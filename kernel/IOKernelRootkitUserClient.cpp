@@ -1,0 +1,2 @@
+
+OSDefineMetaClassAndStructors(IOKernelRootKitService, IOService)

@@ -1,0 +1,47 @@
+#ifndef __PATCHER_HPP_
+#define __PATCHER_HPP_
+
+#include "MacRootKit.hpp"
+
+#include "Kernel.hpp"
+
+#include "Array.hpp"
+#include "Pair.hpp"
+
+class Hook;
+
+class Patcher
+{
+	public:
+		Patcher();
+
+		~Patcher();
+
+		virtual void findAndReplace(void *data,
+									size_t data_size,
+									const void *find, size_t find_size,
+									const void *replace, size_t replace_size);
+
+		virtual void onKextLoad(void *kext, kmod_info_t *kmod);
+
+		virtual void routeFunction(Hook *hook);
+
+		Array<Hook*>* getHooks() { return &hooks; }
+
+		Hook* hookForFunction(mach_vm_address_t address);
+
+		Hook* breakpointForAddress(mach_vm_address_t address);
+
+		bool isFunctionHooked(mach_vm_address_t address);
+
+		bool isBreakpointAtInstruction(mach_vm_address_t address);
+
+		void installHook(Hook *hook, mach_vm_address_t hooked);
+
+		void removeHook(Hook *hook);
+
+	private:
+		Array<Hook*> hooks;
+};
+
+#endif
