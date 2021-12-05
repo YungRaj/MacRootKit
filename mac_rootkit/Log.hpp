@@ -10,13 +10,13 @@ extern "C"
 
 #ifdef __KERNEL_
 
-#define MAC_PE_LOG IOLog
+#define MAC_RK_LOG IOLog
 
 #endif
 
 #ifdef __USER__
 
-#define MAC_PE_LOG printf
+#define MAC_RK_LOG printf
 
 #endif
 
