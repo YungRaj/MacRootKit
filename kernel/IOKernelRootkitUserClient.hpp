@@ -21,9 +21,9 @@ class IOKernelRootKitUserClient : public IOUserClient
 	OSDeclareDefaultStructors(IOKernelRootKitUserClient)
 
 	public:
-		static IOKernelRootKitUserClient* RootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
+		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
 
-		static IOKernelRootKitUserClient* RootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
+		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
 
 		virtual bool initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
 
