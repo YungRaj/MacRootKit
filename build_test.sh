@@ -28,4 +28,4 @@ cd ..
 
 make clean
 
-make -f make_lib.mk
+make -f make_test.mk

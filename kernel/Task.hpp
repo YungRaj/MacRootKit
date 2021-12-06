@@ -65,22 +65,7 @@ class Task
 
 		virtual uint64_t virtualToPhysical(mach_vm_address_t address);
 
-		virtual bool physicalRead(uint64_t paddr, void *data, size_t size);
-
-		virtual uint64_t physicalRead64(uint64_t paddr);
-		virtual uint32_t physicalRead32(uint64_t paddr);
-		virtual uint16_t physicalRead16(uint64_t paddr);
-		virtual uint8_t  physicalRead8(uint64_t paddr);
-
-		virtual bool physicalWrite(uint64_t paddr, void *data, size_t size);
-
-		virtual uint64_t physicalWrite64(uint64_t paddr, uint64_t value);
-		virtual uint32_t physicalWrite32(uint64_t paddr, uint32_t value);
-		virtual uint16_t physicalWrite16(uint64_t paddr, uint16_t value);
-		virtual uint8_t  physicalWrite8(uint64_t paddr, uint8_t value);
-
 		virtual bool read(mach_vm_address_t address, void *data, size_t size);
-		virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
 
 		virtual uint8_t read8(mach_vm_address_t address);
 		virtual uint16_t read16(mach_vm_address_t address);
@@ -88,7 +73,6 @@ class Task
 		virtual uint64_t read64(mach_vm_address_t address);
 
 		virtual bool write(mach_vm_address_t address, void *data, size_t size);
-		virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
 
 		virtual void write8(mach_vm_address_t address, uint8_t value);
 		virtual void write16(mach_vm_address_t address, uint16_t value);

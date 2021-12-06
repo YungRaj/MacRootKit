@@ -1,13 +1,33 @@
 #ifndef __DISASSEMBLER_ARM64_HPP_
 #define __DISASSEMBLER_ARM64_HPP_
 
+#include "Arch.hpp"
+
+#include "Array.hpp"
+
 namespace Arch
 {
 	namespace arm64
 	{
 		namespace Disassembler
 		{
+			bool init();
 
+			bool deinit();
+
+			size_t instructionSize(mach_vm_address_t address, size_t min);
+
+			size_t quickInstructionSize(mach_vm_address_t address, size_t min);
+
+			size_t disassemble(mach_vm_address_t address, size_t size, cs_insn **result);
+
+			mach_vm_address_t disassembleNthBranchLink(mach_vm_address_t address, size_t num, size_t lookup_size);
+
+			mach_vm_address_t disassembleNthBranch(mach_vm_address_t address, size_t num, size_t lookup_size);
+
+			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, arm64_insn insn, size_t num, size_t lookup_size);
+
+			mach_vm_address_t disassembleSignature(mach_vm_address_t address, Array<DisasmSig*> *signature, size_t num, size_t lookup_size);
 		}
 	}
 };

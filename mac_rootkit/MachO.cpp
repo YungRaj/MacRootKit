@@ -1,0 +1,319 @@
+#include "MachO.hpp"
+#include "Log.hpp"
+
+MachO::~MachO()
+{
+}
+
+void MachO::initWithBase(mach_vm_address_t base, off_t slide)
+{
+	this->base = base;
+	this->aslr_slide = slide;
+	this->buffer = reinterpret_cast<char*>(base);
+	this->header = reinterpret_cast<struct mach_header_64*>(buffer);
+
+	parseMachO();
+}
+
+size_t MachO::getSize()
+{
+	size_t file_size = 0;
+
+	struct mach_header_64 *mh = this->getMachHeader();
+
+	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
+
+	for(uint32_t i = 0; i < mh->ncmds; i++)
+	{
+		struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
+
+		uint32_t cmdtype = load_command->cmd;
+		uint32_t cmdsize = load_command->cmdsize;
+
+		if(cmd == LC_SEGMENT_64)
+		{
+			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
+
+			uint64_t vmaddr = segment_command->vmaddr;
+			uint64_t vmsize = segment_command->vmsize;
+
+			uint64_t fileoff = segment_command->fileoff;
+			uint64_t filesize = segment_command->filesize;
+
+			if(vmsize > 0)
+			{
+				file_size = max(file_size, file_off + filesize);
+			}
+		}
+
+		q += cmdsize;
+	}
+
+	return file_size;
+}
+
+Symbol* MachO::getSymbolByName(char *symbolname)
+{
+	this->symbolTable->getSymbolByName(symbolname);
+}
+
+Symbol* MachO::getSymbolByAddress(mach_vm_address_t address)
+{
+	this->symbolTable->getSymbolByAddress(address);
+}
+
+mach_vm_address_t MachO::getSymbolAddressByName(char *symbolname)
+{
+	Symbol *symbol = this->getSymbolByName(symbolname);
+
+	if(!symbol)
+		return 0;
+
+	return symbol->getAddress();
+}
+
+off_t MachO::addressToOffset(mach_vm_address_t address)
+{
+	struct mach_header_64 *mh = this->getMachHeader();
+
+	uint64_t current_offset = sizeof(struct mach_header_64);
+
+	for(uint32_t i = 0; i < mh->ncmds; i++)
+	{
+		struct load_command *load_command = reinterpret_cast<load_command*>(this->getOffset(current_offset));
+
+		uint32_t cmdtype = load_command->cmd;
+		uint32_t cmdsize = load_command->cmdsize;
+
+		if(cmdtype == LC_SEGMENT_64)
+		{
+			struct segment_command_64 = reinterpret_cast<struct segment_command_64*>(load_command);
+
+			uint64_t vmaddr = segment_command->vmaddr;
+			uint64_t vmsize = segment_comamnd->vmsize;
+
+			uint64_t fileoff = segment_comamnd->fileoff;
+			uint64_t filesize = segment_command->filesize;
+
+			uint64_t sect_offet = current_offset + sizeof(struct segment_command_64);
+
+			for(int j = 0; j < segment_command_64->nsects; j++)
+			{
+				struct section_64 *section = reinterpret_cast<struct section_64*>(this->getOffset(sect_offset));
+
+				uint64_t sectaddr = section->addr + this->aslr_slide;
+				uint64_t sectsize = section->size;
+
+				uint64_t offset = section->offset;
+
+				if(address >= sectaddr && address <= sectaddr + sectsize)
+				{
+					return offset == 0 ? 0 : offset + (address - sectaddr);
+				}
+
+				sect_offset += sizeof(struct section_64);
+			}
+
+			current_offset += cmdsize;
+		}
+
+		current_offset += cmdsize;
+	}
+
+	return 0;
+}
+
+mach_vm_address_t MachO::offsetToAddress(off_t offset)
+{
+	struct mach_header_64 *mh = this->getMachHeader();
+
+	uint64_t current_offset = sizeof(struct mach_header_64);
+
+	for(uint32_t i = 0; i < mh->ncmds; i++)
+	{
+		struct load_command *load_command = reinterpret_cast<load_command*>(this->getOffset(current_offset));
+
+		uint32_t cmdtype = load_command->cmd;
+		uint32_t cmdsize = load_command->cmdsize;
+
+		if(cmdtype == LC_SEGMENT_64)
+		{
+			struct segment_command_64 = reinterpret_cast<struct segment_command_64*>(load_command);
+
+			uint64_t vmaddr = segment_command->vmaddr;
+			uint64_t vmsize = segment_comamnd->vmsize;
+
+			uint64_t fileoff = segment_comamnd->fileoff;
+			uint64_t filesize = segment_command->filesize;
+
+			if(offset >= fileoff && offset <= fileoff + filesize)
+			{
+				return vmaddr + (offset - fileoff);
+			}
+		}
+
+		current_offset += cmdsize;
+	}
+
+	return 0;
+}
+
+void* MachO::addressToPointer(mach_vm_address_t address)
+{
+	return reinterpret_cast<void*>(reinterpret_cast<mach_vm_address_t>(buffer + this->addressToOffset(address)));
+}
+
+Segment* MachO::segmentForAddress(mach_vm_address_t address)
+{
+	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
+	{
+		Segment *segment = this->getSegments()->get(i);
+
+		if(address >= segment->getVmAddr() && address <= segment->getVmAddr() + segment->getVmSize())
+		{
+			return segment;
+		}
+	}
+
+	return NULL;
+}
+
+Section* MachO::sectionForAddress(mach_vm_address_t address)
+{
+	Segment *segment = this->segmentForAddress(address);
+
+	if(!segment)
+		return NULL;
+
+	for(uint32_t i = 0; i < segment->getSections()->getSize(); i++)
+	{
+		Section *section = segment->getSections()->get(i);
+
+		if(address >= section->getAddress() && address <= section->getAddress() + section->getSize())
+		{
+			return section;
+		}
+	}
+
+	return NULL;
+}
+
+Segment* MachO::segmentForOffset(off_t offset)
+{
+	mach_vm_address_t address = this->offsetToAddress(offset);
+
+	if(!address)
+		return NULL;
+
+	return this->segmentForAddress(address);
+}
+
+Section* MachO::sectionForOffset(off_t offset)
+{
+	mach_vm_address_t address = this->offsetToAddress(offset);
+
+	if(!address)
+		return NULL;
+
+	return this->segmentForOffset(address);
+}
+
+void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+{
+	this->symbolTable = new SymbolTable();
+
+	for(int i = 0; i < nsyms; i++)
+	{
+		Symbol *symbol;
+
+		struct nlist_64 *nl = &symtab[i];
+
+		char *name;
+
+		mach_vm_address_t address;
+
+		name = &strtab[nl->n_strx];
+
+		address = nl->n_value;
+
+		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
+	
+		this->symbolTable.addSymbol(symbol);
+	}
+}
+
+void MachO::parseLinkedit()
+{
+
+}
+
+bool MachO::parseLoadCommands()
+{
+	return true;
+}
+
+void MachO::parseFatHeader()
+{
+	struct fat_header *fat_header = reinterpret_cast<struct fat_header*>(this->getMachHeader());
+
+	struct fat_arch *arch = reinterpret_cast<struct fat_arch*>(reinterpret_cast<uint8_t*>(fat_header) + sizeof(struct fat_header));
+
+	uint32_t nfat_arch = OSSwapBigToHostInt32(fat_header->nfat_arch);
+
+	for(uint32_t i = 0; i < nfat_arch; i++)
+	{
+		uint32_t cputype;
+		uint32_t cpusubtype;
+
+		uint32_t offset;
+
+		cputype = OSSwapBigToHostInt32(arch->cputype);
+		cpusubtype = OSSwapBigToHostInt32(arch->cpusubtype);
+
+		offset = OSSwapBigToHostInt32(arch->offset);
+
+	#ifdef __x86_64__
+		#define NATIVE_CPU_TYPE   CPU_TYPE_X86_64
+	#endif
+
+	#ifdef __arm64__
+		#define NATIVE_CPU_TYPE   CPU_TYPE_ARM64
+	#endif
+
+		if(cputype == NATIVE_CPU_TYPE)
+		{
+			struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(reinterpret_cast<uint8_t*>(fat_header) + offset);
+
+			this->header = mh;
+			this->buffer = reinterpret_cast<char*>(mh):
+
+			this->parseHeader();
+		}
+
+	}
+}
+
+void MachO::parseHeader()
+{
+	struct mach_header_64 *mh = this->getMachHeader();
+
+	uint32_t magic = mh->magic;
+
+	if(magic = FAT_CIGAM)
+	{
+
+	} else if(magic == MH_MAGIC_64)
+	{
+		getAslrSlide();
+
+		this->size = this->getSize();
+
+		this->parseLoadCommands();
+	}
+}
+
+
+void MachO::parseMachO()
+{
+	parseHeader();
+}

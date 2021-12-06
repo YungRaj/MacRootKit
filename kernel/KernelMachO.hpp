@@ -18,10 +18,11 @@ class KernelMachO : public MachO
 		void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
 		static Kext* kextLoadedAt(Kernel *kernel, mach_vm_address_t address);
+		static Kext* kextWithIdentifier(Kernel *kernel, char *kext);
 
 		virtual void parseLinkedit();
 
-		virtual void parseLoadCommands();
+		virtual bool parseLoadCommands();
 
 		virtual void parseMachO();
 

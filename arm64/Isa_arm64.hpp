@@ -22,6 +22,11 @@ namespace Arch
 		static constexpr size_t Breakpoint = sizeof(uint32_t);
 		static constexpr uint16_t BreakpointPrefix = 0b11010100001;
 
+		union Breakpoint makeBreakpoint();
+		}
+
+		size_t BreakpointSize() { return Breakpoint; }
+
 		union Breakpoint
 		{
 			struct PACKED Break
@@ -38,9 +43,14 @@ namespace Arch
 		static constexpr uint8_t NormalBranchPrefix = 0x05;
 		static constexpr uint32_t IndirectBranchPrefix = 0b1101011000011111000000;
 
-		union FunctionPatch
+		union Branch makeBranch(mach_vm_address_t to, mach_vm_address_t from);
+
+		size_t NormalBranchSize() { return NormalBranch; }
+		size_t IndirectBranchSize() { return IndirectBranch; }
+
+		union Branch
 		{
-			struct PACKED BranchPatch
+			struct PACKED Branch
 			{
 				uint32_t imm  : 26,
 						 op   : 5,
@@ -52,6 +62,10 @@ namespace Arch
 
 		static constexpr size_t CallFunction = sizeof(uint32_t);
 		static constexpr uint8_t CallFunctionPrefix = 0b00101;
+
+		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from);
+
+		size_t FunctionCallSize() { return CallFunction; }
 
 		union FunctionCall
 		{

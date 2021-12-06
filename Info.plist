@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>MacRootkit</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.YungRaj.MacRootKit</string>
+	<key>CFBundleName</key>
+	<string>MacRootKit</string>
+	<key>CFBundlePackageType</key>
+	<string>KEXT</string>
+	<key>CFBundleVersion</key>
+	<string>1.0)</string>
+	<key>IOKitPersonalities</key>
+	<dict>
+		<key>com.YungRaj.MacRootKit</key>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string>com.YungRaj.MacRootKit</string>
+			<key>IOClass</key>
+			<string>IOKernelRootKitService</string>
+			<key>IOProviderClass</key>
+			<string>IOResources</string>
+			<key>IOResourceMatch</key>
+			<string>IOBSD</string>
+			<key>IOUserClientClass</key>
+			<string>IOKernelRootKitUserClient</string>
+		</dict>
+	</dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2016-2022 YungRaj. All rights reserved.</string>
+	<key>OSBundleLibraries</key>
+	<dict>
+		<key>com.apple.kpi.bsd</key>
+		<string>8.0.0</string>
+		<key>com.apple.kpi.iokit</key>
+		<string>8.0.0</string>
+		<key>com.apple.kpi.libkern</key>
+		<string>8.0.0</string>
+		<key>com.apple.kpi.mach</key>
+		<string>8.0.0</string>
+		<key>com.apple.kpi.unsupported</key>
+		<string>8.0.0</string>
+		<key>com.apple.kernel.6.0</key>
+		<string>7.9.9</string>
+	</dict>
+	<key>OSBundleLibraries_x86_64</key>
+	<dict>
+		<key>com.apple.kpi.bsd</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.iokit</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.libkern</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.mach</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.dsep</key>
+		<string>10.0.0</string>
+		<key>com.apple.kpi.unsupported</key>
+		<string>10.0.0</string>
+	</dict>
+	<key>OSBundleRequired</key>
+	<string>Root</string>
+</dict>
+</plist>

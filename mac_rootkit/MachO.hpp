@@ -53,6 +53,8 @@ class MachO
 
 		mach_vm_address_t offsetToAddress(off_t offset);
 
+		void* addressToPointer(mach_vm_address_t address);
+
 		Segment* segmentForAddress(mach_vm_address_t address);
 		Section* sectionForAddress(mach_vm_address_t address);
 
@@ -63,7 +65,9 @@ class MachO
 
 		virtual void parseLinkedit();
 
-		virtual void parseLoadCommands();
+		virtual bool parseLoadCommands();
+
+		virtual void parseHeader();
 
 		virtual void parseFatHeader();
 

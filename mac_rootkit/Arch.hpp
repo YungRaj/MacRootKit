@@ -3,8 +3,8 @@
 
 #include "APIUtil.hpp"
 
-#include <x86_64/Arch_x86_64.hpp>
-#include <arm64/Arch_arm64.hpp>
+#include <x86_64/x86_64.hpp>
+#include <arm64/arm64.hpp>
 
 namespace Arch
 {
@@ -28,6 +28,8 @@ namespace Arch
 	bool setWPBit(bool enable);
 
 	bool setNXBit(bool enable);
+
+	bool setPaging(bool enable);
 
 	namespace i386 { };
 	namespace x86_64 { };

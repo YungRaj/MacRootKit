@@ -30,6 +30,10 @@ namespace Arch
 		static constexpr uint16_t Breakpoint = sizeof(uint16_t);
 		static constexpr uint16_t BreakpointPrefix = 0x03CD;
 
+		void makeBreakpoint(union Breakpoint *breakpoint);
+
+		size_t BreakpointSize() { return Breakpoint; }
+
 		union Breakpoint
 		{
 			struct PACKED Int3
@@ -44,8 +48,16 @@ namespace Arch
 		};
 
 		static constexpr size_t SmallJump = 1 + sizeof(int32_t);
-		static constexpr size_t LongJump = 6 + sizeof(uintptr_t);
 		static constexpr size_t NearJump = 6;
+		static constexpr size_t LongJump = 6 + sizeof(uintptr_t);
+
+		union Jump makeJump(mach_vm_address_t to, mach_vm_address_t from);
+
+		size_t JumpSize() { return SmallJump; }
+
+		size_t SmallJumpSize() { return SmallJump; }
+		size_t NearJumpSize() { return NearJump; }
+		size_t LongJumpSize() { return LongJump; }
 
 		static constexpr uint8_t = SmalJumpPrefix = 0xE9;
 		static constexpr uint16_t LongJumpPrefix = 0x25FF;
@@ -58,9 +70,9 @@ namespace Arch
 			Near,
 		};
 
-		union FunctionPatch
+		union Jump
 		{
-			struct PACKED LongPatch
+			struct PACKED Long
 			{
 				uint16_t opcode;
 				int32_t argument;
@@ -68,7 +80,7 @@ namespace Arch
 				uint8_t org[sizeof(uint64_t) - sizeof(uintptr_t) + sizeof(uint16_t)];
 			} l;
 
-			struct PACKED NearPatch
+			struct PACKED Near
 			{
 				uint16_t opcode;
 				int32_t argument;
@@ -76,7 +88,7 @@ namespace Arch
 				uint8_t org[2];
 			} n;
 
-			struct PACKED ShortPatch
+			struct PACKED Short
 			{
 				uint8_t opcode;
 				int32_t argument;
@@ -88,6 +100,10 @@ namespace Arch
 
 		static constexpr size_t FunctionCall = sizeof(uint8_t) + sizeof(int32_t);
 		static constexpr uint8_t FunctionCallPrefix = 0xE8;
+
+		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from);
+
+		size_t FunctionCallSize() { return FunctionCall; }
 
 		union FunctionCall
 		{

@@ -15,6 +15,8 @@ class Payload;
 
 class Payload
 {
+	static constexpr uint32_t expectedSize = 1 << 12;
+
 	public:
 		Payload(Task *task, Hook *hook, vm_prot_t prot);
 
@@ -40,7 +42,7 @@ class Payload
 		bool writeBytes(uint8_t *bytes, size_t size);
 		bool writeBytes(off_t offset, uint8_t *bytes, size_t size);
 
-		void prepare();
+		bool prepare();
 	
 	private:
 		mach_vm_address_t address;
@@ -53,7 +55,7 @@ class Payload
 
 		size_t size;
 
-		vm_prot_t protection;
+		vm_prot_t prot;
 };
 
 #endif

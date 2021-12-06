@@ -62,7 +62,7 @@ class KernelPatcher : public Patcher
 		kmod_info_t** getKextKmods() { return kextKmods; }
 
 		Hook* getEntitlementHook() { return entitlementHook; }
-		Hook* getBinaryLaodHook() { return binaryLoadHook; }
+		Hook* getBinaryLoadHook() { return binaryLoadHook; }
 		Hook* getKextLoadHook() { return kextLoadHook; }
 
 		static bool dummyBreakpoint(union RegisterState *state);
@@ -87,13 +87,13 @@ class KernelPatcher : public Patcher
 
 		virtual void onEntitlementRequest(task_t task, char *entitlement);
 
+		void installDummyBreakpoint();
+
 		Hook* installEntitlementHook();
 		Hook* installBinaryLoadHook();
 		Hook* installKextLoadHook();
 
 		void registerCallbacks();
-
-		void processAlreadyLoadedKexts();
 
 		void processKext(kmod_info_t *kmod, bool loaded);
 

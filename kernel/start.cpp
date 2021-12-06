@@ -1,18 +1,52 @@
+#include <stdint.h>
+#include <string.h>
+
+#include <kern/host.h>
+#include <kern/task.h>
+
 #include <mach/mach.h>
 #include <mach/mach_types.h>
+#include <mach/port.h>
 #include <mach/kmod.h>
+#include <mach/vm_types.h>
 
 #include "IOKernelRootKitService.hpp"
 #include "MacRootKit.hpp"
 
-kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext *kext)
+MacRootKit *rootkit = NULL;
+
+MacRootKit* mac_rootkit_get_rootkit()
 {
-	return KERN_SUCCESS;
+	if(rootkit)
+		return rootkit;
+
+	return NULL;
 }
 
-kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext *kext)
+kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext **kext)
 {
-	return KERN_SUCCESS;
+	kern_return_t ret = kIOReturnSuccess;
+
+	rootkit = new MacRootKit(kernel);
+
+	if(!rootkit)
+		ret = kIOReturnUnsupported;
+
+	return ret;
+}
+
+kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext **kext)
+{
+	kern_return_t ret = kIOReturnSuccess;
+
+	if(rootkit)
+	{
+		delete rootkit;
+
+		rootkit = NULL
+	}
+
+	return ret;
 }
 
 extern "C"

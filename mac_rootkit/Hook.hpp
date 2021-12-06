@@ -24,8 +24,8 @@ using namespace Arch;
 using RegisterState_x86_64 = struct Arch::x86_64::x86_64_register_state;
 using RegisterState_arm64 = struct Arch::arm64::arm64_register_state;
 
-using FunctionPatch_x86_64 = union Arch::x86_64::FunctionPatch;
-using FunctionPatch_arm64 = union Arch::arm64::FunctionPatch;
+using FunctionPatch_x86_64 = union Arch::x86_64::Jump;
+using FunctionPatch_arm64 = union Arch::arm64::Branch;
 
 using FunctionCall_x86_64 = union Arch::x86_64::FunctionCall;
 using FunctionCall_arm64 = union Arch::arm64::FunctionCall;
@@ -114,6 +114,8 @@ class Hook
 
 		mach_vm_address_t getFrom() { return from; }
 
+		struct HookPatch* getLatestRegisteredHook();
+
 		mach_vm_address_t getTrampoline() { return trampoline; }
 
 		mach_vm_address_t getTrampolineFromChain(mach_vm_address_t address);
@@ -173,7 +175,7 @@ class Hook
 
 		void makePatch(union FunctionPatch *patch, mach_vm_address_t to, mach_vm_address_t from);
 
-		void makeCall(union FunctionPatch *call, mach_vm_address_t to, mach_vm_address_t from);
+		void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from);
 
 		void makeBreakpoint(union Breakpoint *breakpoint);
 

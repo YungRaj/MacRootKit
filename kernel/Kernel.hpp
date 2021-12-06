@@ -50,9 +50,13 @@ class Kernel : public Task
 
 		IOKernelRootKitService* getRootKitService() { return this->RootKitService; }
 
+		void setKernelWriting(bool enable);
+
 		void setNXBit(bool enable);
 
 		void setInterrupts(bool enable);
+
+		void getKernelObjects();
 
 		virtual task_t getTask() { return kernel_task; }
 
@@ -79,10 +83,10 @@ class Kernel : public Task
 
 		virtual bool physicalWrite(uint64_t paddr, void *data, size_t size);
 
-		virtual uint64_t physicalWrite64(uint64_t paddr, uint64_t value);
-		virtual uint32_t physicalWrite32(uint64_t paddr, uint32_t value);
-		virtual uint16_t physicalWrite16(uint64_t paddr, uint16_t value);
-		virtual uint8_t  physicalWrite8(uint64_t paddr, uint8_t value);
+		virtual void physicalWrite64(uint64_t paddr, uint64_t value);
+		virtual void physicalWrite32(uint64_t paddr, uint32_t value);
+		virtual void physicalWrite16(uint64_t paddr, uint16_t value);
+		virtual void  physicalWrite8(uint64_t paddr, uint8_t value);
 
 		virtual bool read(mach_vm_address_t address, void *data, size_t size);
 		virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
@@ -102,10 +106,10 @@ class Kernel : public Task
 
 		virtual char* readString(mach_vm_address_t address);
 
-		virtual Symbol* getSymbolAddressByName(char *symname);
+		virtual Symbol* getSymbolByName(char *symname);
 		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
-		virtual mmach_vm_address_t getSymbolAddressByName(char *symbolname);
+		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 	private:
 		MachO macho;
@@ -118,7 +122,7 @@ class Kernel : public Task
 
 		mach_port_t kernel_task_port;
 
-		void buildKernelTaskPort();
+		void createKernelTaskPort();
 };
 
 #endif

@@ -36,7 +36,7 @@ class KextMachO : public MachO
 
 		virtual void parseLinkedit();
 
-		virtual void parseLoadCommands();
+		virtual bool parseLoadCommands();
 
 		virtual void parseHeader();
 

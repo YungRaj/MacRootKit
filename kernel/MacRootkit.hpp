@@ -24,15 +24,15 @@ class MacRootKit
 	using kextload_callback_t void (*)(void *user, Kext *kext, char *kextname);
 
 	public:
-		MacRootKit();
+		MacRootKit(Kernel *kernel);
 
 		~MacRootKit();
 
 		Kernel* getKernel() { return kernel; }
 
-		enum Architectures getPlatformArchitectures() { return platformArchitecture; }
+		enum Architectures getPlatformArchitecture() { return platformArchitecture; }
 
-		Kext* getKextByIdentifier();
+		Kext* getKextByIdentifier(char *name);
 
 		Kext* getKextByAddress(mach_vm_address_t address);
 
@@ -44,13 +44,15 @@ class MacRootKit
 
 		Array<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
 
+		void registerCallbacks();
+
 		void registerEntitlementCallback(void *user, entitlement_callback_t callback);
 
 		void registerBinaryLoadCallback(void *user, binaryload_callback_t callback);
 
 		void registerKextLoadCallback(void *user, kextload_callback_t callback);
 
-		void onEntitlementRequest(task_t task, const char *entitlement, OSObject *original);
+		void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
 		void onProcLoad(vm_map_t map, const char *path, size_t len);
 

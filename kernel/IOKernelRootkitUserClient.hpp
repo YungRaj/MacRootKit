@@ -58,7 +58,7 @@ class IOKernelRootKitUserClient : public IOUserClient
 
 		void initRootKit();
 
-		uint8_t* mapBufferFromUserspace(mach_vm_address_t uaddr, size_t size, IOOptionBits options);
+		uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptr **desc, IOMemoryMap **mapping);
 
 };
 

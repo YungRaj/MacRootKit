@@ -17,8 +17,10 @@ class Kext;
 class IOKernelRootKitService;
 class IOKernelRootKitUserClient;
 
-extern kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext *kext);
-extern kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext *kext);
+extern kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext **kext);
+extern kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext **kext);
+
+extern MacRootKit* mac_rootkit_get_rootkit();
 
 class IOKernelRootKitService : public IOService
 {
@@ -30,7 +32,7 @@ class IOKernelRootKitService : public IOService
 		virtual void free();
 
 		virtual bool start(IOService *provider);
-		virtual bool stop(IOService *provider);
+		virtual void stop(IOService *provider);
 
 		virtual IOService* probe(IOService *provider, SInt32 *score);
 
@@ -45,9 +47,12 @@ class IOKernelRootKitService : public IOService
 		mach_port_t getKernelTaskPort() { return tfp0; }
 
 		IOReturn createUserClient(task_t task, void *securityID, UInt32 type, IOKernelRootKitUserClient **client);
+		IOReturn createUserClient(task_t task, void *securityID, UInt32 type, OSDictionary *properties, IOKernelRootKitUserClient **client);
 
 		IOReturn newUserClient(task_t task, void *securityID, UInt32 type, OSDictionary *properties, IOUserClient **client);
 		IOReturn newUserClient(task_t task, void *securityID, UInt32 type, IOUserClient **client);
+
+		IOReturn addUserClient(IOKernelRootKitUserClient *client);
 
 		IOReturn removeUserClient(IOKernelRootKitUserClient *client);
 

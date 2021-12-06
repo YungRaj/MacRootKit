@@ -6,7 +6,7 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
-void *_memchr(const void *src, int c, size_t n)
+void *memchr(const void *src, int c, size_t n)
 {
 	const unsigned char *s = (const unsigned char *)src;
 	c = (unsigned char)c;
@@ -147,7 +147,7 @@ static char *twoway_memmem(const unsigned char *h, const unsigned char *z, const
 	}
 }
 
-void *_memmem(const void *h0, size_t k, const void *n0, size_t l)
+void *memmem(const void *h0, size_t k, const void *n0, size_t l)
 {
 	const unsigned char *h = (const unsigned char *)h0, *n = (const unsigned char *)n0;
 
