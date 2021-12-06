@@ -86,7 +86,7 @@ class Task
 
 		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
-	private:
+	protected:
 		Kernel *kernel;
 
 		Disassembler *disassembler;

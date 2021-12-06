@@ -133,8 +133,7 @@ mach_vm_address_t Kernel::findKernelBase()
 
 mach_vm_address_t Kernel::getBase()
 {
-	if(!base)
-		this->base = Kernel::findKernelBase();
+	this->base = Kernel::findKernelBase();
 
 	return base;
 }

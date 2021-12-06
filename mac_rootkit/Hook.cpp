@@ -196,8 +196,83 @@ void Hook::makeBreakpoint(union Breakpoint *breakpoint)
 	}
 }
 
+size_t Hook::getBranchSize()
+{
+	size_t branch_size = 0;
+
+	switch(Arch::getCurrentArchitecture())
+	{
+		case ARCH_x86_64:
+			branch_size = Arch::x86_64::SmallJump;
+
+			break;
+		case ARCH_arm64:
+			branch_size = Arch::arm64::NormalBranch;
+
+			break;
+		default:
+			break;
+	}
+
+	return branch_size;
+}
+
+size_t Hook::getCallSize()
+{
+	size_t branch_size = 0;
+
+	switch(Arch::getCurrentArchitecture())
+	{
+		case ARCH_x86_64:
+			branch_size = Arch::x86_64::CallFunction;
+
+			break;
+		case ARCH_arm64:
+			branch_size = Arch::arm64::CallFunction;
+
+			break;
+		default:
+			break;
+	}
+
+	return branch_size;
+}
+
+size_t Hook::getBreakpointSize()
+{
+	size_t breakpoint_size = 0;
+
+	switch(Arch::getCurrentArchitecture())
+	{
+		case ARCH_x86_64:
+			breakpoint_size = Arch::x86_64::Breakpoint;
+
+			break;
+		case ARCH_arm64:
+			breakpoint_size = Arch::arm64::Breakpoint;
+
+			break;
+		default:
+			break;
+	}
+
+	return breakpoint_size;
+}
+
 Payload* Hook::prepareTrampoline()
 {
+	Payload *payload;
+
+	if(this->payload)
+	{
+		return this->payload;
+	}
+
+	this->payload = payload = new Payload(this->getTask(), this, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE );
+
+	payload->prepare();
+
+	return payload;
 }
 
 void Hook::registerHook(struct HookPatch *patch)
@@ -210,6 +285,97 @@ void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype =
 
 void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookTypeInstrumentFunction)
 {
+	struct HookPatch *hook = new HookPatch;
+
+	Disassembler *disassembler = this->getDisassembler();
+
+	Patcher *patcher = this->getPatcher();
+
+	Payload *payload = this->prepareTrampoline();
+
+	struct HookPatch *chain = this->getLatestRegisteredHook();
+
+	mach_vm_address_t trampoline;
+
+	// if we don't have any entries in the chain
+	// then we start at the payload's starting point
+
+	// if we have entries in the chain, then start at the correct offset
+
+	if(!chain)
+	{
+		this->trampoline = trampoline = payload->getAddress();
+	} else
+	{
+		trampoline = payload->getAddress() + payload->getCurrentOffset();
+	}
+
+	size_t min;
+	size_t branch_size;
+
+	mach_vm_address_t from = chain ? chain->to : this->from;
+
+	branch_size = this->getBranchSize();
+
+	min = disassembler->instructionSize(from, branch_size);
+
+	uint8_t *original_opcodes;
+	uint8_t *replace_opcodes;
+
+	original_opcodes = new uint8_t[min];
+
+	if(this->getTask())
+	{
+		this->hookContext.task->read(from, (void*) original_opcodes, min);
+	}
+	else if(this->getKernel())
+	{
+		this->hookContext.kernel->read(from, (void*) original_opcodes, min);
+	}
+
+	payload->writeBytes(original_opcodes, min);
+
+	union FunctionPatch to_hook_function;
+
+	// build the FunctionPatch branch/jmp instruction from original function to hooked function
+	// NOTE: if function is hooked more than once, then original = previous hook
+
+	this->makePatch(&to_hook_function, to, from);
+
+	replace_opcodes = new uint8_t[branch_size];
+
+	memcpy(replace_opcodes, (void*) &to_hook_function, branch_size);
+
+	union FunctionPatch to_original_function;
+
+	// build the FunctionPatch branch/jmp instruction from trampoline to original function
+
+	this->makePatch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
+
+	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
+
+	if(this->getTask())
+	{
+		this->hookContext.task->write(from, (void*) replace_opcodes, branch_size);
+	}
+	else if(this->getKernel())
+	{
+		this->hookContext.kernel->write(from, (void*) replace_opcodes, branch_size);
+	}
+
+	hook->from = from;
+	hook->to = to;
+
+	hook->trampoline = trampoline;
+	hook->patch = to_hook_function;
+	hook->payload = payload;
+	hook->type = hooktype;
+
+	hook->original = original_opcodes;
+	hook->replace = replace_opcodes;
+	hook->patch_size = branch_size;
+
+	this->registerHook(hook);
 }
 
 void Hook::uninstallHook()
@@ -218,6 +384,123 @@ void Hook::uninstallHook()
 
 void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint)
 {
+	struct HookPatch *hook = new HookPatch;
+
+	Disassembler *disassembler = this->getDisassembler();
+
+	Patcher *patcher = this->getPatcher();
+
+	Payload *payload = this->prepareTrampoline();
+
+	mach_vm_address_t trampoline;
+
+	trampoline = payload->getAddress() + payload->getCurrentOffset();
+
+	size_t min;
+	size_t branch_size;
+
+	mach_vm_address_t from = this->from;
+
+	branch_size = this->getBranchSize();
+
+	min = disassembler->instructionSize(from, branch_size);
+
+	uint8_t *original_opcodes;
+	uint8_t *replace_opcodes;
+
+	original_opcodes = new uint8_t[min];
+
+	if(this->getTask())
+	{
+		this->hookContext.task->read(from, (void*) original_opcodes, min);
+	}
+	else if(this->getKernel())
+	{
+		this->hookContext.kernel->read(from, (void*) original_opcodes, min);
+	}
+
+	union FunctionPatch to_trampoline;
+
+	// build the FunctionPatch branch/jmp instruction from original function to hooked function
+	// NOTE: if function is hooked more than once, then original = previous hook
+
+	this->makePatch(&to_trampoline, trampoline, from);
+
+	replace_opcodes = new uint8_t[branch_size];
+
+	memcpy(replace_opcodes, (void*) &to_trampoline, branch_size);
+
+	size_t breakpoint_size = this->getBreakpointSize();
+
+	if(breakpoint_hook)
+	{
+		// set a conditional breakpoint
+		union FunctionCall call_breakpoint_hook;
+
+		union Breakpoint breakpoint;
+
+		size_t call_size = this->getCallSize();
+
+		payload->writeBytes((uint8_t*) push_registers, (size_t) ((uint8_t*) push_registers_end - (uint8_t*) push_registers));
+		payload->writeBytes((uint8_t*) set_argument, (size_t) ((uint8_t*) set_argument_end - (uint8_t*) set_argument));
+
+		this->makeCall(&call_breakpoint_hook, breakpoint_hook, payload->getAddress() + payload->getCurrentOffset());
+
+		payload->writeBytes((uint8_t*) &call_breakpoint_hook, call_size);
+
+		payload->writeBytes((uint8_t*) check_breakpoint, (size_t) ((uint8_t*) check_breakpoint_end - (uint8_t*) check_breakpoint));
+
+		this->makeBreakpoint(&breakpoint);
+
+		payload->writeBytes((uint8_t*) &breakpoint, breakpoint_size);
+
+		payload->writeBytes((uint8_t*) pop_registers, (size_t) ((uint8_t*) pop_registers_end - (uint8_t*) pop_registers));
+	} else
+	{
+		// break regardless
+		union Breakpoint breakpoint;
+
+		payload->writeBytes((uint8_t*) push_registers, (size_t) ((uint8_t*) push_registers_end - (uint8_t*) push_registers));
+		
+		this->makeBreakpoint(&breakpoint);
+
+		payload->writeBytes((uint8_t*) &breakpoint, breakpoint_size);
+
+		payload->writeBytes((uint8_t*) pop_registers, (size_t) ((uint8_t*) pop_registers_end - (uint8_t*) pop_registers));
+	}
+
+	union FunctionPatch to_original_function;
+
+	// build the FunctionPatch branch/jmp instruction from trampoline to original function
+
+	payload->writeBytes(original_opcodes, min);
+
+	this->makePatch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
+
+	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
+
+	if(this->getTask())
+	{
+		this->hookContext.task->write(from, (void*) replace_opcodes, branch_size);
+	}
+	else if(this->getKernel())
+	{
+		this->hookContext.kernel->write(from, (void*) replace_opcodes, branch_size);
+	}
+
+	hook->from = from;
+	hook->to = trampoline;
+
+	hook->trampoline = trampoline;
+	hook->patch = to_trampoline;
+	hook->payload = payload;
+	hook->type = hooktype;
+
+	hook->original = original_opcodes;
+	hook->replace = replace_opcodes;
+	hook->patch_size = branch_size;
+
+	this->registerHook(hook);
 }
 
 void Hook::removeBreakpoint()

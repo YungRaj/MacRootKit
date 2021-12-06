@@ -11,6 +11,7 @@ extern "C"
 
 Task::Task()
 {
+	
 }
 
 Task::Task(Kernel *kernel, mach_port_t task_port)

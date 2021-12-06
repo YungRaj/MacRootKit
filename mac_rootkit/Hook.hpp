@@ -173,6 +173,12 @@ class Hook
 
 	protected:
 
+		size_t getBranchSize();
+
+		size_t getCallSize();
+
+		size_t getBreakpointSize();
+
 		void makePatch(union FunctionPatch *patch, mach_vm_address_t to, mach_vm_address_t from);
 
 		void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from);
