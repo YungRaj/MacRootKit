@@ -1,7 +1,11 @@
 #ifndef __KEXT_HPP_
 #define __KEXT_HPP_
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <mach/kmod.h>
+#include <mach/mach_types.h>
 
 class Kernel;
 class KextMachO;

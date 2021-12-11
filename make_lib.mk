@@ -28,7 +28,7 @@ ARM64_CPPOBJECTS := $(patsubst arm64/%.cpp, $(OBJ)/%.o, $(ARM64_CPPSOURCES))
 
 CFLAGS = -Wno-shadow -Wno-unused-variable -g -D_USER_ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
-LFLAGS = -framework IOKit -framework CoreFoundation -L/usr/local/lib /usr/local/lib/libkeystone.a /usr/local/lib/libcapstone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
+LFLAGS = -framework IOKit -framework CoreFoundation -L/usr/local/lib /opt/homebrew/Cellar/capstone/4.0.2/lib/libcapstone.a /usr/local/lib/libkeystone.a /opt/homebrew/Cellar/keystone/0.9.2/lib/libcapstone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
 CXX_FLAGS = -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
 

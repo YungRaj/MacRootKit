@@ -6,6 +6,8 @@
 #include "Arch.hpp"
 #include "Array.hpp"
 
+struct DisasmSig;
+
 namespace Arch
 {
 	namespace arm64

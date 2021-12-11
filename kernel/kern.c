@@ -437,7 +437,7 @@ uint64_t physical_read64(uint64_t paddr)
 	return _ml_phys_read_double_64(paddr);
 }
 
-uint64_t physical_read32(uint64_t paddr)
+uint32_t physical_read32(uint64_t paddr)
 {
 	typedef uint32_t (*ml_phys_read_word_64)(uint64_t);
 
@@ -448,7 +448,7 @@ uint64_t physical_read32(uint64_t paddr)
 	return _ml_phys_read_word_64(paddr);
 }
 
-uint64_t physical_read16(uint64_t paddr)
+uint16_t physical_read16(uint64_t paddr)
 {
 	typedef uint16_t (*ml_phys_read_half_64)(uint64_t);
 
@@ -459,7 +459,7 @@ uint64_t physical_read16(uint64_t paddr)
 	return _ml_phys_read_half_64(paddr);
 }
 
-uint64_t physical_read8(uint64_t paddr)
+uint8_t physical_read8(uint64_t paddr)
 {
 	typedef uint8_t (*ml_phys_read_byte_64)(uint64_t);
 

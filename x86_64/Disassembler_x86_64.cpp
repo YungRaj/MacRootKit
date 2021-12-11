@@ -1,3 +1,4 @@
+#include "Disassembler.hpp"
 #include "Disassembler_x86_64.hpp"
 
 #include "umm_malloc.h"
@@ -232,7 +233,7 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, arm64_insn insn, size_t num, size_t lookup_size)
+			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, x86_insn insn, size_t num, size_t lookup_size)
 			{
 				cs_insn *result = nullptr;
 

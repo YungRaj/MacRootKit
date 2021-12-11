@@ -1,3 +1,4 @@
+#include "Disassembler.hpp"
 #include "Disassembler_arm64.hpp"
 
 #include "umm_malloc.h"
