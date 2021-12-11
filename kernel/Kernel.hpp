@@ -3,17 +3,19 @@
 
 #include <IOKit/IOLib.h>
 
+#include <kern/host.h>
 #include <mach/mach_types.h>
 
 #include "MacRootKit.hpp"
-#include "IOKernelRootKitService.hpp"
 
-#include "KernelMachO.hpp"
-#include "Symbol.hpp"
+#include "IOKernelRootKitService.hpp"
 
 #include "Task.hpp"
 
 #include "Disassembler.hpp"
+
+#include "KernelMachO.hpp"
+#include "Symbol.hpp"
 
 class MacRootKit;
 class IOKernelRootKitService;
@@ -36,29 +38,37 @@ class Kernel : public Task
 
 		static mach_vm_address_t findKernelBase();
 
+		static off_t findKernelSlide();
+
 		MachO* getMachO() { return macho; }
 
 		virtual mach_vm_address_t getBase();
 
 		virtual off_t getSlide();
 
-		void setRootKit(MacRootKit *RootKit) { this->RootKit = RootKit; }
+		void setRootKit(MacRootKit *rootkit) { this->rootkit = rootkit; }
 
-		MacRootKit* getRootKit() { return this->RootKit; }
+		MacRootKit* getRootKit() { return this->rootkit; }
 
-		void setRootKitService(IOKernelRootKitService *service) { this->RootKitService = service; }
+		void setRootKitService(IOKernelRootKitService *service) { this->rootkitService = service; }
 
-		IOKernelRootKitService* getRootKitService() { return this->RootKitService; }
+		IOKernelRootKitService* getRootKitService() { return this->rootkitService; }
 
-		void setKernelWriting(bool enable);
+		mach_port_t getKernelTaskPort() { return this->kernel_task_port; }
 
-		void setNXBit(bool enable);
+		bool setKernelWriting(bool enable);
 
-		void setInterrupts(bool enable);
+		bool setNXBit(bool enable);
+
+		bool setInterrupts(bool enable);
 
 		void getKernelObjects();
 
-		virtual task_t getTask() { return kernel_task; }
+		virtual task_t getKernelTask() { return this->getTask(); }
+
+		virtual vm_map_t getKernelMap() { return this->getMap(); }
+
+		virtual pmap_t getKernelPmap() { return this->getPmap(); }
 
 		virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
 		virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
@@ -106,17 +116,17 @@ class Kernel : public Task
 
 		virtual char* readString(mach_vm_address_t address);
 
-		virtual Symbol* getSymbolByName(char *symname);
+		virtual Symbol* getSymbolByName(char *symbolname);
 		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
 		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 	private:
-		MachO macho;
+		MachO *macho;
 
-		IOKernelRootKitService *RootKitService;
+		IOKernelRootKitService *rootkitService;
 
-		MacRootKit *RootKit;
+		MacRootKit *rootkit;
 
 		IOSimpleLock *kernelWriteLock;
 

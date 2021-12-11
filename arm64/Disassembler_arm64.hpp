@@ -1,8 +1,9 @@
 #ifndef __DISASSEMBLER_ARM64_HPP_
 #define __DISASSEMBLER_ARM64_HPP_
 
-#include "Arch.hpp"
+#include <capstone/capstone.h>
 
+#include "Arch.hpp"
 #include "Array.hpp"
 
 namespace Arch
@@ -27,7 +28,7 @@ namespace Arch
 
 			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, arm64_insn insn, size_t num, size_t lookup_size);
 
-			mach_vm_address_t disassembleSignature(mach_vm_address_t address, Array<DisasmSig*> *signature, size_t num, size_t lookup_size);
+			mach_vm_address_t disassembleSignature(mach_vm_address_t address, Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
 		}
 	}
 };

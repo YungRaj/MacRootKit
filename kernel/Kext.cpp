@@ -13,10 +13,10 @@ Kext::Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info)
 	this->kmod_info = kmod_info;
 	this->address = this->kmod_info->address;
 	this->size = this->kmod_info->size;
-	this->name = &this->kmod_info->name[0];
+	this->identifier = &this->kmod_info->name[0];
 
 	if(this->kmod_info->address)
-		this->macho = new KextMachO(this->kernel, this->name, this->kmod_info);
+		this->macho = new KextMachO(this->kernel, this->identifier, this->kmod_info);
 	else
 		this->macho = NULL;
 }
@@ -25,7 +25,7 @@ Kext::~Kext()
 {
 }
 
-Kext* Kext::findKextWithIdentifier(Kernel *kernel, har *name)
+Kext* Kext::findKextWithIdentifier(Kernel *kernel, char *name)
 {
 	MacRootKit *rootkit = kernel->getRootKit();
 
@@ -50,7 +50,7 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 
 			typedef void* (*lookupKextWithIdentifier)(const char*);
 
-			void* (*__ZN6OSKext24lookupKextWithIdentifierEPKc)(const char*)
+			void* (*__ZN6OSKext24lookupKextWithIdentifierEPKc)(const char*);
 
 			mach_vm_address_t OSKext_lookupWithIdentifier = kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc");
 
@@ -59,6 +59,7 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 			OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(name);
 
 			kext = new Kext(kernel, OSKext, kmod);
+		}
 	}
 
 	return NULL;
@@ -66,8 +67,10 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 
 Kext* Kext::findKextWithId(Kernel *kernel, uint32_t kext_id)
 {
+	return NULL;
 }
 
 void Kext::onKextLoad(void *kext, kmod_info_t *kmod_info)
 {
+	return;
 }

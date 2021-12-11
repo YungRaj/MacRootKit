@@ -1,7 +1,15 @@
 #include "KernelPatcher.hpp"
 
 #include "MacRootKit.hpp"
+
+#include "KernelMachO.hpp"
+
+#include "Hook.hpp"
 #include "Payload.hpp"
+
+#include "Task.hpp"
+#include "Kernel.hpp"
+
 
 static KernelPatcher *that = nullptr;
 
@@ -36,13 +44,13 @@ bool KernelPatcher::dummyBreakpoint(union RegisterState *state)
 	return false;
 }
 
-void installDummyBreakpoint()
+Hook* KernelPatcher::installDummyBreakpoint()
 {
 	Hook *hook;
 
 	mach_vm_address_t mach_msg_trap = this->getKernel()->getSymbolAddressByName("_mach_msg_trap");
 
-	hook = new Hook::breakpointForAddress(this->getKernel(), this, mach_msg_trap);
+	hook = Hook::breakpointForAddress(dynamic_cast<Task*>(this->getKernel()), dynamic_cast<Patcher*>(this), mach_msg_trap);
 
 	hook->addBreakpoint((mach_vm_address_t) KernelPatcher::dummyBreakpoint);
 
@@ -60,7 +68,11 @@ void KernelPatcher::onOSKextSaveLoadedKextPanicList()
 
 	typedef void (*OSKextSaveLoadedKextPanicList)();
 
-	reinterpret_cast<OSKextSaveLoadedKextPanicList>(trampoline);
+	void (*_OSKextSavedLoadedKextPanicList)();
+
+	_OSKextSavedLoadedKextPanicList = reinterpret_cast<OSKextSaveLoadedKextPanicList>(trampoline);
+
+	_OSKextSavedLoadedKextPanicList();
 
 	MAC_RK_LOG("MacRK::OSKextSavedLoadedKextPanicList() hook!\n");
 
@@ -87,6 +99,8 @@ void* KernelPatcher::OSKextLookupKextWithIdentifier(const char *identifier)
 
 	mach_vm_address_t OSKext_lookupWithIdentifier = that->getKernel()->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc");
 
+	__ZN6OSKext24lookupKextWithIdentifierEPKc = reinterpret_cast<lookupKextWithIdentifier>(OSKext_lookupWithIdentifier);
+
 	void *OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(identifier);
 
 	return OSKext;
@@ -104,7 +118,7 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 
 	typedef OSObject* (*origCopyClientEntitlement)(task_t, const char*);
 
-	OSObject *original = reinterpret_cast<origCopyClientEntitlement>(trampline)(task, entitlement);
+	OSObject *original = reinterpret_cast<origCopyClientEntitlement>(trampoline)(task, entitlement);
 
 	if(strcmp(entitlement, "com.apple.private.audio.driver-host") == 0)
 	{
@@ -127,9 +141,11 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 
 			void *user = handler->second;
 
-			callback(user, task, entitlement, (void*) original):
+			callback(user, task, entitlement, (void*) original);
 		}
 	}
+
+	return original;
 }
 
 void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread)
@@ -140,21 +156,21 @@ void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread)
 
 	trampoline = hook->getTrampolineFromChain(reinterpret_cast<mach_vm_address_t>(KernelPatcher::taskSetMainThreadQos));
 
-	typedef void *(task_set_main_thread_qos)(task_t, thread_t);
+	typedef void *(*task_set_main_thread_qos)(task_t, thread_t);
 
 	MAC_RK_LOG("MacRK::task_set_main_thread_qos hook!\n");
 
 	if(that)
 	{
-		StoredArray<MacRootKit::binaryload_callback_t> *entitlementCallbacks;
+		StoredArray<MacRootKit::binaryload_callback_t> *binaryLoadCallbacks;
 
 		MacRootKit *rootkit = that->getKernel()->getRootKit();
 
-		entitlementCallbacks = rootkit->getEntitlementCallbacks();
+		binaryLoadCallbacks = rootkit->getBinaryLoadCallbacks();
 
-		for(int i = 0; i < entitlementCallbacks->getSize(); i++)
+		for(int i = 0; i < binaryLoadCallbacks->getSize(); i++)
 		{
-			auto handler = entitlementCallbacks->get(i);
+			auto handler = binaryLoadCallbacks->get(i);
 
 			MacRootKit::binaryload_callback_t callback = handler->first;
 
@@ -178,7 +194,7 @@ void KernelPatcher::routeFunction(Hook *hook)
 {
 }
 
-void KernelPatcher::onKextLoad(void *kext, kmod_info_t kmod)
+void KernelPatcher::onKextLoad(void *kext, kmod_info_t *kmod)
 {
 	Kext::onKextLoad(kext, kmod);
 }
@@ -187,7 +203,7 @@ void KernelPatcher::onExec(task_t task, const char *path, size_t len)
 {
 }
 
-void KernelPatcher::onEntitlementRequest(task_t task, char *entitlement)
+void KernelPatcher::onEntitlementRequest(task_t task, const char *entitlement, void *original)
 {
 }
 
@@ -262,10 +278,10 @@ void KernelPatcher::registerCallbacks()
 
 	rootkit->registerBinaryLoadCallback((void*) this, [] (void *user, task_t task, const char *path, size_t len)
 	{
-		static_cast<KernelPatcher*>(user)->onProcLoad(task, path, len);
+		static_cast<KernelPatcher*>(user)->onExec(task, path, len);
 	});
 
-	rootkit->registerBinaryLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
+	rootkit->registerKextLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
 	{
 		static_cast<KernelPatcher*>(user)->onKextLoad(kext, kmod);
 	});
@@ -319,7 +335,7 @@ void KernelPatcher::applyKernelPatch(KernelPatch *patch)
 {
 }
 
-void KernelPatcher::applyKextPath(KextPath *patch)
+void KernelPatcher::applyKextPatch(KextPatch *patch)
 {
 }
 

@@ -37,7 +37,7 @@ _push_registers_x86_64:
 _push_registers_x86_64_end:
 	nop
 _set_argument_x86_64:
-	lea rdi, [rsp, + 0x80]
+	lea rdi, [rsp + 0x80]
 _set_argument_x86_64_end:
 	nop
 _check_breakpoint_x86_64:

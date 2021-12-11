@@ -6,6 +6,11 @@
 #include "Segment.hpp"
 #include "Section.hpp"
 
+class MachO;
+
+class Segment;
+class Section;
+
 class Symbol
 {
 	public:
@@ -37,7 +42,7 @@ class Symbol
 		uint32_t getType() { return type; }
 
 	private:
-		MachO macho;
+		MachO *macho;
 
 		Segment *segment;
 		Section *section;

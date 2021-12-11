@@ -1,7 +1,9 @@
 #include "Kernel.hpp"
 
+#include "Log.hpp"
+
 #include "IOKernelRootKitService.hpp"
-#include "MacRootki.hpp"
+#include "MacRootKit.hpp"
 
 #include "KernelMachO.hpp"
 
@@ -33,13 +35,13 @@ Kernel::Kernel(mach_vm_address_t base, mach_vm_address_t slide)
 
 	this->base = base;
 
-	set_kernel_map(this->kernel_map);
+	set_kernel_map(this->getKernelMap());
 
 	set_vm_functions(this->getSymbolAddressByName("_vm_read_overwrite"),
 					 this->getSymbolAddressByName("_vm_write"),
 					 this->getSymbolAddressByName("_vm_protect"),
 					 this->getSymbolAddressByName("_vm_remap"),
-					 this->getSymbolAddressByName("_vm_allocate")
+					 this->getSymbolAddressByName("_vm_allocate"),
 					 this->getSymbolAddressByName("_vm_deallocate"),
 					 this->getSymbolAddressByName("_vm_map_copyin"),
 					 this->getSymbolAddressByName("_vm_map_copy_overwrite")
@@ -105,13 +107,13 @@ mach_vm_address_t Kernel::findKernelBase()
 
 	mach_vm_address_t kc = Kernel::findKernelCollection();
 
-	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc_base);
+	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
-		struct load_command *load_command = reinterpret_cast<load_command*>(q);
+		struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
 
 		if(load_command->cmd == LC_SEGMENT_64)
 		{
@@ -131,18 +133,17 @@ mach_vm_address_t Kernel::findKernelBase()
 	return kernel_base;
 }
 
-mach_vm_address_t Kernel::getBase()
+off_t Kernel::findKernelSlide()
 {
-	this->base = Kernel::findKernelBase();
+	mach_vm_address_t base;
 
-	return base;
-}
-
-off_t Kernel::getSlide()
-{
 	mach_vm_address_t text_base;
 
-	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(base);
+	struct mach_header_64 *mh;
+
+	base = Kernel::findKernelBase();
+
+	mh = reinterpret_cast<struct mach_header_64*>(base);
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(base) + sizeof(struct mach_header_64);
 
@@ -154,7 +155,7 @@ off_t Kernel::getSlide()
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			if(strcmp(segment_command->segname, "__TEXT", strlen("__TEXT")) == 0)
+			if(strncmp(segment_command->segname, "__TEXT", strlen("__TEXT")) == 0)
 			{
 				text_base = segment_command->vmaddr;
 
@@ -168,37 +169,60 @@ off_t Kernel::getSlide()
 	return text_base - 0xffffff8000200000;
 }
 
+mach_vm_address_t Kernel::getBase()
+{
+	this->base = Kernel::findKernelBase();
+
+	return base;
+}
+
+off_t Kernel::getSlide()
+{
+	if(this->slide)
+	{
+		return slide;
+	}
+
+	this->slide = Kernel::findKernelSlide();
+
+	return this->slide;
+}
+
 
 void Kernel::getKernelObjects()
 {
+	char buffer1[128];
+	char buffer2[128];
+	char buffer3[128];
+
 	task_t _kernel_task = *reinterpret_cast<task_t*> (this->getSymbolAddressByName("_kernel_task"));
 
-	this->kernel_task = _kernel_task;
+	this->task = _kernel_task;
 
 	typedef vm_map_t (*get_task_map) (task_t task);
 	vm_map_t (*_get_task_map)(task_t);
 
 	_get_task_map = reinterpret_cast<get_task_map> (this->getSymbolAddressByName("_get_task_map"));
 
-	this->kernel_map = _get_task_map(_kernel_task);
+	this->map = _get_task_map(_kernel_task);
 
 	typedef pmap_t (*get_task_pmap) (task_t task);
 	pmap_t (*_get_task_pmap)(task_t);
 
 	_get_task_pmap = reinterpret_cast<get_task_pmap> (this->getSymbolAddressByName("_get_task_pmap"));
 
-	this->kernel_pmap = _get_task_pmap(_kernel_task);
+	this->pmap = _get_task_pmap(_kernel_task);
 	
 	snprintf(buffer1, 128, "0x%llx", (mach_vm_address_t) _get_task_map);
 	snprintf(buffer2, 128, "0x%llx", (mach_vm_address_t)  _get_task_pmap);
 
-	MAC_PE_LOG("MacPE::get_task_map = %s get_task_pmap = %s\n", buffer1, buffer2);
+	MAC_RK_LOG("MacPE::get_task_map = %s get_task_pmap = %s\n", buffer1, buffer2);
 
-	snprintf(buffer1, 128, "0x%llx", (mach_vm_address_t) this->kernel_task);
-	snprintf(buffer2, 128, "0x%llx", (mach_vm_address_t) this->kernel_map);
-	snprintf(buffer3, 128, "0x%llx", (mach_vm_address_t) this->kernel_pmap);
+	snprintf(buffer1, 128, "0x%llx", (mach_vm_address_t) this->getKernelTask());
+	snprintf(buffer2, 128, "0x%llx", (mach_vm_address_t) this->getKernelMap());
+	snprintf(buffer3, 128, "0x%llx", (mach_vm_address_t) this->getKernelPmap());
 
-	MAC_PE_LOG("MacPE::kernel_task = %s kernel_map = %s kernel_pmap = %s!\n", buffer1, buffer2, buffer3);
+	MAC_RK_LOG("MacPE::kernel_task = %s kernel_map = %s kernel_pmap = %s!\n", buffer1, buffer2, buffer3);
 }
 
 void Kernel::createKernelTaskPort()
@@ -268,7 +292,7 @@ void Kernel::createKernelTaskPort()
 	this->kernel_task_port = _ipc_port_make_send(port);
 }
 
-void Kernel::setKernelWriting(bool enable)
+bool Kernel::setKernelWriting(bool enable)
 {
 	static bool interruptsDisabled = false;
 
@@ -290,18 +314,21 @@ void Kernel::setKernelWriting(bool enable)
 	{
 		if(!interruptsDisabled)
 		{
-			:setInterrupts(true);
+			interruptsDisabled = setInterrupts(true);
 		}
 	}
+
+	return interruptsDisabled;
 }
 
-void Kernel::setNXBit(bool enable)
+bool Kernel::setNXBit(bool enable)
 {
+	return false;
 }
 
-void Kernel::setInterrupts(bool enable)
+bool Kernel::setInterrupts(bool enable)
 {
-	Arch::setInterrupts(enable);
+	return Arch::setInterrupts(enable);
 }
 
 uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)
@@ -577,7 +604,7 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	mach_vm_address_t kext_map = this->read64(this->getSymbolAddressByName("_g_kext_map"));
 
-	uint64_t vmEnterArgs[13] = { kext_map, (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t), prot, (uint64_t) VM_INHERIT_DEFAULT };
+	uint64_t vmEnterArgs[13] = { kext_map, (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
 	ret = static_cast<kern_return_t>(this->call("_vm_map_enter", vmEnterArgs, 13));
 
@@ -682,12 +709,12 @@ bool Kernel::physicalWrite(uint64_t paddr, void *data, size_t size)
 
 		if(write_size == 8)
 			 physical_write64(paddr, *(uint64_t*) write_data);
-		if(read_size == 4)
-			physical_write32(paddr, *(uint32_t*) read_data);
-		if(read_size == 2)
-			physical_write16(paddr, *(uint16_t*) read_data);
-		if(read_size == 1)
-			physical_write8(paddr, *(uint8_t*) read_data);
+		if(write_size == 4)
+			physical_write32(paddr, *(uint32_t*) write_data);
+		if(write_size == 2)
+			physical_write16(paddr, *(uint16_t*) write_data);
+		if(write_size == 1)
+			physical_write8(paddr, *(uint8_t*) write_data);
 
 		paddr += write_size;
 		write_data += write_size;
@@ -731,7 +758,7 @@ uint8_t Kernel::read8(mach_vm_address_t address)
 {
 	uint8_t value;
 
-	kernel_read(address, reinterpret_cast<const void*>(&value), sizeof(value));
+	kernel_read(address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	return value;
 }
@@ -740,7 +767,7 @@ uint16_t Kernel::read16(mach_vm_address_t address)
 {
 	uint16_t value;
 
-	kernel_read(address, reinterpret_cast<const void*>(&value), sizeof(value));
+	kernel_read(address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	return value;
 }
@@ -749,7 +776,7 @@ uint32_t Kernel::read32(mach_vm_address_t address)
 {
 	uint32_t value;
 
-	bool success = kernel_read(address, reinterpret_cast<const void*>(&value), sizeof(value));
+	bool success = kernel_read(address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	if(!success)
 		return 0;
@@ -761,7 +788,7 @@ uint64_t Kernel::read64(mach_vm_address_t address)
 {
 	uint64_t value;
 
-	kernel_read(address, reinterpret_cast<const void*>(&value), sizeof(value));
+	kernel_read(address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	return value;
 }
@@ -801,23 +828,23 @@ char* Kernel::readString(mach_vm_address_t address)
 	return NULL;
 }
 
-Symbol* Kernel::getSymbolByName(char *symname)
+Symbol* Kernel::getSymbolByName(char *symbolname)
 {
 	MachO *macho = this->macho;
 
-	return macho->getSymbolByName(symname);
+	return macho->getSymbolByName(symbolname);
 }
 
 Symbol* Kernel::getSymbolByAddress(mach_vm_address_t address)
 {
 	MachO *macho = this->macho;
 
-	return macho_>getSymbolByAddress(address);
+	return macho->getSymbolByAddress(address);
 }
 
-mmach_vm_address_t Kernel::getSymbolAddressByName(char *symbolname)
+mach_vm_address_t Kernel::getSymbolAddressByName(char *symbolname)
 {
 	MachO *macho = this->macho;
 
-	return macho->getSymbolAddressByName(symname);
+	return macho->getSymbolAddressByName(symbolname);
 }

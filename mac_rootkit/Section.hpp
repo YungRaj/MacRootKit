@@ -6,8 +6,6 @@
 
 #include <string.h>
 
-#include "Segment.hpp"
-
 #include "mach-o.h"
 
 class Section
@@ -15,14 +13,14 @@ class Section
 	public:
 		Section(struct section_64 *section)
 		{
-			this->section = sect;
-			this->address = sect->addr;
-			this->offset = sect->offset;
-			this->size = sect->size;
+			this->section = section;
+			this->address = section->addr;
+			this->offset = section->offset;
+			this->size = section->size;
 
-			this->name = new char[strlen(sect->sectname)];
+			this->name = new char[strlen(section->sectname)];
 
-			strlcpy(this->name, sect->sectname, strlen(sect->sectname));
+			strlcpy(this->name, section->sectname, strlen(section->sectname));
 		}
 
 		~Section()
@@ -42,7 +40,7 @@ class Section
 
 	private:
 		struct section_64 *section;
-		
+
 		char *name;
 
 		mach_vm_address_t address;

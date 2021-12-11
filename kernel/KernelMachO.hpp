@@ -2,7 +2,7 @@
 #define __KERNEL_MACHO_HPP_
 
 #include "Kernel.hpp"
-
+#include "Kext.hpp"
 #include "MachO.hpp"
 
 class Kernel;

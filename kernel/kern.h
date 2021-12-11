@@ -6,9 +6,11 @@
 
 #include <IOKit/IOLib.h>
 
+typedef void* pmap_t;
+
 extern vm_map_t kernel_map_;
 
-extern pmap_t kernel_pmap;
+extern pmap_t kernel_pmap_;
 
 extern mach_vm_address_t vm_read_;
 extern mach_vm_address_t vm_write_;
@@ -20,7 +22,7 @@ extern mach_vm_address_t vm_allocate_;
 extern mach_vm_address_t vm_deallocate_;
 
 extern mach_vm_address_t vm_map_copyin_;
-extern mach_vm_address_t vm_map_overwrite_;
+extern mach_vm_address_t vm_map_copy_overwrite_;
 
 extern mach_vm_address_t pmap_find_phys_;
 
@@ -42,6 +44,8 @@ struct vm_map_copy
 	void                  *kdata;
 };
 
+typedef struct vm_map_copy *vm_map_copy_t;
+
 void set_kernel_map(vm_map_t kernel_map);
 
 void set_vm_functions(mach_vm_address_t vm_read,
@@ -51,10 +55,10 @@ void set_vm_functions(mach_vm_address_t vm_read,
 					  mach_vm_address_t vm_allocate,
 					  mach_vm_address_t vm_deallocate,
 					  mach_vm_address_t vm_map_copyin,
-					  mach_vm_address_t vm_map_overwrite);
+					  mach_vm_address_t vm_map_copy_overwrite);
 
 void set_phys_functions(mach_vm_address_t pmap_find_phys,
-						mach_vm_address_t phys_read64;
+						mach_vm_address_t phys_read64,
 						mach_vm_address_t phys_read32,
 						mach_vm_address_t phys_read16,
 						mach_vm_address_t phys_read8,
@@ -92,9 +96,9 @@ bool task_vm_protect(vm_map_t task_map, mach_vm_address_t address, size_t size, 
 void* task_vm_remap(vm_map_t task_map, mach_vm_address_t address, size_t size);
 
 uint64_t physical_read64(uint64_t paddr);
-uint64_t physical_read32(uint64_t paddr);
-uint64_t physical_read16(uint64_t paddr);
-uint64_t physical_read8(uint64_t paddr);
+uint32_t physical_read32(uint64_t paddr);
+uint16_t physical_read16(uint64_t paddr);
+uint8_t physical_read8(uint64_t paddr);
 
 void physical_write64(uint64_t paddr, uint64_t value);
 void physical_write32(uint64_t paddr, uint32_t value);

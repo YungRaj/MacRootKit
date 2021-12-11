@@ -5,12 +5,12 @@ SymbolTable::SymbolTable()
 
 }
 
-SymbolTable::SymbolTable(struct nlist_64, uint32_t nsyms, char *strtab, size_t strsize);
+SymbolTable::SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
 {
 	this->symtab = symtab;
 	this->nsyms = nsyms;
-	this->strtab = strab;
-	this->trsize = strsize;
+	this->strtab = strtab;
+	this->strsize = strsize;
 }
 
 Symbol* SymbolTable::getSymbolByName(char *symname)
@@ -19,7 +19,7 @@ Symbol* SymbolTable::getSymbolByName(char *symname)
 	{
 		Symbol *symbol = symbolTable.get(i);
 
-		if(strcmp(symbol->getName(), syname) == 0)
+		if(strcmp(symbol->getName(), symname) == 0)
 		{
 			return symbol;
 		}
@@ -49,7 +49,7 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 	{
 		Symbol *symbol = symbolTable.get(i);
 
-		if(symbol->getOffset() == address)
+		if(symbol->getOffset() == offset)
 		{
 			return symbol;
 		}

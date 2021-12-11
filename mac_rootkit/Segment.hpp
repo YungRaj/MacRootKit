@@ -1,5 +1,5 @@
-#ifndef __SECTION_HPP_
-#define __SECTION_HPP_
+#ifndef __SEGMENT_HPP_
+#define __SEGMENT_HPP_
 
 #include <mach/mach_types.h>
 #include <sys/types.h>
@@ -18,11 +18,11 @@ class Segment
 			this->address = segment_command->vmaddr;
 			this->size = segment_command->vmsize;
 			this->fileoffset = segment_command->fileoff;
-			this->filesize = segment_comand->filesize;
+			this->filesize = segment_command->filesize;
 
 			this->name = new char[strlen(segment_command->segname) + 1];
 
-			strlcpy(this->name, segment_command->segname, strlen(segcmd->segname)):
+			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname));
 
 			this->populateSections();
 		}
@@ -57,7 +57,7 @@ class Segment
 		{
 			for(int i = 0; i < sections.getSize(); i++)
 			{
-				Section *section = section.get(i);
+				Section *section = sections.get(i);
 
 				if(strcmp(section->getSectionName(), sectname) == 0)
 				{
@@ -102,7 +102,7 @@ class Segment
 
 		off_t fileoffset;
 
-		size_t fileoffset;
-}
+		size_t filesize;
+};
 
 #endif

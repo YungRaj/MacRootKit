@@ -6,36 +6,30 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
+#define MAX(x, y) (x > y) ? x : y
+
 void *memchr(const void *src, int c, size_t n)
 {
 	const unsigned char *s = (const unsigned char *)src;
 	c = (unsigned char)c;
-#ifdef __GNUC__
-	for (; ((uintptr_t)s & ALIGNMENT) && n && *s != c; s++, n--);
-	if (n && *s != c) {
-		typedef size_t __attribute__((__may_alias__)) word;
-		const word *w;
-		size_t k = ONES * c;
-		for (w = (const word *)s; n>=SS && !HASZERO(*w^k); w++, n-=SS);
-		s = (const unsigned char *)w;
-	}
-#endif
+
 	for (; n && *s != c; s++, n--);
+
 	return n ? (void *)s : 0;
 }
 
 static char *twobyte_memmem(const unsigned char *h, size_t k, const unsigned char *n)
 {
-	uint16_t nw = n[0]<<8 | n[1], hw = h[0]<<8 | h[1];
-	for (h+=2, k-=2; k; k--, hw = hw<<8 | *h++)
+	uint16_t nw = (uint16_t)(n[0]<<8 | n[1]), hw = (uint16_t)(h[0]<<8 | h[1]);
+	for (h+=2, k-=2; k; k--, hw = (uint16_t) (hw<<8 | *h++))
 		if (hw == nw) return (char *)h-2;
 	return hw == nw ? (char *)h-2 : 0;
 }
 
 static char *threebyte_memmem(const unsigned char *h, size_t k, const unsigned char *n)
 {
-	uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8;
-	uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8;
+	uint32_t nw = (uint32_t) (n[0]<<24 | n[1]<<16 | n[2]<<8);
+	uint32_t hw = (uint32_t) (h[0]<<24 | h[1]<<16 | h[2]<<8);
 	for (h+=3, k-=3; k; k--, hw = (hw|*h++)<<8)
 		if (hw == nw) return (char *)h-3;
 	return hw == nw ? (char *)h-3 : 0;
@@ -43,8 +37,8 @@ static char *threebyte_memmem(const unsigned char *h, size_t k, const unsigned c
 
 static char *fourbyte_memmem(const unsigned char *h, size_t k, const unsigned char *n)
 {
-	uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8 | n[3];
-	uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8 | h[3];
+	uint32_t nw = (uint32_t) (n[0]<<24 | n[1]<<16 | n[2]<<8 | n[3]);
+	uint32_t hw = (uint32_t) (h[0]<<24 | h[1]<<16 | h[2]<<8 | h[3]);
 	for (h+=4, k-=4; k; k--, hw = hw<<8 | *h++)
 		if (hw == nw) return (char *)h-4;
 	return hw == nw ? (char *)h-4 : 0;
@@ -66,7 +60,7 @@ static char *twoway_memmem(const unsigned char *h, const unsigned char *z, const
 	}
 
 	/* Compute maximal suffix */
-	ip = -1; jp = 0; k = p = 1;
+	ip = (size_t) -1; jp = 0; k = p = 1;
 	while (jp+k<l) {
 		if (n[ip+k] == n[jp+k]) {
 			if (k == p) {
@@ -86,7 +80,7 @@ static char *twoway_memmem(const unsigned char *h, const unsigned char *z, const
 	p0 = p;
 
 	/* And with the opposite comparison */
-	ip = -1; jp = 0; k = p = 1;
+	ip = (size_t) -1; jp = 0; k = p = 1;
 	while (jp+k<l) {
 		if (n[ip+k] == n[jp+k]) {
 			if (k == p) {
@@ -158,9 +152,9 @@ void *memmem(const void *h0, size_t k, const void *n0, size_t l)
 	if (k<l) return 0;
 
 	/* Use faster algorithms for short needles */
-	h = (const unsigned char *)lilu_os_memchr(h0, *n, k);
+	h = (const unsigned char *)memchr(h0, *n, k);
 	if (!h || l==1) return (void *)h;
-	k -= h - (const unsigned char *)h0;
+	k -= (size_t) (h - (const unsigned char *)h0);
 	if (k<l) return 0;
 	if (l==2) return twobyte_memmem(h, k, n);
 	if (l==3) return threebyte_memmem(h, k, n);

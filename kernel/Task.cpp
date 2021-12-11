@@ -1,6 +1,8 @@
 #include "Task.hpp"
 #include "Kernel.hpp"
 
+#include "Log.hpp"
+
 #include <mach/mach_types.h>
 #include <IOKit/IOLib.h>
 
@@ -11,7 +13,7 @@ extern "C"
 
 Task::Task()
 {
-	
+
 }
 
 Task::Task(Kernel *kernel, mach_port_t task_port)
@@ -39,19 +41,19 @@ Task::Task(Kernel *kernel, mach_port_t task_port)
 
 	_get_task_map = reinterpret_cast<get_task_map> (kernel->getSymbolAddressByName("_get_task_map"));
 
-	this->task_map = _get_task_map(this->task);
+	this->map = _get_task_map(this->task);
 
 	typedef pmap_t (*get_task_pmap) (task_t task);
 	pmap_t (*_get_task_pmap)(task_t);
 
 	_get_task_pmap = reinterpret_cast<get_task_pmap> (kernel->getSymbolAddressByName("_get_task_pmap"));
 
-	this->task_pmap = _get_task_pmap(this->task);
+	this->pmap = _get_task_pmap(this->task);
 
 	this->disassembler = new Disassembler(this);
 }
 
-Task::Task(Kernel *kernel *kernel, task_t task)
+Task::Task(Kernel *kernel, task_t task)
 {
 	this->task = task;
 
@@ -67,14 +69,14 @@ Task::Task(Kernel *kernel *kernel, task_t task)
 
 	_get_task_map = reinterpret_cast<get_task_map> (kernel->getSymbolAddressByName("_get_task_map"));
 
-	this->task_map = _get_task_map(this->task);
+	this->map = _get_task_map(this->task);
 
 	typedef pmap_t (*get_task_pmap) (task_t task);
 	pmap_t (*_get_task_pmap)(task_t);
 
 	_get_task_pmap = reinterpret_cast<get_task_pmap> (kernel->getSymbolAddressByName("_get_task_pmap"));
 
-	this->task_pmap = _get_task_pmap(this->task);
+	this->pmap = _get_task_pmap(this->task);
 
 	this->disassembler = new Disassembler(this);
 }
@@ -83,11 +85,11 @@ mach_port_t Task::getTaskPort(Kernel *kernel, int pid)
 {
 	char buffer[128];
 
-	proc_t proc = Task::findProc(kernel, pid);
+	proc_t proc = Task::findProcByPid(kernel, pid);
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) proc);
 
-	MAC_PE_LOG("MacPE::Task::getTaskPort() proc = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskPort() proc = %s\n", buffer);
 
 	typedef task_t (*proc_task) (proc_t proc);
 	task_t (*_proc_task) (proc_t proc);
@@ -98,7 +100,7 @@ mach_port_t Task::getTaskPort(Kernel *kernel, int pid)
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) task);
 
-	MAC_PE_LOG("MacPE::Task::getTaskPort() task = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskPort() task = %s\n", buffer);
 
 	typedef ipc_port_t (*convert_task_to_port)(task_t task);
 	ipc_port_t (*_convert_task_to_port) (task_t task);
@@ -109,7 +111,7 @@ mach_port_t Task::getTaskPort(Kernel *kernel, int pid)
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) port);
 
-	MAC_PE_LOG("MacPE::Task::getTaskPort() port = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskPort() port = %s\n", buffer);
 
 	if(!port) return NULL;
 
@@ -122,11 +124,11 @@ Task* Task::getTaskByName(Kernel *kernel, char *name)
 
 	char buffer[128];
 
-	proc_t proc = Task::findProcByName(kernel, task_name);
+	proc_t proc = Task::findProcByName(kernel, name);
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) proc);
 
-	MAC_PE_LOG("MacPE::Task::getTaskByName() proc = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskByName() proc = %s\n", buffer);
 
 	typedef task_t (*proc_task) (proc_t proc);
 	task_t (*_proc_task) (proc_t proc);
@@ -137,7 +139,7 @@ Task* Task::getTaskByName(Kernel *kernel, char *name)
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) task);
 
-	MAC_PE_LOG("MacPE::Task::getTaskByName() task = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskByName() task = %s\n", buffer);
 
 	typedef ipc_port_t (*convert_task_to_port)(task_t task);
 	ipc_port_t (*_convert_task_to_port) (task_t task);
@@ -148,7 +150,7 @@ Task* Task::getTaskByName(Kernel *kernel, char *name)
 
 	snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) port);
 
-	MAC_PE_LOG("MacPE::Task::getTaskByName() port = %s\n", buffer);
+	MAC_RK_LOG("MacPE::Task::getTaskByName() port = %s\n", buffer);
 
 	if(!port) return NULL;
 
@@ -180,7 +182,7 @@ proc_t Task::findProcByPid(Kernel *kernel, int pid)
 
 		snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) current_proc);
 
-		MAC_PE_LOG("MacPE::proc = %s pid = %d\n", buffer, current_pid);
+		MAC_RK_LOG("MacPE::proc = %s pid = %d\n", buffer, current_pid);
 
 		if(current_pid == pid)
 			return current_proc;
@@ -216,7 +218,7 @@ proc_t Task::findProcByName(Kernel *kernel, char *name)
 
 		snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) current_proc);
 
-		MAC_PE_LOG("MacPE::proc = %s name = %s\n", buffer, current_name);
+		MAC_RK_LOG("MacPE::proc = %s name = %s\n", buffer, current_name);
 
 		if(strcmp(name, current_name) == 0)
 			return current_proc;
@@ -232,7 +234,7 @@ task_t Task::findTaskByPid(Kernel *kernel, int pid)
 	task_t task;
 	proc_t proc;
 
-	proc = Task::findProc(kernel, pid);
+	proc = Task::findProcByPid(kernel, pid);
 
 	if(proc != NULL)
 	{
@@ -275,10 +277,12 @@ task_t Task::findTaskByName(Kernel *kernel, char *name)
 
 uint64_t Task::call(char *symbolname, uint64_t *arguments, size_t argCount)
 {
+	return 0;
 }
 
 uint64_t Task::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
 {
+	return 0;
 }
 
 mach_vm_address_t Task::vmAllocate(size_t size)
@@ -303,7 +307,7 @@ mach_vm_address_t Task::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot)
 
 	vm_map_t map = this->getMap();
 
-	uint64_t vmEnterArgs[13] = { reinterpret_cast<uint64_t>(map), (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t), prot, (uint64_t) VM_INHERIT_DEFAULT };
+	uint64_t vmEnterArgs[13] = { reinterpret_cast<uint64_t>(map), (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
 	ret = static_cast<kern_return_t>(this->call("_vm_map_enter", vmEnterArgs, 13));
 
@@ -322,7 +326,7 @@ void Task::vmDeallocate(mach_vm_address_t address, size_t size)
 
 bool Task::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 {
-	return task_vm_protect(this->getMap() address, size, prot);
+	return task_vm_protect(this->getMap(), address, size, prot);
 }
 
 void* Task::vmRemap(mach_vm_address_t address, size_t size)
@@ -337,14 +341,14 @@ uint64_t Task::virtualToPhysical(mach_vm_address_t address)
 
 bool Task::read(mach_vm_address_t address, void *data, size_t size)
 {
-	return task_read(this->getMap(), address, data, size);
+	return task_vm_read(this->getMap(), address, data, size);
 }
 
 uint8_t Task::read8(mach_vm_address_t address)
 {
 	uint8_t value;
 
-	bool success = task_read(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	bool success = task_vm_read(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	if(!success)
 		return 0;
@@ -356,7 +360,7 @@ uint16_t Task::read16(mach_vm_address_t address)
 {
 	uint16_t value;
 
-	bool success = task_read(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	bool success = task_vm_read(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	if(!success)
 		return 0;
@@ -368,7 +372,7 @@ uint32_t Task::read32(mach_vm_address_t address)
 {
 	uint32_t value;
 
-	bool success = task_read(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	bool success = task_vm_read(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	if(!success)
 		return 0;
@@ -380,7 +384,7 @@ uint64_t Task::read64(mach_vm_address_t address)
 {
 	uint64_t value;
 
-	bool success = task_read(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	bool success = task_vm_read(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 
 	if(!success)
 		return 0;
@@ -395,22 +399,22 @@ bool Task::write(mach_vm_address_t address, void *data, size_t size)
 
 void Task::write8(mach_vm_address_t address, uint8_t value)
 {
-	task_vm_write(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	task_vm_write(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 }
 
 void Task::write16(mach_vm_address_t address, uint16_t value)
 {
-	task_vm_write(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	task_vm_write(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 }
 
 void Task::write32(mach_vm_address_t address, uint32_t value)
 {
-	task_vm_write(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	task_vm_write(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 }
 
 void Task::write64(mach_vm_address_t address, uint64_t value)
 {
-	task_vm_write(this->getMap(), address, reinterpret_cast<const void*>(&value), sizeof(value));
+	task_vm_write(this->getMap(), address, reinterpret_cast<void*>(&value), sizeof(value));
 }
 
 char* Task::readString(mach_vm_address_t address)
@@ -418,7 +422,7 @@ char* Task::readString(mach_vm_address_t address)
 	return NULL;
 }
 
-Symbol* Task::getSymbolAddressByName(char *symname)
+Symbol* Task::getSymbolByName(char *symname)
 {
 	return NULL;
 }

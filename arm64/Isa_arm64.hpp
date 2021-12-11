@@ -23,7 +23,6 @@ namespace Arch
 		static constexpr uint16_t BreakpointPrefix = 0b11010100001;
 
 		union Breakpoint makeBreakpoint();
-		}
 
 		size_t BreakpointSize() { return Breakpoint; }
 
@@ -50,7 +49,7 @@ namespace Arch
 
 		union Branch
 		{
-			struct PACKED Branch
+			struct PACKED Br
 			{
 				uint32_t imm  : 26,
 						 op   : 5,
@@ -77,7 +76,7 @@ namespace Arch
 			} c;
 
 			uint32_t value;
-		}
+		};
 
 		typedef uint8_t aarch64_shift;
 

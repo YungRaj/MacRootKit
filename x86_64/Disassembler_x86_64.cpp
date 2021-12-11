@@ -1,5 +1,7 @@
 #include "Disassembler_x86_64.hpp"
 
+#include "umm_malloc.h"
+
 namespace Arch
 {
 	namespace x86_64
@@ -10,7 +12,7 @@ namespace Arch
 
 			size_t handle_x86_64;
 
-			size_t constexpr size_t MaxInstruction = 15;
+			static constexpr size_t MaxInstruction = 15;
 
 			bool init()
 			{
@@ -72,7 +74,7 @@ namespace Arch
 			{
 				if(initialized)
 				{
-					cs_close(handle_x86_64);
+					cs_close(&handle_x86_64);
 
 					handle_x86_64 = 0;
 
@@ -86,7 +88,7 @@ namespace Arch
 			{
 				cs_insn *result = nullptr;
 
-				size_t insns = disassemble(adr, min + MaxInstruction, &result);
+				size_t insns = disassemble(address, min + MaxInstruction, &result);
 
 				if(result)
 				{
@@ -157,7 +159,7 @@ namespace Arch
 							if(result[i].detail)
 							{
 								if(result[i].detail->x86.op_count == 1 &&
-								   result[i].detail->x86.operands[0] == X86_OP_IMM)
+								   result[i].detail->x86.operands[0].type == X86_OP_IMM)
 								{
 									sub_address = result[i].detail->x86.operands[0].imm + address;
 								}
@@ -203,7 +205,7 @@ namespace Arch
 							if(result[i].detail)
 							{
 								if(result[i].detail->x86.op_count == 1 &&
-								   result[i].detail->x86.operands[0] == X86_OP_IMM)
+								   result[i].detail->x86.operands[0].type == X86_OP_IMM)
 								{
 									sub_address = result[i].detail->x86.operands[0].imm + address;
 								}
@@ -244,7 +246,7 @@ namespace Arch
 
 					for(size_t i = 0; i < disasm_size; i++)
 					{
-						if(result[i].id == ins)
+						if(result[i].id == insn)
 						{
 							sub_address = result[i].address + address;
 

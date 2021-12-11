@@ -11,7 +11,7 @@ namespace Arch
 	enum Architectures
 	{
 		ARCH_unknown 	= -1,
-		ARCH_none 		= 0
+		ARCH_none 		=  0,
 		ARCH_i386,
 		ARCH_x86_64,
 		ARCH_armv7,
@@ -22,6 +22,8 @@ namespace Arch
 	};
 
 	extern enum Architectures current_architecture;
+
+	enum Architectures getArchitecture();
 
 	bool setInterrupts(bool enable);
 

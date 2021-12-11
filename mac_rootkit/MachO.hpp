@@ -1,4 +1,4 @@
-#ifdef __MACHO_HPP_
+#ifndef __MACHO_HPP_
 #define __MACHO_HPP_
 
 #include "mach-o.h"
@@ -36,13 +36,13 @@ class MachO
 
 		size_t getSize();
 
-		uint8_t* getOffset(off_t offset) { return static_cast<uint8_t*>(buffer + offset); }
+		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
 
 		Array<Segment*>* getSegments() { return &segments; }
 		
 		Array<Section*>* getSections(Segment* segment);
 
-		SymbolTable* getSymbolTable() { return symbol_table; }
+		SymbolTable* getSymbolTable() { return symbolTable; }
 
 		Symbol* getSymbolByName(char *symbolname);
 		Symbol* getSymbolByAddress(mach_vm_address_t address);
@@ -80,9 +80,9 @@ class MachO
 
 		struct mach_header_64 *header;
 
-		Array<Segment> *segments;
+		Array<Segment*> segments;
 
-		SymbolTable *symbol_table;
+		SymbolTable *symbolTable;
 
 		off_t aslr_slide;
 
@@ -91,4 +91,6 @@ class MachO
 		mach_vm_address_t base;
 
 		size_t size;
-}
+};
+
+#endif

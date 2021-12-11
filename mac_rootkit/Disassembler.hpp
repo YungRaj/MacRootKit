@@ -3,6 +3,8 @@
 
 #include "Arch.hpp"
 
+#include "umm_malloc.h"
+
 #include <x86_64/Disassembler_x86_64.hpp>
 #include <arm64/Disassembler_arm64.hpp>
 

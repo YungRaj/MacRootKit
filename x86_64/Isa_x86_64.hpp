@@ -30,7 +30,7 @@ namespace Arch
 		static constexpr uint16_t Breakpoint = sizeof(uint16_t);
 		static constexpr uint16_t BreakpointPrefix = 0x03CD;
 
-		void makeBreakpoint(union Breakpoint *breakpoint);
+		union Breakpoint makeBreakpoint();
 
 		size_t BreakpointSize() { return Breakpoint; }
 
@@ -59,7 +59,7 @@ namespace Arch
 		size_t NearJumpSize() { return NearJump; }
 		size_t LongJumpSize() { return LongJump; }
 
-		static constexpr uint8_t = SmalJumpPrefix = 0xE9;
+		static constexpr uint8_t SmallJumpPrefix = 0xE9;
 		static constexpr uint16_t LongJumpPrefix = 0x25FF;
 
 		enum class JumpType

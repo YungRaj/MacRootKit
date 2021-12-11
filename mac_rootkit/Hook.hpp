@@ -8,6 +8,9 @@
 
 #include "Array.hpp"
 
+#include <x86_64/Isa_x86_64.hpp>
+#include <arm64/Isa_arm64.hpp>
+
 class MacRootKit;
 
 class Patcher;
@@ -20,6 +23,82 @@ class Kext;
 class Task;
 
 using namespace Arch;
+
+extern "C"
+{
+	void push_registers_x86_64();
+	void push_registers_x86_64_end();
+	void set_argument_x86_64();
+	void set_argument_x86_64_end();
+	void check_breakpoint_x86_64();
+	void check_breakpoint_x86_64_end();
+	void breakpoint_x86_64();
+	void breakpoint_x86_64_end();
+	void pop_registers_x86_64();
+	void pop_registers_x86_64_end();
+
+	void push_registers_arm64();
+	void push_registers_arm64_end();
+	void set_argument_arm64();
+	void set_argument_arm64_end();
+	void check_breakpoint_arm64();
+	void check_breakpoint_arm64_end();
+	void breakpoint_arm64();
+	void breakpoint_arm64_end();
+	void pop_registers_arm64();
+	void pop_registers_arm64_end();
+}
+
+#ifdef __x86_64__
+
+#define push_registers            push_registers_x86_64
+#define push_registers_end        push_registers_x86_64_end
+
+#define set_argument              set_argument_x86_64
+#define set_argument_end          set_argument_x86_64_end
+
+#define check_breakpoint          check_breakpoint_x86_64
+#define check_breakpoint_end      check_breakpoint_x86_64_end
+
+#define breakpoint                breakpoint_x86_64
+#define breakpoint_end            breakpoint_x86_64_end
+
+#define pop_registers             pop_registers_x86_64
+#define pop_registers_end         pop_registers_x86_64_end
+
+#elif __arm64__
+
+void push_registers_arm64() { }
+void push_registers_arm64_end() { }
+
+void set_argument_arm64() { }
+void set_argument_arm64_end() { }
+
+void check_breakpoint_arm64() { }
+void check_breakpoint_arm64_end() { }
+
+void breakpoint_arm64() { }
+void breakpoint_arm64_end() { }
+
+void pop_registers_arm64() { }
+void pop_registers_arm64_end() { }
+
+#define push_registers            push_registers_arm64
+#define push_registers_end        push_registers_arm64_end
+
+#define set_argument              set_argument_arm64
+#define set_argument_end          set_argument_arm64_end
+
+#define check_breakpoint          check_breakpoint_arm64
+#define check_breakpoint_end      check_breakpoint_arm64_end
+
+#define breakpoint                breakpoint_arm64
+#define breakpoint_end            breakpoint_arm64_end
+
+#define pop_registers             pop_registers_arm64
+#define pop_registers_end         pop_registers_arm64_end
+
+#endif
 
 using RegisterState_x86_64 = struct Arch::x86_64::x86_64_register_state;
 using RegisterState_arm64 = struct Arch::arm64::arm64_register_state;
@@ -64,7 +143,7 @@ union Breakpoint
 {
 	Breakpoint_x86_64 breakpoint_x86_64;
 	Breakpoint_arm64 breakpoint_arm64;
-}
+};
 
 struct HookPatch
 {
@@ -73,21 +152,21 @@ struct HookPatch
 
 	mach_vm_address_t trampoline;
 
-	enum HookType hooktype;
+	enum HookType type;
 
 	union FunctionPatch patch;
 
 	Payload *payload;
 
-	uint8_t *find;
+	uint8_t *original;
 	uint8_t *replace;
 
-	size_t size;
+	size_t patch_size;
 };
 
 class Patcher;
 
-template<typename T, typename Y = enum Hooktype>
+template<typename T, typename Y = enum HookType>
 using HookCallbackPair = Pair<T, Y>;
 
 template<typename T, typename Y = enum HookType>
@@ -112,6 +191,8 @@ class Hook
 
 		Task* getTask() { return task; }
 
+		Disassembler* getDisassembler() { return disassembler; }
+
 		mach_vm_address_t getFrom() { return from; }
 
 		struct HookPatch* getLatestRegisteredHook();
@@ -129,6 +210,8 @@ class Hook
 		enum HookType getHookTypeForCallback(mach_vm_address_t callback);
 
 		void setPatcher(Patcher *patcher) { this->patcher = patcher; }
+
+		void setDisassembler(Disassembler *disassembler) { this->disassembler = disassembler; }
 
 		void setTask(Task *task) { this->task = task; }
 
@@ -156,6 +239,8 @@ class Hook
 		Patcher *patcher;
 
 		Task *task;
+
+		Disassembler *disassembler;
 
 		Payload *payload;
 

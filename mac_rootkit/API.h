@@ -1,11 +1,13 @@
 #ifndef __API_H_
 #define __API_H_
 
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <assert.h>
+#include <string.h>
+
+#include <machine/limits.h>
 
 enum kIOKernelRootKitOperation
 {

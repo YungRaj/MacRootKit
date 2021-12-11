@@ -7,7 +7,7 @@ MacRootKit::MacRootKit(Kernel *kernel)
 
 	this->kextKmods = reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"));
 
-	this->architecture = Arch::getArchitecture();
+	this->platformArchitecture = Arch::getArchitecture();
 
 	this->kernelPatcher = new KernelPatcher(this->kernel);
 }
@@ -26,10 +26,10 @@ void MacRootKit::registerCallbacks()
 
 	this->registerBinaryLoadCallback((void*) this, [] (void *user, task_t task, const char *path, size_t len)
 	{
-		static_cast<MacRootKitr*>(user)->onProcLoad(task, path, len);
+		static_cast<MacRootKit*>(user)->onProcLoad(task, path, len);
 	});
 
-	this->registerBinaryLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
+	this->registerKextLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
 	{
 		static_cast<MacRootKit*>(user)->onKextLoad(kext, kmod);
 	});
@@ -37,35 +37,26 @@ void MacRootKit::registerCallbacks()
 
 void MacRootKit::registerEntitlementCallback(void *user, entitlement_callback_t callback)
 {
-	StoredPair<entitlement_callback_t> *pair = new StoredPair<entitlement_callback_t>;
-
-	pair->first = callback;
-	pair->second = user;
+	StoredPair<entitlement_callback_t> *pair = StoredPair<entitlement_callback_t>::create(callback, user);
 
 	this->entitlementCallbacks.add(pair);
 }
 
 void MacRootKit::registerBinaryLoadCallback(void *user, binaryload_callback_t callback)
 {
-	StoredPair<binaryload_callback_t> *pair = new StoredPair<binaryload_callback_t>;
+	StoredPair<binaryload_callback_t> *pair = StoredPair<binaryload_callback_t>::create(callback, user);
 
-	pair->first = callback;
-	pair->second = user;
-
-	this->binaryLoadedCallbacks.add(pair);
+	this->binaryLoadCallbacks.add(pair);
 }
 
 void MacRootKit::registerKextLoadCallback(void *user, kextload_callback_t callback)
 {
-	StoredPair<kextload_callback_t> *pair = new StoredPair<kextload_callback_t>;
+	StoredPair<kextload_callback_t> *pair = StoredPair<kextload_callback_t>::create(callback, user);
 
-	pair->first = callback;
-	pair->second = user;
-
-	this->entitlementCallbacks.add(pair);
+	this->kextLoadCallbacks.add(pair);
 }
 
-Kext* getKextByIdentifier(char *name)
+Kext* MacRootKit::getKextByIdentifier(char *name)
 {
 	Array<Kext*> *kexts = this->getKexts();
 
@@ -82,7 +73,7 @@ Kext* getKextByIdentifier(char *name)
 	return NULL;
 }
 
-Kext* getKextByAddress(mach_vm_address_t address)
+Kext* MacRootKit::getKextByAddress(mach_vm_address_t address)
 {
 	Array<Kext*> *kexts = this->getKexts();
 
@@ -90,7 +81,7 @@ Kext* getKextByAddress(mach_vm_address_t address)
 	{
 		Kext *kext = kexts->get(i);
 
-		if(strcmp(kext->getAddress(), address) == 0)
+		if(kext->getAddress() == address)
 		{
 			return kext;
 		}
@@ -104,7 +95,7 @@ void MacRootKit::onEntitlementRequest(task_t task, const char *entitlement, void
 
 }
 
-void MacRootKit::onProcLoad(vm_map_t map, const char *path, size_t len)
+void MacRootKit::onProcLoad(task_t task, const char *path, size_t len)
 {
 
 }
@@ -120,7 +111,7 @@ kmod_info_t* MacRootKit::findKmodInfo(const char *kextname)
 {
 	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
-		if(strcmp(kmod->name, kext) == 0)
+		if(strcmp(kmod->name, kextname) == 0)
 		{
 			return kmod;
 		}
@@ -137,7 +128,7 @@ void* MacRootKit::findOSKextByIdentifier(const char *kextidentifier)
 
 	lookupKextWithIdentifier = reinterpret_cast<__ZN6OSKext24lookupKextWithIdentifierEPKc>(this->kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc"));
 
-	void *OSKext = lookupKextWithIdentifier(kext);
+	void *OSKext = lookupKextWithIdentifier(kextidentifier);
 
 	return OSKext;
 }

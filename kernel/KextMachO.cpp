@@ -51,7 +51,7 @@ bool KextMachO::parseLoadCommands()
 			case LC_SEGMENT_64:
 			{
 				;
-				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64>(load_command);
+				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
 				uint32_t nsects = segment_command->nsects;
 				uint32_t sect_offset = current_offset + sizeof(struct segment_command_64);
@@ -59,7 +59,7 @@ bool KextMachO::parseLoadCommands()
 				if(segment_command->fileoff > this->size || segment_command->filesize > this->size - segment_command->fileoff)
 					return false;
 
-				if(segment_command->vm_addr == this->getBase())
+				if(segment_command->vmaddr == this->getBase())
 				{
 					this->base_offset = segment_command->fileoff;
 				}

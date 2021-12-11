@@ -2,7 +2,7 @@
 #define __IOKERNELRootKitSERVICE_HPP_
 
 #include <IOKit/IOLib.h>
-#include <mach/mach.h>
+#include <IOKit/IOService.h>
 
 #include "MacRootKit.hpp"
 
@@ -27,7 +27,7 @@ class IOKernelRootKitService : public IOService
 	OSDeclareDefaultStructors(IOKernelRootKitService)
 
 	public:
-		virtual void init(OSDictionary *properties);
+		virtual bool init(OSDictionary *properties);
 
 		virtual void free();
 
@@ -38,11 +38,11 @@ class IOKernelRootKitService : public IOService
 
 		virtual void clientClosed(IOKernelRootKitUserClient *client);
 
-		MacRootKit* getRootKit() { return RootKit; }
+		MacRootKit* getRootKit() { return rootkit; }
 
 		Kernel* getKernel() { return kernel; }
 
-		Kext* getKext() { return RootKitKext; }
+		Kext* getKext() { return rootkitKext; }
 
 		mach_port_t getKernelTaskPort() { return tfp0; }
 
@@ -59,11 +59,11 @@ class IOKernelRootKitService : public IOService
 		IOReturn detachUserClients();
 
 	private:
-		MacRootKit *RootKit;
+		MacRootKit *rootkit;
 
 		Kernel *kernel;
 
-		Kext *RootKitKext;
+		Kext *rootkitKext;
 
 		mach_port_t tfp0;
 

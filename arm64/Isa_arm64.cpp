@@ -10,7 +10,7 @@ namespace Arch
 
 			breakpoint.brk.op = Arch::arm64::BreakpointPrefix;
 			breakpoint.brk.imm = 0b0;
-			breakpoint.brk.Z = 0b0;
+			breakpoint.brk.z = 0b0;
 
 			return breakpoint;
 		}
@@ -56,7 +56,7 @@ namespace Arch
 			return branch;
 		}
 
-		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from);
+		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from)
 		{
 			union FunctionCall call;
 

@@ -6,11 +6,13 @@
 #include <mach/mach_types.h>
 #include <mach/kmod.h>
 
-#include "Kernel.hpp"
 #include "Patcher.hpp"
 
 class Kernel;
 class Kext;
+
+class MachO;
+class Symbol;
 
 class Hook;
 class Payload;
@@ -81,19 +83,21 @@ class KernelPatcher : public Patcher
 
 		virtual void routeFunction(Hook *hook);
 
-		virtual void onKextLoad(void *kext, kmod_info_t kmod);
+		virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
 		virtual void onExec(task_t task, const char *path, size_t len);
 
-		virtual void onEntitlementRequest(task_t task, char *entitlement);
+		virtual void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-		void installDummyBreakpoint();
+		Hook* installDummyBreakpoint();
 
 		Hook* installEntitlementHook();
 		Hook* installBinaryLoadHook();
 		Hook* installKextLoadHook();
 
 		void registerCallbacks();
+
+		void processAlreadyLoadedKexts();
 
 		void processKext(kmod_info_t *kmod, bool loaded);
 
@@ -102,13 +106,15 @@ class KernelPatcher : public Patcher
 		mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
 
 		void applyKernelPatch(KernelPatch *patch);
-		void applyKextPath(KextPath *patch);
+		void applyKextPatch(KextPatch *patch);
 
 		void removeKernelPatch(KernelPatch *patch);
 		void removeKextPatch(KextPatch *patch);
 
 	private:
 		Kernel *kernel;
+
+		kmod_info_t **kextKmods;
 
 		Hook *entitlementHook;
 		Hook *binaryLoadHook;

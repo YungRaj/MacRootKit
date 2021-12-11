@@ -21,7 +21,7 @@ Kext* KernelMachO::kextWithIdentifier(Kernel *kernel, char *kextname)
 {
 	MacRootKit *rootkit = kernel->getRootKit();
 
-	return rootkit->getKextByIdentifier(kextname):
+	return rootkit->getKextByIdentifier(kextname);
 }
 
 void MachO::parseLinkedit()
@@ -58,7 +58,7 @@ bool KernelMachO::parseLoadCommands()
 			case LC_SEGMENT_64:
 			{
 				;
-				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64>(load_command);
+				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
 				uint32_t nsects = segment_command->nsects;
 				uint32_t sect_offset = current_offset + sizeof(struct segment_command_64);

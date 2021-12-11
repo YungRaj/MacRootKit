@@ -16,7 +16,7 @@ class SymbolTable
 
 		SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
 
-		Array<Symbol*> getAllSymbols() { return symbol_table; }
+		Array<Symbol*> getAllSymbols() { return symbolTable; }
 
 		Symbol* getSymbolByName(char *name);
 
@@ -24,7 +24,7 @@ class SymbolTable
 
 		Symbol* getSymbolByOffset(off_t offset);
 
-		void addSymbol(Symbol *symbol) { symbolTable.add(symbol; )}
+		void addSymbol(Symbol *symbol) { symbolTable.add(symbol); }
 
 		void removeSymbol(Symbol *symbol) { symbolTable.remove(symbol); }
 
@@ -38,6 +38,6 @@ class SymbolTable
 		char *strtab;
 
 		size_t strsize;
-}
+};
 
 #endif

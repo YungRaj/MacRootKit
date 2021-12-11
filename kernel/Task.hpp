@@ -1,9 +1,19 @@
 #ifndef __TASK_HPP_
 #define __TASK_HPP_
 
+#include "Process.hpp"
+
 #include "Disassembler.hpp"
 
+#include "MachO.hpp"
+#include "Segment.hpp"
+#include "Section.hpp"
+
 class Kernel;
+
+class Disassembler;
+
+typedef void* pmap_t;
 
 class Task
 {
@@ -11,7 +21,7 @@ class Task
 		Task();
 
 		Task(Kernel *kernel, mach_port_t task_port);
-		Task(Kernel *kernel *kernel, task_t task);
+		Task(Kernel *kernel, task_t task);
 
 		static mach_port_t getTaskPort(Kernel *kernel, int pid);
 
@@ -30,6 +40,8 @@ class Task
 		pmap_t getPmap() { return pmap; }
 
 		proc_t getProc() { return proc; }
+
+		Disassembler* getDisassembler() { return disassembler; }
 
 		Process* getProcess() { return process; }
 
@@ -81,7 +93,7 @@ class Task
 
 		virtual char* readString(mach_vm_address_t address);
 
-		virtual Symbol* getSymbolAddressByName(char *symname);
+		virtual Symbol* getSymbolByName(char *symname);
 		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
 		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
@@ -93,10 +105,12 @@ class Task
 
 		mach_port_t task_port;
 
+		Process *process;
+
 		task_t task;
 		proc_t proc;
 
-		vm_map_t vmap;
+		vm_map_t map;
 		pmap_t pmap;
 
 		mach_vm_address_t base;
@@ -107,6 +121,6 @@ class Task
 		mach_vm_address_t dyld_shared_cache = 0;
 
 		int pid;
-}
+};
 
 #endif

@@ -62,7 +62,7 @@ IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKerne
 
 bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
 {
-	bool result = IOUserClient::initWithTask(owningTask, securityToken, type, properties);
+	bool result = IOUserClient::initWithTask(owningTask, securityToken, type);
 
 	if(!kernel)
 		result = false;
@@ -77,7 +77,7 @@ bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, 
 
 bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
 {
-	bool result = IOUserClient::initWithTask(owningTask, securityToken, type);
+	bool result = IOUserClient::initWithTask(owningTask, securityToken, type, properties);
 
 	if(!kernel)
 		result = false;
@@ -92,14 +92,14 @@ bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, 
 
 bool IOKernelRootKitUserClient::start(IOService *provider)
 {
-	IOKernelRootKitService *service = this->kernel->getRootkitService();
+	IOKernelRootKitService *service = this->kernel->getRootKitService();
 
 	this->rootkitService = service;
 
 	return IOUserClient::start(provider);
 }
 
-bool IOKernelRootKitUserClient::stop(IOService *provider)
+void IOKernelRootKitUserClient::stop(IOService *provider)
 {
 	return IOUserClient::stop(provider);
 }
@@ -130,7 +130,7 @@ IOExternalTrap*  IOKernelRootKitUserClient::getExternalTrapForIndex(UInt32 index
 	return NULL;
 }
 
-uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptr **desc, IOMemoryMap **mapping)
+uint8_t* IOKernelRootKitUserClient::mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping)
 {
 	uint8_t *buffer;
 
@@ -140,7 +140,7 @@ uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionB
 
 	IOMemoryMap *map;
 
-	descriptor = IOMemoryDescriptor::withAddressRange(address, size, options, clientTask);
+	descriptor = IOMemoryDescriptor::withAddressRange(uaddr, size, options, this->getClientTask());
 
 	if(!descriptor)
 	{

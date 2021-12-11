@@ -1,8 +1,6 @@
 #ifndef __PATCHFINDER_HPP_ 
 #define __PATCHFINDER_HPP_
 
-#include "Arch.hpp"
-
 #include "MachO.hpp"
 
 class MachO;

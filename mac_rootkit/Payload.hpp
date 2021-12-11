@@ -32,7 +32,7 @@ class Payload
 
 		size_t getSize() { return size; }
 
-		vm_prot_t getProt() { return protection; }
+		vm_prot_t getProt() { return prot; }
 
 		Task* getTask() { return task; }
 
@@ -45,6 +45,8 @@ class Payload
 		bool prepare();
 	
 	private:
+		Task *task;
+
 		mach_vm_address_t address;
 
 		off_t current_offset;

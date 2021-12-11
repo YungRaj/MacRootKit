@@ -23,6 +23,8 @@
 	}
 #endif
 
+#include <mach/mach_types.h>
+
 class Kernel;
 
 /**

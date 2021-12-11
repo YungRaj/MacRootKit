@@ -1,7 +1,6 @@
 #ifndef _MACHO_H__
 #define _MACHO_H__
 
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -10,27 +9,9 @@
 
 #include <sys/_types/_uuid_t.h> 
 
-#define max(a, b) (a) > (b) ? (a) : (b)
-#define min(a, b) (a) < (b) ? (a) : (b)
+#ifdef __USER__
 
 typedef uint32_t mach_port_t;
-
-typedef struct task_ task_;
-
-typedef struct symbol_table symbol_table;
-
-#define MACHO_GET(macho_) &macho_->macho[macho_->current_offset]
-#define MACHO_GET_OFFSET(macho_, offset) &macho_->macho[offset]
-
-#ifndef  _MACH_MACHINE_H_
-
-#define VM_PROT_READ                       0x1
-#define VM_PROT_WRITE                      0x2
-#define VM_PROT_EXECUTE                    0x4
-#define CPU_TYPE_ARM64              0x0100000c
-#define CPU_SUBTYPE_MASK            0x00ffffff
-#define CPU_SUBTYPE_ARM64_ALL              0x0
-#define CPU_SUBTYPE_ARM64E                 0x2
 
 #endif
 
@@ -51,7 +32,7 @@ typedef struct symbol_table symbol_table;
 #define LC_UUID                     0x0000001b
 #define LC_CODE_SIGNATURE           0x0000001d
 #define LC_ENCRYPTION_INFO          0x00000021
-#define LC_DYLD_INFO                0x00000022
+#define LC_DYLD_INFO                0x0000002
 #define LC_DYLD_INFO_ONLY          (0x00000022 | LC_REQ_DYLD)
 #define LC_FUNCTION_STARTS          0x00000026
 #define LC_MAIN                    (0x28|LC_REQ_DYLD)
@@ -148,101 +129,6 @@ typedef struct symbol_table symbol_table;
 
 #define HASH_TYPE_SHA1 0x01
 #define HASH_TYPE_SHA256 0x02
-
-#define ARM_THREAD_STATE64                6
-
-struct arm_thread_state_64
-{
-    uint64_t    x[29];      /* General purpose registers x0-x28 */
-    uint64_t    fp;         /* Frame pointer x29 */
-    uint64_t    lr;         /* Link register x30 */
-    uint64_t    sp;         /* Stack pointer x31 */
-    uint64_t    pc;         /* Program counter */
-    uint32_t    cpsr;
-};
-
-typedef struct macho
-{
-    FILE *file;
-    
-    char *macho;
-
-    char *path;
-
-    bool is_valid;
-    bool is_dump;
-    bool is_image;
-
-    uint32_t offset;
-    uint32_t size;
-
-    uint32_t current_offset;
-
-    uint64_t base;
-    uint64_t end;
-
-    struct mach_header_64 *header;
-
-    uint64_t aslr_slide;
-    uint64_t dyld;
-    uint64_t dyld_shared_cache;
-
-    task_ *task_info;
-
-    struct symtab_command *symtab_command;
-
-    struct nlist_64 *symtab;
-    uint32_t nsyms;
-
-    char *strtab;
-    uint32_t strsize;
-
-    struct unixthread_command *thread;
-    uint64_t entry_point;
-
-    struct arm_thread_state_64 emu_state;
-
-    uint64_t xnu_dump_base;
-
-    uint64_t xnucore_base;
-    uint64_t xnucore_size;
-
-    uint64_t ppltext_base;
-    uint64_t ppltext_size;
-
-    uint64_t prelink_base;
-    uint64_t prelink_size;
-
-    uint64_t kld_base;
-    uint64_t kld_size;
-
-    uint64_t cstring_base;
-    uint64_t cstring_size;
-
-    uint64_t pstring_base;
-    uint64_t pstring_size;
-
-    uint64_t oslstring_base;
-    uint64_t oslstring_size;
-
-    uint64_t data_base;
-    uint64_t data_size;
-
-    uint64_t data_const_base;
-    uint64_t data_const_size;
-
-    uint64_t const_base;
-    uint64_t const_size;
-
-    uint64_t pinst_base;
-    uint64_t pinst_size;
-
-    uint64_t objc_classlist_base;
-    uint64_t objc_classlist_size;
-
-    symbol_table *symbol_table;
-} macho;
-
 
 struct fat_header
 {
@@ -342,6 +228,16 @@ struct dysymtab_command
     uint32_t nlocrel;
 };
 
+struct relocation_info
+{
+   int32_t  r_address;
+   uint32_t r_symbolnum : 24,
+            r_pcrel     :  1,
+            r_length    :  2,
+            r_extern    :  1,
+            r_type      :  4;
+};
+
 struct linkedit_data_command
 {
     uint32_t cmd;
@@ -373,7 +269,6 @@ struct unixthread_command
     uint32_t cmdsize;
     uint32_t flavor;
     uint32_t count;
-    struct   arm_thread_state_64 state;
 };
 
 struct uuid_command
@@ -382,6 +277,8 @@ struct uuid_command
     uint32_t cmdsize;
     uint8_t  uuid[16];
 };
+
+#ifdef __USER__
 
 struct dylib
 {
@@ -454,16 +351,6 @@ struct dylib_reference
 {
     uint32_t isym     : 24,
              flags    : 8;
-};
-
-struct relocation_info
-{
-   int32_t  r_address;
-   uint32_t r_symbolnum : 24,
-            r_pcrel     :  1,
-            r_length    :  2,
-            r_extern    :  1,
-            r_type      :  4;
 };
 
 typedef union
@@ -547,12 +434,16 @@ struct dyld_chained_import
 
 enum dyld_image_mode { dyld_image_adding=0, dyld_image_removing=1 };
 
+#endif
+
 struct dyld_image_info
 {
     const struct mach_header*   imageLoadAddress;
     const char*                 imageFilePath;
     uintptr_t                   imageFileModDate;
 };
+
+#ifdef __USER__
 
 struct dyld_uuid_info
 {
@@ -624,6 +515,8 @@ extern struct dyld_all_image_infos  dyld_all_image_infos;
 
 
 extern struct dyld_shared_cache_ranges dyld_shared_cache_ranges;
+
+#endif
 
 struct nlist_64
 {

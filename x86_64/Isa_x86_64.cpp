@@ -75,7 +75,7 @@ namespace Arch
 			if(from > to)
 				imm *= -1;
 
-			call.c.opcode = Arch::x86_64::CallFunctionPrefix;
+			call.c.opcode = Arch::x86_64::FunctionCallPrefix;
 			call.c.argument = imm;
 
 			return call;

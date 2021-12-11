@@ -1,9 +1,13 @@
 #ifndef __PATCHFINDER_ARM64_HPP_
 #define __PATCHFINDER_ARM64_HPP_
 
+#include "PatchFinder.hpp"
+
 #include "MachO.hpp"
 
 class MachO;
+
+using namespace PatchFinder;
 
 namespace Arch
 {

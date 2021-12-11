@@ -1,9 +1,7 @@
 #ifndef __PATCHER_HPP_
 #define __PATCHER_HPP_
 
-#include "MacRootKit.hpp"
-
-#include "Kernel.hpp"
+#include <mach/kmod.h>
 
 #include "Array.hpp"
 #include "Pair.hpp"

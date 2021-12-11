@@ -16,4 +16,4 @@ cd ..
 
 make clean
 
-make -f make_kernel.mk
+make -f make_kext.mk

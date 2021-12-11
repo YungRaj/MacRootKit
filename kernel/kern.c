@@ -45,20 +45,20 @@ void set_vm_functions(mach_vm_address_t vm_read,
 					  mach_vm_address_t vm_allocate,
 					  mach_vm_address_t vm_deallocate,
 					  mach_vm_address_t vm_map_copyin,
-					  mach_vm_address_t vm_map_overwrite)
+					  mach_vm_address_t vm_map_copy_overwrite)
 {
 	vm_read_ = vm_read;
 	vm_write_ = vm_write;
 	vm_protect_ = vm_protect;
 	vm_remap_ = vm_remap;
 	vm_allocate_ = vm_allocate;
-	vm_dellocate_ = vm_deallocate;
+	vm_deallocate_ = vm_deallocate;
 	vm_map_copyin_ = vm_map_copyin;
-	vm_map_overwrite_ = vm_map_overwrite;
+	vm_map_copy_overwrite_ = vm_map_copy_overwrite;
 }
 
 void set_phys_functions(mach_vm_address_t pmap_find_phys,
-						mach_vm_address_t phys_read64;
+						mach_vm_address_t phys_read64,
 						mach_vm_address_t phys_read32,
 						mach_vm_address_t phys_read16,
 						mach_vm_address_t phys_read8,
@@ -134,13 +134,12 @@ bool kernel_vm_read(mach_vm_address_t address, void *data, size_t size)
 
 	kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
-	_vm_map_copyin = (kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copy_in_;
 
-	kr = _vm_map_copyin(kernel_map_, (vm_address_t) address, (vm_map_size_t) size, FALSE, &copy);
+	ret = _vm_map_copyin(kernel_map_, (vm_address_t) address, (vm_map_size_t) size, FALSE, &copy);
 
 	kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
-	_vm_map_copy_overwrite = (kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
+	_vm_map_copy_overwrite = (kern_return_t (*)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
 
 	ret = _vm_map_copy_overwrite(kernel_map_, (vm_offset_t) data, copy, size, FALSE);
 
@@ -158,8 +157,6 @@ bool kernel_vm_write(mach_vm_address_t address, const void *data, size_t size)
 
 	while(size > 0)
 	{
-		kern_return_t ret;
-
 		size_t write_size = size;
 
 		if(write_size > 0x1000)
@@ -171,13 +168,13 @@ bool kernel_vm_write(mach_vm_address_t address, const void *data, size_t size)
 
 		kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
-		_vm_map_copyin = (kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copy_in_;
+		_vm_map_copyin = (kern_return_t (*)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copyin_;
 
-		kr = _vm_map_copyin(kernel_map_, (vm_address_t) write_data (vm_map_size_t) write_size, FALSE, &copy);
+		ret = _vm_map_copyin(kernel_map_, (vm_address_t) write_data, (vm_map_size_t) write_size, FALSE, &copy);
 
 		kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
-		_vm_map_copy_overwrite = (kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
+		_vm_map_copy_overwrite = (kern_return_t (*)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
 
 		ret = _vm_map_copy_overwrite(kernel_map_, address, copy, write_size, FALSE);
 
@@ -218,7 +215,7 @@ mach_vm_address_t kernel_vm_allocate(size_t size)
 
 void kernel_vm_deallocate(mach_vm_address_t address, size_t size)
 {
-	kern_return_t ret = vm_deallocate(kernel_map_, (vm_address_t) address, size, VM_FLAGS_ANYWHERE);
+	kern_return_t ret = vm_deallocate(kernel_map_, (vm_address_t) address, size);
 
 	if(ret != KERN_SUCCESS)
 	{
@@ -232,7 +229,7 @@ bool kernel_vm_protect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 
 	kern_return_t (*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t);
 
-	_vm_protect = (kern_return_t (*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t));
+	_vm_protect = (kern_return_t (*)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t)) vm_protect_;
 
 	ret = _vm_protect(kernel_map_, address, size, FALSE, prot);
 
@@ -254,13 +251,12 @@ void* kernel_vm_remap(mach_vm_address_t address, size_t size)
 
 	kern_return_t (*_vm_remap)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t);
 
-	_vm_remap = (kern_return_t (*_vm_remap)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t));
+	_vm_remap = (kern_return_t (*)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t)) vm_remap_;
 
 	ret = _vm_remap(kernel_map_,
 					(vm_address_t*) &target_address,
 					size,
 					0,
-					VM_FLAGS_ANYWHERE,
 					kernel_map_,
 					address,
 					FALSE,
@@ -279,6 +275,7 @@ void* kernel_vm_remap(mach_vm_address_t address, size_t size)
 
 uint64_t kernel_virtual_to_physical(mach_vm_address_t vaddr)
 {
+	return 0;
 }
 
 bool task_vm_read(vm_map_t task_map, mach_vm_address_t address, void *data, size_t size)
@@ -289,13 +286,13 @@ bool task_vm_read(vm_map_t task_map, mach_vm_address_t address, void *data, size
 
 	kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
-	_vm_map_copyin = (kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copy_in_;
+	_vm_map_copyin = (kern_return_t (*)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copyin_;
 
-	kr = _vm_map_copyin(task_map, (vm_address_t) address, (vm_map_size_t) size, FALSE, &copy);
+	ret = _vm_map_copyin(task_map, (vm_address_t) address, (vm_map_size_t) size, FALSE, &copy);
 
 	kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
-	_vm_map_copy_overwrite = (kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
+	_vm_map_copy_overwrite = (kern_return_t (*)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
 
 	ret = _vm_map_copy_overwrite(task_map, (vm_offset_t) data, copy, size, FALSE);
 
@@ -313,8 +310,6 @@ bool task_vm_write(vm_map_t task_map, mach_vm_address_t address, const void *dat
 
 	while(size > 0)
 	{
-		kern_return_t ret;
-
 		size_t write_size = size;
 
 		if(write_size > 0x1000)
@@ -326,13 +321,13 @@ bool task_vm_write(vm_map_t task_map, mach_vm_address_t address, const void *dat
 
 		kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
-		_vm_map_copyin = (kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copy_in_;
+		_vm_map_copyin = (kern_return_t (*)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*)) vm_map_copyin_;
 
-		kr = _vm_map_copyin(task_map, (vm_address_t) write_data (vm_map_size_t) write_size, FALSE, &copy);
+		ret = _vm_map_copyin(task_map, (vm_address_t) write_data, (vm_map_size_t) write_size, FALSE, &copy);
 
 		kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
-		_vm_map_copy_overwrite = (kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
+		_vm_map_copy_overwrite = (kern_return_t (*)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t)) vm_map_copy_overwrite_;
 
 		ret = _vm_map_copy_overwrite(task_map, address, copy, write_size, FALSE);
 
@@ -373,7 +368,7 @@ mach_vm_address_t task_vm_allocate(vm_map_t task_map, size_t size)
 
 void task_vm_deallocate(vm_map_t task_map, mach_vm_address_t address, size_t size)
 {
-	kern_return_t ret = vm_deallocate(task_map, (vm_address_t) address, size, VM_FLAGS_ANYWHERE);
+	kern_return_t ret = vm_deallocate(task_map, (vm_address_t) address, size);
 
 	if(ret != KERN_SUCCESS)
 	{
@@ -387,7 +382,7 @@ bool task_vm_protect(vm_map_t task_map, mach_vm_address_t address, size_t size, 
 
 	kern_return_t (*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t);
 
-	_vm_protect = (kern_return_t (*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t));
+	_vm_protect = (kern_return_t (*)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t)) vm_protect_;
 
 	ret = _vm_protect(task_map, address, size, FALSE, prot);
 
@@ -409,13 +404,12 @@ void* task_vm_remap(vm_map_t task_map, mach_vm_address_t address, size_t size)
 
 	kern_return_t (*_vm_remap)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t);
 
-	_vm_remap = (kern_return_t (*_vm_remap)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t));
+	_vm_remap = (kern_return_t (*)(vm_map_t, vm_address_t*, vm_size_t, int, vm_map_t, vm_address_t, boolean_t, vm_prot_t*, vm_prot_t*, vm_inherit_t)) vm_remap_;
 
 	ret = _vm_remap(task_map,
 					(vm_address_t*) &target_address,
 					size,
 					0,
-					VM_FLAGS_ANYWHERE,
 					task_map,
 					address,
 					FALSE,

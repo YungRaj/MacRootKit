@@ -11,11 +11,11 @@ namespace Arch
 {
 	namespace arm64
 	{
-		void setInterrupts(bool enable);
+		bool setInterrupts(bool enable);
 
-		void setNXBit(bool enable);
+		bool setNXBit(bool enable);
 
-		void setWPBit(bool enable);
+		bool setWPBit(bool enable);
 
 	};
 };

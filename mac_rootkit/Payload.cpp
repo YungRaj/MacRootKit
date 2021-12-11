@@ -18,7 +18,7 @@ bool Payload::readBytes(uint8_t *bytes, size_t size)
 {
 	bool success;
 
-	success = this->readBytes(this->current_offset, size);
+	success = this->readBytes(this->current_offset, bytes, size);
 
 	return success;
 }
@@ -67,5 +67,7 @@ bool Payload::prepare()
 		return false;
 
 	this->address = trampoline;
+
+	return true;
 }
 	

@@ -45,6 +45,8 @@ class KextMachO : public MachO
 	private:
 		Kernel *kernel;
 
+		mach_vm_address_t address;
+
 		char *name;
 
 		off_t base_offset;
@@ -52,6 +54,12 @@ class KextMachO : public MachO
 		mach_vm_address_t kernel_collection;
 
 		kmod_info_t *kmod_info;
+
+		uint8_t *linkedit;
+
+		off_t linkedit_off;
+
+		size_t linkedit_size;
 };
 
 #endif

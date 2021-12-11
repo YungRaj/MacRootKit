@@ -1,9 +1,10 @@
 #ifndef __KEXT_HPP_
 #define __KEXT_HPP_
 
-#include <mach/kmod_info.h>
+#include <mach/kmod.h>
 
 class Kernel;
+class KextMachO;
 
 class Kext
 {
@@ -12,7 +13,7 @@ class Kext
 
 		~Kext();
 
-		static Kext* findKextWithIdentifier(Kernel *kernel, har *name);
+		static Kext* findKextWithIdentifier(Kernel *kernel, char *name);
 		static Kext* findKextWithIdentifier_deprecated(Kernel *kernel, char *name);
 
 		static Kext* findKextWithId(Kernel *kernel, uint32_t kext_id);
@@ -29,7 +30,7 @@ class Kext
 
 		void* getOSKext() { return kext; }
 
-		kmod_info_t getKmodInfo() { return kmod_info; }
+		kmod_info_t* getKmodInfo() { return kmod_info; }
 
 		kmod_start_func_t* getKmodStart() { return kmod_info->start; }
 		kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }

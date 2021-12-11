@@ -25,18 +25,22 @@ void Patcher::routeFunction(Hook *hook)
 
 Hook* Patcher::hookForFunction(mach_vm_address_t address)
 {
+	return NULL;
 }
 
 Hook* Patcher::breakpointForAddress(mach_vm_address_t address)
 {
+	return NULL;
 }
 
 bool Patcher::isFunctionHooked(mach_vm_address_t address)
 {
+	return false;
 }
 
 bool Patcher::isBreakpointAtInstruction(mach_vm_address_t address)
 {
+	return false;
 }
 
 void Patcher::installHook(Hook *hook, mach_vm_address_t hooked)

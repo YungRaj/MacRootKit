@@ -2,8 +2,8 @@
 #define __IOKERNELRootKitUSERCLIENT_HPP_
 
 #include <IOKit/IOLib.h>
+#include <IOKit/IOUserClient.h>
 
-#include <mach/mach.h>
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
 
@@ -30,7 +30,7 @@ class IOKernelRootKitUserClient : public IOUserClient
 		virtual bool initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
 
 		virtual bool start(IOService *provider);
-		virtual bool stop(IOService *provider);
+		virtual void stop(IOService *provider);
 
 		virtual IOReturn clientClose();
 		virtual IOReturn clientDied();
@@ -42,13 +42,13 @@ class IOKernelRootKitUserClient : public IOUserClient
 
 		virtual IOReturn externalMethod(UInt32 selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference);
 
-		IOKernelRootKitService* getRootKitService() { return RootKitService; }
+		IOKernelRootKitService* getRootKitService() { return rootkitService; }
 
 		task_t getClientTask() { return clientTask; }
 		task_t getKernelTask() { return kernelTask; }
 
 	private:
-		IOKernelRootKitService *RootKitService;
+		IOKernelRootKitService *rootkitService;
 
 		task_t clientTask;
 
@@ -58,7 +58,7 @@ class IOKernelRootKitUserClient : public IOUserClient
 
 		void initRootKit();
 
-		uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptr **desc, IOMemoryMap **mapping);
+		uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping);
 
 };
 

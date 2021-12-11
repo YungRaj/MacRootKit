@@ -1,8 +1,16 @@
-#ifndef __MACRootKit_HPP_
-#define __MACRootKit_HPP_
+#ifndef __MACROOTKIT_HPP_
+#define __MACROOTKIT_HPP_
+
+#include "Arch.hpp"
 
 #include "Kernel.hpp"
+#include "KernelPatcher.hpp"
+
 #include "Kext.hpp"
+
+#include <string.h>
+
+using namespace Arch;
 
 class IOKernelRootKitService;
 
@@ -17,11 +25,12 @@ using StoredArray = Array<StoredPair<T, Y>*>;
 
 class MacRootKit
 {
-	using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, OSObject *original);
+	public:
+		using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, void *original);
 
-	using binaryload_callback_t = void (*)(void *user, vm_map_t map, const char *path, size_t len);
+		using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, size_t len);
 
-	using kextload_callback_t void (*)(void *user, Kext *kext, char *kextname);
+		using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
 
 	public:
 		MacRootKit(Kernel *kernel);
@@ -32,17 +41,19 @@ class MacRootKit
 
 		enum Architectures getPlatformArchitecture() { return platformArchitecture; }
 
+		Array<Kext*>* getKexts() { return &kexts; }
+
 		Kext* getKextByIdentifier(char *name);
 
 		Kext* getKextByAddress(mach_vm_address_t address);
 
 		KernelPatcher* getKernelPatcher() { return kernelPatcher; }
 
-		Array<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
+		StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
 
-		Array<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
+		StoredArray<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
 
-		Array<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
+		StoredArray<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
 
 		void registerCallbacks();
 
@@ -54,9 +65,9 @@ class MacRootKit
 
 		void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-		void onProcLoad(vm_map_t map, const char *path, size_t len);
+		void onProcLoad(task_t task, const char *path, size_t len);
 
-		void onKextLoad(Kext *kext, char *kextname);
+		void onKextLoad(void *kext, kmod_info_t *kmod);
 
 		kmod_info_t* findKmodInfo(const char *kextname);
 
@@ -72,6 +83,8 @@ class MacRootKit
 		bool waitingForAlreadyLoadedKexts;
 
 		Array<Kext*> kexts;
+
+		kmod_info_t **kextKmods;
 
 		StoredArray<entitlement_callback_t> entitlementCallbacks;
 

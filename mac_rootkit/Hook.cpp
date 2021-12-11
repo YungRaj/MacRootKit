@@ -42,7 +42,7 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 
 	for(int i = 0; i < hooks->getSize(); i++)
 	{
-		hook = hook->get(i);
+		hook = hooks->get(i);
 
 		if(hook->getFrom() == address && hook->getHookType() == kHookTypeInstrumentFunction)
 		{
@@ -67,7 +67,7 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 	{
 		hook = hooks->get(i);
 
-		if(hook->getFrom() == address && hook->getType() == kHookTypeBreakpoint)
+		if(hook->getFrom() == address && hook->getHookType() == kHookTypeBreakpoint)
 		{
 			return hook;
 		}
@@ -95,23 +95,23 @@ void Hook::initWithBreakpointParams(Task *task, mach_vm_address_t breakpoint)
 	this->setDisassembler(task->getDisassembler());
 }
 
-struct HookPatch* getLatestRegisteredHook()
+struct HookPatch* Hook::getLatestRegisteredHook()
 {
 	Array<struct HookPatch*> *hooks = this->getHooks();
 
 	if(hooks->getSize() == 0)
 		return NULL;
 
-	return hooks->get(hooks->getSize() - 1):
+	return hooks->get((int) (hooks->getSize() - 1));
 }
 
 mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 {
 	Array<struct HookPatch*> *hooks = this->getHooks();
 
-	for(int i = 0; i < hooks; i++)
+	for(int i = 0; i < hooks->getSize(); i++)
 	{
-		struct HookPatch *patch = hooks->get(i):
+		struct HookPatch *patch = hooks->get(i);
 
 		mach_vm_address_t to = patch->to;
 		mach_vm_address_t trampoline = patch->trampoline;
@@ -131,7 +131,7 @@ enum HookType Hook::getHookTypeForCallback(mach_vm_address_t callback)
 	{
 		auto pair = this->getCallbacks()->get(i);
 
-		mach_vm_addresss_t cb = pair->first;
+		mach_vm_address_t cb = pair->first;
 
 		if(callback == cb)
 		{
@@ -144,10 +144,10 @@ enum HookType Hook::getHookTypeForCallback(mach_vm_address_t callback)
 
 void Hook::makePatch(union FunctionPatch *patch, mach_vm_address_t to, mach_vm_address_t from)
 {
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
-			patch->patch_x86_64 = Arch::x86_64::makeJmp(to, from);
+			patch->patch_x86_64 = Arch::x86_64::makeJump(to, from);
 
 			break;
 		case ARCH_arm64:
@@ -162,7 +162,7 @@ void Hook::makePatch(union FunctionPatch *patch, mach_vm_address_t to, mach_vm_a
 
 void Hook::makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
 {
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
 			call->call_x86_64 = Arch::x86_64::makeCall(to, from);
@@ -180,7 +180,7 @@ void Hook::makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_addr
 
 void Hook::makeBreakpoint(union Breakpoint *breakpoint)
 {
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
 			breakpoint->breakpoint_x86_64 = Arch::x86_64::makeBreakpoint();
@@ -200,7 +200,7 @@ size_t Hook::getBranchSize()
 {
 	size_t branch_size = 0;
 
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
 			branch_size = Arch::x86_64::SmallJump;
@@ -221,14 +221,14 @@ size_t Hook::getCallSize()
 {
 	size_t branch_size = 0;
 
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
-			branch_size = Arch::x86_64::CallFunction;
+			branch_size = Arch::x86_64::FunctionCallSize();
 
 			break;
 		case ARCH_arm64:
-			branch_size = Arch::arm64::CallFunction;
+			branch_size = Arch::arm64::FunctionCallSize();
 
 			break;
 		default:
@@ -242,7 +242,7 @@ size_t Hook::getBreakpointSize()
 {
 	size_t breakpoint_size = 0;
 
-	switch(Arch::getCurrentArchitecture())
+	switch(Arch::getArchitecture())
 	{
 		case ARCH_x86_64:
 			breakpoint_size = Arch::x86_64::Breakpoint;
@@ -279,11 +279,11 @@ void Hook::registerHook(struct HookPatch *patch)
 {
 }
 
-void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype = kHookTypeCallback)
+void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype)
 {
 }
 
-void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookTypeInstrumentFunction)
+void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 {
 	struct HookPatch *hook = new HookPatch;
 
@@ -324,14 +324,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookType
 
 	original_opcodes = new uint8_t[min];
 
-	if(this->getTask())
-	{
-		this->hookContext.task->read(from, (void*) original_opcodes, min);
-	}
-	else if(this->getKernel())
-	{
-		this->hookContext.kernel->read(from, (void*) original_opcodes, min);
-	}
+	this->task->read(from, (void*) original_opcodes, min);
 
 	payload->writeBytes(original_opcodes, min);
 
@@ -354,14 +347,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookType
 
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
-	if(this->getTask())
-	{
-		this->hookContext.task->write(from, (void*) replace_opcodes, branch_size);
-	}
-	else if(this->getKernel())
-	{
-		this->hookContext.kernel->write(from, (void*) replace_opcodes, branch_size);
-	}
+	this->task->write(from, (void*) replace_opcodes, branch_size);
 
 	hook->from = from;
 	hook->to = to;
@@ -382,7 +368,7 @@ void Hook::uninstallHook()
 {
 }
 
-void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint)
+void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype)
 {
 	struct HookPatch *hook = new HookPatch;
 
@@ -410,14 +396,7 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	original_opcodes = new uint8_t[min];
 
-	if(this->getTask())
-	{
-		this->hookContext.task->read(from, (void*) original_opcodes, min);
-	}
-	else if(this->getKernel())
-	{
-		this->hookContext.kernel->read(from, (void*) original_opcodes, min);
-	}
+	this->task->read(from, (void*) original_opcodes, min);
 
 	union FunctionPatch to_trampoline;
 
@@ -479,14 +458,7 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
-	if(this->getTask())
-	{
-		this->hookContext.task->write(from, (void*) replace_opcodes, branch_size);
-	}
-	else if(this->getKernel())
-	{
-		this->hookContext.kernel->write(from, (void*) replace_opcodes, branch_size);
-	}
+	this->task->write(from, (void*) replace_opcodes, branch_size);
 
 	hook->from = from;
 	hook->to = trampoline;

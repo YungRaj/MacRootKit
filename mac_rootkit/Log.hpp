@@ -8,7 +8,7 @@ extern "C"
 	#include "API.h"
 }
 
-#ifdef __KERNEL_
+#ifdef __KERNEL__
 
 #define MAC_RK_LOG IOLog
 

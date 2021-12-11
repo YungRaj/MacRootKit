@@ -68,6 +68,8 @@
 #define UMM_CRITICAL_ENTRY()
 #define UMM_CRITICAL_EXIT()
 
+#define UMM_MALLOC_CFG_HEAP_SIZE 0x10000
+
 static char default_umm_heap[UMM_MALLOC_CFG_HEAP_SIZE];
 
 #define UMM_MALLOC_CFG_HEAP_ADDR default_umm_heap
@@ -308,7 +310,7 @@ void umm_free( void *ptr ) {
 
   /* Figure out which block we're in. Note the use of truncated division... */
 
-  c = (((char *)ptr)-(char *)(&(umm_heap[0])))/sizeof(umm_block);
+  c = ((unsigned long)(((char *)ptr)-(char *)(&(umm_heap[0]))))/sizeof(umm_block);
 
   DBGLOG_DEBUG( "Freeing block %6i\n", c );
 
@@ -393,6 +395,8 @@ void *umm_malloc( size_t size ) {
     blockSize = (UMM_NBLOCK(cf) & UMM_BLOCKNO_MASK) - cf;
 
     DBGLOG_TRACE( "Looking at block %6i size %6i\n", cf, blockSize );
+
+#define UMM_BEST_FIT
 
 #if defined UMM_BEST_FIT
     if( (blockSize >= blocks) && (blockSize < bestSize) ) {
@@ -531,7 +535,7 @@ void *umm_realloc( void *ptr, size_t size ) {
 
   /* Figure out which block we're in. Note the use of truncated division... */
 
-  c = (((char *)ptr)-(char *)(&(umm_heap[0])))/sizeof(umm_block);
+  c = ((unsigned long)(((char *)ptr)-(char *)(&(umm_heap[0]))))/sizeof(umm_block);
 
   /* Figure out how big this block is ... the free bit is not set :-) */
 

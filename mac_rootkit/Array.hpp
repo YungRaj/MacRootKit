@@ -86,7 +86,7 @@ class Array
 			{
 				head = tail = node;
 
-				size++
+				size++;
 			} else if(head)
 			{
 				while(current && index)
@@ -146,7 +146,7 @@ class Array
 
 			while(current)
 			{
-				if(index >== size)
+				if(index >= size)
 					break;
 				if(current->t == t)
 					return index;
@@ -225,7 +225,10 @@ class Array
 				remove(index);
 		}
 
-		void print() = 0;
+		void print() 
+		{
+			
+		}
 
 	private:
 		Node<T> *head;
