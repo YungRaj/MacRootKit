@@ -1,9 +1,26 @@
 #include "Isa_arm64.hpp"
 
+void push_registers_arm64() {}
+void push_registers_arm64_end() {}
+
+void set_argument_arm64() {}
+void set_argument_arm64_end() {}
+
+void check_breakpoint_arm64() {}
+void check_breakpoint_arm64_end() {}
+
+void breakpoint_arm64() {}
+void breakpoint_arm64_end() {}
+
+void pop_registers_arm64() {}
+void pop_registers_arm64_end() {}
+
 namespace Arch
 {
 	namespace arm64
 	{
+		size_t BreakpointSize() { return Breakpoint; }
+
 		union Breakpoint makeBreakpoint()
 		{
 			union Breakpoint breakpoint;
@@ -14,6 +31,9 @@ namespace Arch
 
 			return breakpoint;
 		}
+
+		size_t NormalBranchSize() { return NormalBranch; }
+		size_t IndirectBranchSize() { return IndirectBranch; }
 
 		union Branch makeBranch(mach_vm_address_t to, mach_vm_address_t from)
 		{
@@ -55,6 +75,8 @@ namespace Arch
 
 			return branch;
 		}
+
+		size_t FunctionCallSize() { return CallFunction; }
 
 		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from)
 		{

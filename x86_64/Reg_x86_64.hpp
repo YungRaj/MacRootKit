@@ -39,7 +39,6 @@ namespace Arch
 		#define EFL_VIF         0x00080000              /* virtual interrupt flag */
 		#define EFL_VIP         0x00100000              /* virtual interrupt pending */
 		#define EFL_ID          0x00200000              /* cpuID instruction */
-		#endif
 
 		#define EFL_CLR         0xfff88028
 		#define EFL_SET         0x00000002
@@ -47,7 +46,7 @@ namespace Arch
 		#define EFL_USER_SET    (EFL_IF)
 		#define EFL_USER_CLEAR  (EFL_IOPL|EFL_NT|EFL_RF)
 
-		#define MSR_IA32_EFER                           0xC0000080
+		#define     MSR_IA32_EFER                           0xC0000080
 		#define     MSR_IA32_EFER_SCE                       0x00000001
 		#define     MSR_IA32_EFER_LME                       0x00000100
 		#define     MSR_IA32_EFER_LMA                       0x00000400

@@ -1,14 +1,15 @@
 #ifndef __DISASSEMBLER_HPP_
 #define __DISASSEMBLER_HPP_
 
+#include <capstone/capstone.h>
+
 #include "Arch.hpp"
 
 #include "umm_malloc.h"
 
-#include <x86_64/Disassembler_x86_64.hpp>
-#include <arm64/Disassembler_arm64.hpp>
-
 using namespace Arch;
+
+class Task;
 
 struct DisasmSig
 {

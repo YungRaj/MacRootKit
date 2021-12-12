@@ -24,7 +24,7 @@ Kext* KernelMachO::kextWithIdentifier(Kernel *kernel, char *kextname)
 	return rootkit->getKextByIdentifier(kextname);
 }
 
-void MachO::parseLinkedit()
+void KernelMachO::parseLinkedit()
 {
 	MachO::parseLinkedit();
 }

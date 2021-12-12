@@ -4,6 +4,8 @@ namespace Arch
 {
 	namespace x86_64
 	{
+		size_t BreakpointSize() { return Breakpoint; }
+
 		union Breakpoint makeBreakpoint()
 		{
 			union Breakpoint breakpoint;
@@ -12,6 +14,12 @@ namespace Arch
 
 			return breakpoint;
 		}
+
+		size_t JumpSize() { return SmallJump; }
+
+		size_t SmallJumpSize() { return SmallJump; }
+		size_t NearJumpSize() { return NearJump; }
+		size_t LongJumpSize() { return LongJump; }
 
 		union Jump makeJump(mach_vm_address_t to, mach_vm_address_t from)
 		{
@@ -46,6 +54,8 @@ namespace Arch
 
 			return jmp;
 		}
+
+		size_t FunctionCallSize() { return FunctionCall; }
 
 		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from)
 		{

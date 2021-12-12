@@ -1,5 +1,13 @@
 #include "Disassembler.hpp"
 
+#include "Task.hpp"
+
+#include <x86_64/x86_64.hpp>
+#include <arm64/arm64.hpp>
+
+#include <x86_64/Disassembler_x86_64.hpp>
+#include <arm64/Disassembler_arm64.hpp>
+
 Disassembler::Disassembler(Task *task)
 {
 	this->task = task;

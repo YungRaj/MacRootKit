@@ -32,7 +32,7 @@ namespace Arch
 
 		union Breakpoint makeBreakpoint();
 
-		size_t BreakpointSize() { return Breakpoint; }
+		size_t BreakpointSize();
 
 		union Breakpoint
 		{
@@ -53,11 +53,11 @@ namespace Arch
 
 		union Jump makeJump(mach_vm_address_t to, mach_vm_address_t from);
 
-		size_t JumpSize() { return SmallJump; }
+		size_t JumpSize();
 
-		size_t SmallJumpSize() { return SmallJump; }
-		size_t NearJumpSize() { return NearJump; }
-		size_t LongJumpSize() { return LongJump; }
+		size_t SmallJumpSize();
+		size_t NearJumpSize();
+		size_t LongJumpSize();
 
 		static constexpr uint8_t SmallJumpPrefix = 0xE9;
 		static constexpr uint16_t LongJumpPrefix = 0x25FF;
@@ -103,7 +103,7 @@ namespace Arch
 
 		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from);
 
-		size_t FunctionCallSize() { return FunctionCall; }
+		size_t FunctionCallSize();
 
 		union FunctionCall
 		{

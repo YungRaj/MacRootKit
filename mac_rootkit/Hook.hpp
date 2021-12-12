@@ -68,20 +68,23 @@ extern "C"
 
 #elif __arm64__
 
-void push_registers_arm64() { }
-void push_registers_arm64_end() { }
+extern "C"
+{
+	void push_registers_arm64();
+	void push_registers_arm64_end();
 
-void set_argument_arm64() { }
-void set_argument_arm64_end() { }
+	void set_argument_arm64();
+	void set_argument_arm64_end();
 
-void check_breakpoint_arm64() { }
-void check_breakpoint_arm64_end() { }
+	void check_breakpoint_arm64();
+	void check_breakpoint_arm64_end();
 
-void breakpoint_arm64() { }
-void breakpoint_arm64_end() { }
+	void breakpoint_arm64();
+	void breakpoint_arm64_end();
 
-void pop_registers_arm64() { }
-void pop_registers_arm64_end() { }
+	void pop_registers_arm64();
+	void pop_registers_arm64_end();
+}
 
 #define push_registers            push_registers_arm64
 #define push_registers_end        push_registers_arm64_end

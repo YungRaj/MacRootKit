@@ -20,7 +20,7 @@ extern "C"
 	#include "kern.h"
 }
 
-OSDefineMetaClassAndStructors(IOKernelRootKitService, IOService)
+OSDefineMetaClassAndStructors(IOKernelRootKitUserClient, IOUserClient)
 
 IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
 {
