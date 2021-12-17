@@ -2,6 +2,8 @@
 
 #include "MacRootKit.hpp"
 
+#include "Arch.hpp"
+
 #include "KernelMachO.hpp"
 
 #include "Hook.hpp"
@@ -9,7 +11,6 @@
 
 #include "Task.hpp"
 #include "Kernel.hpp"
-
 
 static KernelPatcher *that = nullptr;
 
@@ -41,6 +42,21 @@ KernelPatcher::~KernelPatcher()
 
 bool KernelPatcher::dummyBreakpoint(union RegisterState *state)
 {
+	switch(Arch::getArchitecture())
+	{
+		case ARCH_x86_64:
+			RegisterState_x86_64 *state_x86_64 = &state->state_x86_64;
+
+			break;
+		case ARCH_arm64:
+			RegisterState_arm64 *state_arm64 = &state->state_arm64;
+
+			break;
+
+		default:
+			break;
+	}
+
 	return false;
 }
 

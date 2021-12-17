@@ -8,6 +8,26 @@ class Task
 
 		~Task();
 
+		mach_vm_address_t getTask() { return task; }
+
+		mach_vm_address_t getProc() { return proc; }
+
+		char* getName() { return name; }
+
+		Dyld* getDyld() { return dyld; }
+
+		Process* getProcess() { return process; }
+
+		static Task* getTaskInfo(Kernel *kernel, char *task_name);
+
+		static mach_vm_address_t findProcByPid(Kernel *kernel, int pid);
+		static mach_vm_address_t findProcByName(Kernel *kernel, char *name);
+
+		static mach_vm_address_t findTaskByPid(Kernel *kernel, int pid);
+		static mach_vm_address_t findTaskByName(Kernel *kernel, char *name);
+
+		static mach_vm_address_t findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port);
+
 		virtual mach_vm_address_t getBase();
 
 		virtual off_t getSlide();
@@ -48,10 +68,17 @@ class Task
 		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
 		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
-	protected:
-		mach_port_t task_port;
 
-		mach_vm_address_t base;
+		mach_vm_address_t getImageLoadedAt(char *image_name, char **image_path);
+
+		virtual void printLoadedImages();
+
+	protected:
+		MachO *macho;
+
+		Disassembler *disassembler;
+
+		mach_port_t task_port;
 
 		off_t slide;
 
@@ -61,7 +88,19 @@ class Task
 		mach_vm_address_t map;
 		mach_vm_address_t pmap;
 
+		char *name; 
+		char *path;
+
+		Process *process;
+
 		int pid;
+
+		mach_vm_address_t base;
+
+		mach_vm_address_t dyld_base;
+		mach_vm_address_t dyld_shared_cache;
+
+		Dyld *dyld;
 };	
 
 #endif

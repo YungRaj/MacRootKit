@@ -19,7 +19,21 @@ class Kernel;
 
 namespace Heap
 {
+	class Zone;
+
+	class KallocHeap;
+	class KallocTypeView;
+};
+
+namespace Heap
+{
+	static Kernel *kernel = NULL;
+
 	static Array<Zone*> zones;
+
+	static Array<KallocHeap*> allHeaps;
+
+	static Array<KallocTypeView*> allTypeViews;
 
 	static mach_vm_address_t zone_array;
 	static mach_vm_address_t zone_security_array;
@@ -31,11 +45,88 @@ namespace Heap
 
 	static size_t num_zones;
 
+	Zone* zoneForAddress(mach_vm_address_t address);
+
 	void enumerateAllZones(Kernel *kernel);
+
+	void enumerateKallocHeaps(Kernel *kernel, mach_vm_address_t kalloc_zones_default, mach_vm_address_t kalloc_zones_kext, mach_vm_address_t kalloc_zones_data_buffers);
+
+	void enumerateKallocTypeViews(Kernel *kernel, Segment *segment, Section *section);
 
 	namespace ZoneAllocator
 	{
+		Zone* findLargestZone();
 
+		Zone* createZone();
+
+		void destroyZone(Zone *zone);
+
+		namespace ZoneInfo
+		{
+			zone_info_t* zoneInfo();
+		}
+
+		namespace ZoneStats
+		{
+			zone_stats_t zoneStatsForZone(mach_vm_address_t zone);
+		}
+
+		namespace ZoneIndex
+		{
+			zone_id_t zoneIndexForZone(mach_vm_address_t zone);
+
+			zone_id_t zoneIndexFromAddress(mach_vm_address_t address);
+
+			zone_id_t zoneIndexFromPointer(void *ptr);
+		}
+
+		namespace ZonePva
+		{
+			zone_pva_t zonePvaFromAddress(mach_vm_address_t zone);
+
+			zone_pva_t zonePvaFromMeta(mach_vm_address_t meta);
+
+			zone_pva_t zonePvaFromElement(zone_element_t element);
+
+			mach_vm_address_t zonePvaToAddress(zone_pva_t pva);
+
+			mach_vm_address_t zonePvaToMeta(zone_pva_t pva);
+		}
+
+		namespace ZoneBits
+		{
+			struct zone_bits_allocator_header* zoneBitsAllocatorHeader(mach_vm_address_t zone_bits_header);
+
+			mach_vm_address_t zoneBitsAllocatorRefPtr(mach_vm_address_t address);
+
+			mach_vm_address_t zoneBitsAllocatorBase();
+
+			size_t zoneBitsAllocatorSize();
+		}
+
+		namespace PageMetadata
+		{
+			namespace FreeList
+			{
+				uint64_t bitMap(mach_vm_address_t address, struct zone_page_metadata *metadata);
+
+				uint32_t inlineBitMap(mach_vm_address_t address, struct zone_page_metadata *metadata);
+			}
+
+			struct zone_page_metadata* zoneMetadata(mach_vm_address_t meta);
+
+			mach_vm_address_t zoneMetaFromAddress(mach_vm_address_t address);
+
+			mach_vm_address_t zoneMetaFromElement(zone_element_t element);
+
+			mach_vm_address_t zoneMetaToAddress(mach_vm_address_t meta);
+		}
+
+		zone_t zone(mach_vm_address_t zone);
+
+		mach_vm_address_t zoneFromName(char *zone_name);
+
+		mach_vm_address_t zoneFromAddress(mach_vm_address_t address);
 	};
 
 	class Zone
@@ -43,6 +134,7 @@ namespace Heap
 		public:
 			Zone() { }
 
+			Zone(Kernel *kernel, mach_vm_address_t zone);
 			Zone(Kernel *kernel, zone_id_t zone_id);
 			Zone(Kernel *kernel, char *zone_name);
 
@@ -53,17 +145,27 @@ namespace Heap
 
 			static zone_info_t zoneInfo(Kernel *kernel);
 
-			zone_t getZone() { return zone; }
+			void setKallocHeap(KallocHeap *kheap) { this->kheap = kheap; }
 
-			char* getZoneName() { return zone_name; }
+			void setKallocTypeView(KallocTypeView *typeview) { this->typeview = typeview; }
 
-			char* getZoneSiteName() { return zone_site_name; }
+			mach_vm_address_t getZoneAddress() { return zone; }
+
+			zone_t getZone() { return z }
+
+			char* getZoneName() { return z_name; }
+
+			char* getZoneSiteName() { return z_site_name; }
 
 			char* getKHeapName() { return kheap_name; }
 
-			zone_id_t getZoneId() { return zone_id; }
+			uint16_t getZoneElementSize() { return z_elem_size; }
 
-			zone_stats_t getZoneStats();
+			zone_id_t getZoneId() { return z_id; }
+
+			zone_info_t* getZoneInfo() { return z_info; }
+
+			zone_stats_t getZoneStats() { return z_stats; }
 
 			zone_element_t getZoneElement(mach_vm_address_t address);
 
@@ -73,19 +175,25 @@ namespace Heap
 
 			bool checkFree(mach_vm_address_t address);
 
+			void parseZone();
+
 		private:
 			Kernel *kernel;
 
-			zone_t zone;
+			mach_vm_address_t zone;
 
-			char* zone_name;
-			char *zone_site_name;
+			zone_t z;
 
-			zone_id_t zone_id;
+			zone_id_t z_id;
 
-			zone_info_t zone_info;
+			zone_info_t z_info;
 
-			zone_stats zone_stats;
+			zone_stats z_stats;
+
+			char* z_name;
+			char *z_site_name;
+
+			uint16_t z_elem_size;
 
 			KallocHeap *kheap;
 
@@ -96,18 +204,21 @@ namespace Heap
 	class KallocHeap
 	{
 		public:
-			KallocHeap();
+			KallocHeap(struct kheap_zones *kheap_zones, struct kalloc_heap *kalloc_heap);
 
 			~KallocHeap();
 
 			Array<Zone*> getZones() { return &zones; }
+
+			char* getKHeapName() { return kh_name; }
 
 			zone_kheap_id_t getKHeapId() { return kheap_id; }
 
 			Zone* getZoneByName(char *zone_name);
 			Zone* getZoneByIndex(zone_id_t zone_id);
 
-			char* getKHeapName();
+			void parseKallocHeap();
+
 		private:
 			Kernel *kernel;
 
@@ -117,12 +228,16 @@ namespace Heap
 
 			struct kalloc_heap *kalloc_heap;
 			struct kheap_zones *kheap_zones;
+
+			char *kh_name;
+
+			zone_kheap_id_t kh_id;
 	};
 
 	class KallocTypeView
 	{
 		public:
-			KallocTypeView();
+			KallocTypeView(struct kalloc_type_view *typeview);
 
 			~KallocTypeView();
 
@@ -134,11 +249,17 @@ namespace Heap
 
 			Segment* getSegment() { return segment; }
 
+			Section* getSection() { return section; }
+
+			zone_stats_t getKallocTypeViewStats();
+
 			off_t getSegmentOffset() { return offset; }
 
-			char* getSignature() { return signature; }
+			char* getSignature() { return kt_signature; }
 
-			char * getSiteName() { return site; }
+			char * getSiteName() { return kt_site; }
+
+			void parseTypeView();
 
 		private:
 			Kernel *kernel;
@@ -148,12 +269,33 @@ namespace Heap
 			KallocHeap *kheap;
 
 			Segment *segment;
+			Section *section;
 
 			off_t offset;
 
-			struct kalloc_type_viewe *typeview;
+			struct kalloc_type_view *typeview;
 
-			char *signature;
+			char *kt_signature;
 
-			char *site;
+			char *kt_site;
 	}
+
+	namespace ZoneAllocatorTest
+	{
+		Zone* findLargestZone();
+
+		Zone* createZone();
+
+		void destroyZone(Zone* zone);
+
+		void triggerGarbageCollection();
+		void triggerGarbageCollectionForZone(Zone *zone);
+
+		void expandZones();
+		void expandZone(Zone *zone);
+
+		void sprayMemory();
+	}
+};
+
+#endif
