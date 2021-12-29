@@ -21,6 +21,7 @@
 		#include "API.h"
 #ifdef __cplusplus
 	}
+
 #endif
 
 #include <mach/mach_types.h>

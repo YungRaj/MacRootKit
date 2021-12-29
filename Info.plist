@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>MacRootkit</string>
+	<string>MacRootKit</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.YungRaj.MacRootKit</string>
 	<key>CFBundleName</key>
@@ -13,7 +13,7 @@
 	<key>CFBundlePackageType</key>
 	<string>KEXT</string>
 	<key>CFBundleVersion</key>
-	<string>1.0)</string>
+	<string>1.0</string>
 	<key>IOKitPersonalities</key>
 	<dict>
 		<key>com.YungRaj.MacRootKit</key>
@@ -44,10 +44,8 @@
 		<string>8.0.0</string>
 		<key>com.apple.kpi.unsupported</key>
 		<string>8.0.0</string>
-		<key>com.apple.kernel.6.0</key>
-		<string>7.9.9</string>
 	</dict>
-	<key>OSBundleLibraries_x86_64</key>
+	<key>OSBundleLibraries_arm64</key>
 	<dict>
 		<key>com.apple.kpi.bsd</key>
 		<string>10.0.0</string>

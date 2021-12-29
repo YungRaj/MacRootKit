@@ -2,7 +2,7 @@
 
 vm_map_t kernel_map_ = 0;
 
-pmap_t kernel_pmap = 0;
+pmap_t kernel_pmap_ = 0;
 
 mach_vm_address_t vm_read_ = 0;
 mach_vm_address_t vm_write_ = 0;
@@ -14,7 +14,7 @@ mach_vm_address_t vm_allocate_ = 0;
 mach_vm_address_t vm_deallocate_ = 0;
 
 mach_vm_address_t vm_map_copyin_ = 0;
-mach_vm_address_t vm_map_overwrite_ = 0;
+mach_vm_address_t vm_map_copy_overwrite_ = 0;
 
 mach_vm_address_t pmap_find_phys_ = 0;
 

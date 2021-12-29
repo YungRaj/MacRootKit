@@ -50,7 +50,6 @@ kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel,
 
 extern "C"
 {
-
 	static kern_return_t mac_rootkit_kmod_start(struct kmod_info *ki, void *data)
 	{
 		MAC_RK_LOG("MacRK::kmod_start()!\n");
@@ -68,8 +67,5 @@ extern "C"
 	__private_extern__ kmod_start_func_t *_realmain = &mac_rootkit_kmod_start;
 	__private_extern__ kmod_stop_func_t *_antimain = &mac_rootkit_kmod_stop;
 
-	extern kern_return_t _start(kmod_info_t *ki, void *data);
-	extern kern_return_t _stop(kmod_info_t *ki, void *data);
-
-	__attribute__((visibility("default"))) KMOD_EXPLICIT_DECL(net.siguza.hsp4, "1.0.0", _start, _stop);
+	__attribute__((visibility("default"))) KMOD_EXPLICIT_DECL(com.YungRaj.MacRootKit, "1.0.1", mac_rootkit_kmod_start, mac_rootkit_kmod_stop);
 }
