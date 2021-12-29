@@ -1,9 +1,30 @@
 #ifndef __TASK_HPP_
 #define __TASK_HPP_
 
+#include <stdint.h>
+#include <string.h>
+
+#include <sys/types.h>
+#include <mach/mach_types.h>
+
+class Kernel;
+
+class Dyld;
+class Process;
+
+class Disassembler;
+
+class MachO;
+
+class Symbol;
+class Segment;
+class Section;
+
 class Task
 {
 	public:
+		Task() { }
+		
 		Task(mach_port_t task_port);
 
 		~Task();
@@ -17,6 +38,8 @@ class Task
 		Dyld* getDyld() { return dyld; }
 
 		Process* getProcess() { return process; }
+
+		Disassembler* getDisassembler() { return disassembler; }
 
 		static Task* getTaskInfo(Kernel *kernel, char *task_name);
 

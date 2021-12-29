@@ -5,8 +5,6 @@
 
 #include "Arch.hpp"
 
-#include "umm_malloc.h"
-
 using namespace Arch;
 
 class Task;

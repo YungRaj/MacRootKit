@@ -1,11 +1,11 @@
 #ifndef _USER_MACHO_HPP__
 #define _USER_MACHO_HPP__
 
-#include "mach-o.h"
-
 #include "MachO.hpp"
 #include "Array.hpp"
 #include "SymbolTable.hpp"
+
+#include "mach-o.h"
 
 class Segment;
 class Section;

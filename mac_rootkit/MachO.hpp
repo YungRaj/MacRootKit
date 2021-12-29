@@ -17,6 +17,13 @@ class SymbolTable;
 class Segment;
 class Section;
 
+#ifdef __USER__
+
+#define max(x, y) (x > y ? x : y)
+#define min(x, y) (x > y ? y : x)
+
+#endif
+
 class MachO
 {
 	public:

@@ -2,6 +2,7 @@
 
 Kernel::Kernel()
 {
+	Task();
 }
 
 Kernel::~Kernel()

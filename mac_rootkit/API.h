@@ -33,6 +33,7 @@ enum kIOKernelRootKitOperation
 	kIOKernelRootKitMachVmRead,
 	kIOKernelRootKitMachVmWrite,
 	kIOKernelRootKitMachVmAllocate,
+	kIOKernelRootKitMachVmDeallocate,
 	kIOKernelRootKitMachVmProtect,
 	kIOKernelRootKitMachVmCall,
 	kIOKernelRootKitVirtualToPhysical,

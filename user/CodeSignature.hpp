@@ -8,6 +8,8 @@
 
 #include <mach-o.h>
 
+#include "MachO.hpp"
+
 class MachO;
 
 class CodeSignature

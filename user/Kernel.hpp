@@ -1,6 +1,8 @@
 #ifndef __KERNEL_HPP_
 #define __KERNEL_HPP_
 
+#include "Task.hpp"
+
 class Kernel : public Task
 {
 	public:
@@ -83,6 +85,6 @@ class Kernel : public Task
 
 		off_t slide;
 
-}
+};
 
 #endif

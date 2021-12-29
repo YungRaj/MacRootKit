@@ -270,7 +270,7 @@ void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *
 
 		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
 
-		this->symbol_table->addSymbol(symbol);
+		this->symbolTable->addSymbol(symbol);
 	}
 }
 
@@ -353,7 +353,7 @@ bool UserMachO::parseLoadCommands()
 
 	size_t file_size;
 
-	this->size = this->getMachOSize();
+	this->size = this->getSize();
 
 	file_size = this->size;
 

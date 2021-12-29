@@ -32,7 +32,7 @@ typedef uint32_t mach_port_t;
 #define LC_UUID                     0x0000001b
 #define LC_CODE_SIGNATURE           0x0000001d
 #define LC_ENCRYPTION_INFO          0x00000021
-#define LC_DYLD_INFO                0x0000002
+#define LC_DYLD_INFO                0x00000022
 #define LC_DYLD_INFO_ONLY          (0x00000022 | LC_REQ_DYLD)
 #define LC_FUNCTION_STARTS          0x00000026
 #define LC_MAIN                    (0x28|LC_REQ_DYLD)
@@ -389,13 +389,13 @@ typedef union
 
 } pacptr_t;
 
-enum
+enum dyld_fixup_t
 {
     DYLD_CHAINED_PTR_NONE                       = 0, // pacptr.raw
     DYLD_CHAINED_PTR_ARM64E                     = 1, // pacptr.pac
     DYLD_CHAINED_PTR_ARM64E_KERNEL              = 7, // pacptr.cache, virt offset from kernel base
     DYLD_CHAINED_PTR_64_KERNEL_CACHE            = 8, // pacptr.cache, file offset
-} dyld_fixup_t;
+};
 
 struct dyld_chained_fixups_header
 {

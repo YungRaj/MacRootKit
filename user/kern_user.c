@@ -19,7 +19,7 @@ bool open_kernel_tfp0_connection()
 
 	io_name_t name;
 
-	kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching(service_name), &iterator);
+	kern_return_t kr = IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(service_name), &iterator);
 
 	if(iterator == MACH_PORT_NULL)
 		return false;
@@ -63,7 +63,7 @@ mach_port_t get_task_for_pid(int pid)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0TaskForPid, input, 1, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitTaskForPid, input, 1, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -84,7 +84,7 @@ mach_vm_address_t get_kernel_symbol(char *symname)
 
 	printf("0x%llx\n", (uint64_t) &output);
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0GetKernelSymbol, input, 2, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetKernelSymbol, input, 2, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -103,7 +103,7 @@ off_t get_kernel_slide()
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0GetKaslrSlide, input, 0, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetKaslrSlide, input, 0, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -122,7 +122,7 @@ mach_vm_address_t get_kernel_base()
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0GetKernelBase, input, 0, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetKernelBase, input, 0, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -157,7 +157,7 @@ bool kernel_hook(mach_vm_address_t address, mach_vm_address_t hook, size_t hook_
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0HookKernelFunction, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitHookKernelFunction, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -194,7 +194,7 @@ bool kernel_set_breakpoint(mach_vm_address_t address, mach_vm_address_t breakpoi
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0AddBreakpoint, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitAddBreakpoint, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -233,7 +233,7 @@ uint64_t kernel_call(mach_vm_address_t symaddr, uint64_t *arguments, size_t argc
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelCall, arguments, argcount, 0, 0,  output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelCall, arguments, argcount, 0, 0,  output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -252,7 +252,7 @@ bool kernel_read(mach_vm_address_t address, void *data, size_t size)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelRead, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelRead, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -319,7 +319,7 @@ bool kernel_write(mach_vm_address_t address, const void *data, size_t size)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelWrite, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelWrite, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -358,7 +358,7 @@ mach_vm_address_t kernel_vm_allocate(size_t size)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmAllocate, input, 1, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmAllocate, input, 1, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -377,7 +377,7 @@ void kernel_vm_deallocate(mach_vm_address_t address, size_t size)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmDeallocate, input, 2, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmDeallocate, input, 2, 0, 0, output, &outputCnt, 0, 0);
 }
 
 bool kernel_vm_protect(mach_vm_address_t address, size_t size, vm_prot_t prot)
@@ -389,7 +389,7 @@ bool kernel_vm_protect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmProtect, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmProtect, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -412,7 +412,7 @@ void* kernel_vm_remap(mach_vm_address_t address, size_t size)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmProtect, input, 2, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmProtect, input, 2, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -433,7 +433,7 @@ uint64_t kernel_virtual_to_physical(mach_vm_address_t vaddr)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmProtect, input, 1, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmProtect, input, 1, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -452,7 +452,7 @@ bool phys_read(uint64_t paddr, void *data, size_t size)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0PhysRead, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitPhysicalRead, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -519,7 +519,7 @@ bool phys_write(uint64_t paddr, const void *data, size_t size)
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0PhysWrite, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitPhysicalWrite, input, 3, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -565,7 +565,7 @@ uint64_t task_call(mach_port_t task_port, mach_vm_address_t symaddr, uint64_t *a
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0MachVmCall, arguments, argcount, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitMachVmCall, arguments, argcount, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -584,7 +584,7 @@ bool task_vm_read(mach_port_t task, mach_vm_address_t address, void *data, size_
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0MachVmRead, input, 4, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitMachVmRead, input, 4, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -603,7 +603,7 @@ bool task_vm_write(mach_port_t task, mach_vm_address_t address, const void *data
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0MachVmWrite, input, 4, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitMachVmWrite, input, 4, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -622,7 +622,7 @@ mach_vm_address_t task_vm_allocate(mach_port_t task, size_t size)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0MachVmAllocate, input, 2, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitMachVmAllocate, input, 2, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -641,7 +641,7 @@ void task_vm_deallocate(mach_port_t task, mach_vm_address_t address, size_t size
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0MachVmDeallocate, input, 3, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitMachVmDeallocate, input, 3, 0, 0, output, &outputCnt, 0, 0);
 }
 
 bool task_vm_protect(mach_port_t task, mach_vm_address_t address, size_t size, vm_prot_t prot)
@@ -653,7 +653,7 @@ bool task_vm_protect(mach_port_t task, mach_vm_address_t address, size_t size, v
 
 	uint32_t outputCnt = 0;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmProtect, input, 4, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmProtect, input, 4, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -672,7 +672,7 @@ uint64_t virtual_to_physical(mach_port_t task, mach_vm_address_t vaddr)
 
 	uint32_t outputCnt = 1;
 
-	kr = IOConnectCallMethod(connection, kIOKernelTFP0KernelVmProtect, input, 2, 0, 0, output, &outputCnt, 0, 0);
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitKernelVmProtect, input, 2, 0, 0, output, &outputCnt, 0, 0);
 
 	if(kr != KERN_SUCCESS)
 	{

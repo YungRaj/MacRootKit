@@ -3,15 +3,12 @@
  * Brandon Azad
  */
 #define IOSURFACE_EXTERN
-#include "iosurface.h"
+
+#include "IOSurface.hpp"
+#include "IOKit.hpp"
 
 #include <assert.h>
 #include <pthread.h>
-
-#include "IOKitLib.h"
-#include "OSSerializeBinary.h"
-#include "log.h"
-#include "parameters.h"
 
 // ---- IOSurface types ---------------------------------------------------------------------------
 
@@ -67,7 +64,7 @@ IOSurface_init() {
 			kIOMasterPortDefault,
 			IOServiceMatching("IOSurfaceRoot"));
 	if (IOSurfaceRoot == MACH_PORT_NULL) {
-		ERROR("could not find %s", "IOSurfaceRoot");
+		fprintf(stderr, "could not find %s", "IOSurfaceRoot");
 		return false;
 	}
 	kern_return_t kr = IOServiceOpen(
@@ -76,7 +73,7 @@ IOSurface_init() {
 			0,
 			&IOSurfaceRootUserClient);
 	if (kr != KERN_SUCCESS) {
-		ERROR("could not open %s", "IOSurfaceRootUserClient");
+		fprintf(stderr, "could not open %s", "IOSurfaceRootUserClient");
 		return false;
 	}
 	struct _IOSurfaceFastCreateArgs create_args = { .alloc_size = 0x4000, };
@@ -90,7 +87,7 @@ IOSurface_init() {
 			NULL, NULL,
 			&lock_result, &lock_result_size);
 	if (kr != KERN_SUCCESS) {
-		ERROR("could not create %s: 0x%x", "IOSurfaceClient", kr);
+		fprintf(stderr, "could not create %s: 0x%x", "IOSurfaceClient", kr);
 		return false;
 	}
 	IOSurface_id = lock_result.surface_id;
@@ -125,7 +122,7 @@ IOSurface_set_value(const struct IOSurfaceValueArgs *args, size_t args_size) {
 			NULL, NULL,
 			&result, &result_size);
 	if (kr != KERN_SUCCESS) {
-		ERROR("failed to %s value in %s: 0x%x", "set", "IOSurface", kr);
+		fprintf(stderr, "failed to %s value in %s: 0x%x", "set", "IOSurface", kr);
 		return false;
 	}
 	return true;
@@ -148,7 +145,7 @@ IOSurface_get_value(const struct IOSurfaceValueArgs *in, size_t in_size,
 			NULL, NULL,
 			out, out_size);
 	if (kr != KERN_SUCCESS) {
-		ERROR("failed to %s value in %s: 0x%x", "get", "IOSurface", kr);
+		fprintf(stderr, "failed to %s value in %s: 0x%x", "get", "IOSurface", kr);
 		return false;
 	}
 	return true;
@@ -172,7 +169,7 @@ IOSurface_remove_value(const struct IOSurfaceValueArgs *args, size_t args_size) 
 			NULL, NULL,
 			&result, &result_size);
 	if (kr != KERN_SUCCESS) {
-		ERROR("failed to %s value in %s: 0x%x", "remove", "IOSurface", kr);
+		fprintf(stderr, "failed to %s value in %s: 0x%x", "remove", "IOSurface", kr);
 		return false;
 	}
 	return true;
@@ -217,15 +214,15 @@ serialize_IOSurface_data_array(uint32_t *xml0, uint32_t array_length, uint32_t d
 		uint32_t **xml_data, uint32_t **key) {
 	uint32_t *xml = xml0;
 	*xml++ = kOSSerializeBinarySignature;
-	*xml++ = kOSSerializeArray | 2 | kOSSerializeEndCollecton;
+	*xml++ = kOSSerializeArray | 2 | kOSSerializeEndCollection;
 	*xml++ = kOSSerializeArray | array_length;
 	for (size_t i = 0; i < array_length; i++) {
-		uint32_t flags = (i == array_length - 1 ? kOSSerializeEndCollecton : 0);
+		uint32_t flags = (i == array_length - 1 ? kOSSerializeEndCollection : 0);
 		*xml++ = kOSSerializeData | (data_size - 1) | flags;
 		xml_data[i] = xml;
 		xml += xml_units_for_data_size(data_size);
 	}
-	*xml++ = kOSSerializeSymbol | sizeof(uint32_t) + 1 | kOSSerializeEndCollecton;
+	*xml++ = kOSSerializeSymbol | sizeof(uint32_t) + 1 | kOSSerializeEndCollection;
 	*key = xml++;		// This will be filled in on each array loop.
 	*xml++ = 0;		// Null-terminate the symbol.
 	return (xml - xml0) * sizeof(*xml);
@@ -259,13 +256,15 @@ IOSurface_spray_with_gc_internal(uint32_t array_count, uint32_t array_length, ui
 	// Allocate the args struct.
 	struct IOSurfaceValueArgs *args;
 	size_t args_size = sizeof(*args) + xml_units * sizeof(args->xml[0]);
-	args = malloc(args_size);
+
+	args = (struct IOSurfaceValueArgs*) malloc(args_size);
+
 	assert(args != 0);
 	// Build the IOSurfaceValueArgs.
 	args->surface_id = IOSurface_id;
 	// Create the serialized OSArray. We'll remember the locations we need to fill in with our
 	// data as well as the slot we need to set our key.
-	uint32_t **xml_data = malloc(current_array_length * sizeof(*xml_data));
+	uint32_t **xml_data = (uint32_t**) malloc(current_array_length * sizeof(*xml_data));
 	assert(xml_data != NULL);
 	uint32_t *key;
 	size_t xml_size = serialize_IOSurface_data_array(args->xml,
@@ -366,8 +365,11 @@ IOSurface_spray_read_array(uint32_t array_id, uint32_t array_length, uint32_t da
 	// data to the client without having to worry about the fact that the kernel data is 1 byte
 	// shorter (which otherwise would produce an out-of-bounds read on the last element for
 	// certain data sizes). Yeah, it's a hack, deal with it.
-	args_out = malloc(args_out_size + sizeof(uint32_t));
+	args_out = (struct IOSurfaceValueArgs*) malloc(args_out_size + sizeof(uint32_t));
 	assert(args_out != 0);
+
+	uint32_t *xml;
+
 	// Get the value.
 	bool ok = IOSurface_get_value((struct IOSurfaceValueArgs *)&args_in, sizeof(args_in),
 			args_out, &args_out_size);
@@ -375,19 +377,19 @@ IOSurface_spray_read_array(uint32_t array_id, uint32_t array_length, uint32_t da
 		goto fail;
 	}
 	// Do the ugly parsing ourselves. :(
-	uint32_t *xml = args_out->xml;
+	xml = args_out->xml;
 	if (*xml++ != kOSSerializeBinarySignature) {
-		ERROR("did not find OSSerializeBinary signature");
+		fprintf(stderr, "did not find OSSerializeBinary signature");
 		goto fail;
 	}
-	if (*xml++ != (kOSSerializeArray | array_length | kOSSerializeEndCollecton)) {
-		ERROR("unexpected container");
+	if (*xml++ != (kOSSerializeArray | array_length | kOSSerializeEndCollection)) {
+		fprintf(stderr, "unexpected container");
 		goto fail;
 	}
 	for (uint32_t data_id = 0; data_id < array_length; data_id++) {
-		uint32_t flags = (data_id == array_length - 1 ? kOSSerializeEndCollecton : 0);
+		uint32_t flags = (data_id == array_length - 1 ? kOSSerializeEndCollection : 0);
 		if (*xml++ != (kOSSerializeString | data_size - 1 | flags)) {
-			ERROR("unexpected data: 0x%x != 0x%x at index %u",
+			fprintf(stderr, "unexpected data: 0x%x != 0x%x at index %u",
 					xml[-1], kOSSerializeString | data_size - 1 | flags,
 					data_id);
 			goto fail;

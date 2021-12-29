@@ -16,9 +16,8 @@
 #include <IOKit/IOKitLib.h>
 
 #include "mach_vm.h"
-#include "task.h"
 
-#include "kalloc_spray.h"
+#include "mach_msg_spray.h"
 
 // Credit to oob_timstampp by Brandon Azad for basis for code
 // https://bugs.chromium.org/p/project-zero/issues/detail?id=1986
