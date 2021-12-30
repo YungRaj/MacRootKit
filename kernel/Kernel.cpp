@@ -69,7 +69,7 @@ mach_vm_address_t Kernel::findKernelCollection()
 {
 	static mach_vm_address_t kernel_collection = 0;
 
-	if(kernel_collection)
+	if(kernel_collection != 0)
 		return kernel_collection;
 
 	mach_vm_address_t near = reinterpret_cast<mach_vm_address_t>(IOLog);
