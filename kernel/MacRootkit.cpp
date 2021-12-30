@@ -9,6 +9,8 @@ MacRootKit::MacRootKit(Kernel *kernel)
 
 	this->platformArchitecture = Arch::getArchitecture();
 
+	this->registerCallbacks();
+
 	this->kernelPatcher = new KernelPatcher(this->kernel);
 }
 

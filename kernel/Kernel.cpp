@@ -69,7 +69,7 @@ mach_vm_address_t Kernel::findKernelCollection()
 {
 	static mach_vm_address_t kernel_collection = 0;
 
-	if(kernel_collection != 0)
+	if(kernel_collection)
 		return kernel_collection;
 
 	mach_vm_address_t near = reinterpret_cast<mach_vm_address_t>(IOLog);
@@ -107,6 +107,14 @@ mach_vm_address_t Kernel::findKernelBase()
 
 	mach_vm_address_t kc = Kernel::findKernelCollection();
 
+	char buffer[128];
+
+	snprintf(buffer, 128, "0x%llx", kc);
+
+	MAC_RK_LOG("MacRK::Kernel::findKernelCollection() == %s\n", buffer);
+
+	return 0;
+
 	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
@@ -119,7 +127,7 @@ mach_vm_address_t Kernel::findKernelBase()
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			if(strncmp(segment_command->segname, "__PRELINK_TEXT", strlen("__PRELINK_TEXT") + 1) == 0)
+			if(strncmp(segment_command->segname, "__PRELINK_TEXT", strlen("__PRELINK_TEXT")) == 0)
 			{
 				kernel_base = segment_command->vmaddr;
 

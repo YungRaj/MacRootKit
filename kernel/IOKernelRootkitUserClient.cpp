@@ -92,9 +92,9 @@ bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, 
 
 bool IOKernelRootKitUserClient::start(IOService *provider)
 {
-	IOKernelRootKitService *service = this->kernel->getRootKitService();
+	// IOKernelRootKitService *service = this->kernel->getRootKitService();
 
-	this->rootkitService = service;
+	// this->rootkitService = service;
 
 	return IOUserClient::start(provider);
 }

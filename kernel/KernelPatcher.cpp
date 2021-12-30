@@ -97,6 +97,7 @@ void KernelPatcher::onOSKextSaveLoadedKextPanicList()
 	if(that->waitingForAlreadyLoadedKexts)
 	{
 		that->processAlreadyLoadedKexts();
+
 		that->waitingForAlreadyLoadedKexts = false;
 	} else
 	{
@@ -308,7 +309,11 @@ void KernelPatcher::registerCallbacks()
 void KernelPatcher::processAlreadyLoadedKexts()
 {
 	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
+	{
 		processKext(kmod, true);
+	}
+
+	this->waitingForAlreadyLoadedKexts = false;
 }
 
 void KernelPatcher::processKext(kmod_info_t *kmod, bool loaded)

