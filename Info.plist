@@ -7,7 +7,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.YungRaj.MacRootKit</string>
 	<key>CFBundleName</key>
-	<string>MacRootKit</string>
+	<string>MacRK</string>
 	<key>CFBundlePackageType</key>
 	<string>KEXT</string>
 	<key>CFBundleVersion</key>
@@ -22,8 +22,6 @@
 			<string>IOKernelRootKitService</string>
 			<key>IOProviderClass</key>
 			<string>IOResources</string>
-			<key>IOResourceMatch</key>
-			<string>IOBSD</string>
 			<key>IOUserClientClass</key>
 			<string>IOKernelRootKitUserClient</string>
 		</dict>
@@ -31,19 +29,15 @@
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>com.apple.kpi.bsd</key>
-		<string>15.0</string>
-		<key>com.apple.kpi.dsep</key>
-		<string>15.0</string>
+		<string>14.0</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>15.0</string>
+		<string>14.0</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>15.0</string>
+		<string>14.0</string>
 		<key>com.apple.kpi.mach</key>
-		<string>15.0</string>
+		<string>14.0</string>
 		<key>com.apple.kpi.unsupported</key>
-		<string>15.0</string>
+		<string>14.0</string>
 	</dict>
-	<key>OSBundleRequired</key>
-	<string>Root</string>
 </dict>
 </plist>

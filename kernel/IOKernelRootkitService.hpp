@@ -36,7 +36,7 @@ class IOKernelRootKitService : public IOService
 
 		virtual IOService* probe(IOService *provider, SInt32 *score) override;
 
-		virtual void clientClosed(IOKernelRootKitUserClient *client);
+		virtual void clientClosed(IOUserClient *client);
 
 		MacRootKit* getRootKit() { return rootkit; }
 

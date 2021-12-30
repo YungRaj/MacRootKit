@@ -54,36 +54,27 @@ kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel,
 
 extern "C"
 {
-	static kern_return_t mac_rootkit_kmod_start(struct kmod_info *ki, void *data)
-	{
-		mach_vm_address_t kernel_base = Kernel::findKernelBase();
-
-		off_t kernel_slide = 0; //Kernel::findKernelSlide();
-
-		char buffer[128];
-
-		snprintf(buffer, 128, "0x%llx", kernel_base);
-
-		MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
-
-		snprintf(buffer, 128, "0x%llx", kernel_slide);
-
-		MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
-		
+	kern_return_t kern_start(kmod_info_t *ki, void *data)
+	{	
 		MAC_RK_LOG("MacRK::kmod_start()!\n");
 
 		return KERN_SUCCESS;
 	}
 
-	static kern_return_t mac_rootkit_kmod_stop(struct kmod_info *ki, void *data)
+	kern_return_t kern_stop(kmod_info_t *ki, void *data)
 	{
 		MAC_RK_LOG("MacRK::kmod_stop()!\n");
 
 		return KERN_SUCCESS;
 	}
 
-	__private_extern__ kmod_start_func_t *_realmain = &mac_rootkit_kmod_start;
-	__private_extern__ kmod_stop_func_t *_antimain = &mac_rootkit_kmod_stop;
+	extern kern_return_t _start(kmod_info_t *, void*);
+	extern kern_return_t _stop(kmod_info_t *, void*);
 
-	// __attribute__((visibility("default"))) KMOD_EXPLICIT_DECL(com.YungRaj.MacRootKit, "1.0.1", mac_rootkit_kmod_start, mac_rootkit_kmod_stop);
+	__private_extern__ kmod_start_func_t *_realmain = kern_start;
+	__private_extern__ kmod_stop_func_t *_antimain = kern_stop;
+
+	__attribute__((visibility("default"))) KMOD_EXPLICIT_DECL(com.YungRaj.MacRootKit, "1.0.1", _start, _stop);
+
+	__private_extern__ int _kext_apple_;
 }

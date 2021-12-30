@@ -19,6 +19,8 @@ bool IOKernelRootKitService::init(OSDictionary *properties)
 	if(!this->userClients)
 		return false;
 
+	MAC_RK_LOG("MacRK::IOKernelRootKitService::init()!\n");
+
 	return IOService::init(properties);
 }
 
@@ -37,7 +39,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	char buffer[128];
 
-	// MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
+	MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
 
 	/*
 	snprintf(buffer, 128, "0x%llx", kernel_base);
@@ -64,7 +66,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 		//this->rootkit = mac_rootkit_get_rootkit();
 	}
 
-	// registerService();
+	registerService();
 
 	return ret == kIOReturnSuccess && IOService::start(provider);
 }
@@ -95,11 +97,11 @@ IOService* IOKernelRootKitService::probe(IOService *provider, SInt32 *score)
 	return IOService::probe(provider, score);
 }
 
-void IOKernelRootKitService::clientClosed(IOKernelRootKitUserClient *client)
+void IOKernelRootKitService::clientClosed(IOUserClient *client)
 {
 	if(client)
 	{
-		this->removeUserClient(client);
+		this->removeUserClient(reinterpret_cast<IOKernelRootKitUserClient*>(client));
 	}
 }
 
