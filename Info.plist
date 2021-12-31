@@ -20,6 +20,8 @@
 			<string>com.YungRaj.MacRootKit</string>
 			<key>IOClass</key>
 			<string>IOKernelRootKitService</string>
+			<key>IOMatchCategory</key>
+			<string>IOKernelRootKitService</string>
 			<key>IOProviderClass</key>
 			<string>IOResources</string>
 			<key>IOUserClientClass</key>
@@ -29,15 +31,17 @@
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>com.apple.kpi.bsd</key>
-		<string>14.0</string>
+		<string>8.0</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>14.0</string>
+		<string>8.0</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>14.0</string>
+		<string>8.0</string>
 		<key>com.apple.kpi.mach</key>
-		<string>14.0</string>
+		<string>8.0</string>
 		<key>com.apple.kpi.unsupported</key>
-		<string>14.0</string>
+		<string>8.0</string>
 	</dict>
+	<key>OSBundleRequired</key>
+	<string>Root</string>
 </dict>
 </plist>

@@ -38,6 +38,7 @@ typedef uint32_t mach_port_t;
 #define LC_MAIN                    (0x28|LC_REQ_DYLD)
 #define LC_DATA_IN_CODE             0x00000029
 #define LC_DYLD_CHAINED_FIXUPS     (0x00000034 | LC_REQ_DYLD)
+#define LC_FILESET_ENTRY           (0x00000035 | LC_REQ_DYLD)
 
 
 #define N_STAB                            0xe0
@@ -192,6 +193,16 @@ struct section_64
     uint32_t reserved1;
     uint32_t reserved2;
     uint32_t reserved3;
+};
+
+struct fileset_entry_command
+{
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint64_t vmaddr;
+    uint64_t fileoff;
+    uint32_t entry_id;
+    uint32_t reserved;
 };
 
 struct symtab_command

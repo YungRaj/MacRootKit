@@ -139,7 +139,7 @@ bool KernelMachO::parseLoadCommands()
 				uint32_t strsize = symtab_command->strsize;
 
 				if(nsyms > 0)
-					this->parseSymbolTable(symtab, nsyms, strtab, strsize);
+					// this->parseSymbolTable(symtab, nsyms, strtab, strsize);
 
 				break;
 			}

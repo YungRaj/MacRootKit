@@ -27,6 +27,7 @@ Kernel::Kernel(mach_vm_address_t base, mach_vm_address_t slide)
 
 	this->macho->initWithBase(base, slide);
 
+	/*
 	this->createKernelTaskPort();
 
 	this->getKernelObjects();
@@ -59,10 +60,55 @@ Kernel::Kernel(mach_vm_address_t base, mach_vm_address_t slide)
 	);
 
 	this->disassembler = new Disassembler(this);
+	*/
 }
 
 Kernel::~Kernel()
 {
+}
+
+/*
+
+KernelCache slide: 0x000000000bd54000\n
+KernelCache base:  0xfffffe0012d58000\n
+Kernel slide:      0x000000000c580000\n
+Kernel text base:  0xfffffe0013584000\n
+Kernel text exec slide: 0x000000000c668000\n
+Kernel text exec base:  0xfffffe001366c000
+
+*/
+
+mach_vm_address_t Kernel::findKernelCache()
+{
+	static mach_vm_address_t kernel_cache = 0;
+
+	if(kernel_cache)
+		return kernel_cache;
+
+	mach_vm_address_t near = 0xfffffe0000000000 | *reinterpret_cast<mach_vm_address_t*>(IOLog);
+
+	size_t kaslr_align = 0x4000;
+
+	near &= ~(kaslr_align - 1);
+
+	while(true)
+	{
+		struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(near);
+
+		if(mh->magic == MH_MAGIC_64)
+		{
+			if(mh->filetype == 0xC && mh->flags == 0 && mh->reserved == 0)
+			{
+				break;
+			}
+		}
+
+		near -= kaslr_align;
+	}
+
+	kernel_cache = near;
+
+	return kernel_cache;
 }
 
 mach_vm_address_t Kernel::findKernelCollection()
@@ -105,15 +151,43 @@ mach_vm_address_t Kernel::findKernelBase()
 	if(kernel_base)
 		return kernel_base;
 
-	mach_vm_address_t kc = Kernel::findKernelCollection();
+	mach_vm_address_t kc;
 
-	char buffer[128];
+#ifdef __arm64__
 
-	snprintf(buffer, 128, "0x%llx", kc);
+	kc = Kernel::findKernelCache();
 
-	MAC_RK_LOG("MacRK::Kernel::findKernelCollection() == %s\n", buffer);
+	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
-	return 0;
+	uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
+
+	for(uint32_t i = 0; i < mh->ncmds; i++)
+	{
+		struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
+
+		if(load_command->cmd == LC_FILESET_ENTRY)
+		{
+			struct fileset_entry_command *fileset_entry_command = reinterpret_cast<struct fileset_entry_command*>(load_command);
+
+			char *entry_id = reinterpret_cast<char*>(fileset_entry_command) + fileset_entry_command->entry_id;
+
+			if(strcmp(entry_id, "com.apple.kernel") == 0)
+			{
+				kernel_base = 0xfffffe0000000000 | fileset_entry_command->vmaddr;
+
+				break;
+			}
+		}
+
+		q += load_command->cmdsize;
+	}
+
+
+#endif
+
+#ifdef __x86_64__
+
+	kc = Kernel::findKernelCollection();
 
 	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
@@ -138,6 +212,8 @@ mach_vm_address_t Kernel::findKernelBase()
 		q += load_command->cmdsize;
 	}
 
+#endif
+
 	return kernel_base;
 }
 
@@ -150,6 +226,14 @@ off_t Kernel::findKernelSlide()
 	struct mach_header_64 *mh;
 
 	base = Kernel::findKernelBase();
+
+#ifdef __arm64__
+
+	return base - 0xfffffe0007004000;
+
+#endif
+
+#ifdef __x86_64__
 
 	mh = reinterpret_cast<struct mach_header_64*>(base);
 
@@ -174,7 +258,9 @@ off_t Kernel::findKernelSlide()
 		q += load_command->cmdsize;
 	}
 
-	return text_base - 0xffffff8000200000;
+	return text_base - 0xfffffe0007004000;
+	
+#endif
 }
 
 mach_vm_address_t Kernel::getBase()

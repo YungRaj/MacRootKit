@@ -18,7 +18,7 @@ class Section
 			this->offset = section->offset;
 			this->size = section->size;
 
-			this->name = new char[strlen(section->sectname)];
+			this->name = new char[strlen(section->sectname) + 1];
 
 			strlcpy(this->name, section->sectname, strlen(section->sectname));
 		}

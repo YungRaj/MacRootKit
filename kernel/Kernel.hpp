@@ -34,6 +34,8 @@ class Kernel : public Task
 
 		~Kernel();
 
+		static mach_vm_address_t findKernelCache();
+
 		static mach_vm_address_t findKernelCollection();
 
 		static mach_vm_address_t findKernelBase();
