@@ -30,7 +30,9 @@ class Kernel : public Task
 	public:
 		Kernel(mach_port_t kernel_task_port);
 
-		Kernel(mach_vm_address_t base, mach_vm_address_t slide);
+		Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+
+		Kernel(mach_vm_address_t base, off_t slide);
 
 		~Kernel();
 

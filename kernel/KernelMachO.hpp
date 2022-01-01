@@ -15,6 +15,12 @@ class KernelMachO : public MachO
 
 		~KernelMachO();
 
+		mach_vm_address_t getKernelCache() { return kernel_cache; }
+
+		mach_vm_address_t getKernelCollection() { return kernel_collection; }
+
+		void setKernelCache(mach_vm_address_t kc) { this->kernel_cache = kc; }
+
 		void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
 		static Kext* kextLoadedAt(Kernel *kernel, mach_vm_address_t address);
@@ -28,6 +34,8 @@ class KernelMachO : public MachO
 
 	private:
 		Kernel *kernel;
+
+		mach_vm_address_t kernel_cache;
 
 		mach_vm_address_t kernel_collection;
 

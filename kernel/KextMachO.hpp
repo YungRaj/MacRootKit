@@ -17,6 +17,7 @@ class Kernel;
 class KextMachO : public MachO
 {
 	public:
+		KextMachO(Kernel *kernel, char *name, mach_vm_address_t base);
 		KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info);
 
 		~KextMachO();
@@ -51,6 +52,7 @@ class KextMachO : public MachO
 
 		off_t base_offset;
 
+		mach_vm_address_t kernel_cache;
 		mach_vm_address_t kernel_collection;
 
 		kmod_info_t *kmod_info;

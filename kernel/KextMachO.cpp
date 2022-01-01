@@ -1,5 +1,18 @@
 #include "KextMachO.hpp"
 
+KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
+{
+	this->kernel = kernel;
+	this->name = name;
+	this->base_offset = 0;
+	this->kernel_cache = Kernel::findKernelCache();
+	this->kernel_collection = 0;
+
+	this->initWithBase(base, 0);
+
+	// this->kmod_info = reinterpret_cast<kmod_info_t*>(this->getSymbolAddressByName("_kmod_info"));
+}
+
 KextMachO::KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info)
 {
 	this->kernel = kernel;
@@ -8,6 +21,7 @@ KextMachO::KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info)
 	this->name = &this->kmod_info->name[0];
 	this->base_offset = 0;
 	this->kernel_collection = Kernel::findKernelCollection();
+	this->kernel_cache = 0;
 
 	this->initWithBase(this->kmod_info->address, 0);
 }
@@ -26,11 +40,17 @@ bool KextMachO::parseLoadCommands()
 {
 	struct mach_header_64 *mh = this->getMachHeader();
 
-	size_t file_size;
+	char buffer[128];
 
-	this->size = this->getSize();
+	snprintf(buffer, 128, "0x%llx", (uint64_t) mh);
 
-	file_size = this->size;
+	MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh = %s\n", buffer);
+
+	snprintf(buffer, 128, "0x%llx", (uint64_t) this->getOffset(sizeof(struct mach_header_64)));
+
+	MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
+
+	// this->size = this->getSize();
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
 
@@ -43,9 +63,11 @@ bool KextMachO::parseLoadCommands()
 		uint32_t cmdtype = load_command->cmd;
 		uint32_t cmdsize = load_command->cmdsize;
 
+		
 		if(cmdsize > mh->sizeofcmds - ((uintptr_t) load_command - (uintptr_t)(mh + 1)))
 			return false;
 
+		/*
 		switch(cmdtype)
 		{
 			case LC_SEGMENT_64:
@@ -123,6 +145,12 @@ bool KextMachO::parseLoadCommands()
 				;
 				struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_command);
 
+				struct nlist_64 *symtab;
+				uint32_t nsyms;
+
+				char *strtab;
+				uint32_t strsize;
+
 				if(symtab_command->stroff > this->size || symtab_command->symoff > this->size || symtab_command->nsyms > (this->size - symtab_command->symoff) / sizeof(struct nlist_64))
 					return false;
 
@@ -130,18 +158,44 @@ bool KextMachO::parseLoadCommands()
 				MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
 				MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
 
-				struct nlist_64 *symtab = reinterpret_cast<struct nlist_64*>(this->getBase() + (symtab_command->symoff - this->base_offset));
-				uint32_t nsyms = symtab_command->nsyms;
+				if(kernel_cache)
+				{
+					symtab = reinterpret_cast<struct nlist_64*>(this->kernel_cache + symtab_command->symoff);
+					nsyms = symtab_command->nsyms;
 
-				char *strtab = reinterpret_cast<char*>(this->getBase() + (symtab_command->stroff - this->base_offset));
-				uint32_t strsize = symtab_command->strsize;
+					strtab = reinterpret_cast<char*>(this->kernel_cache + symtab_command->stroff);
+					strsize = symtab_command->strsize;
+
+					char buffer1[128];
+					char buffer2[128];
+
+					snprintf(buffer1, 128, "0x%llx", (uint64_t) symtab);
+					snprintf(buffer2, 128, "0x%llx", (uint64_t) strtab);
+
+					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
+					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+
+				} else if(kernel_collection)
+				{
+					symtab = reinterpret_cast<struct nlist_64*>(this->getBase() + (symtab_command->symoff - this->base_offset));
+					nsyms = symtab_command->nsyms;
+
+					strtab = reinterpret_cast<char*>(this->getBase() + (symtab_command->stroff - this->base_offset));
+					strsize = symtab_command->strsize;
+				} else
+				{
+					symtab = NULL;
+					nsyms = 0;
+
+					strtab = NULL;
+					strsize = 0;
+				}
 
 				if(nsyms > 0)
-					this->parseSymbolTable(symtab, nsyms, strtab, strsize);
-
+					// this->parseSymbolTable(symtab, nsyms, strtab, strsize);
+				
 				break;
 			}
-
 			case LC_DYSYMTAB:
 			{
 				;
@@ -194,6 +248,7 @@ bool KextMachO::parseLoadCommands()
 				break;
 			}
 		}
+		*/
 
 		current_offset += cmdsize;
 	}
@@ -212,7 +267,9 @@ void KextMachO::parseHeader()
 
 	} else if(magic == MH_MAGIC_64)
 	{
+	#ifdef __x86_64__
 		this->size = this->kmod_info->size;
+	#endif
 
 		this->parseLoadCommands();
 	}
@@ -220,5 +277,5 @@ void KextMachO::parseHeader()
 
 void KextMachO::parseMachO()
 {
-	MachO::parseMachO();
+	this->parseHeader();
 }

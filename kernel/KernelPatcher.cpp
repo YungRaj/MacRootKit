@@ -25,9 +25,9 @@ KernelPatcher::KernelPatcher(Kernel *kernel)
 	this->kernel = kernel;
 	this->kextKmods = reinterpret_cast<kmod_info_t**>(this->kernel->getSymbolAddressByName("_kmod"));
 
-	this->installEntitlementHook();
-	this->installBinaryLoadHook();
-	this->installKextLoadHook();
+	// this->installEntitlementHook();
+	// this->installBinaryLoadHook();
+	// this->installKextLoadHook();
 
 	// this->installDummyBreakpoint();
 
@@ -101,12 +101,16 @@ void KernelPatcher::onOSKextSaveLoadedKextPanicList()
 		that->waitingForAlreadyLoadedKexts = false;
 	} else
 	{
+	
+	#ifdef __x86_64__
 		kmod_info_t *kmod = *that->getKextKmods();
 
 		if(kmod)
 		{
 			that->processKext(kmod, false);
 		}
+	#endif
+	
 	}
 }
 
@@ -120,9 +124,9 @@ void* KernelPatcher::OSKextLookupKextWithIdentifier(const char *identifier)
 
 	__ZN6OSKext24lookupKextWithIdentifierEPKc = reinterpret_cast<lookupKextWithIdentifier>(OSKext_lookupWithIdentifier);
 
-	void *OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(identifier);
+	// void *OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(identifier);
 
-	return OSKext;
+	return 0;
 }
 
 OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlement)
@@ -308,10 +312,63 @@ void KernelPatcher::registerCallbacks()
 
 void KernelPatcher::processAlreadyLoadedKexts()
 {
+#ifdef __x86_64__
+
 	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
-		processKext(kmod, true);
+		this->processKext(kmod, true);
 	}
+	
+#endif
+
+#ifdef __arm64__
+
+	mach_vm_address_t kernel_cache = Kernel::findKernelCache();
+
+	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kernel_cache);
+
+	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
+
+	for(int i = 0; i < mh->ncmds; i++)
+	{
+		struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
+
+		if(load_command->cmd == LC_FILESET_ENTRY)
+		{
+			struct fileset_entry_command *fileset_entry_command = reinterpret_cast<struct fileset_entry_command*>(load_command);
+
+			mach_vm_address_t base = fileset_entry_command->vmaddr;
+
+			char *entry_id = reinterpret_cast<char*>(fileset_entry_command) + fileset_entry_command->entry_id;
+
+			if(base && strcmp(entry_id, "com.apple.kernel") != 0)
+			{
+				kmod_info_t *kmod = new kmod_info_t;
+
+				kmod->address = 0xfffffe0000000000 | base;
+				kmod->size = 0;
+
+				strlcpy(reinterpret_cast<char*>(&kmod->name), entry_id, strlen(entry_id) + 1);
+
+				kmod->start = (kmod_start_func_t*) 0;
+				kmod->stop = (kmod_stop_func_t*) 0;
+
+				this->processKext(kmod, true);
+
+				char buffer1[128];
+				char buffer2[128];
+
+				snprintf(buffer1, 128, "0x%lx", kmod->address);
+				snprintf(buffer2, 128, "0x%x", *(uint32_t*) kmod->address);
+
+				MAC_RK_LOG("MacRK::KernelPatcher::processing Kext %s = %s @ %s = %s\n", entry_id, buffer1, entry_id, buffer2);
+			}
+		}
+
+		q += load_command->cmdsize;
+	}
+
+#endif
 
 	this->waitingForAlreadyLoadedKexts = false;
 }

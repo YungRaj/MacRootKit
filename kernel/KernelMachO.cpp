@@ -3,7 +3,13 @@
 KernelMachO::KernelMachO(Kernel *kernel)
 {
 	this->kernel = kernel;
+#ifdef __x86_64__
 	this->kernel_collection = Kernel::findKernelCollection();
+	this->kernel_cache = 0;
+#elif __arm64__
+	this->kernel_cache = Kernel::findKernelCache();
+	this->kernel_collection = 0;
+#endif
 }
 
 KernelMachO::~KernelMachO()
@@ -125,6 +131,12 @@ bool KernelMachO::parseLoadCommands()
 				;
 				struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_command);
 
+				struct nlist_64 *symtab;
+				uint32_t nsyms;
+
+				char *strtab;
+				uint32_t strsize;
+
 				if(symtab_command->stroff > this->size || symtab_command->symoff > this->size || symtab_command->nsyms > (this->size - symtab_command->symoff) / sizeof(struct nlist_64))
 					return false;
 
@@ -132,14 +144,42 @@ bool KernelMachO::parseLoadCommands()
 				MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
 				MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
 
-				struct nlist_64 *symtab = reinterpret_cast<struct nlist_64*>(linkedit + (symtab_command->symoff - linkedit_off));
-				uint32_t nsyms = symtab_command->nsyms;
+				if(this->kernel_cache)
+				{
+					symtab = reinterpret_cast<struct nlist_64*>(this->kernel_cache + symtab_command->symoff);
+					nsyms = symtab_command->nsyms;
 
-				char *strtab = reinterpret_cast<char*>(linkedit + (symtab_command->stroff - linkedit_off));
-				uint32_t strsize = symtab_command->strsize;
+					strtab = reinterpret_cast<char*>(this->kernel_cache + symtab_command->stroff);
+					strsize = symtab_command->strsize;
+
+					char buffer1[128];
+					char buffer2[128];
+
+					snprintf(buffer1, 128, "0x%llx", (uint64_t) symtab);
+					snprintf(buffer2, 128, "0x%llx", (uint64_t) strtab);
+
+					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
+					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+					
+				} else if(this->kernel_collection)
+				{
+					symtab = reinterpret_cast<struct nlist_64*>(linkedit + (symtab_command->symoff - linkedit_off));
+					nsyms = symtab_command->nsyms;
+
+					strtab = reinterpret_cast<char*>(linkedit + (symtab_command->stroff - linkedit_off));
+					strsize = symtab_command->strsize;
+
+				} else
+				{
+					symtab = NULL;
+					nsyms = 0;
+
+					strtab = NULL;
+					strsize = 0;
+				}
 
 				if(nsyms > 0)
-					// this->parseSymbolTable(symtab, nsyms, strtab, strsize);
+					this->parseSymbolTable(symtab, nsyms, strtab, strsize);
 
 				break;
 			}

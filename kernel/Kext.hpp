@@ -13,6 +13,8 @@ class KextMachO;
 class Kext
 {
 	public:
+		Kext(Kernel *kernel, mach_vm_address_t base, char *identifier);
+
 		Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info);
 
 		~Kext();

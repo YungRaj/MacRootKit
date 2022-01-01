@@ -102,16 +102,29 @@ void MacRootKit::onProcLoad(task_t task, const char *path, size_t len)
 
 }
 
-void MacRootKit::onKextLoad(void *kext, kmod_info_t *kmod_info)
+void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
 {
-	Kext *loadedKext;
+	Kext *kext;
 
-	loadedKext = new Kext(this->getKernel(), kext, kmod_info);
+	if(kmod_info->size)
+	{
+		// kext = new Kext(this->getKernel(), kext, kmod_info);
+	} else
+	{
+		kext = new Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));
+	}
+
+	kexts.add(kext);
 }
 
 kmod_info_t* MacRootKit::findKmodInfo(const char *kextname)
 {
-	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
+	kmod_info_t *kmod;
+
+	if(!kextKmods)
+		return NULL;
+
+	for(kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
 		if(strcmp(kmod->name, kextname) == 0)
 		{

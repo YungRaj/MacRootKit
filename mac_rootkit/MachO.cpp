@@ -11,8 +11,9 @@ void MachO::initWithBase(mach_vm_address_t base, off_t slide)
 	this->aslr_slide = slide;
 	this->buffer = reinterpret_cast<char*>(base);
 	this->header = reinterpret_cast<struct mach_header_64*>(buffer);
-
-	parseMachO();
+	this->symbolTable = new SymbolTable();
+	
+	this->parseMachO();
 }
 
 size_t MachO::getSize()
@@ -101,7 +102,7 @@ off_t MachO::addressToOffset(mach_vm_address_t address)
 			{
 				struct section_64 *section = reinterpret_cast<struct section_64*>(this->getOffset(sect_offset));
 
-				uint64_t sectaddr = section->addr + this->aslr_slide;
+				uint64_t sectaddr = section->addr;
 				uint64_t sectsize = section->size;
 
 				uint64_t offset = section->offset;
@@ -113,8 +114,6 @@ off_t MachO::addressToOffset(mach_vm_address_t address)
 
 				sect_offset += sizeof(struct section_64);
 			}
-
-			current_offset += cmdsize;
 		}
 
 		current_offset += cmdsize;
@@ -220,8 +219,6 @@ Section* MachO::sectionForOffset(off_t offset)
 
 void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
 {
-	this->symbolTable = new SymbolTable();
-
 	for(int i = 0; i < nsyms; i++)
 	{
 		Symbol *symbol;
@@ -323,5 +320,5 @@ void MachO::parseHeader()
 
 void MachO::parseMachO()
 {
-	parseHeader();
+	this->parseHeader();
 }

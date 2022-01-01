@@ -14,6 +14,7 @@ mach_vm_address_t vm_allocate_ = 0;
 mach_vm_address_t vm_deallocate_ = 0;
 
 mach_vm_address_t vm_map_copyin_ = 0;
+mach_vm_address_t vm_map_copyout_ = 0;
 mach_vm_address_t vm_map_copy_overwrite_ = 0;
 
 mach_vm_address_t pmap_find_phys_ = 0;
