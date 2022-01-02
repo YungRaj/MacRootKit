@@ -293,6 +293,8 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	Payload *payload = this->prepareTrampoline();
 
+	/*
+
 	struct HookPatch *chain = this->getLatestRegisteredHook();
 
 	mach_vm_address_t trampoline;
@@ -362,6 +364,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	hook->patch_size = branch_size;
 
 	this->registerHook(hook);
+	*/
 }
 
 void Hook::uninstallHook()

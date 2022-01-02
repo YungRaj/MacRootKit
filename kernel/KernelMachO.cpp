@@ -160,7 +160,6 @@ bool KernelMachO::parseLoadCommands()
 
 					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
 					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
-					
 				} else if(this->kernel_collection)
 				{
 					symtab = reinterpret_cast<struct nlist_64*>(linkedit + (symtab_command->symoff - linkedit_off));

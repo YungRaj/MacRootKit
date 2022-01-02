@@ -26,6 +26,10 @@ Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 	this->macho = new KernelMachO(this);
 
 	this->macho->initWithBase(base, slide);
+
+	// this->getKernelObjects();
+
+	this->disassembler = new Disassembler(this);
 }
 
 Kernel::Kernel(mach_vm_address_t base, off_t slide)
@@ -34,10 +38,12 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 
 	this->macho->initWithBase(base, slide);
 
+	// this->getKernelObjects();
+
+	this->disassembler = new Disassembler(this);
+
 	/*
 	this->createKernelTaskPort();
-
-	this->getKernelObjects();
 
 	this->kernelWriteLock = IOSimpleLockAlloc();
 
@@ -65,8 +71,6 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 					   this->getSymbolAddressByName("_ml_phys_write_half_64"),
 					   this->getSymbolAddressByName("_ml_phys_write_byte_64")
 	);
-
-	this->disassembler = new Disassembler(this);
 	*/
 }
 
@@ -703,16 +707,90 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	mach_vm_address_t address = 0;
 
-	mach_vm_address_t kext_map = this->read64(this->getSymbolAddressByName("_g_kext_map"));
+	mach_vm_address_t map;
 
-	uint64_t vmEnterArgs[13] = { kext_map, (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+#ifdef __x86_64__
+
+	map = this->read64(this->getSymbolAddressByName("_g_kext_map"));
+
+	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
 	ret = static_cast<kern_return_t>(this->call("_vm_map_enter", vmEnterArgs, 13));
+
+#elif __arm64__
+
+#include <arm64/Isa_arm64.hpp>
+
+	using namespace Arch::arm64;
+
+	mach_vm_address_t vm_allocate_external = this->getSymbolAddressByName("_vm_allocate_external");
+
+	char buffer[128];
+
+	mach_vm_address_t branch = this->disassembler->disassembleNthInstruction(vm_allocate_external, ARM64_INS_B, 1, 0x10);
+
+	bool sign;
+
+	b_t b = *(b_t*) branch;
+
+	uint64_t imm = b.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	mach_vm_address_t vm_allocate = sign ? branch - imm : branch + imm;
+
+	branch = this->disassembler->disassembleNthInstruction(vm_allocate, ARM64_INS_BL, 1, 0x100);
+
+	bl_t bl = *(bl_t*) branch;
+
+	imm = bl.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	mach_vm_address_t vm_map_enter = sign ? branch - imm : branch + imm;
+
+	snprintf(buffer, 128, "0x%llx", vm_map_enter);
+
+	MAC_RK_LOG("MacRK::vm_map_enter() = %s\n", buffer);
+
+	map = this->getSymbolAddressByName("_kernel_map");
+
+	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+
+	ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
+
+#endif
 
 	if(ret != KERN_SUCCESS)
 	{
 		address = 0;
 	}
+
+	snprintf(buffer, 128, "0x%llx", address);
+
+	MAC_RK_LOG("MacRK::vm_map_enter() return address = %s\n", buffer);
 
 	return address;
 }

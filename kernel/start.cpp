@@ -33,7 +33,15 @@ kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel,
 		ret = kIOReturnUnsupported;
 	}
 
-	// *kext = rootkit->getKextByIdentifier("com.YungRaj.MacRootKit");
+	*kext = rootkit->getKextByIdentifier("com.YungRaj.MacRootKit");
+
+	if(!kext)
+	{
+		MAC_RK_LOG("MacRK::mac_rootkit_start() cannot find com.YungRaj.MacRootKit kext!\n");
+	} else
+	{
+		MAC_RK_LOG("MacRK::mac_rootkit_start() found com.YungRaj.MacRootKit kext!\n");
+	}
 
 	return ret;
 }

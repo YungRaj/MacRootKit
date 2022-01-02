@@ -32,12 +32,24 @@ struct DisasmSig
 	}
 };
 
+enum DisassemblerType
+{
+	DisassemblerType_x86_64,
+	DisassemblerType_arm64,
+	DisassemblerType_Unknown,
+	DisassemblerType_None,
+};
+
 class Disassembler
 {
 	public:
 		Disassembler(Task *task);
 
+		~Disassembler();
+
 		enum Architectures getArchitecture() { return architecture; }
+
+		enum DisassemblerType getDisassemblerType() { return disassembler; }
 
 		void initDisassembler();
 
@@ -60,7 +72,11 @@ class Disassembler
 	private:
 		enum Architectures architecture;
 
+		enum DisassemblerType disassembler;
+
 		Task *task;
+
+		enum DisassemblerType getDisassemblerFromArch();
 };
 
 #endif

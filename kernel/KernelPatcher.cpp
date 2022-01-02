@@ -25,15 +25,15 @@ KernelPatcher::KernelPatcher(Kernel *kernel)
 	this->kernel = kernel;
 	this->kextKmods = reinterpret_cast<kmod_info_t**>(this->kernel->getSymbolAddressByName("_kmod"));
 
-	// this->installEntitlementHook();
+	this->processAlreadyLoadedKexts();
+
+	this->waitingForAlreadyLoadedKexts = false;
+
+	this->installEntitlementHook();
 	// this->installBinaryLoadHook();
 	// this->installKextLoadHook();
 
 	// this->installDummyBreakpoint();
-
-	this->processAlreadyLoadedKexts();
-
-	this->waitingForAlreadyLoadedKexts = false;
 }
 
 KernelPatcher::~KernelPatcher()
@@ -232,7 +232,7 @@ void KernelPatcher::onEntitlementRequest(task_t task, const char *entitlement, v
 
 Hook* KernelPatcher::installEntitlementHook()
 {
-	Hook *hook;
+	Hook *hook = NULL;
 
 	mach_vm_address_t orig_copyClientEntitlement;
 	mach_vm_address_t hooked_copyClientEntitlement;

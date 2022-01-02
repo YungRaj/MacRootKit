@@ -241,10 +241,10 @@ void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strt
 
 		snprintf(buffer, 128, "0x%llx", address);
 
-		MAC_RK_LOG("MacRK::MachO::symbol address %s name = %s\n", buffer, name);
+		// MAC_RK_LOG("MacRK::MachO::symbol address %s name = %s\n", buffer, name);
 	}
 
-	MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+	// MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
 }
 
 void MachO::parseLinkedit()

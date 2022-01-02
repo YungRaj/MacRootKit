@@ -3,6 +3,7 @@
 
 #include "umm_malloc.h"
 
+
 namespace Arch
 {
 	namespace arm64
@@ -11,7 +12,7 @@ namespace Arch
 		{
 			bool initialized = false;
 
-			size_t handle_arm64;
+			size_t handle_arm64 {};
 
 			static constexpr size_t MaxInstruction = 15;
 
@@ -41,6 +42,8 @@ namespace Arch
 
 					if(err != CS_ERR_OK)
 					{
+						MAC_RK_LOG("MacRK::Disassembler::init() failed 1!\n");
+						
 						return false;
 					}
 
@@ -49,10 +52,12 @@ namespace Arch
 
 			#endif
 
-				cs_err err = cs_open(CS_ARCH_ARM, CS_MODE_64, &handle_arm64);
+				cs_err err = cs_open(CS_ARCH_ARM64, CS_MODE_ARM, &handle_arm64);
 
 				if(err != CS_ERR_OK)
 				{
+					MAC_RK_LOG("MacRK::Disassembler::init() failed! 2 err = %d\n", err);
+					
 					return false;
 				}
 
@@ -64,9 +69,13 @@ namespace Arch
 
 					if(err != CS_ERR_OK)
 					{
+						MAC_RK_LOG("MacRK::Disassembler::init() failed! 3\n");
+
 						return false;
 					}
 				}
+
+				MAC_RK_LOG("MacRK::Disassembler::init() success!\n");
 
 				return true;
 			}
@@ -237,36 +246,55 @@ namespace Arch
 			{
 				cs_insn *result = nullptr;
 
-				size_t disasm_size = disassemble(address, lookup_size, &result);
-
-				if(disasm_size > 0)
+				if(!address)
 				{
-					size_t counter = 0;
+					MAC_RK_LOG("MacRK::Disassembler::disassembleNthInstruction() address = 0!\n");
 
-					mach_vm_address_t sub_address = 0;
+					return 0;
+				}
 
-					for(size_t i = 0; i < disasm_size; i++)
+				uint32_t offset = 0;
+
+				size_t counter = 0;
+
+				while(offset < lookup_size)
+				{
+					size_t disasm_size = min(0x28, lookup_size);
+
+					size_t disassembled = disassemble(address + offset, disasm_size, &result);
+
+					if(result && disassembled > 0)
 					{
-						if(result[i].id == insn)
-						{
-							sub_address = result[i].address + address;
+						mach_vm_address_t sub_address = 0;
 
-							counter++;
+						for(size_t i = 0; i < disassembled; i++)
+						{
+							if(result[i].id == insn)
+							{
+								sub_address = result[i].address + (address + offset);
+
+								counter++;
+							}
+
+							if(counter == num)
+							{
+								break;
+							} else
+							{
+								sub_address = 0;
+							}
 						}
+
+						cs_free(result, disassembled);
 
 						if(counter == num)
-						{
-							break;
-						} else
-						{
-							sub_address = 0;
-						}
+							return sub_address;
 					}
 
-					cs_free(result, disasm_size);
-
-					return sub_address;
+					offset += disasm_size;
 				}
+
+				MAC_RK_LOG("MacRK::Disassembler::disasm size = 0!!\n");
 
 				return 0;
 			}

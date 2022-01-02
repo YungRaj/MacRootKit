@@ -8,6 +8,14 @@
 
 #define MAX(x, y) (x > y) ? x : y
 
+int tolower(int c)
+{
+    if (c >= 'A' && c <= 'Z')
+        return c +'a'-'A';
+    else
+        return c;
+}
+
 void *memchr(const void *src, int c, size_t n)
 {
 	const unsigned char *s = (const unsigned char *)src;

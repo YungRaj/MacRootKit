@@ -12,8 +12,8 @@ Kext::Kext(Kernel *kernel, mach_vm_address_t base, char *identifier)
 	this->address = base;
 	this->identifier = identifier;
 	this->macho = new KextMachO(this->kernel, this->identifier, this->address);
-	// this->kmod_info = reinterpret_cast<kmod_info_t*>(this->macho->getSymbolAddressByName("_kmod_info"));
-	// this->size = this->kmod_info->size;
+	this->kmod_info = reinterpret_cast<kmod_info_t*>(this->macho->getSymbolAddressByName("_kmod_info"));
+	this->size = this->kmod_info->size;
 }
 
 Kext::Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info)

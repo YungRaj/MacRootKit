@@ -8,10 +8,36 @@
 #include <x86_64/Disassembler_x86_64.hpp>
 #include <arm64/Disassembler_arm64.hpp>
 
+using namespace Arch;
+
 Disassembler::Disassembler(Task *task)
 {
 	this->task = task;
 	this->architecture = Arch::getArchitecture();
+	this->disassembler = this->getDisassemblerFromArch();
+	this->initDisassembler();
+}
+
+Disassembler::~Disassembler()
+{
+
+}
+
+enum DisassemblerType Disassembler::getDisassemblerFromArch()
+{
+	enum Architectures architecture = Arch::getArchitecture();
+
+	switch(architecture)
+	{
+		case ARCH_x86_64:
+			return DisassemblerType_x86_64;
+		case ARCH_arm64:
+			return DisassemblerType_arm64;
+		default:
+			return DisassemblerType_None;
+	}
+
+	return DisassemblerType_Unknown;
 }
 
 void Disassembler::initDisassembler()
