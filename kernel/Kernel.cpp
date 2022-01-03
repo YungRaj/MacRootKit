@@ -436,16 +436,32 @@ bool Kernel::setInterrupts(bool enable)
 	return Arch::setInterrupts(enable);
 }
 
-uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)
+uint64_t Kernel::callFunction(char *symbolname, uint64_t *arguments, size_t argCount)
 {
 	mach_vm_address_t func = this->getSymbolAddressByName(symbolname);
 
 	return this->call(func, arguments, argCount);
 }
 
-uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
+uint64_t Kernel::callFunctionAtAddress(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
 {
-	uint64_t ret;
+	uint64_t ret = 0;
+
+	mach_vm_address_t function = func;
+
+#ifdef __arm64__
+
+	char buffer[128];
+
+	snprintf(buffer, 128, "0x%llx", (uint64_t) function);
+
+	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (function));
+
+	snprintf(buffer, 128, "0x%llx", (uint64_t) function);
+
+	MAC_RK_LOG("MacRK::vm_map_enter after PACIZA = %s\n", buffer);
+
+#endif
 
 	switch(argCount)
 	{
@@ -453,7 +469,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function0)(void);
 
-			function0 funk = reinterpret_cast<function0>(func);
+			function0 funk = reinterpret_cast<function0>(function);
 
 			ret = (uint64_t)(*funk)();
 
@@ -464,7 +480,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function1)(uint64_t);
 
-			function1 funk = reinterpret_cast<function1>(func);
+			function1 funk = reinterpret_cast<function1>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0]);
 
@@ -475,7 +491,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function2)(uint64_t, uint64_t);
 
-			function2 funk = reinterpret_cast<function2>(func);
+			function2 funk = reinterpret_cast<function2>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1]);
 
@@ -486,7 +502,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function3)(uint64_t, uint64_t, uint64_t);
 
-			function3 funk = reinterpret_cast<function3>(func);
+			function3 funk = reinterpret_cast<function3>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2]);
 
@@ -497,7 +513,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function4)(uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function4 funk = reinterpret_cast<function4>(func);
+			function4 funk = reinterpret_cast<function4>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3]);
 
@@ -508,7 +524,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function5)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function5 funk = reinterpret_cast<function5>(func);
+			function5 funk = reinterpret_cast<function5>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
 
@@ -519,7 +535,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function6)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function6 funk = reinterpret_cast<function6>(func);
+			function6 funk = reinterpret_cast<function6>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
 
@@ -530,7 +546,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function7)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function7 funk = reinterpret_cast<function7>(func);
+			function7 funk = reinterpret_cast<function7>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
 
@@ -541,7 +557,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function8)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function8 funk = reinterpret_cast<function8>(func);
+			function8 funk = reinterpret_cast<function8>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7]);
 
@@ -552,7 +568,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function9)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function9 funk = reinterpret_cast<function9>(func);
+			function9 funk = reinterpret_cast<function9>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8]);
 
@@ -563,7 +579,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function10)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function10 funk = reinterpret_cast<function10>(func);
+			function10 funk = reinterpret_cast<function10>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9]);
 
@@ -574,7 +590,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function11)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function11 funk = reinterpret_cast<function11>(func);
+			function11 funk = reinterpret_cast<function11>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10]);
 
@@ -585,7 +601,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function12)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function12 funk = reinterpret_cast<function12>(func);
+			function12 funk = reinterpret_cast<function12>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11]);
 
@@ -596,10 +612,10 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function13)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function13 funk = reinterpret_cast<function13>(func);
+			function13 funk = reinterpret_cast<function13>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12]);
-
+			
 			break;
 		}
 
@@ -607,7 +623,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function14)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function14 funk = reinterpret_cast<function14>(func);
+			function14 funk = reinterpret_cast<function14>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13]);
 
@@ -618,7 +634,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function15)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function15 funk = reinterpret_cast<function15>(func);
+			function15 funk = reinterpret_cast<function15>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14]);
 
@@ -629,7 +645,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function16)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function16 funk = reinterpret_cast<function16>(func);
+			function16 funk = reinterpret_cast<function16>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15]);
 
@@ -640,7 +656,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function17)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function17 funk = reinterpret_cast<function17>(func);
+			function17 funk = reinterpret_cast<function17>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16]);
 
@@ -651,7 +667,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function18)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function18 funk = reinterpret_cast<function18>(func);
+			function18 funk = reinterpret_cast<function18>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17]);
 
@@ -662,7 +678,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function19)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function19 funk = reinterpret_cast<function19>(func);
+			function19 funk = reinterpret_cast<function19>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17], arguments[18]);
 
@@ -673,7 +689,7 @@ uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCou
 		{
 			typedef uint64_t (*function20)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
-			function20 funk = reinterpret_cast<function20>(func);
+			function20 funk = reinterpret_cast<function20>(function);
 
 			ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17], arguments[18], arguments[19]);
 
@@ -750,7 +766,15 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	mach_vm_address_t vm_allocate = sign ? branch - imm : branch + imm;
 
+	snprintf(buffer, 128, "0x%llx", vm_allocate);
+
+	MAC_RK_LOG("MacRK::vm_allocate() = %s\n", buffer);
+
 	branch = this->disassembler->disassembleNthInstruction(vm_allocate, ARM64_INS_BL, 1, 0x100);
+
+	snprintf(buffer, 128, "0x%llx", branch);
+
+	MAC_RK_LOG("MacRK::vm_allocate() branch = %s\n", buffer);
 
 	bl_t bl = *(bl_t*) branch;
 
@@ -775,11 +799,13 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	MAC_RK_LOG("MacRK::vm_map_enter() = %s\n", buffer);
 
+	snprintf(buffer, 128, "0x%llx", vm_map_enter);
+
 	map = this->getSymbolAddressByName("_kernel_map");
 
 	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
-	ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
+	ret = static_cast<kern_return_t>(this->callFunctionAtAddress(vm_map_enter, vmEnterArgs, 13));
 
 #endif
 
