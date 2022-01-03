@@ -451,15 +451,7 @@ uint64_t Kernel::callFunctionAtAddress(mach_vm_address_t func, uint64_t *argumen
 
 #ifdef __arm64__
 
-	char buffer[128];
-
-	snprintf(buffer, 128, "0x%llx", (uint64_t) function);
-
 	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (function));
-
-	snprintf(buffer, 128, "0x%llx", (uint64_t) function);
-
-	MAC_RK_LOG("MacRK::vm_map_enter after PACIZA = %s\n", buffer);
 
 #endif
 
@@ -801,7 +793,7 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	snprintf(buffer, 128, "0x%llx", vm_map_enter);
 
-	map = this->getSymbolAddressByName("_kernel_map");
+	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
 
 	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
