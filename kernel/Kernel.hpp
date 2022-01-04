@@ -74,8 +74,8 @@ class Kernel : public Task
 
 		virtual pmap_t getKernelPmap() { return this->getPmap(); }
 
-		virtual uint64_t callFunction(char *symbolname, uint64_t *arguments, size_t argCount);
-		virtual uint64_t callFunctionAtAddress(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
+		virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
+		virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
 
 		virtual mach_vm_address_t vmAllocate(size_t size);
 		virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);

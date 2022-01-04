@@ -28,6 +28,8 @@ class Section
 			delete name;
 		}
 
+		struct section_64* getSection() { return section; }
+
 		char* getSectionName() { return name; }
 
 		mach_vm_address_t getAddress() { return address; }

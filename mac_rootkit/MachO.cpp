@@ -162,6 +162,41 @@ void* MachO::addressToPointer(mach_vm_address_t address)
 	return reinterpret_cast<void*>(reinterpret_cast<mach_vm_address_t>(buffer + this->addressToOffset(address)));
 }
 
+Segment* MachO::getSegment(char *segmentname)
+{
+	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
+	{
+		Segment *segment = this->getSegments()->get(i);
+
+		if(strcmp(segment->getSegmentName(), segmentname) == 0)
+		{
+			return segment;
+		}
+	}
+
+	return NULL;
+}
+
+Section* MachO::getSection(char *segmentname, char *sectionname)
+{
+	Segment *segment = this->getSegment(segmentname);
+
+	if(!segment)
+		return NULL;
+
+	for(uint32_t i = 0; i < segment->getSections()->getSize(); i++)
+	{
+		Section *section = segment->getSections()->get(i);
+
+		if(strcmp(section->getSectionName(), sectionname) == 0)
+		{
+			return section;
+		}
+	}
+
+	return NULL;
+}
+
 Segment* MachO::segmentForAddress(mach_vm_address_t address)
 {
 	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
