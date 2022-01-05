@@ -8,6 +8,8 @@
 
 #include "mach-o.h"
 
+#include "Log.hpp"
+
 class Section
 {
 	public:
@@ -20,7 +22,7 @@ class Section
 
 			this->name = new char[strlen(section->sectname) + 1];
 
-			strlcpy(this->name, section->sectname, strlen(section->sectname));
+			strlcpy(this->name, section->sectname, strlen(section->sectname) + 1);
 		}
 
 		~Section()

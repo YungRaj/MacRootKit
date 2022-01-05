@@ -9,6 +9,8 @@
 
 #include "mach-o.h"
 
+#include "Log.hpp"
+
 class Segment
 {
 	public:
@@ -22,7 +24,7 @@ class Segment
 
 			this->name = new char[strlen(segment_command->segname) + 1];
 
-			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname));
+			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
 
 			this->populateSections();
 		}

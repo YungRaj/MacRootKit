@@ -16,7 +16,7 @@ namespace Arch
 	{
 		namespace PatchFinder
 		{
-			#define NO_REG - 1
+			#define NO_REG -1
 
 			using namespace Arch::arm64;
 
@@ -84,13 +84,20 @@ namespace Arch
 
 				base = macho->getBase();
 
+				start -= base;
+				end   -= base;
+				what  -= base;
+
 				memset(state, 0x0, sizeof(state));
 
 				end &= ~3;
 
+				if(!start || !end || !what || !base)
+					return 0;
+
 				for(current_insn = start & ~3; current_insn < end; current_insn += sizeof(uint32_t))
 				{
-					uint32_t op = *reinterpret_cast<uint32_t*>(macho->getOffset(base - current_insn));
+					uint32_t op = *reinterpret_cast<uint32_t*>(macho->getOffset(current_insn));
 
 					uint32_t reg = op & 0x1F;
 
@@ -100,7 +107,7 @@ namespace Arch
 						
 						// ADRP <Xd>, <label>
 
-						int32_t imm = (adrp->immlo | (adrp->immhi << 2)) << 12;
+						signed imm = (adrp->immlo | (adrp->immhi << 2)) << 12;
 
 						state[reg] = imm + (current_insn & ~0xFFF);
 
@@ -112,7 +119,7 @@ namespace Arch
 
 						// ADR <Xd>, <label>
 
-						int32_t imm = adr->immlo | (adr->immhi << 2);
+						signed imm = adr->immlo | (adr->immhi << 2);
 
 						state[reg] = current_insn + imm;
 
@@ -127,10 +134,11 @@ namespace Arch
 						if(Rn == 31) // skip if SP is rn
 						{
 							state[reg] = 0;
+
 							continue;
 						}
 
-						int32_t imm = add->imm;
+						unsigned imm = add->imm;
 
 						uint8_t shift = add->sh;
 
@@ -147,13 +155,23 @@ namespace Arch
 
 						// LDR <Xt>, [<Xn|SP>, #<simm>]!
 
-						int32_t imm = ldr->imm >> (2 + ldr->sf);
+						unsigned imm = ldr->imm >> (2 + ldr->sf);
 
 						uint8_t Rn = ldr->Rn;
 
 						if(!imm) continue;
 
 						state[reg] = state[Rn] + imm;
+
+					} else if(is_ldr_lit((ldr_lit_t*) &op))
+					{
+						ldr_lit_t *ldr = reinterpret_cast<ldr_lit_t*>(&op);
+
+						// LDR <Xt>, <label>
+						
+						unsigned addr = ldr->imm << 2; // label is imm * 4
+
+						state[reg] = addr + current_insn;
 
 					} else if(is_bl((bl_t*) &op))
 					{
@@ -182,7 +200,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn;
+							return current_insn + base;
 						}
 
 					} else if(is_b((b_t*) &op))
@@ -210,7 +228,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn;
+							return current_insn + base;
 						}
 						
 					} else if(is_cbz((cbz_t*) &op) || is_cbnz((cbz_t*) &op))
@@ -233,7 +251,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn;
+							return current_insn + base;
 						}
 
 					} else if(is_tbz((tbz_t*) &op) || is_tbnz((tbz_t*) &op))
@@ -256,7 +274,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn;
+							return current_insn + base;
 						}
 
 					}
@@ -269,7 +287,13 @@ namespace Arch
 
 					if(state[reg] == what && reg != 31)
 					{
-						return current_insn;
+						char buffer[128];
+
+						snprintf(buffer, 128, "0x%llx", current_insn);
+
+						MAC_RK_LOG("MacRK::xref64 current_insn = %s\n", buffer);
+
+						return current_insn + base;
 					}
 				}
 
@@ -354,9 +378,9 @@ namespace Arch
 			{
 				uint8_t *buffer;
 				
-				mach_vm_address_t end = start - length;
+				mach_vm_address_t end = start + length;
 
-				buffer = (uint8_t*) macho->getBase();
+				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
 				bool no_Rt = Rt == NO_REG;
 				bool no_Rn = Rn == NO_REG;
@@ -388,7 +412,7 @@ namespace Arch
 				
 				mach_vm_address_t end = start - length;
 
-				buffer = (uint8_t*) macho->getBase();
+				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
 				bool no_Rt = Rt == NO_REG;
 				bool no_Rn = Rn == NO_REG;
@@ -424,7 +448,7 @@ namespace Arch
 
 				for(current_insn = where; current_insn >= start; current_insn -= sizeof(uint32_t))
 				{
-					uint32_t op = *reinterpret_cast<uint32_t*>(macho->getOffset(base - current_insn));
+					uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
 
 					if(is_pacsys((pacsys_t*) &op))
 					{
@@ -455,8 +479,8 @@ namespace Arch
 				{
 					struct segment_command_64 *segment_command = segment->getSegmentCommand();
 
-					text_base = segment_command->vmaddr;
-					text_size = segment_command->vmsize;
+					text_base = segment_command->fileoff + macho->getBase();
+					text_size = segment_command->filesize;
 				}
 
 				switch(which_text)
@@ -470,8 +494,8 @@ namespace Arch
 						{
 							struct segment_command_64 *segment_command = segment->getSegmentCommand();
 
-							text_base = segment_command->vmaddr;
-							text_size = segment_command->vmsize;
+							text_base = segment_command->vmaddr + macho->getBase();
+							text_size = segment_command->filesize;
 						}
 
 						break;
@@ -481,8 +505,8 @@ namespace Arch
 						{
 							struct segment_command_64 *segment_command = macho->getSegment("__PPLTEXT")->getSegmentCommand();
 
-							text_base = segment_command->vmaddr;
-							text_size = segment_command->vmsize;
+							text_base = segment_command->fileoff + macho->getBase();
+							text_size = segment_command->filesize;
 						}
 
 						break;
@@ -513,51 +537,91 @@ namespace Arch
 
 			mach_vm_address_t findDataReference(MachO *macho, mach_vm_address_t to, enum data which_data, int n)
 			{
+				Segment *segment;
+
 				struct segment_command_64 *segment_command;
 
 				mach_vm_address_t start;
 				mach_vm_address_t end;
 
+				segment = NULL;
+				segment_command = NULL;
+
 				switch(which_data)
 				{
 					case __DATA_CONST:
-						segment_command = macho->getSegment("__DATA_CONST")->getSegmentCommand();
+
+						if((segment = macho->getSegment("__DATA_CONST")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __PPLDATA_CONST:
-						segment_command = macho->getSegment("__PPLDATA_CONST")->getSegmentCommand();
+
+						if((segment = macho->getSegment("__PPLDATA_CONST")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __PPLDATA:
-						segment_command = macho->getSegment("__PPLDATA")->getSegmentCommand();
+						
+						if((segment = macho->getSegment("__PPLDATA")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __DATA:
-						segment_command = macho->getSegment("__DATA")->getSegmentCommand();
+						
+						if((segment = macho->getSegment("__DATA")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __BOOTDATA:
-						segment_command = macho->getSegment("__BOOTDATA")->getSegmentCommand();
+						
+						if((segment = macho->getSegment("__BOOTDATA")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __PRELINK_DATA:
-						segment_command = macho->getSegment("__PRELINK_DATA")->getSegmentCommand();
+						
+						if((segment = macho->getSegment("__PRELINK_DATA")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					case __PLK_DATA_CONST:
-						segment_command = macho->getSegment("__PLK_DATA_CONST")->getSegmentCommand();
+						
+						if((segment = macho->getSegment("__PLK_DATA_CONST")))
+						{
+							segment_command = segment->getSegmentCommand();
+						}
 
 						break;
 					default:
+						segment = NULL;
+
+						segment_command = NULL;
+
 						return 0;
 				}
+
+				if(!segment || !segment_command)
+					return 0;
 
 				start = segment_command->fileoff;
 				end = segment_command->fileoff + segment_command->filesize;
 
 				for(mach_vm_address_t i = start; i <= end; i += sizeof(uint16_t))
 				{
-					mach_vm_address_t ref = *reinterpret_cast<mach_vm_address_t*>(macho->getOffset(i - macho->getBase()));
+					mach_vm_address_t ref = *reinterpret_cast<mach_vm_address_t*>(i);
 
 				#ifdef __arm64__
 
@@ -580,12 +644,12 @@ namespace Arch
 
 				mach_vm_address_t offset = 0;
 
-				while((find = boyermoore_horspool_memmem(reinterpret_cast<unsigned char*>(macho->getBase()) + base + offset, size - offset, (uint8_t *)string, strlen(string))))
+				while((find = boyermoore_horspool_memmem(reinterpret_cast<unsigned char*>(base + offset), size - offset, (uint8_t *)string, strlen(string))))
 				{
-					if((find == reinterpret_cast<unsigned char*>(macho->getBase()) + base || *(string - 1) == '\0') && (!full_match || strcmp((char*)find, string) == 0))
+					if((find == reinterpret_cast<unsigned char*>(base)|| *(string - 1) == '\0') && (!full_match || strcmp((char*)find, string) == 0))
 						break;
 
-					offset = (uint64_t) (find - (reinterpret_cast<unsigned char*>(macho->getBase()) + base) + 1);
+					offset = (uint64_t) (find -  base + 1);
 				}
 
 				return find;
@@ -607,70 +671,90 @@ namespace Arch
 					case __const_:
 
 						segment = macho->getSegment("__TEXT");
-						section = macho->getSection("__TEXT", "__const");
 
-						if(section)
+						if(segment)
 						{
-							struct section_64 *sect = section->getSection();
+							section = macho->getSection("__TEXT", "__const");
 
-							base = sect->addr;
-							size = sect->size;
+							if(section)
+							{
+								struct section_64 *sect = section->getSection();
+
+								base = sect->addr;
+								size = sect->size;
+							}
 						}
 
 						break;
 					case __data_:
 
 						segment = macho->getSegment("__DATA");
-						section = macho->getSection("__DATA", "__data");
 
-						if(section)
+						if(segment)
 						{
-							struct section_64 *sect = section->getSection();
+							section = macho->getSection("__DATA", "__data");
 
-							base = sect->addr;
-							size = sect->size;
+							if(section)
+							{
+								struct section_64 *sect = section->getSection();
+
+								base = sect->addr;
+								size = sect->size;
+							}
 						}
 
 						break;
 					case __oslstring_:
 
 						segment = macho->getSegment("__TEXT");
-						section = macho->getSection("__TEXT", "__os_log");
 
-						if(section)
+						if(segment)
 						{
-							struct section_64 *sect = section->getSection();
+							section = macho->getSection("__TEXT", "__os_log");
 
-							base = sect->addr;
-							size = sect->size;
+							if(section)
+							{
+								struct section_64 *sect = section->getSection();
+
+								base = sect->addr;
+								size = sect->size;
+							}
 						}
 
 						break;
 					case __pstring_:
 
 						segment = macho->getSegment("__TEXT");
-						section = macho->getSection("__TEXT", "__text");
 
-						if(section)
+						if(segment)
 						{
-							struct section_64 *sect = section->getSection();
+							section = macho->getSection("__TEXT", "__text");
 
-							base = sect->addr;
-							size = sect->size;
+							if(section)
+							{
+								struct section_64 *sect = section->getSection();
+
+								base = sect->addr;
+								size = sect->size;
+							}
 						}
 
 						break;
 					case __cstring_:
 
 						segment = macho->getSegment("__TEXT");
-						section = macho->getSection("__TEXT", "__cstring");
 
-						if(section)
+						if(segment)
 						{
-							struct section_64 *sect = section->getSection();
+							section = macho->getSection("__TEXT", "__cstring");
 
-							base = sect->addr;
-							size = sect->size;
+							if(section)
+							{
+								struct section_64 *sect = section->getSection();
+
+								base = sect->addr;
+								size = sect->size;
+							}
 						}
 
 						break;
@@ -678,7 +762,7 @@ namespace Arch
 						break;
 				}
 
-				if(!base && size)
+				if(!base && !size)
 					return 0;
 
 				find = findString(macho, string, base, size, full_match);
@@ -686,7 +770,7 @@ namespace Arch
 				if(!find)
 					return 0;
 
-				return Arch::arm64::PatchFinder::findReference(macho, (mach_vm_address_t)(find - reinterpret_cast<unsigned char*>(macho->getBase()) + base), n, which_text);
+				return Arch::arm64::PatchFinder::findReference(macho, (mach_vm_address_t) find, n, which_text);
 			}
 
 			void printInstruction64(MachO *macho, mach_vm_address_t start, uint32_t length, bool (*is_ins)(uint32_t*), int Rt, int Rn)

@@ -790,21 +790,37 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	snprintf(buffer, 128, "0x%llx", vm_map_enter);
 
-	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_pmap"));
+	mach_vm_address_t pmap_enter_options_strref = Arch::arm64::PatchFinder::findStringReference(this->macho, "pmap_enter_options() pmap %p pa 0x%llx @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
 
-	mach_vm_address_t pmap_find_phys = this->getSymbolAddressByName("_pmap_find_phys");
+	snprintf(buffer, 128, "0x%llx", pmap_enter_options_strref);
+
+	MAC_RK_LOG("MacRK::pmap_enter_options string reference = %s\n", buffer);
+
+	// mach_vm_address_t pmap_enter_options = Arch::arm64::PatchFinder::findFunctionBegin(this->macho, pmap_enter_options_strref - 0xFFF, pmap_enter_options_strref);
+
+	// snprintf(buffer, 128, "0x%llx", pmap_enter_options);
+
+	// MAC_RK_LOG("MacRK::pmap_enter_options = %s\n", buffer);
+
+	// mach_vm_address_t panic = Arch::arm64::PatchFinder::stepBack64(this->macho, pmap_enter_options_strref, 0x20, reinterpret_cast<bool(*)(uint32_t*)>(is_movn), -1, -1);
+
+	// snprintf(buffer, 128, "0x%llx", panic);
+
+	// MAC_RK_LOG("MacRK::panic = %s\n", buffer);
+
+	return 0;
 
 	// uint64_t breakpoint = 0xD4388E40D4388E40;
 
 	//this->write(vm_map_enter, (void*) &breakpoint, sizeof(uint64_t));
 
-	MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
+	// MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
 
-	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
+	// map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
 
-	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, 512, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+	// uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, 512, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 	
-	ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
+	// ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
 
 #endif
 
