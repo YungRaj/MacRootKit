@@ -108,6 +108,8 @@ class KernelPatcher : public Patcher
 		void applyKernelPatch(KernelPatch *patch);
 		void applyKextPatch(KextPatch *patch);
 
+		void patchPmapEnterOptions();
+
 		void removeKernelPatch(KernelPatch *patch);
 		void removeKextPatch(KextPatch *patch);
 

@@ -12,6 +12,8 @@
 #include "Task.hpp"
 #include "Kernel.hpp"
 
+#include "Disassembler.hpp"
+
 static KernelPatcher *that = nullptr;
 
 KernelPatcher::KernelPatcher()
@@ -417,6 +419,93 @@ void KernelPatcher::applyKernelPatch(KernelPatch *patch)
 
 void KernelPatcher::applyKextPatch(KextPatch *patch)
 {
+}
+
+void KernelPatcher::patchPmapEnterOptions()
+{
+	using namespace Arch::arm64;
+
+	Kernel *kernel = this->kernel;
+
+	MachO *macho = kernel->getMachO();
+
+	mach_vm_address_t vm_allocate_external = kernel->getSymbolAddressByName("_vm_allocate_external");
+
+	char buffer[128];
+
+	mach_vm_address_t branch = Arch::arm64::PatchFinder::step64(macho, vm_allocate_external, 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b), -1, -1);
+
+	bool sign;
+
+	b_t b = *(b_t*) branch;
+
+	uint64_t imm = b.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	mach_vm_address_t vm_allocate = sign ? branch - imm : branch + imm;
+
+	branch = Arch::arm64::PatchFinder::step64(macho, vm_allocate, 0x100, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_bl), -1, -1);
+
+	bl_t bl = *(bl_t*) branch;
+
+	imm = bl.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	uint32_t nop = 0xd503201f;
+
+	mach_vm_address_t vm_map_enter = sign ? branch - imm : branch + imm;
+
+	mach_vm_address_t pmap_enter_options_strref = Arch::arm64::PatchFinder::findStringReference(macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+
+	mach_vm_address_t pmap_enter_options = Arch::arm64::PatchFinder::findFunctionBegin(macho, pmap_enter_options_strref - 0xFFF, pmap_enter_options_strref);
+
+	mach_vm_address_t panic = Arch::arm64::PatchFinder::stepBack64(macho, pmap_enter_options_strref - sizeof(uint32_t) * 2, 0x20, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_adrp), -1, -1);
+
+	mach_vm_address_t panic_xref = Arch::arm64::PatchFinder::xref64(macho, panic - 0xFFF, panic - sizeof(uint32_t), panic);
+
+	kernel->write(panic_xref, (void*) &nop, sizeof(nop));
+
+	branch = Arch::arm64::PatchFinder::stepBack64(macho, panic_xref - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b_cond), -1, -1);
+
+	kernel->write(branch, (void*) &nop, sizeof(nop));
+
+	branch = Arch::arm64::PatchFinder::stepBack64(macho, branch - sizeof(uint32_t), 0x20, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b_cond), -1, -1);
+
+	kernel->write(branch, (void*) &nop, sizeof(nop));
+
+	branch = Arch::arm64::PatchFinder::stepBack64(macho, branch - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b_cond), -1, -1);
+
+	kernel->write(branch, (void*) &nop, sizeof(nop));
+
+	// uint64_t breakpoint = 0xD4388E40D4388E40;
+
+	//this->write(vm_map_enter, (void*) &breakpoint, sizeof(uint64_t));
+
+	// MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
 }
 
 void KernelPatcher::removeKernelPatch(KernelPatch *patch)

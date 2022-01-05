@@ -181,7 +181,7 @@ namespace Arch
 
 						bool sign;
 
-						int64_t imm = bl->imm;
+						uint64_t imm = bl->imm;
 						
 						if(imm & 0x2000000)
 						{
@@ -194,7 +194,7 @@ namespace Arch
 							sign = false;
 						}
 
-						imm *= (1 << 2);
+						imm <<= 2;
 
 						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
 						
@@ -209,7 +209,7 @@ namespace Arch
 
 						bool sign;
 
-						int64_t imm = b->imm;
+						uint64_t imm = b->imm;
 						
 						if(imm & 0x2000000)
 						{
@@ -222,7 +222,7 @@ namespace Arch
 							sign = false;
 						}
 
-						imm *= (1 << 2);
+						imm <<= 2;
 
 						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
 						
@@ -235,19 +235,24 @@ namespace Arch
 					{
 						cbz_t *cbz = reinterpret_cast<cbz_t*>(&op);
 
-						int64_t imm = cbz->imm << 2;
+						uint64_t imm = cbz->imm;
 
-						if(imm & (1UL << 20))
+						bool sign;
+
+						if(imm & 0x100000)
 						{
-							imm &= ~(1UL << 15);
+							imm = ~(imm - 1);
+							imm &= 0xfffff;
 
-							for(int i = 20; i < 63; i++)
-								imm |= (1UL << i);
-
-							imm |= (1UL << 63);
+							sign = true;
+						} else
+						{
+							sign = false;
 						}
 
-						mach_vm_address_t to = current_insn + imm;
+						imm <<= 2;
+
+						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -258,19 +263,24 @@ namespace Arch
 					{
 						tbz_t *tbz = reinterpret_cast<tbz_t*>(&op);
 
-						int64_t imm = tbz->imm << 2;
+						uint64_t imm = tbz->imm;
 
-						if(imm & (1UL << 15))
+						bool sign;
+
+						if(imm & 0x8000)
 						{
-							imm &= ~(1UL << 15);
+							imm = ~(imm - 1);
+							imm &= 0xfffff;
 
-							for(int i = 15; i < 63; i++)
-								imm |= (1UL << i);
-
-							imm |= (1UL << 63);
+							sign = true;
+						} else
+						{
+							sign = false;
 						}
 
-						mach_vm_address_t to = current_insn + imm;
+						imm <<= 2;
+
+						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -389,7 +399,7 @@ namespace Arch
 
 				while(start >= end)
 				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
+					uint32_t x = *reinterpret_cast<uint32_t*>(start);
 
 					if(is_ins(&x) && no_reg)
 						return start;
@@ -421,7 +431,7 @@ namespace Arch
 
 				while(start >= end)
 				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
+					uint32_t x = *reinterpret_cast<uint32_t*>(start);
 
 					if(is_ins(&x) && no_reg)
 						return start;

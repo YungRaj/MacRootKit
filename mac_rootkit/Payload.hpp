@@ -15,7 +15,11 @@ class Payload;
 
 class Payload
 {
+#ifdef __arm64__
+	static constexpr uint32_t expectedSize = 1 << 14;
+#elif  __x86_64__
 	static constexpr uint32_t expectedSize = 1 << 12;
+#endif
 
 	public:
 		Payload(Task *task, Hook *hook, vm_prot_t prot);
