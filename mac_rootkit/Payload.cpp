@@ -61,13 +61,29 @@ bool Payload::prepare()
 
 	Task *task = this->getTask();
 
-	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_EXECUTE);
 
-	if(!address)
+	if(!trampoline)
 		return false;
 
 	this->address = trampoline;
 
 	return true;
 }
-	
+
+void Payload::setWritable()
+{
+	this->task->vmProtect(this->address, Payload::expectedSize, VM_PROT_READ | VM_PROT_WRITE);
+}
+
+void Payload::setExecutable()
+{
+	this->task->vmProtect(this->address, Payload::expectedSize, VM_PROT_READ | VM_PROT_EXECUTE);
+}
+
+bool Payload::commit()
+{
+	this->setExecutable();
+
+	return true;
+}

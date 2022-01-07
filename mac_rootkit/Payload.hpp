@@ -46,7 +46,12 @@ class Payload
 		bool writeBytes(uint8_t *bytes, size_t size);
 		bool writeBytes(off_t offset, uint8_t *bytes, size_t size);
 
+		void setWritable();
+		void setExecutable();
+
 		bool prepare();
+
+		bool commit();
 	
 	private:
 		Task *task;

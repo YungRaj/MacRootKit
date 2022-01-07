@@ -66,10 +66,12 @@ namespace Arch
 			branch.branch.mode = 0b0;
 			branch.branch.op = Arch::arm64::NormalBranchPrefix;
 
+			imm = diff;
+
 			imm >>= 2;
 
 			if(sign)
-				imm = (~imm + 1) | 0x2000000;
+				imm = (~(imm - 1) & 0x1FFFFFF) | 0x2000000;
 
 			branch.branch.imm = static_cast<uint32_t>(imm);
 

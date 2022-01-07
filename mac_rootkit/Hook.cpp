@@ -277,10 +277,14 @@ Payload* Hook::prepareTrampoline()
 
 void Hook::registerHook(struct HookPatch *patch)
 {
+	this->hooks.add(patch);
 }
 
 void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype)
 {
+	HookCallbackPair<mach_vm_address_t, enum HookType> *pair = HookCallbackPair<mach_vm_address_t, enum HookType>::create(callback, hooktype);
+
+	this->callbacks.add(pair);
 }
 
 void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
@@ -292,8 +296,6 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	Patcher *patcher = this->getPatcher();
 
 	Payload *payload = this->prepareTrampoline();
-
-	/*
 
 	struct HookPatch *chain = this->getLatestRegisteredHook();
 
@@ -316,6 +318,8 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	size_t branch_size;
 
 	mach_vm_address_t from = chain ? chain->to : this->from;
+
+	payload->setWritable();
 
 	branch_size = this->getBranchSize();
 
@@ -349,7 +353,11 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
-	this->task->write(from, (void*) replace_opcodes, branch_size);
+	payload->setExecutable();
+
+	this->task->write(from, (void*) &to_hook_function, branch_size);
+
+	MAC_RK_LOG("MacRK::Hook instruction = 0x%x\n", *(uint32_t*) &to_hook_function);
 
 	hook->from = from;
 	hook->to = to;
@@ -364,7 +372,6 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	hook->patch_size = branch_size;
 
 	this->registerHook(hook);
-	*/
 }
 
 void Hook::uninstallHook()

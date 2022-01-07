@@ -84,10 +84,6 @@ namespace Arch
 
 				base = macho->getBase();
 
-				start -= base;
-				end   -= base;
-				what  -= base;
-
 				memset(state, 0x0, sizeof(state));
 
 				end &= ~3;
@@ -97,9 +93,18 @@ namespace Arch
 
 				for(current_insn = start & ~3; current_insn < end; current_insn += sizeof(uint32_t))
 				{
-					uint32_t op = *reinterpret_cast<uint32_t*>(macho->getOffset(current_insn));
+					uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
 
 					uint32_t reg = op & 0x1F;
+
+					if(op == 0xF0FFB6A0 && *((uint32_t*) current_insn + 1) == 0x91317400)
+					{
+						char buffer[128];
+
+						snprintf(buffer, 128, "0x%llx", current_insn);
+
+						MAC_RK_LOG("MacRK::Found instruction 0x%x at %s\n", op, buffer);
+					}
 
 					if(is_adrp((adr_t*) &op))
 					{
@@ -107,9 +112,24 @@ namespace Arch
 						
 						// ADRP <Xd>, <label>
 
-						signed imm = (adrp->immlo | (adrp->immhi << 2)) << 12;
+						bool sign;
 
-						state[reg] = imm + (current_insn & ~0xFFF);
+						uint64_t imm = (adrp->immlo | (adrp->immhi << 2));
+
+						if(imm & 0x100000)
+						{
+							imm = ~(imm - 1);
+							imm &= 0xFFFFF;
+
+							sign = true;
+						} else
+						{
+							sign = false;
+						}
+
+						imm <<= 12;
+
+						state[reg] = sign ? (current_insn & ~0xFFF) - imm : (current_insn & ~0xFFF) + imm;
 
 						continue;
 
@@ -200,7 +220,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn + base;
+							return current_insn;
 						}
 
 					} else if(is_b((b_t*) &op))
@@ -228,7 +248,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn + base;
+							return current_insn;
 						}
 						
 					} else if(is_cbz((cbz_t*) &op) || is_cbnz((cbz_t*) &op))
@@ -256,7 +276,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn + base;
+							return current_insn;
 						}
 
 					} else if(is_tbz((tbz_t*) &op) || is_tbnz((tbz_t*) &op))
@@ -284,7 +304,7 @@ namespace Arch
 						
 						if(to == what)
 						{
-							return current_insn + base;
+							return current_insn;
 						}
 
 					}
@@ -303,7 +323,7 @@ namespace Arch
 
 						MAC_RK_LOG("MacRK::xref64 current_insn = %s\n", buffer);
 
-						return current_insn + base;
+						return current_insn;
 					}
 				}
 
@@ -397,7 +417,7 @@ namespace Arch
 
 				bool no_reg = no_Rt && no_Rn;
 
-				while(start >= end)
+				while(start <= end)
 				{
 					uint32_t x = *reinterpret_cast<uint32_t*>(start);
 
@@ -489,8 +509,8 @@ namespace Arch
 				{
 					struct segment_command_64 *segment_command = segment->getSegmentCommand();
 
-					text_base = segment_command->fileoff + macho->getBase();
-					text_size = segment_command->filesize;
+					text_base = segment_command->vmaddr;
+					text_size = segment_command->vmsize;
 				}
 
 				switch(which_text)
@@ -504,8 +524,8 @@ namespace Arch
 						{
 							struct segment_command_64 *segment_command = segment->getSegmentCommand();
 
-							text_base = segment_command->vmaddr + macho->getBase();
-							text_size = segment_command->filesize;
+							text_base = segment_command->vmaddr;
+							text_size = segment_command->vmsize;
 						}
 
 						break;
@@ -515,8 +535,8 @@ namespace Arch
 						{
 							struct segment_command_64 *segment_command = macho->getSegment("__PPLTEXT")->getSegmentCommand();
 
-							text_base = segment_command->fileoff + macho->getBase();
-							text_size = segment_command->filesize;
+							text_base = segment_command->vmaddr;
+							text_size = segment_command->vmsize;
 						}
 
 						break;
@@ -626,8 +646,8 @@ namespace Arch
 				if(!segment || !segment_command)
 					return 0;
 
-				start = segment_command->fileoff;
-				end = segment_command->fileoff + segment_command->filesize;
+				start = segment_command->vmaddr;
+				end = segment_command->vmaddr + segment_command->vmsize;
 
 				for(mach_vm_address_t i = start; i <= end; i += sizeof(uint16_t))
 				{
@@ -776,6 +796,12 @@ namespace Arch
 					return 0;
 
 				find = findString(macho, string, base, size, full_match);
+
+				char buffer[128];
+
+				snprintf(buffer, 128, "0x%llx", (uint64_t) find);
+
+				MAC_RK_LOG("MacRK::find string %s = %s\n", string, buffer);
 
 				if(!find)
 					return 0;

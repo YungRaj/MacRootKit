@@ -133,8 +133,10 @@ bool kernel_vm_read(mach_vm_address_t address, void *data, size_t size)
 
 	vm_map_copy_t copy;
 
-	kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
+	if(!vm_map_copyin_ || !vm_map_copy_overwrite_)
+		return false;
 
+	kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
 	ret = _vm_map_copyin(kernel_map_, (vm_address_t) address, (vm_map_size_t) size, FALSE, &copy);
 
@@ -155,6 +157,9 @@ bool kernel_vm_read(mach_vm_address_t address, void *data, size_t size)
 bool kernel_vm_write(mach_vm_address_t address, const void *data, size_t size)
 {
 	const uint8_t *write_data = (uint8_t*) data;
+
+	if(!vm_map_copyin_ || !vm_map_copy_overwrite_)
+		return false;
 
 	while(size > 0)
 	{

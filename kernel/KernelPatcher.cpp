@@ -479,15 +479,13 @@ void KernelPatcher::patchPmapEnterOptions()
 
 	mach_vm_address_t vm_map_enter = sign ? branch - imm : branch + imm;
 
-	mach_vm_address_t pmap_enter_options_strref = Arch::arm64::PatchFinder::findStringReference(macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+	mach_vm_address_t pmap_enter_options_strref = Arch::arm64::PatchFinder::findStringReference(macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_PPL_BASE, false);
 
 	mach_vm_address_t pmap_enter_options = Arch::arm64::PatchFinder::findFunctionBegin(macho, pmap_enter_options_strref - 0xFFF, pmap_enter_options_strref);
 
 	mach_vm_address_t panic = Arch::arm64::PatchFinder::stepBack64(macho, pmap_enter_options_strref - sizeof(uint32_t) * 2, 0x20, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_adrp), -1, -1);
 
 	mach_vm_address_t panic_xref = Arch::arm64::PatchFinder::xref64(macho, panic - 0xFFF, panic - sizeof(uint32_t), panic);
-
-	kernel->write(panic_xref, (void*) &nop, sizeof(nop));
 
 	branch = Arch::arm64::PatchFinder::stepBack64(macho, panic_xref - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b_cond), -1, -1);
 
@@ -500,6 +498,14 @@ void KernelPatcher::patchPmapEnterOptions()
 	branch = Arch::arm64::PatchFinder::stepBack64(macho, branch - sizeof(uint32_t), 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b_cond), -1, -1);
 
 	kernel->write(branch, (void*) &nop, sizeof(nop));
+
+	uint32_t mov_x26_0x7 = 0xd28000fa;
+
+	kernel->write(panic_xref - sizeof(uint32_t) * 2, (void*) &mov_x26_0x7, sizeof(mov_x26_0x7));
+
+	kernel->write(panic_xref - sizeof(uint32_t), (void*) &nop, sizeof(nop));
+
+	kernel->write(panic_xref + sizeof(uint32_t), (void*) &nop, sizeof(nop));
 
 	// uint64_t breakpoint = 0xD4388E40D4388E40;
 
