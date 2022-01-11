@@ -315,15 +315,16 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	}
 
 	size_t min;
+	
 	size_t branch_size;
 
 	mach_vm_address_t from = chain ? chain->to : this->from;
 
-	payload->setWritable();
-
 	branch_size = this->getBranchSize();
 
 	min = disassembler->instructionSize(from, branch_size);
+
+	MAC_RK_LOG("MacRK::Hook min = %zu\n", min);
 
 	uint8_t *original_opcodes;
 	uint8_t *replace_opcodes;
@@ -350,10 +351,12 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	// build the FunctionPatch branch/jmp instruction from trampoline to original function
 
 	this->makePatch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
-
+	
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
-	payload->setExecutable();
+	MAC_RK_LOG("MacRK::Hook @ from = 0x%x\n", *(uint32_t*) from);
+
+	MAC_RK_LOG("MacRK::@ payload = 0x%x 0x%x\n", *(uint32_t*) trampoline, *(uint32_t*) (trampoline + 4));
 
 	this->task->write(from, (void*) &to_hook_function, branch_size);
 

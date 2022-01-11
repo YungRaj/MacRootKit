@@ -27,7 +27,9 @@ bool Payload::readBytes(off_t offset, uint8_t *bytes, size_t size)
 {
 	bool success;
 
-	success = this->getTask()->read(this->address + offset, (void*) bytes, size);
+	mach_vm_address_t address = this->address + offset;
+
+	success = this->getTask()->read(address + offset, (void*) bytes, size);
 
 	return success;
 }
@@ -48,7 +50,20 @@ bool Payload::writeBytes(off_t offset, uint8_t *bytes, size_t size)
 {
 	bool success;
 
-	success = this->getTask()->write(this->address + offset, (void*) bytes, size);
+	mach_vm_address_t address = this->address + offset;
+
+	success = this->getTask()->write(address, (void*) bytes, size);
+
+#ifdef __arm64__
+
+	if(address >= (mach_vm_address_t) Kernel::getExecutableMemory() && address < (mach_vm_address_t) Kernel::getExecutableMemory() + Kernel::getExecutableMemorySize())
+	{
+		Kernel::setExecutableMemoryOffset(Kernel::getExecutableMemoryOffset() + size);
+
+		MAC_RK_LOG("MacRK::incrementing getExecutableMemoryOffset by %u\n", size);
+	}
+
+#endif
 
 	return success;
 }
@@ -61,10 +76,18 @@ bool Payload::prepare()
 
 	Task *task = this->getTask();
 
-	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_EXECUTE);
+#ifdef __x86_64__
+
+	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_WRITE);
 
 	if(!trampoline)
 		return false;
+
+#elif __arm64__
+
+	trampoline = Kernel::getExecutableMemory() + Kernel::getExecutableMemoryOffset();
+
+#endif
 
 	this->address = trampoline;
 
@@ -83,7 +106,10 @@ void Payload::setExecutable()
 
 bool Payload::commit()
 {
-	this->setExecutable();
+
+#ifdef __arm64__
+
+#endif
 
 	return true;
 }

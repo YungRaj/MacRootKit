@@ -27,7 +27,14 @@ class Disassembler;
 
 class Kernel : public Task
 {
+	static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
+
+	static off_t tempExecutableMemoryOffset;
+
+	static uint8_t tempExecutableMemory[tempExecutableMemorySize];
+
 	public:
+
 		Kernel(mach_port_t kernel_task_port);
 
 		Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
@@ -43,6 +50,16 @@ class Kernel : public Task
 		static mach_vm_address_t findKernelBase();
 
 		static off_t findKernelSlide();
+
+		static mach_vm_address_t getExecutableMemory() { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[0]); }
+
+		static mach_vm_address_t getExecutableMemoryAtOffset(off_t offset) { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[tempExecutableMemoryOffset]); }
+
+		static size_t getExecutableMemorySize() { return tempExecutableMemorySize; }
+
+		static off_t getExecutableMemoryOffset() { return tempExecutableMemoryOffset; }
+
+		static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
 
 		MachO* getMachO() { return macho; }
 
