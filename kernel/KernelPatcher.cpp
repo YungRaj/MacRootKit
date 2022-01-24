@@ -139,7 +139,6 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 
 	MAC_RK_LOG("MacRK::KernelPatcher::copyClientEntitlement() hook!\n");
 
-	/*
 	trampoline = hook->getTrampolineFromChain(reinterpret_cast<mach_vm_address_t>(KernelPatcher::copyClientEntitlement));
 
 	typedef OSObject* (*origCopyClientEntitlement)(task_t, const char*);
@@ -171,9 +170,7 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 		}
 	}
 
-	return original;*/
-
-	return NULL;
+	return original;
 }
 
 void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread)

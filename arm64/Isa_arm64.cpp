@@ -46,10 +46,6 @@ namespace Arch
 			mach_vm_address_t max;
 			mach_vm_address_t min;
 
-			uint32_t insn_length = sizeof(uint32_t);
-
-			from = from + insn_length;
-
 			max = (from > to) ? from : to;
 			min = (from > to) ? to   : from;
 

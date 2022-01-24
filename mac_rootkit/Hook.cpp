@@ -118,6 +118,12 @@ mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 
 		if(to == address)
 		{
+		#ifdef __arm64__
+
+			__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (trampoline));
+
+		#endif
+			
 			return trampoline;
 		}
 	}
@@ -324,8 +330,6 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	min = disassembler->instructionSize(from, branch_size);
 
-	MAC_RK_LOG("MacRK::Hook min = %zu\n", min);
-
 	uint8_t *original_opcodes;
 	uint8_t *replace_opcodes;
 
@@ -354,13 +358,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 	
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
-	MAC_RK_LOG("MacRK::Hook @ from = 0x%x\n", *(uint32_t*) from);
-
-	MAC_RK_LOG("MacRK::@ payload = 0x%x 0x%x\n", *(uint32_t*) trampoline, *(uint32_t*) (trampoline + 4));
-
 	this->task->write(from, (void*) &to_hook_function, branch_size);
-
-	MAC_RK_LOG("MacRK::Hook instruction = 0x%x\n", *(uint32_t*) &to_hook_function);
 
 	hook->from = from;
 	hook->to = to;
