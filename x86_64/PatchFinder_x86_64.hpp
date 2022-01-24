@@ -1,8 +1,6 @@
 #ifndef __PATCHFINDER_X86_64_HPP_
 #define __PATCHFINDER_X86_64_HPP_
 
-#include "Arch.hpp"
-
 #include "PatchFinder.hpp"
 
 #include "MachO.hpp"

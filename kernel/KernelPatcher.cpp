@@ -47,7 +47,7 @@ bool KernelPatcher::dummyBreakpoint(union RegisterState *state)
 	RegisterState_x86_64 *state_x86_64;
 	RegisterState_arm64  *state_arm64;
 
-	switch(Arch::getArchitecture())
+	switch(Arch::getCurrentArchitecture())
 	{
 		case ARCH_x86_64:
 			state_x86_64 = &state->state_x86_64;
@@ -413,14 +413,6 @@ mach_vm_address_t KernelPatcher::injectSegment(mach_vm_address_t address, Payloa
 	return (mach_vm_address_t) 0;
 }
 
-void KernelPatcher::applyKernelPatch(KernelPatch *patch)
-{
-}
-
-void KernelPatcher::applyKextPatch(KextPatch *patch)
-{
-}
-
 void KernelPatcher::patchPmapEnterOptions()
 {
 	using namespace Arch::arm64;
@@ -514,10 +506,338 @@ void KernelPatcher::patchPmapEnterOptions()
 	// MAC_RK_LOG("MacRK::@ vm_map_enter = 0x%x\n", *(uint32_t*) vm_map_enter);
 }
 
-void KernelPatcher::removeKernelPatch(KernelPatch *patch)
+void KernelPatcher::applyKernelPatch(struct KernelPatch *patch)
 {
+	Kernel *kernel;
+
+	MachO *macho;
+
+	Symbol *symbol;
+
+	const uint8_t *find;
+	const uint8_t *replace;
+
+	size_t size;
+	size_t count;
+
+	off_t offset;
+
+	kernel = patch->kernel;
+	macho = patch->macho;
+
+	find = patch->find;
+	replace = patch->replace;
+
+
+	size = patch->size;
+	count = patch->count;
+
+	offset = patch->offset;
+
+	if(!symbol)
+	{
+		// patch everything you can N times;
+
+		mach_vm_address_t base = kernel->getBase();
+
+		mach_vm_address_t current_address = base;
+
+		size_t size = macho->getSize();
+
+		for(int i = 0; current_address < base + size && (i < count || count == 0); i++)
+		{
+			while(current_address < base + size && memcmp((void*) current_address, (void*) find, size) != 0)
+			{
+				current_address++;
+			}
+
+			if(current_address != base + size)
+			{
+				kernel->write(current_address, (void*) replace, size);
+			}
+		}
+
+	} else
+	{
+		// patch the function directed by symbol
+
+		mach_vm_address_t address = symbol->getAddress();
+
+		if(find)
+		{
+			// search up to N bytes from beginning of function
+			// use PatchFinder::findFunctionEnd() to get ending point
+
+			mach_vm_address_t current_address = address;
+
+			for(int i = 0; i < 0x400; i++)
+			{
+				if(memcmp((void*) current_address, (void*) find, size) == 0)
+				{
+					kernel->write(current_address, (void*) replace, size);
+				}
+
+				current_address++;
+			}
+		} else
+		{
+			// use offset provided by user to patch bytes in function
+
+			kernel->write(address + offset, (void*) replace, size);
+		}
+	}
+
+	this->kernelPatches.add(patch);
 }
 
-void KernelPatcher::removeKextPatch(KextPatch *patch)
+void KernelPatcher::applyKextPatch(struct KextPatch *patch)
 {
+	Kext *kext;
+
+	MachO *macho;
+
+	Symbol *symbol;
+
+	const uint8_t *find;
+	const uint8_t *replace;
+
+	size_t size;
+	size_t count;
+
+	off_t offset;
+
+	kext = patch->kext;
+	macho = patch->macho;
+
+	find = patch->find;
+	replace = patch->replace;
+
+
+	size = patch->size;
+	count = patch->count;
+
+	offset = patch->offset;
+
+	if(!symbol)
+	{
+		// patch everything you can N times;
+
+		mach_vm_address_t base = kext->getBase();
+
+		mach_vm_address_t current_address = base;
+
+		size_t size = macho->getSize();
+
+		for(int i = 0; current_address < base + size && (i < count || count == 0); i++)
+		{
+			while(current_address < base + size && memcmp((void*) current_address, (void*) find, size) != 0)
+			{
+				current_address++;
+			}
+
+			if(current_address != base + size)
+			{
+				kernel->write(current_address, (void*) replace, size);
+			}
+		}
+
+	} else
+	{
+		// patch the function directed by symbol
+
+		mach_vm_address_t address = symbol->getAddress();
+
+		if(find)
+		{
+			// search up to N bytes from beginning of function
+			// use PatchFinder::findFunctionEnd() to get ending point
+
+			mach_vm_address_t current_address = address;
+
+			for(int i = 0; i < 0x400; i++)
+			{
+				if(memcmp((void*) current_address, (void*) find, size) == 0)
+				{
+					kernel->write(current_address, (void*) replace, size);
+				}
+
+				current_address++;
+			}
+		} else
+		{
+			// use offset provided by user to patch bytes in function
+
+			kernel->write(address + offset, (void*) replace, size);
+		}
+	}
+
+	this->kextPatches.add(patch);
+}
+
+void KernelPatcher::removeKernelPatch(struct KernelPatch *patch)
+{
+	Kernel *kernel;
+
+	MachO *macho;
+
+	Symbol *symbol;
+
+	const uint8_t *find;
+	const uint8_t *replace;
+
+	size_t size;
+	size_t count;
+
+	off_t offset;
+
+	kernel = patch->kernel;
+	macho = patch->macho;
+
+	find = patch->find;
+	replace = patch->replace;
+
+
+	size = patch->size;
+	count = patch->count;
+
+	offset = patch->offset;
+
+	if(!symbol)
+	{
+		// patch everything you can N times;
+
+		mach_vm_address_t base = kernel->getBase();
+
+		mach_vm_address_t current_address = base;
+
+		size_t size = macho->getSize();
+
+		for(int i = 0; current_address < base + size && (i < count || count == 0); i++)
+		{
+			while(current_address < base + size && memcmp((void*) current_address, (void*) replace, size) != 0)
+			{
+				current_address++;
+			}
+
+			if(current_address != base + size)
+			{
+				kernel->write(current_address, (void*) find, size);
+			}
+		}
+
+	} else
+	{
+		// patch the function directed by symbol
+
+		mach_vm_address_t address = symbol->getAddress();
+
+		if(find)
+		{
+			// search up to N bytes from beginning of function
+			// use PatchFinder::findFunctionEnd() to get ending point
+
+			mach_vm_address_t current_address = address;
+
+			for(int i = 0; i < 0x400; i++)
+			{
+				if(memcmp((void*) current_address, (void*) replace, size) == 0)
+				{
+					kernel->write(current_address, (void*) find, size);
+				}
+
+				current_address++;
+			}
+		} else
+		{
+			// use offset provided by user to patch bytes in function
+
+			kernel->write(address + offset, (void*) find, size);
+		}
+	}
+
+	this->kernelPatches.add(patch);
+}
+
+void KernelPatcher::removeKextPatch(struct KextPatch *patch)
+{
+	Kext *kext;
+
+	MachO *macho;
+
+	Symbol *symbol;
+
+	const uint8_t *find;
+	const uint8_t *replace;
+
+	size_t size;
+	size_t count;
+
+	off_t offset;
+
+	kext = patch->kext;
+	macho = patch->macho;
+
+	find = patch->find;
+	replace = patch->replace;
+
+
+	size = patch->size;
+	count = patch->count;
+
+	offset = patch->offset;
+
+	if(!symbol)
+	{
+		// patch everything you can N times;
+
+		mach_vm_address_t base = kext->getBase();
+
+		mach_vm_address_t current_address = base;
+
+		size_t size = macho->getSize();
+
+		for(int i = 0; current_address < base + size && (i < count || count == 0); i++)
+		{
+			while(current_address < base + size && memcmp((void*) current_address, (void*) replace, size) != 0)
+			{
+				current_address++;
+			}
+
+			if(current_address != base + size)
+			{
+				kernel->write(current_address, (void*) find, size);
+			}
+		}
+
+	} else
+	{
+		// patch the function directed by symbol
+
+		mach_vm_address_t address = symbol->getAddress();
+
+		if(find)
+		{
+			// search up to N bytes from beginning of function
+			// use PatchFinder::findFunctionEnd() to get ending point
+
+			mach_vm_address_t current_address = address;
+
+			for(int i = 0; i < 0x400; i++)
+			{
+				if(memcmp((void*) current_address, (void*) replace, size) == 0)
+				{
+					kernel->write(current_address, (void*) find, size);
+				}
+
+				current_address++;
+			}
+		} else
+		{
+			// use offset provided by user to patch bytes in function
+
+			kernel->write(address + offset, (void*) find, size);
+		}
+	}
+
+	this->kextPatches.add(patch);
 }

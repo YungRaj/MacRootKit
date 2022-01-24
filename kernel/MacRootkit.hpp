@@ -39,6 +39,8 @@ class MacRootKit
 
 		Kernel* getKernel() { return kernel; }
 
+		Architecture* getArchitecture() { return architecture; }
+
 		enum Architectures getPlatformArchitecture() { return platformArchitecture; }
 
 		Array<Kext*>* getKexts() { return &kexts; }
@@ -74,6 +76,8 @@ class MacRootKit
 		void* findOSKextByIdentifier(const char *kextidentifier);
 
 	private:
+		Architecture *architecture;
+
 		Kernel *kernel;
 
 		KernelPatcher *kernelPatcher;

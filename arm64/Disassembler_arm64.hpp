@@ -3,7 +3,6 @@
 
 #include <capstone/capstone.h>
 
-#include "Arch.hpp"
 #include "Array.hpp"
 
 struct DisasmSig;

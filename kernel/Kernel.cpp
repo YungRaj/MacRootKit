@@ -404,6 +404,8 @@ bool Kernel::setKernelWriting(bool enable)
 {
 	static bool interruptsDisabled = false;
 
+	Architecture *architecture = this->getRootKit()->getArchitecture();
+
 	kern_return_t result = KERN_SUCCESS;
 
 	if(enable)
@@ -411,7 +413,7 @@ bool Kernel::setKernelWriting(bool enable)
 		interruptsDisabled = !setInterrupts(false);
 	}
 
-	if(Arch::setWPBit(!enable) != KERN_SUCCESS)
+	if(architecture->setWPBit(!enable) != KERN_SUCCESS)
 	{
 		enable = false;
 
@@ -436,7 +438,9 @@ bool Kernel::setNXBit(bool enable)
 
 bool Kernel::setInterrupts(bool enable)
 {
-	return Arch::setInterrupts(enable);
+	Architecture *architecture = this->getRootKit()->getArchitecture();
+
+	return architecture->setInterrupts(enable);
 }
 
 uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)

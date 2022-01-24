@@ -1,7 +1,7 @@
 #ifndef __REG_X86_64_HPP_
 #define __REG_X86_64_HPP_
 
-#include "Arch.hpp"
+#include "APIUtil.hpp"
 
 namespace Arch
 {

@@ -1,7 +1,9 @@
 #ifndef __X86_64_HPP_
 #define __X86_64_HPP_
 
-#include "Arch.hpp"
+#include "Isa_x86_64.hpp"
+#include "Disassembler_x86_64.hpp"
+#include "PatchFinder_x86_64.hpp"
 
 namespace Arch
 {

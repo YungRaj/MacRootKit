@@ -1,6 +1,8 @@
 #ifndef __API_UTIL_HPP_
 #define __API_UTIL_HPP_
 
+#include "Log.hpp"
+
 #ifdef __USER__
 
 #include <IOKit/IOKitLib.h>
@@ -25,6 +27,7 @@
 #endif
 
 #include <mach/mach_types.h>
+#include <mach/vm_types.h>
 
 class Kernel;
 

@@ -13,7 +13,7 @@ using namespace Arch;
 Disassembler::Disassembler(Task *task)
 {
 	this->task = task;
-	this->architecture = Arch::getArchitecture();
+	this->architecture = Arch::getCurrentArchitecture();
 	this->disassembler = this->getDisassemblerFromArch();
 	this->initDisassembler();
 }
@@ -25,7 +25,7 @@ Disassembler::~Disassembler()
 
 enum DisassemblerType Disassembler::getDisassemblerFromArch()
 {
-	enum Architectures architecture = Arch::getArchitecture();
+	enum Architectures architecture = Arch::getCurrentArchitecture();;
 
 	switch(architecture)
 	{

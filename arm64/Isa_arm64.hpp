@@ -1,9 +1,7 @@
 #ifndef __ISA_ARM64_HPP_
 #define __ISA_ARM64_HPP_
 
-#include "Arch.hpp"
-
-#include "arm64.hpp"
+#include "APIUtil.hpp"
 
 extern "C"
 {

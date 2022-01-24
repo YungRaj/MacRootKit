@@ -7,6 +7,9 @@
 #include <mach/kmod.h>
 
 #include "Patcher.hpp"
+#include "Arch.hpp"
+
+using namespace Arch;
 
 class Kernel;
 class Kext;
@@ -17,7 +20,7 @@ class Symbol;
 class Hook;
 class Payload;
 
-class KextPatch
+struct KextPatch
 {
 	public:
 		Kext *kext;
@@ -34,10 +37,10 @@ class KextPatch
 		off_t offset;
 };
 
-class KernelPatch
+struct KernelPatch
 {
 	public:
-		Kext *kext;
+		Kernel *kernel;
 
 		MachO *macho;
 		Symbol *symbol;
@@ -105,13 +108,13 @@ class KernelPatcher : public Patcher
 
 		mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
 
-		void applyKernelPatch(KernelPatch *patch);
-		void applyKextPatch(KextPatch *patch);
+		void applyKernelPatch(struct KernelPatch *patch);
+		void applyKextPatch(struct KextPatch *patch);
 
 		void patchPmapEnterOptions();
 
-		void removeKernelPatch(KernelPatch *patch);
-		void removeKextPatch(KextPatch *patch);
+		void removeKernelPatch(struct KernelPatch *patch);
+		void removeKextPatch(struct KextPatch *patch);
 
 	private:
 		Kernel *kernel;
@@ -124,8 +127,8 @@ class KernelPatcher : public Patcher
 
 		bool waitingForAlreadyLoadedKexts = false;
 
-		Array<KernelPatch*> kernelPatches;
-		Array<KextPatch*> kextPatches;
+		Array<struct KernelPatch*> kernelPatches;
+		Array<struct KextPatch*> kextPatches;
 };
 
 

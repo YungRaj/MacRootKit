@@ -7,11 +7,13 @@ MacRootKit::MacRootKit(Kernel *kernel)
 
 	this->kextKmods = reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"));
 
-	this->platformArchitecture = Arch::getArchitecture();
+	this->platformArchitecture = Arch::getCurrentArchitecture();;
 
 	this->registerCallbacks();
 
 	this->kernelPatcher = new KernelPatcher(this->kernel);
+
+	this->architecture = Arch::initArchitecture();
 }
 
 MacRootKit::~MacRootKit()

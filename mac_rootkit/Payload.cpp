@@ -59,8 +59,6 @@ bool Payload::writeBytes(off_t offset, uint8_t *bytes, size_t size)
 	if(address >= (mach_vm_address_t) Kernel::getExecutableMemory() && address < (mach_vm_address_t) Kernel::getExecutableMemory() + Kernel::getExecutableMemorySize())
 	{
 		Kernel::setExecutableMemoryOffset(Kernel::getExecutableMemoryOffset() + size);
-
-		MAC_RK_LOG("MacRK::incrementing getExecutableMemoryOffset by %u\n", size);
 	}
 
 #endif

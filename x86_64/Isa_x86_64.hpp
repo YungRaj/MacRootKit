@@ -1,7 +1,7 @@
 #ifndef __ISA_X86_64_HPP_
 #define __ISA_X86_64_HPP_
 
-#include "Arch.hpp"
+#include "APIUtil.hpp"
 
 namespace Arch
 {

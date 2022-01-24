@@ -3,10 +3,9 @@
 
 #include <capstone/capstone.h>
 
-#include "Arch.hpp"
 #include "Array.hpp"
 
-#include "Task.hpp"
+struct DisasmSig;
 
 namespace Arch
 {
