@@ -27,7 +27,7 @@ class Section;
 class MachO
 {
 	public:
-		MachO() {}
+		MachO();
 
 		~MachO();
 

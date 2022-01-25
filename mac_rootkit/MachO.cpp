@@ -1,8 +1,14 @@
 #include "MachO.hpp"
 #include "Log.hpp"
 
+MachO::MachO()
+{
+
+}
+
 MachO::~MachO()
 {
+	
 }
 
 void MachO::initWithBase(mach_vm_address_t base, off_t slide)

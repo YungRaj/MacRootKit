@@ -55,6 +55,7 @@ namespace PatchFinder
 	mach_vm_address_t findDataReference(MachO *macho, mach_vm_address_t to, enum data which_data, int n);
 
 	uint8_t* findString(MachO *macho, char *string, mach_vm_address_t base, mach_vm_address_t size, bool full_match);
+	
 	mach_vm_address_t findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, bool full_match);
 
 	void printInstruction64(MachO *macho, mach_vm_address_t start, uint32_t length, bool (*is_ins)(uint32_t*), int Rt, int Rn);

@@ -63,7 +63,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	if(ret == kIOReturnSuccess)
 	{
-		//this->rootkit = mac_rootkit_get_rootkit();
+		this->rootkit = mac_rootkit_get_rootkit();
 	}
 
 	registerService();
@@ -75,7 +75,6 @@ void IOKernelRootKitService::stop(IOService *provider)
 {
 	kern_return_t ret;
 
-	/*
 	ret = mac_rootkit_stop(this, this->kernel, &this->rootkitKext);
 
 	if(ret != KERN_SUCCESS)
@@ -87,7 +86,6 @@ void IOKernelRootKitService::stop(IOService *provider)
 	{
 		this->detachUserClients();
 	}
-	*/
 
 	IOService::stop(provider);
 }

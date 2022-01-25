@@ -97,15 +97,6 @@ namespace Arch
 
 					uint32_t reg = op & 0x1F;
 
-					if(op == 0xF0FFB6A0 && *((uint32_t*) current_insn + 1) == 0x91317400)
-					{
-						char buffer[128];
-
-						snprintf(buffer, 128, "0x%llx", current_insn);
-
-						MAC_RK_LOG("MacRK::Found instruction 0x%x at %s\n", op, buffer);
-					}
-
 					if(is_adrp((adr_t*) &op))
 					{
 						adr_t *adrp = reinterpret_cast<adr_t*>(&op);
@@ -317,12 +308,6 @@ namespace Arch
 
 					if(state[reg] == what && reg != 31)
 					{
-						char buffer[128];
-
-						snprintf(buffer, 128, "0x%llx", current_insn);
-
-						MAC_RK_LOG("MacRK::xref64 current_insn = %s\n", buffer);
-
 						return current_insn;
 					}
 				}
@@ -797,11 +782,6 @@ namespace Arch
 
 				find = findString(macho, string, base, size, full_match);
 
-				char buffer[128];
-
-				snprintf(buffer, 128, "0x%llx", (uint64_t) find);
-
-				MAC_RK_LOG("MacRK::find string %s = %s\n", string, buffer);
 
 				if(!find)
 					return 0;
