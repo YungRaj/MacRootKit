@@ -3,6 +3,21 @@
 
 #include "Task.hpp"
 
+#include "MachO.hpp"
+#include "UserMachO.hpp"
+
+#include "Disassembler.hpp"
+
+extern "C"
+{
+	#include "kern_user.h"
+}
+
+#include <mach/mach_types.h>
+
+class MachO;
+class Symbol;
+
 class Kernel : public Task
 {
 	public:
