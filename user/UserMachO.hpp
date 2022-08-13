@@ -23,7 +23,7 @@ class UserMachO : MachO
 		virtual void initWithTask(Task *task);
 		virtual void initWithFilePath(char *path);
 		virtual void initWithBuffer(char *buffer);
-		virtual void initWithBuffer(char *buffer, uint64_t size) = 0;
+		virtual void initWithBuffer(char *buffer, uint64_t size);
 
 		static MachO* taskAt(mach_port_t task);
 		static MachO* libraryLoadedAt(mach_port_t task, char *library);

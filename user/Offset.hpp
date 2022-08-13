@@ -37,8 +37,8 @@ namespace Offset
 	uint32_t task_itk_space = 0x330;
 	uint32_t task_bsd_info = 0x390;
 	uint32_t task_t_flags = 0x3d8;
-	uint32_t task_all_image_info_addr = 0x3e8;
-	uint32_t task_all_image_info_size = 0x3f0;
+	uint32_t task_all_image_info_addr = 0x440;
+	uint32_t task_all_image_info_size = 0x448;
 
 	uint32_t filedesc_fd_ofiles = 0x0;
 	uint32_t filedesc_fd_cdir = 0x38;

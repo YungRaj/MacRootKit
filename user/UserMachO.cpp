@@ -47,6 +47,11 @@ void UserMachO::initWithBuffer(char *buf)
 	this->parseMachO();
 }
 
+void UserMachO::initWithBuffer(char *buffer, uint64_t size)
+{
+
+}
+
 MachO* UserMachO::libraryLoadedAt(mach_port_t task_port, char *library)
 {
 	return NULL;

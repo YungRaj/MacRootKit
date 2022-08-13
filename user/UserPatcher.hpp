@@ -4,6 +4,7 @@
 #include "Patcher.hpp"
 
 class Hook;
+class Payload;
 
 class UserPatcher : Patcher
 {
@@ -31,6 +32,5 @@ class UserPatcher : Patcher
 
 	private:
 };
-}
 
 #endif

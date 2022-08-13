@@ -5,11 +5,11 @@
 #include <string.h>
 #include <mach/mach.h>
 
-const char *service_name = "IOKernelTFP0Service";
+const char *service_name = "IOKernelRootKitService";
 
 mach_port_t connection = MACH_PORT_NULL;
 
-bool open_kernel_tfp0_connection()
+mach_port_t open_kernel_tfp0_connection()
 {
 	io_connect_t conn;
 
@@ -22,7 +22,7 @@ bool open_kernel_tfp0_connection()
 	kern_return_t kr = IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(service_name), &iterator);
 
 	if(iterator == MACH_PORT_NULL)
-		return false;
+		return MACH_PORT_NULL;
 
 	while((service = IOIteratorNext(iterator)) != 0)
 	{
@@ -37,11 +37,11 @@ bool open_kernel_tfp0_connection()
 	}
 
 	if(kr != KERN_SUCCESS)
-		return false;
+		return MACH_PORT_NULL;
 
 	connection = conn;
 
-	return true;
+	return connection;
 }
 
 void close_kernel_tfp0_connection()
@@ -81,8 +81,6 @@ mach_vm_address_t get_kernel_symbol(char *symname)
 	uint64_t output[] = { (uint64_t) 0 };
 
 	uint32_t outputCnt = 1;
-
-	printf("0x%llx\n", (uint64_t) &output);
 
 	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetKernelSymbol, input, 2, 0, 0, output, &outputCnt, 0, 0);
 
@@ -126,6 +124,8 @@ mach_vm_address_t get_kernel_base()
 
 	if(kr != KERN_SUCCESS)
 	{
+		printf("get_kernel_base failed!\n");
+
 		return (mach_vm_address_t) 0;
 	}
 

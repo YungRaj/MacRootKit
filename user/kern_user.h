@@ -13,7 +13,7 @@
 
 extern mach_port_t connection;
 
-bool open_kernel_tfp0_connection();
+mach_port_t open_kernel_tfp0_connection();
 void close_kernel_tfp0_connection();
 
 mach_port_t get_task_for_pid(int pid);

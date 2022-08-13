@@ -2,9 +2,25 @@
 #include "Kernel.hpp"
 #include "MachO.hpp"
 #include "Task.hpp"
+#include "Offset.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <mach/mach.h>
+
+static int EndsWith(const char *str, const char *suffix)
+{
+	if (!str || !suffix)
+		return 0;
+	
+	size_t lenstr = strlen(str);
+	size_t lensuffix = strlen(suffix);
+	
+	if (lensuffix >  lenstr)
+		return 0;
+	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
 
 Dyld::Dyld(Kernel *kernel, Task *task)
 {
@@ -15,10 +31,28 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 	this->kernel = kernel;
 	this->task = task;
 
-	all_image_info_addr = kernel->read64(task->getTask() + Offset::task_all_image_info_addr);
-	all_image_info_size = kernel->read64(task->getTask() + Offset::task_all_image_info_size);
+	this->all_image_info_addr = kernel->read64(task->getTask() + Offset::task_all_image_info_addr);
+	this->all_image_info_size = kernel->read64(task->getTask() + Offset::task_all_image_info_size);
 
-	task->read(all_image_info_addr, &all_image_infos, sizeof(all_image_infos));
+	if(!all_image_info_addr || !all_image_info_size)
+	{
+		kern_return_t kr;
+
+		struct task_dyld_info dyld_info;
+
+		mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
+
+		if((kr = task_info(task->getTaskPort(), TASK_DYLD_INFO, (task_info_t) &dyld_info, &count)) == KERN_SUCCESS)
+		{
+			this->all_image_info_addr = dyld_info.all_image_info_addr;
+			this->all_image_info_size = dyld_info.all_image_info_size;
+		} else
+		{
+			MAC_RK_LOG("MacRK::could not find all_image_info for task! %d\n", kr);
+		}
+	}
+
+	task->read(all_image_info_addr, &all_images, sizeof(struct dyld_all_image_infos));
 
 	this->all_image_infos = reinterpret_cast<struct dyld_all_image_infos*> (malloc(sizeof(struct dyld_all_image_infos)));
 
@@ -35,7 +69,7 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 
 		char *image_file;
 
-		image_info_addr = (mach_vm_address_t) all_image_infos->infoArray + sizeof(struct dyld_image_info) * i;
+		image_info_addr = (mach_vm_address_t) (all_images.infoArray + i);
 
 		task->read(image_info_addr, &image_info, sizeof(image_info));
 
@@ -44,7 +78,7 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 
 		image_file = task->readString(image_file_path);
 
-		if(strstr(image_file, task->getName()))
+		if(EndsWith(image_file, task->getName()))
 		{
 			task->read(image_load_addr, &hdr, sizeof(hdr));
 
@@ -55,6 +89,10 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 				memcpy(this->main_image_info, &image_info, sizeof(image_info));
 
 				this->dyld_shared_cache = this->all_image_infos->sharedCacheBaseAddress;
+
+				printf("%s main image loaded at 0x%llx\n", image_file, image_load_addr);
+
+				this->main_image_load_base = image_load_addr;
 			}
 		}
 
@@ -75,10 +113,12 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 	struct dyld_all_image_infos all_images;
 
-	task->read(this->all_image_info_addr, &all_images, sizeof(all_image_infos));
+	task->read(this->all_image_info_addr, &all_images, sizeof(all_images));
 
 	if(!this->all_image_infos)
+	{
 		this->all_image_infos = reinterpret_cast<struct dyld_all_image_infos*> (malloc(sizeof(struct dyld_all_image_infos)));
+	}
 
 	memcpy(this->all_image_infos, &all_images, sizeof(struct dyld_all_image_infos));
 
@@ -93,7 +133,7 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 		char *image_file;
 
-		image_info_addr = (mach_vm_address_t) all_image_infos->infoArray + sizeof(struct dyld_image_info) * i;
+		image_info_addr = (mach_vm_address_t) (all_image_infos->infoArray + i);
 
 		task->read(image_info_addr, &image_info, sizeof(image_info));
 
@@ -102,7 +142,7 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 		image_file = task->readString(image_file_path);
 
-		if(strstr(image_file, image_name))
+		if(EndsWith(image_file, image_name))
 		{
 			task->read(image_load_addr, &hdr, sizeof(hdr));
 

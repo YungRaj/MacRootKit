@@ -90,7 +90,7 @@ class Kernel : public Task
 		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 	private:
-		MachO *macho;
+		UserMachO *macho;
 
 		mach_port_t connection;
 

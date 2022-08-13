@@ -9,9 +9,6 @@
 
 #include <mach-o.h>
 
-#include "Task.hpp"
-#include "Offset.hpp"
-
 class Task;
 class Kernel;
 class MachO;
@@ -23,8 +20,11 @@ public:
 
 	~Dyld();
 
+	mach_vm_address_t getMainImageLoadBase() { return main_image_load_base; }
 	mach_vm_address_t getDyld() { return dyld; }
 	mach_vm_address_t getAllImageInfoAddr() { return all_image_info_addr; }
+
+	struct dyld_image_info* getMainImageInfo() { return main_image_info; }
 
 	off_t getSlide() { return slide; }
 
@@ -45,6 +45,8 @@ private:
 	Kernel *kernel;
 
 	Task *task;
+
+	mach_vm_address_t main_image_load_base;
 
 	mach_vm_address_t dyld;
 	mach_vm_address_t dyld_shared_cache;

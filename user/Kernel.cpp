@@ -2,18 +2,22 @@
 
 Kernel::Kernel()
 {
+	this->kernel = this;
+
 	Task();
 
-	open_kernel_tfp0_connection();
+	this->connection = open_kernel_tfp0_connection();
 
-	this->macho = new UserMachO();
+	// UserMachO *userMachO = new UserMachO();
 #ifdef __x86_64__
-	this->macho->initWithBuffer("/System/Library/Kernels/kernel");
-#elif
-	this->macho->initWithBuffer("/System/Library/Kernels/kernel.release.t8020");
+	//userMachO->initWithFilePath("/System/Library/Kernels/kernel");
+#elif __arm64__
+	// userMachO->initWithFilePath("/System/Library/Kernels/kernel.release.t8110");
 #endif
 
-	this->slide = this->getKernelSlide();
+	 //this->macho = userMachO;
+
+	this->slide = this->getSlide();
 }
 
 Kernel::~Kernel()
@@ -35,12 +39,12 @@ off_t Kernel::getSlide()
 
 uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)
 {
-	return kernel_call_function(symname, arguments, argcount);
+	return kernel_call_function(symbolname, arguments, argCount);
 }
 
 uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
 {
-	return kernel_cell(symaddr, arguments, argcount);
+	return kernel_call(func, arguments, argCount);
 }
 
 mach_vm_address_t Kernel::vmAllocate(size_t size)
@@ -50,13 +54,13 @@ mach_vm_address_t Kernel::vmAllocate(size_t size)
 
 mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot)
 {
+	return 0;
 }
 
 void Kernel::vmDeallocate(mach_vm_address_t address, size_t size)
 {
-	return kernel_vm_allocate(address, size);
+	kernel_vm_deallocate(address, size);
 }
-
 
 bool Kernel::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 {
@@ -100,6 +104,7 @@ uint8_t  Kernel::physicalRead8(uint64_t paddr)
 
 bool Kernel::physicalWrite(uint64_t paddr, void *data, size_t size)
 {
+	return false;
 }
 
 void Kernel::physicalWrite64(uint64_t paddr, uint64_t value)
@@ -130,6 +135,7 @@ bool Kernel::read(mach_vm_address_t address, void *data, size_t size)
 
 bool Kernel::readUnsafe(mach_vm_address_t address, void *data, size_t size)
 {
+	return false;
 }
 
 
@@ -161,52 +167,58 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 
 bool Kernel::writeUnsafe(mach_vm_address_t address, void *data, size_t size)
 {
+	return false;
 }
 
 
 void Kernel::write8(mach_vm_address_t address, uint8_t value)
 {
-	return kernel_write8(address, value);
+	kernel_write8(address, value);
 }
 
 void Kernel::write16(mach_vm_address_t address, uint16_t value)
 {
-	return kernel_write16(address, value);
+	kernel_write16(address, value);
 }
 
 void Kernel::write32(mach_vm_address_t address, uint32_t value)
 {
-	return kernel_write32(address, value);
+	kernel_write32(address, value);
 }
 
 void Kernel::write64(mach_vm_address_t address, uint64_t value)
 {
-	return kernel_write64(address, value);
+	kernel_write64(address, value);
 }
 
 bool Kernel::hookFunction(char *symname, mach_vm_address_t hook, size_t hook_size)
 {
-
+	return false;
 }
 
-bool hookFunction(mach_vm_address_t address, mach_vm_address_t hook, size_t hook_size)
+bool Kernel::hookFunction(mach_vm_address_t address, mach_vm_address_t hook, size_t hook_size)
 {
+	return false;
 }
 
 bool Kernel::setBreakpoint(char *symname)
 {
+	return false;
 }
 
-bool setBreakpoint(char *symname, mach_vm_address_t hook, size_t hook_size)
+bool Kernel::setBreakpoint(char *symname, mach_vm_address_t hook, size_t hook_size)
 {
+	return false;
 }
 
 bool Kernel::setBreakpoint(mach_vm_address_t address)
 {
+	return false;
 }
 
 bool Kernel::setBreakpoint(mach_vm_address_t address, mach_vm_address_t breakpoint_hook, size_t breakpoint_hook_size)
 {
+	return false;
 }
 
 #define MAX_LENGTH 0x100
@@ -248,5 +260,5 @@ Symbol* Kernel::getSymbolByAddress(mach_vm_address_t address)
 
 mach_vm_address_t Kernel::getSymbolAddressByName(char *symbolname)
 {
-	return get_kernel_symbol(symname);
+	return get_kernel_symbol(symbolname);
 }

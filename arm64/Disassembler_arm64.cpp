@@ -1,8 +1,11 @@
 #include "Disassembler.hpp"
 #include "Disassembler_arm64.hpp"
 
+#ifdef __KERNEL__
+
 #include "umm_malloc.h"
 
+#endif
 
 namespace Arch
 {

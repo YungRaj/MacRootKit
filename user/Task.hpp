@@ -23,11 +23,17 @@ class Section;
 class Task
 {
 	public:
-		Task() { }
+		Task();
+
+		Task(Kernel *kernel, int pid);
 		
-		Task(mach_port_t task_port);
+		Task(Kernel *kernel, mach_port_t task_port);
 
 		~Task();
+
+		Kernel* getKernel();
+
+		mach_port_t getTaskPort() { return task_port; }
 
 		mach_vm_address_t getTask() { return task; }
 
@@ -40,6 +46,8 @@ class Task
 		Process* getProcess() { return process; }
 
 		Disassembler* getDisassembler() { return disassembler; }
+
+		static mach_port_t getTaskForPid(int pid);
 
 		static Task* getTaskInfo(Kernel *kernel, char *task_name);
 
@@ -54,6 +62,8 @@ class Task
 		virtual mach_vm_address_t getBase();
 
 		virtual off_t getSlide();
+
+		virtual char* getTaskName();
 
 		virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
 		virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
@@ -97,6 +107,8 @@ class Task
 		virtual void printLoadedImages();
 
 	protected:
+		Kernel *kernel;
+
 		MachO *macho;
 
 		Disassembler *disassembler;
