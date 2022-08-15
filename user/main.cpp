@@ -18,7 +18,7 @@ int main()
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
-	Task *task = new Task(kernel, 450);
+	Task *task = new Task(kernel, "Twitter");
 
 	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
 }

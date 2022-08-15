@@ -72,6 +72,9 @@ uint64_t task_call(mach_port_t task_port, mach_vm_address_t symaddr, uint64_t *a
 mach_vm_address_t get_task_for_pid(int pid);
 mach_vm_address_t get_proc_for_pid(int pid);
 
+mach_vm_address_t get_task_by_name(char *name);
+mach_vm_address_t get_proc_by_name(char *name);
+
 bool task_vm_read(mach_port_t task, mach_vm_address_t address, void *data, size_t size);
 bool task_vm_write(mach_port_t task, mach_vm_address_t address, const void *data, size_t size);
 

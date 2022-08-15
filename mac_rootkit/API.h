@@ -32,6 +32,8 @@ enum kIOKernelRootKitOperation
 	kIOKernelRootKitTaskForPid,
 	kIOKernelRootKitGetTaskForPid,
 	kIOKernelRootKitGetProcForPid,
+	kIOKernelRootKitGetTaskByName,
+	kIOKernelRootKitGetProcByName,
 	kIOKernelRootKitMachVmRead,
 	kIOKernelRootKitMachVmWrite,
 	kIOKernelRootKitMachVmAllocate,

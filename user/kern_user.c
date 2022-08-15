@@ -613,6 +613,44 @@ mach_vm_address_t get_proc_for_pid(int pid)
 	return output[0];
 }
 
+mach_vm_address_t get_task_by_name(char *name)
+{
+	kern_return_t kr;
+
+	uint64_t input[] = { (uint64_t) strdup(name), strlen(name) + 1 };
+	uint64_t output[] = { (uint64_t) 0 };
+
+	uint32_t outputCnt = 1;
+
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetTaskByName, input, 2, 0, 0, output, &outputCnt, 0, 0);
+
+	if(kr != KERN_SUCCESS)
+	{
+		return 0;
+	}
+
+	return output[0];
+}
+
+mach_vm_address_t get_proc_by_name(char *name)
+{
+	kern_return_t kr;
+
+	uint64_t input[] = { (uint64_t) strdup(name), strlen(name) + 1 };
+	uint64_t output[] = { (uint64_t) 0 };
+
+	uint32_t outputCnt = 1;
+
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetProcByName, input, 2, 0, 0, output, &outputCnt, 0, 0);
+
+	if(kr != KERN_SUCCESS)
+	{
+		return 0;
+	}
+
+	return output[0];
+}
+
 bool task_vm_read(mach_port_t task, mach_vm_address_t address, void *data, size_t size)
 {
 	kern_return_t kr;

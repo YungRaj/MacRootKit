@@ -27,6 +27,8 @@ class Task
 		Task();
 
 		Task(Kernel *kernel, int pid);
+
+		Task(Kernel *kernel, char *name);
 		
 		Task(Kernel *kernel, mach_port_t task_port);
 
@@ -35,6 +37,8 @@ class Task
 		Kernel* getKernel();
 
 		int getPid() { return pid; }
+
+		int findPid();
 
 		mach_port_t getTaskPort() { return task_port; }
 

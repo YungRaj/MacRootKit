@@ -682,6 +682,80 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 				}
 			}
 
+			break;
+
+		case kIOKernelRootKitGetTaskByName:
+			;
+
+			if(arguments)
+			{
+				if(arguments->scalarInputCount == 2)
+				{
+					bool success;
+
+					IOMemoryDescriptor *descriptor;
+
+					IOMemoryMap *map;
+
+					char *name = reinterpret_cast<char*>(this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map));
+
+					MAC_RK_LOG("MacRK::finding task with name = 0x%llx\n", (uint64_t)(name));
+
+					mach_vm_address_t task = reinterpret_cast<mach_vm_address_t>(Task::findTaskByName(this->kernel, name));
+
+					if(!task)
+					{
+						result = kIOReturnError;
+					}
+				
+					if(map)
+						map->release();
+
+					if(descriptor)
+						descriptor->release();
+
+					arguments->scalarOutput[0] = task;
+				}
+			}
+
+			break;
+
+		case kIOKernelRootKitGetProcByName:
+			;
+
+			if(arguments)
+			{
+				if(arguments->scalarInputCount == 2)
+				{
+					bool success;
+
+					IOMemoryDescriptor *descriptor;
+
+					IOMemoryMap *map;
+
+					char *name = reinterpret_cast<char*>(this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map));
+
+					MAC_RK_LOG("MacRK::finding proc with 0x%llx\n", (uint64_t)(name));
+
+				 	mach_vm_address_t proc = reinterpret_cast<mach_vm_address_t>(Task::findProcByName(this->kernel, name));
+
+					if(!proc)
+					{
+						result = kIOReturnError;
+					}
+				
+					if(map)
+						map->release();
+
+					if(descriptor)
+						descriptor->release();
+
+					arguments->scalarOutput[0] = proc;
+				}
+			}
+
+			break;
+
 		case kIOKernelRootKitMachVmRead:
 			;
 

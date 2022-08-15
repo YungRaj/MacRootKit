@@ -12,6 +12,19 @@ extern "C"
 	#include "kern.h"
 }
 
+static int EndsWith(const char *str, const char *suffix)
+{
+	if (!str || !suffix)
+		return 0;
+	
+	size_t lenstr = strlen(str);
+	size_t lensuffix = strlen(suffix);
+	
+	if (lensuffix >  lenstr)
+		return 0;
+	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
 Task::Task()
 {
 
@@ -203,8 +216,6 @@ proc_t Task::findProcByName(Kernel *kernel, char *name)
 {
 	proc_t current_proc;
 
-	char buffer[128];
-
 	current_proc = *(proc_t*) reinterpret_cast<proc_t*> (kernel->getSymbolAddressByName("_kernproc"));
 
 	current_proc = (proc_t) *(uint64_t*) ((uint8_t*) current_proc + 0x8);
@@ -247,9 +258,9 @@ proc_t Task::findProcByName(Kernel *kernel, char *name)
 
 		snprintf(pointer, 128, "0x%llx", (mach_vm_address_t) current_proc);
 
-		MAC_RK_LOG("MacPE::proc = %s name = %s\n", pointer, current_name);
+		MAC_RK_LOG("MacRK::proc = %s name = %s\n", pointer, current_name);
 
-		if(strcmp(name, current_name) == 0)
+		if(EndsWith(current_name, name))
 		{
 			return current_proc;
 		}
@@ -300,13 +311,7 @@ task_t Task::findTaskByName(Kernel *kernel, char *name)
 
 		task_t (*_proc_task) (proc_t proc);
 
-		_proc_task = reinterpret_cast<proc_task> (kernel->getSymbolAddressByName("_proc_task"));
-
-#ifdef __arm64__
-
-	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (_proc_task));
-
-#endif
+		_proc_task = reinterpret_cast<proc_task> (PACSignPointerWithAKey(kernel->getSymbolAddressByName("_proc_task")));
 
 		task = _proc_task(proc);
 

@@ -9,6 +9,20 @@
 #include "Task.hpp"
 #include "Dyld.hpp"
 
+static int EndsWith(const char *str, const char *suffix)
+{
+	if (!str || !suffix)
+		return 0;
+	
+	size_t lenstr = strlen(str);
+	size_t lensuffix = strlen(suffix);
+	
+	if (lensuffix >  lenstr)
+		return 0;
+	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+
 Task::Task()
 {
 	this->disassembler = new Disassembler(this);
@@ -25,6 +39,19 @@ Task::Task(Kernel *kernel, int pid)
 	this->dyld = new Dyld(kernel, this);
 	this->macho = new UserMachO();
 	// this->macho->initWithTask(this);
+}
+
+Task::Task(Kernel *kernel, char *name)
+{
+	this->kernel = kernel;
+	this->name = name;
+	this->task = Task::findTaskByName(kernel, name);
+	this->proc = Task::findProcByName(kernel, name);
+	this->pid = this->findPid();
+	this->task_port = Task::getTaskForPid(pid);
+	this->dyld = new Dyld(kernel, this);
+	this->macho = new UserMachO();
+
 }
 		
 Task::Task(Kernel *kernel, mach_port_t task_port)
@@ -55,6 +82,15 @@ mach_port_t Task::getTaskForPid(int pid)
 	assert(ret == KERN_SUCCESS);
 
 	return task;
+}
+
+int Task::findPid()
+{
+	uint64_t arguments[] = { this->proc };
+
+	int pid = kernel->call("_proc_pid", arguments, 1);
+
+	return pid;
 }
 
 Task* Task::getTaskInfo(Kernel *kernel, char *task_name)
@@ -96,7 +132,7 @@ mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
 		current_proc = (mach_vm_address_t) kernel->read64(current_proc + 0x8);
 	}
 
-	MAC_RK_LOG("MacPE::could not find proc for pid = %d\n", pid);
+	MAC_RK_LOG("MacRK::could not find proc for pid = %d\n", pid);
 
 	assert(false);
 
@@ -106,6 +142,13 @@ mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
 mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
 {
 	mach_vm_address_t current_proc;
+
+	current_proc = get_proc_by_name(name);
+
+	if(current_proc)
+	{
+		return current_proc;
+	}
 
 	current_proc = kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
 
@@ -119,7 +162,7 @@ mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
 
 		proc_name = kernel->call("_proc_name", arguments, 1);
 
-		if(strcmp(name, kernel->readString(proc_name)) == 0)
+		if(EndsWith(name, kernel->readString(proc_name)) == 0)
 		{
 			return current_proc;
 		}
@@ -168,6 +211,13 @@ mach_vm_address_t Task::findTaskByName(Kernel *kernel, char *name)
 {
 	mach_vm_address_t task;
 	mach_vm_address_t proc;
+
+	task = get_task_by_name(name);
+
+	if(task)
+	{
+		return task;
+	}
 
 	proc = Task::findProcByName(kernel, name);
 
