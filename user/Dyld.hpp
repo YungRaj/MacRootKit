@@ -45,7 +45,7 @@ public:
 	size_t getAdjustedLinkeditSize(mach_vm_address_t address);
 	size_t getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_vm_address_t linkedit, off_t linkedit_fileoff);
 
-	void rebuildSymtabStrtab(mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, struct symtab_command *symtab_command);
+	void rebuildSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, off_t linkedit_fileoff);
 
 	size_t getImageSize(mach_vm_address_t address);
 
