@@ -214,8 +214,6 @@ struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header *
 
 		if(mapping->initProt == prot)
 		{
-			printf("Index of returned mapping = %u\n", i);
-
 			return mapping;
 		}
 
@@ -231,27 +229,13 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 
 	struct dyld_cache_mapping_info *mappings;
 
-	struct dyld_cache_mapping_info *rx;
-	struct dyld_cache_mapping_info *ro;
-	struct dyld_cache_mapping_info *rw;
-
 	mach_vm_address_t shared_cache_rx_base;
 
 	shared_cache_rx_base = this->dyld_shared_cache;
 
 	cache_header = this->cacheGetHeader();
 
-	printf("magic = %s cache mapping count = %u \n", cache_header->magic, cache_header->mappingCount);
-
 	mappings = this->cacheGetMappings(cache_header);
-
-	/*
-	rx = this->cacheGetMapping(cache_header, VM_PROT_READ | VM_PROT_EXECUTE);
-
-	ro = this->cacheGetMapping(cache_header, VM_PROT_READ);
-
-	rw = this->cacheGetMapping(cache_header, VM_PROT_READ | VM_PROT_WRITE);
-	*/
 
 	size_t rx_size = 0;
 	size_t rw_size = 0;
@@ -278,9 +262,6 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 			dyld_cache_address = mappingAddr + mapping->address;
 		}
 
-		printf("mapping %u\n", i);
-		printf("\taddress = 0x%llx prot = %u offset = 0x%llx size = 0x%llx\n", mapping->address, mapping->maxProt, mapping->fileOffset, mapping->size);
-
 		if(mapping->maxProt == (VM_PROT_READ | VM_PROT_EXECUTE))
 		{
 			rx_size += mapping->size;
@@ -300,8 +281,6 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 		}
 	}
 
-	printf("dyld_cache_address = 0x%llx\n", dyld_cache_address);
-
 	off_t aslr_slide = (off_t) (this->dyld_shared_cache - rx_addr);
 
 	char *shared_cache_ro = (char*)((mach_vm_address_t) ro_addr + aslr_slide);
@@ -311,18 +290,12 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 	if(address)
 		*address = ((mach_vm_address_t) dyld_cache_address + aslr_slide);
 
-	if(slide)
+	if(aslr_slide)
 		*aslr = aslr_slide;
-
-	printf("Slide = 0x%llx\n", aslr_slide);
-
-	printf("Dyld address = 0x%llx calculated\n", *address);
 
 	free(cache_header);
 
-	// free(rx);
-	// free(ro);
-	//free(rw);
+	free(mappings);
 }
 
 void Dyld::cacheGetSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t *symtab, mach_vm_address_t *strtab, off_t *slide)
@@ -400,7 +373,7 @@ mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
 	return slide;
 }
 
-size_t Dyld::getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fileoff, struct symtab_command *symtab_command)
+size_t Dyld::getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_vm_address_t linkedit, off_t linkedit_fileoff)
 {
 	mach_vm_address_t symtab;
 	mach_vm_address_t strtab;
@@ -411,7 +384,7 @@ size_t Dyld::getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fi
 	off_t symoff;
 	off_t stroff;
 
-	off_t slide;
+	off_t aslr_slide;
 
 	struct nlist_64 *syms;
 
@@ -422,10 +395,10 @@ size_t Dyld::getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fi
 
 	syms = reinterpret_cast<struct nlist_64*>(malloc(symsize));
 
-	this->cacheGetSymtabStrtab(symtab_command, &symtab, &strtab, &slide);
+	this->cacheGetSymtabStrtab(symtab_command, NULL, NULL, &aslr_slide);
 
-	symtab = linkedit + slide + (symtab_command->symoff - linkedit_fileoff);
-	strtab = linkedit + slide + (symtab_command->stroff - linkedit_fileoff);
+	symtab = linkedit + aslr_slide + (symtab_command->symoff - linkedit_fileoff);
+	strtab = linkedit + aslr_slide + (symtab_command->stroff - linkedit_fileoff);
 
 	this->task->read(symtab, syms, symsize);
 
@@ -438,6 +411,8 @@ size_t Dyld::getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fi
 		char *sym = this->task->readString(strtab + nl->n_strx);
 
 		new_strsize += strlen(sym) + 1;
+
+		printf("%s\n", sym);
 
 		free(sym);
 	}
@@ -549,12 +524,9 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 		{
 			struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(q);
 
-			ok = this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
+			this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
 
-			printf("linkedit file off = 0x%llx\n", linkedit_old_off);
-			printf("symoff 0x%x stroff 0x%x\n", symtab_command->symoff, symtab_command->stroff);
-
-			uint32_t new_strsize = this->getAdjustedStrtabSize(linkedit_vmaddr, linkedit_old_off, symtab_command);
+			uint32_t new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr, linkedit_old_off);
 
 			uint64_t symsize = symtab_command->nsyms * sizeof(struct nlist_64);
 			uint64_t strsize = symtab_command->strsize;
@@ -858,9 +830,15 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		this->task->read(address, image_dump, sizeof(struct mach_header_64));
 
-		hdr = reinterpret_cast<struct mach_header_64*>(image);
+		printf("Reading address = 0x%llx\n", address);
+
+		hdr = reinterpret_cast<struct mach_header_64*>(image_dump);
+
+		printf("Reading address = 0x%llx\n", address + sizeof(struct mach_header_64));
 
 		this->task->read(address + sizeof(struct mach_header_64), image_dump + sizeof(struct mach_header_64), hdr->sizeofcmds);
+
+		printf("Done\n");
 
 		align = sizeof(struct mach_header_64) + hdr->sizeofcmds;
 
@@ -943,26 +921,26 @@ MachO* Dyld::cacheDumpImage(char *image)
 				uint64_t symoff = old_symoff - linkedit_new_off;
 				uint64_t stroff = old_stroff - linkedit_new_off;
 
-				uint32_t new_strsize = this->getAdjustedStrtabSize(linkedit_old_off + this->dyld_shared_cache, linkedit_old_off, symtab_command);
+				uint32_t new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr, linkedit_old_off);
 
-				// symtab_command->symoff = symoff;
-				// symtab_command->stroff = stroff;
+				symtab_command->symoff = symoff;
+				symtab_command->stroff = stroff;
 
-				// symtab_command->symoff = old_symoff;
-				// symtab_command->stroff = old_stroff;
+				symtab_command->symoff = old_symoff;
+				symtab_command->stroff = old_stroff;
 				
 				uint64_t symtab = (uint64_t) (image_dump + linkedit_new_off + linkedit_off);
 				uint64_t strtab = (uint64_t) (image_dump + linkedit_new_off + linkedit_off + symsize);
 
-				// symtab_command->symoff = symoff;
-				// symtab_command->stroff = stroff;
+				symtab_command->symoff = symoff;
+				symtab_command->stroff = stroff;
 
-				// this->task->read(linkedit_vmaddr + slide + symoff, image_dump + linkedit_new_off + linkedit_off, symsize);
+				this->task->read(linkedit_vmaddr + slide + symoff, image_dump + linkedit_new_off + linkedit_off, symsize);
 
-				// this->rebuildSymtabStrtab(symtab, strtab, linkedit_vmaddr + slide, symtab_command);
+				this->rebuildSymtabStrtab(symtab, strtab, linkedit_vmaddr + slide, symtab_command);
 
-				// symtab_command->symoff = linkedit_new_off + linkedit_off;
-				// symtab_command->stroff = linkedit_new_off + linkedit_off + symsize;
+				symtab_command->symoff = linkedit_new_off + linkedit_off;
+				symtab_command->stroff = linkedit_new_off + linkedit_off + symsize;
 
 				symtab_command->strsize = new_strsize;
 

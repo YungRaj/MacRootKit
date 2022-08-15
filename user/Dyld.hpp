@@ -43,7 +43,7 @@ public:
 	mach_vm_address_t getImageSlide(mach_vm_address_t address);
 
 	size_t getAdjustedLinkeditSize(mach_vm_address_t address);
-	size_t getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fileoff, struct symtab_command *symtab_command);
+	size_t getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_vm_address_t linkedit, off_t linkedit_fileoff);
 
 	void rebuildSymtabStrtab(mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, struct symtab_command *symtab_command);
 
