@@ -800,15 +800,9 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	mach_vm_address_t address = this->getImageLoadedAt(image, NULL);
 
-	printf("address = 0x%llx\n", address);
-
 	size_t size = this->getImageSize(address);
 
 	off_t aslr_slide = this->getImageSlide(address);
-
-	printf("address = 0x%llx size = %zx offset = 0x%llx\n", address, size, aslr_slide);
-
-	FILE *fp;
 
 	if(size)
 	{
@@ -828,15 +822,9 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		this->task->read(address, image_dump, sizeof(struct mach_header_64));
 
-		printf("Reading address = 0x%llx\n", address);
-
 		hdr = reinterpret_cast<struct mach_header_64*>(image_dump);
 
-		printf("Reading address = 0x%llx\n", address + sizeof(struct mach_header_64));
-
 		this->task->read(address + sizeof(struct mach_header_64), image_dump + sizeof(struct mach_header_64), hdr->sizeofcmds);
-
-		printf("Done\n");
 
 		align = sizeof(struct mach_header_64) + hdr->sizeofcmds;
 
@@ -1086,11 +1074,6 @@ MachO* Dyld::cacheDumpImage(char *image)
 			q = q + load_cmd->cmdsize;
 		}
 	}
-
-	fp = fopen("file.bin", "w");
-
-	fwrite(image_dump, 1, image_size, fp);
-	fclose(fp);
 
 	macho = new UserMachO();
 

@@ -14,6 +14,7 @@ void UserMachO::initWithTask(Task *task)
 	this->dyld = task->getDyld();
 	this->dyld_base = this->dyld->getDyld();
 	this->dyld_shared_cache = this->dyld->getDyldSharedCache();
+	this->symbolTable = new SymbolTable();
 }
 
 void UserMachO::initWithFilePath(char *path)
@@ -39,6 +40,8 @@ void UserMachO::initWithFilePath(char *path)
 
 	fclose(file);
 
+	this->symbolTable = new SymbolTable();
+
 	this->parseMachO();
 }
 
@@ -47,6 +50,8 @@ void UserMachO::initWithBuffer(char *buf)
 	buffer = buf;
 
 	header = (struct mach_header_64*) buffer;
+
+	this->symbolTable = new SymbolTable();
 
 	this->parseMachO();
 }
