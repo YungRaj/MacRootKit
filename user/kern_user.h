@@ -16,7 +16,7 @@ extern mach_port_t connection;
 mach_port_t open_kernel_tfp0_connection();
 void close_kernel_tfp0_connection();
 
-mach_port_t get_task_for_pid(int pid);
+mach_port_t _task_for_pid(int pid);
 
 mach_vm_address_t get_kernel_base();
 mach_vm_address_t get_kernel_symbol(char *symname);
@@ -68,6 +68,9 @@ void dump_kernel(char **kernel, size_t *size, off_t *slide);
 
 // uint64_t task_call_function(mach_port_t task_port, char *symname, uint64_t *arguments, size_t argcount);
 uint64_t task_call(mach_port_t task_port, mach_vm_address_t symaddr, uint64_t *arguments, size_t argcount);
+
+mach_vm_address_t get_task_for_pid(int pid);
+mach_vm_address_t get_proc_for_pid(int pid);
 
 bool task_vm_read(mach_port_t task, mach_vm_address_t address, void *data, size_t size);
 bool task_vm_write(mach_port_t task, mach_vm_address_t address, const void *data, size_t size);

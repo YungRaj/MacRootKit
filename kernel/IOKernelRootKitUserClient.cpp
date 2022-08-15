@@ -639,6 +639,49 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			break;
 		case kIOKernelRootKitTaskForPid:
 			break;
+
+		case kIOKernelRootKitGetTaskForPid:
+			;
+
+			if(arguments)
+			{
+				if(arguments->scalarInputCount == 1)
+				{
+					int pid = (int) arguments->scalarInput[0];
+
+					mach_vm_address_t task = reinterpret_cast<mach_vm_address_t>(Task::findTaskByPid(this->kernel, pid));
+
+					if(!task)
+					{
+						result = kIOReturnError;
+					}
+
+					arguments->scalarOutput[0] = task;
+				}
+			}
+
+			break;
+
+		case kIOKernelRootKitGetProcForPid:
+			;
+
+			if(arguments)
+			{
+				if(arguments->scalarInputCount == 1)
+				{
+					int pid = (int) arguments->scalarInput[0];
+
+					mach_vm_address_t proc = reinterpret_cast<mach_vm_address_t>(Task::findProcByPid(this->kernel, pid));
+
+					if(!proc)
+					{
+						result = kIOReturnError;
+					}
+					
+					arguments->scalarOutput[0] = proc;
+				}
+			}
+
 		case kIOKernelRootKitMachVmRead:
 			;
 

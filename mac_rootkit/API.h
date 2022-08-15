@@ -30,6 +30,8 @@ enum kIOKernelRootKitOperation
 	kIOKernelRootKitPhysicalWrite,
 	kIOKernelRootKitKernelVirtualToPhysical,
 	kIOKernelRootKitTaskForPid,
+	kIOKernelRootKitGetTaskForPid,
+	kIOKernelRootKitGetProcForPid,
 	kIOKernelRootKitMachVmRead,
 	kIOKernelRootKitMachVmWrite,
 	kIOKernelRootKitMachVmAllocate,

@@ -25,7 +25,6 @@ Task::Task(Kernel *kernel, int pid)
 	this->dyld = new Dyld(kernel, this);
 	this->macho = new UserMachO();
 	// this->macho->initWithTask(this);
-	MachO *libSystemKernel = this->dyld->cacheDumpImage("libsystem_kernel.dylib");
 }
 		
 Task::Task(Kernel *kernel, mach_port_t task_port)
@@ -68,6 +67,13 @@ mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
 	mach_vm_address_t current_proc;
 
 	int current_pid;
+
+	current_proc = get_proc_for_pid(pid);
+
+	if(current_proc)
+	{
+		return current_proc;
+	}
 
 	current_proc = (mach_vm_address_t) kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
 
@@ -132,6 +138,13 @@ mach_vm_address_t Task::findTaskByPid(Kernel *kernel, int pid)
 {
 	mach_vm_address_t task;
 	mach_vm_address_t proc;
+
+	task = get_task_for_pid(pid);
+
+	if(task)
+	{
+		return task;
+	}
 
 	proc = Task::findProcByPid(kernel, pid);
 

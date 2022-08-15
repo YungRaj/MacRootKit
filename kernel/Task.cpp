@@ -1,5 +1,6 @@
 #include "Task.hpp"
 #include "Kernel.hpp"
+#include "PAC.hpp"
 
 #include "Log.hpp"
 
@@ -176,7 +177,7 @@ proc_t Task::findProcByPid(Kernel *kernel, int pid)
 		typedef int (*proc_pid) (proc_t proc);
 		int (*_proc_pid) (proc_t proc);
 
-		_proc_pid = reinterpret_cast<proc_pid> (kernel->getSymbolAddressByName("_proc_pid"));
+		_proc_pid = reinterpret_cast<proc_pid> (PACSignPointerWithAKey(kernel->getSymbolAddressByName("_proc_pid")));
 
 		current_pid = _proc_pid(current_proc);
 
@@ -185,7 +186,10 @@ proc_t Task::findProcByPid(Kernel *kernel, int pid)
 		MAC_RK_LOG("MacPE::proc = %s pid = %d\n", buffer, current_pid);
 
 		if(current_pid == pid)
+		{
 			return current_proc;
+		}
+		
 		if(current_pid == 0)
 			break;
 
@@ -213,46 +217,45 @@ proc_t Task::findProcByName(Kernel *kernel, char *name)
 
 		uint64_t buffer;
 
-		typedef char* (*proc_name) (proc_t proc);
-		char* (*_proc_name) (proc_t proc);
-
 		typedef int (*proc_pid) (proc_t proc);
 		int (*_proc_pid) (proc_t proc);
 
-		typedef void* (kalloc) (size_t size);
+		typedef void* (*kalloc) (size_t size);
 		void* (*_kalloc) (size_t size);
 
-		typedef void (kfree) (void *p, size_t s);
+		typedef void (*kfree) (void *p, size_t s);
 		void (*_kfree) (void *p, size_t);
 
 		typedef void (*proc_name) (int pid, char *name, size_t size);
 		void (*_proc_name) (int pid, char *name, size_t size);
 
-		_proc_pid = reinterpret_cast<proc_pid> (kernel->getSymbolAddressByName("_proc_pid"));
+		_proc_pid = reinterpret_cast<proc_pid> (PACSignPointerWithAKey(kernel->getSymbolAddressByName("_proc_pid")));
 
 		current_pid = _proc_pid(current_proc);
 
-		_kalloc = reinterpret_cast<kalloc>(kernel->getSymbolAddressByName("_kalloc"));
+		_kalloc = reinterpret_cast<kalloc>(PACSignPointerWithAKey(kernel->getSymbolAddressByName("_kalloc")));
 
-		buffer = _kalloc(256);
+		buffer = (uint64_t) _kalloc(256);
 
-		_proc_name = reinterpret_cast<proc_name>(kernel->getSymbolAddressByName("_proc_name"));
+		_proc_name = reinterpret_cast<proc_name>(PACSignPointerWithAKey(kernel->getSymbolAddressByName("_proc_name")));
 
-		_proc_name(current_pid, buffer, 256);
+		_proc_name(current_pid, (char*) buffer, 256);
 
 		current_name = reinterpret_cast<char*>(buffer);
 
-		snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) current_proc);
+		char pointer[128];
 
-		MAC_RK_LOG("MacPE::proc = %s name = %s\n", buffer, current_name);
+		snprintf(pointer, 128, "0x%llx", (mach_vm_address_t) current_proc);
+
+		MAC_RK_LOG("MacPE::proc = %s name = %s\n", pointer, current_name);
 
 		if(strcmp(name, current_name) == 0)
 		{
 			return current_proc;
 		}
 
-		_kfree = reinterpret_cast<kfree>(kernel->getSymbolAddressByName("_kfree"));
-		
+		_kfree = reinterpret_cast<kfree>(PACSignPointerWithAKey(kernel->getSymbolAddressByName("_kfree")));
+
 		_kfree(reinterpret_cast<void*>(buffer), 256);
 
 		current_proc = (proc_t) *(uint64_t*) ((uint8_t*) current_proc + 0x8);
@@ -274,7 +277,7 @@ task_t Task::findTaskByPid(Kernel *kernel, int pid)
 
 		task_t (*_proc_task) (proc_t proc);
 
-		_proc_task = reinterpret_cast<proc_task> (kernel->getSymbolAddressByName("_proc_task"));
+		_proc_task = reinterpret_cast<proc_task> (PACSignPointerWithAKey(kernel->getSymbolAddressByName("_proc_task")));
 
 		task = _proc_task(proc);
 
@@ -298,6 +301,12 @@ task_t Task::findTaskByName(Kernel *kernel, char *name)
 		task_t (*_proc_task) (proc_t proc);
 
 		_proc_task = reinterpret_cast<proc_task> (kernel->getSymbolAddressByName("_proc_task"));
+
+#ifdef __arm64__
+
+	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (_proc_task));
+
+#endif
 
 		task = _proc_task(proc);
 
