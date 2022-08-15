@@ -23,6 +23,9 @@ Task::Task(Kernel *kernel, int pid)
 	this->proc = Task::findProcByPid(kernel, pid);
 	this->name = this->getTaskName();
 	this->dyld = new Dyld(kernel, this);
+	this->macho = new UserMachO();
+	// this->macho->initWithTask(this);
+	MachO *libSystemKernel = this->dyld->cacheDumpImage("libsystem_kernel.dylib");
 }
 		
 Task::Task(Kernel *kernel, mach_port_t task_port)
@@ -173,6 +176,8 @@ mach_vm_address_t Task::findTaskByName(Kernel *kernel, char *name)
 
 char* Task::getTaskName()
 {
+	char *task_name;
+
 	mach_vm_address_t name;
 
 	uint64_t kalloc_args[] = { 256 };
@@ -183,7 +188,13 @@ char* Task::getTaskName()
 
 	name = this->kernel->call("_proc_name", proc_name_args, 3);
 
-	return this->kernel->readString(buffer);
+	task_name = this->kernel->readString(buffer);
+
+	uint64_t kfree_args[] = { buffer, 256 };
+
+	this->kernel->call("_kfree", kfree_args, 2);
+
+	return task_name;
 }
 
 mach_vm_address_t Task::findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port)
@@ -491,6 +502,8 @@ char* Task::readString(mach_vm_address_t address)
 	} 
 	while(value);
 
+	assert(size > 0);
+
 	string = (char*) malloc(size);
 
 	this->read(address, string, size);
@@ -500,22 +513,36 @@ char* Task::readString(mach_vm_address_t address)
 
 Symbol* Task::getSymbolByName(char *symname)
 {
-	return NULL;
+	return macho->getSymbolByName(symname);
 }
 
 Symbol* Task::getSymbolByAddress(mach_vm_address_t address)
 {
-	return NULL;
+	return macho->getSymbolByAddress(address);
 }
 
 mach_vm_address_t Task::getSymbolAddressByName(char *symbolname)
 {
-	return 0;
+	Symbol *symbol = this->macho->getSymbolByName(symbolname);
+
+	if(!symbol)
+		return 0;
+
+	return symbol->getAddress();
 }
 
 mach_vm_address_t Task::getImageLoadedAt(char *image_name, char **image_path)
 {
-	return 0;
+	mach_vm_address_t image = this->dyld->getImageLoadedAt(image_name, image_path);
+
+	if(!image)
+	{
+		MAC_RK_LOG("Locating image %s failed!\n", image_name);
+	}
+
+	assert(image != 0);
+
+	return image;
 }
 
 void Task::printLoadedImages()

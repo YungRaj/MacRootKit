@@ -21,8 +21,10 @@ public:
 	~Dyld();
 
 	mach_vm_address_t getMainImageLoadBase() { return main_image_load_base; }
-	mach_vm_address_t getDyld() { return dyld; }
 	mach_vm_address_t getAllImageInfoAddr() { return all_image_info_addr; }
+
+	mach_vm_address_t getDyld() { return dyld; }
+	mach_vm_address_t getDyldSharedCache() { return dyld_shared_cache; }
 
 	struct dyld_image_info* getMainImageInfo() { return main_image_info; }
 
@@ -30,16 +32,25 @@ public:
 
 	struct dyld_cache_header* cacheGetHeader();
 
-	struct shared_file_mapping_np* cacheGetMapping(struct dyld_cache_header *cache_header, vm_prot_t prot);
+	struct dyld_cache_mapping_info* cacheGetMappings(struct dyld_cache_header *cache_header);
+	struct dyld_cache_mapping_info* cacheGetMapping(struct dyld_cache_header *cache_header, vm_prot_t prot);
 
-	void cacheGetLinkeditAddress(off_t dyld_cache_offset, mach_vm_address_t *address, off_t *slide);
+	void cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *address, off_t *slide);
 
-	void cacheGetSymtabStrtab(struct symtab_command *symtab_command, off_t dyld_cache_offset, mach_vm_address_t *symtab, mach_vm_address_t *strtab, off_t *slide);
-
-	MachO* cacheDumpLibrary(char *library);
-	MachO* cacheDumpLibraryToFile(char *library, char *path);
+	void cacheGetSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t *symtab, mach_vm_address_t *strtab, off_t *slide);
 
 	mach_vm_address_t getImageLoadedAt(char *image_name, char **image_path);
+	mach_vm_address_t getImageSlide(mach_vm_address_t address);
+
+	size_t getAdjustedLinkeditSize(mach_vm_address_t address);
+	size_t getAdjustedStrtabSize(mach_vm_address_t linkedit, off_t linkedit_fileoff, struct symtab_command *symtab_command);
+
+	void rebuildSymtabStrtab(mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, struct symtab_command *symtab_command);
+
+	size_t getImageSize(mach_vm_address_t address);
+
+	MachO* cacheDumpImage(char *image);
+	MachO* cacheDumpImageToFile(char *image, char *path);
 
 private:
 	Kernel *kernel;

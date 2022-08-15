@@ -209,19 +209,51 @@ proc_t Task::findProcByName(Kernel *kernel, char *name)
 	{
 		char *current_name;
 
+		int current_pid;
+
+		uint64_t buffer;
+
 		typedef char* (*proc_name) (proc_t proc);
 		char* (*_proc_name) (proc_t proc);
 
-		_proc_name = reinterpret_cast<proc_name> (kernel->getSymbolAddressByName("_proc_name"));
+		typedef int (*proc_pid) (proc_t proc);
+		int (*_proc_pid) (proc_t proc);
 
-		current_name = _proc_name(current_proc);
+		typedef void* (kalloc) (size_t size);
+		void* (*_kalloc) (size_t size);
+
+		typedef void (kfree) (void *p, size_t s);
+		void (*_kfree) (void *p, size_t);
+
+		typedef void (*proc_name) (int pid, char *name, size_t size);
+		void (*_proc_name) (int pid, char *name, size_t size);
+
+		_proc_pid = reinterpret_cast<proc_pid> (kernel->getSymbolAddressByName("_proc_pid"));
+
+		current_pid = _proc_pid(current_proc);
+
+		_kalloc = reinterpret_cast<kalloc>(kernel->getSymbolAddressByName("_kalloc"));
+
+		buffer = _kalloc(256);
+
+		_proc_name = reinterpret_cast<proc_name>(kernel->getSymbolAddressByName("_proc_name"));
+
+		_proc_name(current_pid, buffer, 256);
+
+		current_name = reinterpret_cast<char*>(buffer);
 
 		snprintf(buffer, 128, "0x%llx", (mach_vm_address_t) current_proc);
 
 		MAC_RK_LOG("MacPE::proc = %s name = %s\n", buffer, current_name);
 
 		if(strcmp(name, current_name) == 0)
+		{
 			return current_proc;
+		}
+
+		_kfree = reinterpret_cast<kfree>(kernel->getSymbolAddressByName("_kfree"));
+		
+		_kfree(reinterpret_cast<void*>(buffer), 256);
 
 		current_proc = (proc_t) *(uint64_t*) ((uint8_t*) current_proc + 0x8);
 	}

@@ -1,6 +1,6 @@
 all: KEXT LIB TEST
 
-KERNEL:
+KEXT:
 	make -f make_kext.mk
 
 LIB:

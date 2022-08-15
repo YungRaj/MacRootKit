@@ -6,10 +6,14 @@
 #include "ObjC.hpp"
 
 #include "Task.hpp"
+#include "Dyld.hpp"
 
 void UserMachO::initWithTask(Task *task)
 {
-
+	this->task = task;
+	this->dyld = task->getDyld();
+	this->dyld_base = this->dyld->getDyld();
+	this->dyld_shared_cache = this->dyld->getDyldSharedCache();
 }
 
 void UserMachO::initWithFilePath(char *path)

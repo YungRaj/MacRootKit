@@ -9,11 +9,14 @@
 
 class Segment;
 class Section;
+
 class Task;
+class Dyld;
+
 class CodeSignature;
 class ObjC;
 
-class UserMachO : MachO
+class UserMachO : public MachO
 {
 	public:
 		UserMachO() { }
@@ -49,7 +52,11 @@ class UserMachO : MachO
 		void parseObjC(Segment *segment, Section *section);
 
 	private:
-		mach_vm_address_t dyld;
+		Task *task;
+
+		Dyld *dyld;
+
+		mach_vm_address_t dyld_base;
 		mach_vm_address_t dyld_shared_cache;
 
 		CodeSignature *codeSignature;

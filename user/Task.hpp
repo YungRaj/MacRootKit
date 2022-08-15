@@ -15,6 +15,7 @@ class Process;
 class Disassembler;
 
 class MachO;
+class UserMachO;
 
 class Symbol;
 class Segment;
@@ -32,6 +33,8 @@ class Task
 		~Task();
 
 		Kernel* getKernel();
+
+		int getPid() { return pid; }
 
 		mach_port_t getTaskPort() { return task_port; }
 
@@ -109,7 +112,7 @@ class Task
 	protected:
 		Kernel *kernel;
 
-		MachO *macho;
+		UserMachO *macho;
 
 		Disassembler *disassembler;
 
