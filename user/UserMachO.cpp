@@ -56,6 +56,18 @@ void UserMachO::initWithBuffer(char *buf)
 	this->parseMachO();
 }
 
+void UserMachO::initWithBuffer(char *buf, off_t slide)
+{
+	buffer = buf;
+
+	header = (struct mach_header_64*) buffer;
+
+	this->symbolTable = new SymbolTable();
+	this->aslr_slide = slide;
+
+	this->parseMachO();
+}
+
 void UserMachO::initWithBuffer(char *buffer, uint64_t size)
 {
 
@@ -281,6 +293,8 @@ void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *
 		name = &strtab[nl->n_strx];
 
 		address = nl->n_value;
+
+		printf("%s\n", name);
 
 		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
 

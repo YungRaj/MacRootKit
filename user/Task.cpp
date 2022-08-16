@@ -170,7 +170,7 @@ mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
 		current_proc = kernel->read64(current_proc + 0x8);
 	}
 
-	MAC_RK_LOG("MacPE::could not find proc for name = %s\n", name);
+	MAC_RK_LOG("MacRK::could not find proc for name = %s\n", name);
 
 	assert(false);
 

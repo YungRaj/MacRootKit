@@ -162,6 +162,8 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 			if(hdr.magic == MH_MAGIC_64)
 			{
+				printf("Found %s at %s loaded at 0x%llx\n", image_name, image_file, image_load_addr);
+
 				if(image_path)
 					*image_path = image_file;
 
@@ -405,8 +407,6 @@ size_t Dyld::getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_v
 		struct nlist_64* nl = &syms[i];
 
 		char *sym = this->task->readString(strtab + nl->n_strx);
-
-		printf("%s\n", sym);
 
 		new_strsize += strlen(sym) + 1;
 
@@ -804,6 +804,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	off_t aslr_slide = this->getImageSlide(address);
 
+	FILE *fp;
+
 	if(size)
 	{
 		uint8_t *q;
@@ -885,7 +887,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 					{
 						struct section_64 *section = reinterpret_cast<struct section_64*>(q + sizeof(struct segment_command_64) + sizeof(struct section_64) * j);
 						
-						if(section->size && section->offset)
+						if(section->offset)
 						{
 							section->offset = current_offset + (section->offset - fileoffset); 
 						}
@@ -927,22 +929,22 @@ MachO* Dyld::cacheDumpImage(char *image)
 			{
 				struct dysymtab_command *dysymtab_command = reinterpret_cast<struct dysymtab_command*>(q);
 
-				uint32_t tocoff = dysymtab_command->tocoff - linkedit_new_off;
+				uint32_t tocoff = dysymtab_command->tocoff - linkedit_old_off;
 				uint32_t tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
 
-				uint32_t modtaboff = dysymtab_command->modtaboff - linkedit_new_off;
+				uint32_t modtaboff = dysymtab_command->modtaboff - linkedit_old_off;
 				uint32_t modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
 
-				uint32_t extrefsymoff = dysymtab_command->extrefsymoff - linkedit_new_off;
+				uint32_t extrefsymoff = dysymtab_command->extrefsymoff - linkedit_old_off;
 				uint32_t extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
 
-				uint32_t indirectsymoff = dysymtab_command->indirectsymoff - linkedit_new_off;
+				uint32_t indirectsymoff = dysymtab_command->indirectsymoff - linkedit_old_off;
 				uint32_t indirectsize = dysymtab_command->nindirectsyms * sizeof(uint32_t);
 
-				uint32_t extreloff = dysymtab_command->extreloff - linkedit_new_off;
+				uint32_t extreloff = dysymtab_command->extreloff - linkedit_old_off;
 				uint32_t extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
 
-				uint32_t locreloff = dysymtab_command->locreloff - linkedit_new_off;
+				uint32_t locreloff = dysymtab_command->locreloff - linkedit_old_off;
 				uint32_t locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
 
 				this->task->read(linkedit_vmaddr + aslr_slide + tocoff, image_dump + linkedit_new_off + linkedit_off, tocsize);
@@ -985,19 +987,19 @@ MachO* Dyld::cacheDumpImage(char *image)
 			{
 				struct dyld_info_command *dyld_info_command = reinterpret_cast<struct dyld_info_command*>(q);
 
-				uint32_t rebase_off = dyld_info_command->rebase_off - linkedit_new_off;
+				uint32_t rebase_off = dyld_info_command->rebase_off - linkedit_old_off;
 				uint32_t rebase_size = dyld_info_command->rebase_size;
 
-				uint32_t bind_off = dyld_info_command->bind_off - linkedit_new_off;;
+				uint32_t bind_off = dyld_info_command->bind_off - linkedit_old_off;
 				uint32_t bind_size = dyld_info_command->bind_size;
 
-				uint32_t weak_bind_off = dyld_info_command->weak_bind_off - linkedit_new_off;;
+				uint32_t weak_bind_off = dyld_info_command->weak_bind_off - linkedit_old_off;
 				uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
 
-				uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_new_off;;
+				uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_old_off;
 				uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-				uint32_t export_off = dyld_info_command->export_off - linkedit_new_off;;
+				uint32_t export_off = dyld_info_command->export_off - linkedit_old_off;
 				uint32_t export_size = dyld_info_command->export_size;
 
 				this->task->read(linkedit_vmaddr + aslr_slide + rebase_off, image_dump + linkedit_new_off + linkedit_off, rebase_size);
@@ -1035,7 +1037,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 			{
 				struct linkedit_data_command *linkedit_data_command = reinterpret_cast<struct linkedit_data_command*>(q);
 
-				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_new_off;
+				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
 				uint32_t datasize = linkedit_data_command->datasize;
 
 				this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
@@ -1048,7 +1050,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 			{
 				struct linkedit_data_command *linkedit_data_command = reinterpret_cast<struct linkedit_data_command*>(q);
 
-				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_new_off;
+				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
 				uint32_t datasize = linkedit_data_command->datasize;
 
 				this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
@@ -1061,7 +1063,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 			{
 				struct linkedit_data_command *linkedit_data_command = reinterpret_cast<struct linkedit_data_command*>(q);
 
-				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_new_off;
+				uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
 				uint32_t datasize = linkedit_data_command->datasize;
 
 				this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
@@ -1075,9 +1077,15 @@ MachO* Dyld::cacheDumpImage(char *image)
 		}
 	}
 
+	fp = fopen("file.bin", "w");
+
+	fwrite(image_dump, image_size, 1, fp);
+
+	fclose(fp);
+
 	macho = new UserMachO();
 
-	macho->initWithBuffer(image_dump);
+	macho->initWithBuffer(image_dump, aslr_slide);
 
 	return reinterpret_cast<MachO*>(macho);
 
