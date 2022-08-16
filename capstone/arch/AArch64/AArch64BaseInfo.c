@@ -23,6 +23,9 @@
 
 #include "../../utils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "AArch64BaseInfo.h"
 
 const char *A64NamedImmMapper_toString(const A64NamedImmMapper *N, uint32_t Value, bool *Valid)
@@ -634,7 +637,7 @@ void A64SysRegMapper_toString(const A64SysRegMapper *S, uint32_t Bits, char *res
 	// First search the registers shared by all
 	for (i = 0; i < ARR_SIZE(SysRegPairs); ++i) {
 		if (SysRegPairs[i].Value == Bits) {
-			strcpy(result, SysRegPairs[i].Name, strlen(SysRegPairs[i].Name));
+			strcpy(result, SysRegPairs[i].Name);
 			return;
 		}
 	}
@@ -644,7 +647,7 @@ void A64SysRegMapper_toString(const A64SysRegMapper *S, uint32_t Bits, char *res
 	if (true) {
 		for (i = 0; i < ARR_SIZE(CycloneSysRegPairs); ++i) {
 			if (CycloneSysRegPairs[i].Value == Bits) {
-				strcpy(result, CycloneSysRegPairs[i].Name, strlen(CycloneSysRegPairs[i].Name));
+				strcpy(result, CycloneSysRegPairs[i].Name);
 				return;
 			}
 		}
@@ -654,7 +657,7 @@ void A64SysRegMapper_toString(const A64SysRegMapper *S, uint32_t Bits, char *res
 	// write-only).
 	for (i = 0; i < S->NumInstPairs; ++i) {
 		if (S->InstPairs[i].Value == Bits) {
-			strcpy(result, S->InstPairs[i].Name, strlen(S->InstPairs[i].Name));
+			strcpy(result, S->InstPairs[i].Name);
 			return;
 		}
 	}

@@ -26,7 +26,9 @@
 using namespace std;
 
 #define STACK_SIZE ((1024 * 1024) * 512)
-#define ROP_ret "\xc0\x03\x5f\xd6"
+
+
+#define ROP_ret "\xff\x0f\x5f\xd6"
 #define ALIGNSIZE 8
 #define align64(x) ( ((x) + ALIGNSIZE - 1) & ~(ALIGNSIZE - 1) )
 
@@ -54,10 +56,13 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 {
 	kern_return_t kret;
 
-	state.__pc = (uint64_t) function;
-	state.__lr = (uint64_t) gadget_address;
-	state.__sp = (uint64_t)(remote_stack + STACK_SIZE) - (STACK_SIZE / 4);
-	state.__fp = state.__sp;
+	state.__opaque_pc = (void*) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
+
+	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
+
+	state.__opaque_lr = (void*) gadget_address;
+	state.__opaque_sp = (void*) (uint64_t) ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
+	state.__opaque_fp = (void*) state.__opaque_sp;
 
 	char *local_fake_stack = (char *)malloc((size_t) STACK_SIZE);
 
@@ -150,8 +155,6 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 		return 0;
 	}
 
-	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
-
 	printf("Calling function at %p...\n", (void *)function);
 
 	thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, ARM_THREAD_STATE64_COUNT);
@@ -164,7 +167,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 
 		thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
 
-		if(state.__pc == (uint64_t)gadget_address)
+		if(state.__opaque_pc == (void*)gadget_address)
 		{
 			printf("Returned from function!\n");
 
@@ -314,6 +317,8 @@ int main()
 		
 		return -1;
 	}
+
+	printf("Pthread arguments = 0x%llx\n", pthread);
 
 	ropcall(pthread_create_from_mach_thread, (char *)"u", (uint64_t*) pthread, NULL, (uint64_t*) pthread + 256, NULL );
 

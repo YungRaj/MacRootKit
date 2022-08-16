@@ -1,9 +1,25 @@
 set -e
 
-export CFLAGS=""
-export LDFLAGS=""
+cd capstone
+
+export CAPSTONE_ARCHS="x86 aarch64"
+
+make clean
+
+export CFLAGS="-target arm64e-apple-macos"
+export CXXFLAGS="-target arm64e-apple-macos"
+export LDFLAGS="-target arm64e-apple-macos"
+
+CFLAGS="-target arm64e-apple-macos" LDFLAGS="-target arm64e-apple-macos" ./make.sh mac-universal-no
+
+sudo ./make.sh mac-universal-no install
+
+cd ..
 
 cd keystone
+
+export CFLAGS="-target arm64e-apple-macos"
+export LDFLAGS="-target arm64e-apple-macos"
 
 if [ ! -d build ]; then
   mkdir build

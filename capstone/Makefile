@@ -10,7 +10,7 @@ V ?= 0
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
-LIBARCHS ?= x86_64
+LIBARCHS ?= arm64e
 PREFIX ?= /usr/local
 endif
 
@@ -294,7 +294,7 @@ LDFLAGS += $(foreach arch,$(LIBARCHS),-arch $(arch))
 endif
 EXT = dylib
 VERSION_EXT = $(API_MAJOR).$(EXT)
-$(LIBNAME)_LDFLAGS += -dynamiclib -install_name lib$(LIBNAME).$(VERSION_EXT) -current_version $(PKG_MAJOR).$(PKG_MINOR).$(PKG_EXTRA) -compatibility_version $(PKG_MAJOR).$(PKG_MINOR)
+$(LIBNAME)_LDFLAGS += -target arm64e-apple-macos -dynamiclib -install_name lib$(LIBNAME).$(VERSION_EXT) -current_version $(PKG_MAJOR).$(PKG_MINOR).$(PKG_EXTRA) -compatibility_version $(PKG_MAJOR).$(PKG_MINOR)
 AR_EXT = a
 # Homebrew wants to make sure its formula does not disable FORTIFY_SOURCE
 # However, this is not really necessary because 'CAPSTONE_USE_SYS_DYN_MEM=yes' by default
@@ -357,6 +357,12 @@ endif
 endif
 
 PKGCFGF = $(BLDIR)/$(LIBNAME).pc
+
+CFLAGS += -target arm64e-apple-macos -arch arm64e
+
+$(info $$CFLAGS is [${CFLAGS}])
+
+$(info $$LDFLAGS is [${LDFLAGS}])
 
 .PHONY: all clean install uninstall dist
 

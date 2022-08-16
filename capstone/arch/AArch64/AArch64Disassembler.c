@@ -18,6 +18,9 @@
 
 #ifdef CAPSTONE_HAS_ARM64
 
+#include <stdio.h>	// DEBUG
+#include <stdlib.h>
+
 #include "../../cs_priv.h"
 #include "../../utils.h"
 
