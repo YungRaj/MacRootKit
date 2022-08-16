@@ -15,6 +15,9 @@ namespace Arch
 	{
 		namespace PatchFinder
 		{
+			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,
+													  const unsigned char* needle,   size_t nlen);
+
 			mach_vm_address_t xref64(MachO *macho, mach_vm_address_t start, mach_vm_address_t end, mach_vm_address_t what);
 	
 			mach_vm_address_t findInstruction64(MachO *macho, mach_vm_address_t start, size_t length, uint32_t ins);
