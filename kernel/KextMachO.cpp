@@ -44,7 +44,7 @@ bool KextMachO::parseLoadCommands()
 
 	snprintf(buffer, 128, "0x%llx", (uint64_t) this->getOffset(sizeof(struct mach_header_64)));
 
-	// MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
+	// // MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
 
 	// this->size = this->getSize();
 
@@ -52,7 +52,7 @@ bool KextMachO::parseLoadCommands()
 
 	uint32_t current_offset = sizeof(struct mach_header_64);
 
-	MAC_RK_LOG("MacRK::KextMachO::mach_header->ncmds = %u\n", mh->ncmds);
+	// MAC_RK_LOG("MacRK::KextMachO::mach_header->ncmds = %u\n", mh->ncmds);
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
@@ -85,10 +85,10 @@ bool KextMachO::parseLoadCommands()
 				snprintf(buffer1, 128, "0x%08llx", segment_command->vmaddr);
 				snprintf(buffer2, 128, "0x%08llx", segment_command->vmaddr + segment_command->vmsize);
 
-				MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n", segment_command->fileoff,
-																						segment_command->segname,
-																						buffer1,
-																						buffer2);
+				// MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n", segment_command->fileoff,
+																						// segment_command->segname,
+																						// buffer1,
+																						// buffer2);
 				
 				
 				if (!strcmp(segment_command->segname, "__LINKEDIT"))
@@ -115,10 +115,10 @@ bool KextMachO::parseLoadCommands()
 					snprintf(buffer1, 128, "0x%08llx", section->addr);
 					snprintf(buffer2, 128, "0x%08llx", section->addr + section->size);
 
-					MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j,
-					                            buffer1,
-					                            buffer2,
-					                            section->sectname);
+					// MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j,
+					                           // buffer1,
+					                           // buffer2,
+					                            //section->sectname);
 
 					sect_offset += sizeof(struct section_64);
 				}
@@ -139,9 +139,9 @@ bool KextMachO::parseLoadCommands()
 				char *strtab;
 				uint32_t strsize;
 
-				MAC_RK_LOG("MacRK::LC_SYMTAB\n");
-				MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
-				MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
+				// MAC_RK_LOG("MacRK::LC_SYMTAB\n");
+				// MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
+				// MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
 
 				if(kernel_cache)
 				{
@@ -157,8 +157,8 @@ bool KextMachO::parseLoadCommands()
 					snprintf(buffer1, 128, "0x%llx", (uint64_t) symtab);
 					snprintf(buffer2, 128, "0x%llx", (uint64_t) strtab);
 
-					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
-					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+					// MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
+					// MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
 
 				} else if(kernel_collection)
 				{
@@ -186,11 +186,11 @@ bool KextMachO::parseLoadCommands()
 				;
 				struct dysymtab_command *dysymtab_command = reinterpret_cast<struct dysymtab_command*>(load_command);
 
-				MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
-				MAC_RK_LOG("MacRK::\t%u local symbols at index %u\n",dysymtab_command->ilocalsym,dysymtab_command->nlocalsym);
-				MAC_RK_LOG("MacRK::\t%u external symbols at index %u\n",dysymtab_command->nextdefsym,dysymtab_command->iextdefsym);
-				MAC_RK_LOG("MacRK::\t%u undefined symbols at index %u\n",dysymtab_command->nundefsym,dysymtab_command->iundefsym);
-				MAC_RK_LOG("MacRK::\t%u Indirect symbols at offset 0x%x\n",dysymtab_command->nindirectsyms,dysymtab_command->indirectsymoff);
+				// MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
+				// MAC_RK_LOG("MacRK::\t%u local symbols at index %u\n",dysymtab_command->ilocalsym,dysymtab_command->nlocalsym);
+				// MAC_RK_LOG("MacRK::\t%u external symbols at index %u\n",dysymtab_command->nextdefsym,dysymtab_command->iextdefsym);
+				// MAC_RK_LOG("MacRK::\t%u undefined symbols at index %u\n",dysymtab_command->nundefsym,dysymtab_command->iundefsym);
+				// MAC_RK_LOG("MacRK::\t%u Indirect symbols at offset 0x%x\n",dysymtab_command->nindirectsyms,dysymtab_command->indirectsymoff);
 
 				break;
 			}
@@ -204,14 +204,14 @@ bool KextMachO::parseLoadCommands()
 					return false;
 
 				
-				MAC_RK_LOG("MacRK::LC_UUID\n");
-				MAC_RK_LOG("MacRK::\tuuid = ");
+				// MAC_RK_LOG("MacRK::LC_UUID\n");
+				// MAC_RK_LOG("MacRK::\tuuid = ");
 				
 
 				for(int j = 0; j < sizeof(uuid_command->uuid); j++)
-					MAC_RK_LOG("%x", uuid_command->uuid[j]);
+					// MAC_RK_LOG("%x", uuid_command->uuid[j]);
 
-				MAC_RK_LOG("\n");
+				// MAC_RK_LOG("\n");
 
 				break;
 			}
@@ -224,8 +224,8 @@ bool KextMachO::parseLoadCommands()
 				uint32_t dataoff = linkedit->dataoff;
 				uint32_t datasize = linkedit->datasize;
 
-				MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
-				MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
+				// MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
+				// MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
 
 				break;
 			}

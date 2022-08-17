@@ -3,9 +3,6 @@
 
 #ifdef CAPSTONE_HAS_ARM64
 
-#include <stdio.h>	// debug
-#include <string.h>
-
 #include "../../utils.h"
 
 #include "AArch64Mapping.h"
@@ -303,6 +300,8 @@ static const insn_map insns[] = {
 
 #include "AArch64MappingInsn.inc"
 };
+
+#include <string.h>
 
 // given internal insn id, return public instruction info
 void AArch64_get_insn_id(cs_struct *h, cs_insn *insn, unsigned int id)

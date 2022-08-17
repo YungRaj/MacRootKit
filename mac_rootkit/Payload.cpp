@@ -54,7 +54,7 @@ bool Payload::writeBytes(off_t offset, uint8_t *bytes, size_t size)
 
 	success = this->getTask()->write(address, (void*) bytes, size);
 
-#if defined(__arm64e__) && defined(__KERNEL__)
+#ifdef __KERNEL__
 
 	if(address >= (mach_vm_address_t) Kernel::getExecutableMemory() && address < (mach_vm_address_t) Kernel::getExecutableMemory() + Kernel::getExecutableMemorySize())
 	{
@@ -74,14 +74,15 @@ bool Payload::prepare()
 
 	Task *task = this->getTask();
 
-#if defined(__x86_64__) || (defined(__arm64e__) && defined(__USER__))
+#if defined(__x86_64__) || (defined(__arm64__) && defined(__USER__))
 
 	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_WRITE);
 
 	if(!trampoline)
 		return false;
 
-#elif defined(__arm64e__) && defined(__KERNEL__)
+/*#elif defined(__arm64__) && defined(__KERNEL__)*/
+#else
 
 	trampoline = Kernel::getExecutableMemory() + Kernel::getExecutableMemoryOffset();
 

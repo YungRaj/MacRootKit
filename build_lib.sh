@@ -2,15 +2,11 @@ set -e
 
 cd capstone
 
-export CAPSTONE_ARCHS="x86 aarch64"
-
 make clean
 
-export CFLAGS="-target arm64e-apple-macos"
-export CXXFLAGS="-target arm64e-apple-macos"
-export LDFLAGS="-target arm64e-apple-macos"
+export CAPSTONE_ARCHS="x86 aarch64"
 
-CFLAGS="-target arm64e-apple-macos" LDFLAGS="-target arm64e-apple-macos" ./make.sh mac-universal-no
+./make.sh mac-universal-no
 
 sudo ./make.sh mac-universal-no install
 

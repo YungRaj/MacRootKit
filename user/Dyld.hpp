@@ -30,6 +30,8 @@ public:
 
 	off_t getSlide() { return slide; }
 
+	void getImageInfos();
+
 	struct dyld_cache_header* cacheGetHeader();
 
 	struct dyld_cache_mapping_info* cacheGetMappings(struct dyld_cache_header *cache_header);

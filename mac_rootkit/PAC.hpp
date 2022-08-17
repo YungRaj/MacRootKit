@@ -3,7 +3,7 @@
 
 #include <mach/mach_types.h>
 
-#ifdef __arm64e__
+#ifdef __arm64__
 
 namespace PAC
 {

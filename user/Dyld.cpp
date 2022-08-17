@@ -33,26 +33,7 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 	this->kernel = kernel;
 	this->task = task;
 
-	this->all_image_info_addr = kernel->read64(task->getTask() + Offset::task_all_image_info_addr);
-	this->all_image_info_size = kernel->read64(task->getTask() + Offset::task_all_image_info_size);
-
-	if(!all_image_info_addr || !all_image_info_size)
-	{
-		kern_return_t kr;
-
-		struct task_dyld_info dyld_info;
-
-		mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
-
-		if((kr = task_info(task->getTaskPort(), TASK_DYLD_INFO, (task_info_t) &dyld_info, &count)) == KERN_SUCCESS)
-		{
-			this->all_image_info_addr = dyld_info.all_image_info_addr;
-			this->all_image_info_size = dyld_info.all_image_info_size;
-		} else
-		{
-			MAC_RK_LOG("MacRK::could not find all_image_info for task! %d\n", kr);
-		}
-	}
+	this->getImageInfos();
 
 	assert(this->all_image_info_addr && this->all_image_info_size);
 
@@ -121,11 +102,39 @@ Dyld::~Dyld()
 	
 }
 
+void Dyld::getImageInfos()
+{
+	this->all_image_info_addr = kernel->read64(task->getTask() + Offset::task_all_image_info_addr);
+	this->all_image_info_size = kernel->read64(task->getTask() + Offset::task_all_image_info_size);
+
+	if(!all_image_info_addr || !all_image_info_size)
+	{
+		kern_return_t kr;
+
+		struct task_dyld_info dyld_info;
+
+		mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
+
+		if((kr = task_info(task->getTaskPort(), TASK_DYLD_INFO, (task_info_t) &dyld_info, &count)) == KERN_SUCCESS)
+		{
+			this->all_image_info_addr = dyld_info.all_image_info_addr;
+			this->all_image_info_size = dyld_info.all_image_info_size;
+		} else
+		{
+			MAC_RK_LOG("MacRK::could not find all_image_info for task! %d\n", kr);
+		}
+	}
+}
+
 mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 {
 	struct mach_header_64 hdr;
 
 	struct dyld_all_image_infos all_images;
+
+	this->getImageInfos();
+
+	assert(this->all_image_info_addr && this->all_image_info_size);
 
 	task->read(this->all_image_info_addr, &all_images, sizeof(all_images));
 

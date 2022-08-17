@@ -217,6 +217,13 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	min = disassembler->instructionSize(from, branch_size);
 
+	if(!min)
+	{
+		MAC_RK_LOG("Cannot hook! Capstone failed!\n");
+		
+		return;
+	}
+
 	uint8_t *original_opcodes;
 	uint8_t *replace_opcodes;
 

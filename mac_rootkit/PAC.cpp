@@ -1,6 +1,6 @@
 #include "PAC.hpp"
 
-#ifdef __arm64e__
+#ifdef __arm64__
 
 uint64_t PAC::signPointerWithAKey(uint64_t pointer)
 {

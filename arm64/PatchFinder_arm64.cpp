@@ -638,7 +638,7 @@ namespace Arch
 				{
 					mach_vm_address_t ref = *reinterpret_cast<mach_vm_address_t*>(i);
 
-				#ifdef __arm64e__
+				#ifdef __arm64__
 
 					__asm__ volatile("XPACI %[pac]" : [pac] "+rm" (ref));
 

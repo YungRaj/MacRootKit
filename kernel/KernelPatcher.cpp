@@ -150,6 +150,11 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 		original = OSBoolean::withBoolean(true);
 	}
 
+	if(strcmp(entitlement, "com.apple.security.app-sandbox") == 0)
+	{
+		original = OSBoolean::withBoolean(false);
+	}
+
 	if(that)
 	{
 		StoredArray<MacRootKit::entitlement_callback_t> *entitlementCallbacks;

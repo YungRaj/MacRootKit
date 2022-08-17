@@ -17,8 +17,6 @@
 #ifdef CAPSTONE_HAS_ARM64
 
 #include <capstone/platform.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "AArch64InstPrinter.h"
 #include "AArch64BaseInfo.h"
@@ -449,6 +447,40 @@ void AArch64_printInst(MCInst *MI, SStream *O, void *Info)
 	}
 }
 
+static char *
+strstr_(string, substring)
+    register char *string;	/* String to search. */
+    char *substring;		/* Substring to try to find in string. */
+{
+    register char *a, *b;
+
+    /* First scan quickly through the two strings looking for a
+     * single-character match.  When it's found, then compare the
+     * rest of the substring.
+     */
+
+    b = substring;
+    if (*b == 0) {
+	return string;
+    }
+    for ( ; *string != 0; string += 1) {
+	if (*string != *b) {
+	    continue;
+	}
+	a = string;
+	while (1) {
+	    if (*b == 0) {
+		return string;
+	    }
+	    if (*a++ != *b++) {
+		break;
+	    }
+	}
+	b = substring;
+    }
+    return NULL;
+}
+
 static bool printSysAlias(MCInst *MI, SStream *O)
 {
 	// unsigned Opcode = MCInst_getOpcode(MI);
@@ -706,8 +738,11 @@ static bool printSysAlias(MCInst *MI, SStream *O)
 			MI->flat_insn->detail->arm64.operands[MI->flat_insn->detail->arm64.op_count].sys = op_ic + op_dc + op_at + op_tlbi;
 			MI->flat_insn->detail->arm64.op_count++;
 		}
-
+#ifdef CAPSTONE_HAS_OSXKERNEL
+		if (!strstr_(Asm, "all", strlen("all"))) {
+#else
 		if (!strstr(Asm, "all")) {
+#endif
 			unsigned Reg = MCOperand_getReg(MCInst_getOperand(MI, 4));
 			SStream_concat(O, ", %s", getRegisterName(Reg, AArch64_NoRegAltName));
 			if (MI->csh->detail) {
