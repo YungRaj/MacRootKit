@@ -13,6 +13,8 @@ class Task;
 class Kernel;
 class MachO;
 
+#define MH_DYLIB_IN_CACHE 0x80000000
+
 class Dyld
 {
 public:

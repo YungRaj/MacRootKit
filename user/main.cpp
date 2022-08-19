@@ -41,11 +41,11 @@ char injectedCode[] =
 	"\x00\x02\x00\x10"		//    ADR         X0,  0x40
 	"\x41\x20\x80\xd2" 		//    MOV         X1,  0x102
 	"\x03\x00\x00\x90"		//    ADRP        X3,  0x00
-	"\x23\x04\x00\x10"		//    ADR         X3,  0x84
+	"\x23\x05\x00\x10"		//    ADR         X3,  0xa4
 	"\x64\x00\x40\xf9" 		//    LDR         X4,  [X3]
 	"\x80\x00\x3f\xd6" 		//    BLR         X4
 	"\x03\x00\x00\x90" 		//    ADRP        X3, 0x0
-	"\xe3\x03\x00\x10" 		//    ADR         X3, 0x7c
+	"\xe3\x04\x00\x10" 		//    ADR         X3, 0x9c
 	"\x64\x00\x40\xf9" 		//    LDR         X4,  [X3]
 	"\x80\x00\x3f\xd6" 		//    BLR         X4
 	"\x1f\x20\x03\xd5" 		//    NOP
@@ -60,6 +60,8 @@ char injectedCode[] =
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
 
 Kernel *kernel;
@@ -281,7 +283,7 @@ int main()
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
-	task = new Task(kernel, "Twitter");
+	task = new Task(kernel, "QRReader");
 
 	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
 
@@ -379,7 +381,7 @@ int main()
 		char *zeros = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 		char *ones   = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
 
-		char *library = "/Users/ilhanraja/Downloads/libcycript.dylib";
+		char *library = "/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript.dylib";
 
 		if(lib && libaddr)
 			break;
@@ -430,15 +432,13 @@ int main()
 
 	sleep(5);
 
-	libCycript = task->getDyld()->cacheDumpImage("libcycript.dylib");
-
-	thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
-
 	thread_suspend(thread);
 
 	thread_terminate(thread);
 
 	vm_deallocate(task->getTaskPort(), remote_stack, STACK_SIZE);
+
+	libCycript = task->getDyld()->cacheDumpImage("libcycript.dylib");
 
 	delete task;
 
