@@ -275,17 +275,9 @@ static void* find_gadget(const char *gadget, int gadget_len)
 	return NULL;
 }
 
-int main()
+int injectLibrary(char *dylib)
 {
 	kern_return_t kr;
-
-	kernel = new Kernel();
-
-	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
-
-	task = new Task(kernel, "QRReader");
-
-	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
 
 	libDyld = task->getDyld()->cacheDumpImage("libdyld.dylib");
 
@@ -381,7 +373,7 @@ int main()
 		char *zeros = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 		char *ones   = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
 
-		char *library = "/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript.dylib";
+		char *library = dylib;
 
 		if(lib && libaddr)
 			break;
@@ -438,11 +430,55 @@ int main()
 
 	vm_deallocate(task->getTaskPort(), remote_stack, STACK_SIZE);
 
-	libCycript = task->getDyld()->cacheDumpImage("libcycript.dylib");
+	return 0;
+}
+
+int main()
+{
+	int err;
+
+	kernel = new Kernel();
+
+	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
+
+	task = new Task(kernel, "QRReader");
+
+	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
+	
+	mach_vm_address_t libcycript = task->getDyld()->getImageLoadedAt("libcycript.dylib", NULL);
+	mach_vm_address_t libcycript_runner = task->getDyld()->getImageLoadedAt("libcycript_runner.dylib", NULL);
+
+	if(!libcycript)
+	{
+		err = injectLibrary("/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript.dylib");
+
+		if(err != 0)
+		{
+			return err;
+		}
+
+		libcycript = task->getDyld()->getImageLoadedAt("libcycript.dylib", NULL);
+	}
+
+	if(!libcycript_runner)
+	{
+		err = injectLibrary("/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript_runner.dylib");
+
+		if(err != 0)
+		{
+			return err;
+		}
+
+		libcycript_runner = task->getDyld()->getImageLoadedAt("libcycript_runner.dylib", NULL);
+	}
+
+	printf("libcycript.dylib loaded at 0x%llx\n", libcycript);
+
+	printf("libcycript_runner.dylib loaded at 0x%llx\n", libcycript_runner);
 
 	delete task;
 
 	delete kernel;
 
-	return 0;
+	return err;
 }
