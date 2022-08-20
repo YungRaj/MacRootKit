@@ -41,11 +41,11 @@ char injectedCode[] =
 	"\x00\x02\x00\x10"		//    ADR         X0,  0x40
 	"\x41\x20\x80\xd2" 		//    MOV         X1,  0x102
 	"\x03\x00\x00\x90"		//    ADRP        X3,  0x00
-	"\x23\x05\x00\x10"		//    ADR         X3,  0xa4
+	"\x63\x06\x00\x10"		//    ADR         X3,  0xcc
 	"\x64\x00\x40\xf9" 		//    LDR         X4,  [X3]
 	"\x80\x00\x3f\xd6" 		//    BLR         X4
 	"\x03\x00\x00\x90" 		//    ADRP        X3, 0x0
-	"\xe3\x04\x00\x10" 		//    ADR         X3, 0x9c
+	"\x23\x06\x00\x10" 		//    ADR         X3, 0xc4
 	"\x64\x00\x40\xf9" 		//    LDR         X4,  [X3]
 	"\x80\x00\x3f\xd6" 		//    BLR         X4
 	"\x1f\x20\x03\xd5" 		//    NOP
@@ -56,6 +56,8 @@ char injectedCode[] =
 	"\xc0\x03\x5f\xd6" 		//    RET
 
 
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -368,6 +370,10 @@ int injectLibrary(char *dylib)
 	bool lib = false;
 	bool libaddr = false;
 
+	char *injected_code = reinterpret_cast<char*>(malloc(sizeof(injectedCode)));
+
+	memcpy(injected_code, injectedCode, sizeof(injectedCode));
+
 	for(uint32_t i = 0; i < sizeof(injectedCode); i++)
 	{
 		char *zeros = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
@@ -382,7 +388,7 @@ int injectLibrary(char *dylib)
 		{
 			lib = true;
 
-			strlcpy(&injectedCode[i], library, strlen(library) + 1);
+			strlcpy(&injected_code[i], library, strlen(library) + 1);
 
 			i += strlen(library);
 		}
@@ -391,14 +397,14 @@ int injectLibrary(char *dylib)
 		{
 			libaddr = true;
 
-			memcpy(&injectedCode[i], &dlopen, sizeof(uint64_t));
-			memcpy(&injectedCode[i] + sizeof(uint64_t), &dlerror, sizeof(uint64_t));
+			memcpy(&injected_code[i], &dlopen, sizeof(uint64_t));
+			memcpy(&injected_code[i] + sizeof(uint64_t), &dlerror, sizeof(uint64_t));
 
 			i += sizeof(uint64_t);
 		}
 	}
 
-	kr = vm_write(task->getTaskPort(), remote_code, (vm_address_t) injectedCode, sizeof(injectedCode));
+	kr = vm_write(task->getTaskPort(), remote_code, (vm_address_t) injected_code, sizeof(injectedCode));
 
 	if(kr != KERN_SUCCESS)
 	{
@@ -429,6 +435,8 @@ int injectLibrary(char *dylib)
 	thread_terminate(thread);
 
 	vm_deallocate(task->getTaskPort(), remote_stack, STACK_SIZE);
+
+	free(injected_code);
 
 	return 0;
 }

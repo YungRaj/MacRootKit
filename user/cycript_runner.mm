@@ -78,16 +78,19 @@ void run_cycript_server()
 	NSLog(@"Running cycript server on port 1337 at IP Address %@", ip_address);
 }
 
-__attribute__((constructor))
-static void initializer()
+extern "C"
 {
-	printf("[%s] initializer()\n", __FILE__);
+	__attribute__((constructor))
+	static void initializer()
+	{
+		printf("[%s] initializer()\n", __FILE__);
 
-	run_cycript_server();
-}
+		run_cycript_server();
+	}
 
-__attribute__ ((destructor))
-static void finalizer()
-{
-	printf("[%s] finalizer()\n", __FILE__);
+	__attribute__ ((destructor))
+	static void finalizer()
+	{
+		printf("[%s] finalizer()\n", __FILE__);
+	}
 }
