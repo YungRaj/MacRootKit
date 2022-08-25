@@ -13,6 +13,8 @@ namespace Arch
 	{
 		namespace Disassembler
 		{
+		#ifdef __KERNEL__
+
 			bool initialized = false;
 
 			size_t handle_x86_64;
@@ -279,6 +281,8 @@ namespace Arch
 			{
 				return 0;
 			}
+
+			#endif
 		}
 	}
 }

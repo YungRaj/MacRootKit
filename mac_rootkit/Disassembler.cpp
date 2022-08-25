@@ -44,6 +44,8 @@ void Disassembler::initDisassembler()
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
+
 		case ARCH_x86_64:
 			Arch::x86_64::Disassembler::init();
 
@@ -54,6 +56,7 @@ void Disassembler::initDisassembler()
 			break;
 		default:
 			break;
+	#endif
 	}
 }
 
@@ -65,6 +68,7 @@ size_t Disassembler::disassemble(mach_vm_address_t address, size_t size, cs_insn
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::disassemble(address, size, result);
 
@@ -75,6 +79,7 @@ size_t Disassembler::disassemble(mach_vm_address_t address, size_t size, cs_insn
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -84,6 +89,7 @@ size_t Disassembler::quickInstructionSize(mach_vm_address_t address, size_t min)
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::quickInstructionSize(address, min);
 
@@ -94,6 +100,7 @@ size_t Disassembler::quickInstructionSize(mach_vm_address_t address, size_t min)
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -103,6 +110,7 @@ size_t Disassembler::instructionSize(mach_vm_address_t address, size_t min)
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::instructionSize(address, min);
 
@@ -113,6 +121,7 @@ size_t Disassembler::instructionSize(mach_vm_address_t address, size_t min)
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -122,6 +131,7 @@ mach_vm_address_t Disassembler::disassembleNthCall(mach_vm_address_t address, si
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::disassembleNthCall(address, num, lookup_size);
 
@@ -132,6 +142,7 @@ mach_vm_address_t Disassembler::disassembleNthCall(mach_vm_address_t address, si
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -141,6 +152,7 @@ mach_vm_address_t Disassembler::disassembleNthJmp(mach_vm_address_t address, siz
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::disassembleNthJmp(address, num, lookup_size);
 
@@ -151,6 +163,7 @@ mach_vm_address_t Disassembler::disassembleNthJmp(mach_vm_address_t address, siz
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -160,6 +173,7 @@ mach_vm_address_t Disassembler::disassembleNthInstruction(mach_vm_address_t addr
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::disassembleNthInstruction(address, (x86_insn) insn, num, lookup_size);
 
@@ -170,6 +184,7 @@ mach_vm_address_t Disassembler::disassembleNthInstruction(mach_vm_address_t addr
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
@@ -179,6 +194,7 @@ mach_vm_address_t Disassembler::disassembleSignature(mach_vm_address_t address, 
 {
 	switch(this->architecture)
 	{
+	#ifdef __KERNEL__
 		case ARCH_x86_64:
 			return Arch::x86_64::Disassembler::disassembleSignature(address, signature, num, lookup_size);
 
@@ -189,6 +205,7 @@ mach_vm_address_t Disassembler::disassembleSignature(mach_vm_address_t address, 
 			break;
 		default:
 			break;
+	#endif
 	}
 
 	return 0;
