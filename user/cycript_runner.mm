@@ -73,6 +73,8 @@ void run_cycript_server()
 		_CYListenServer = reinterpret_cast<_CYListenServer_>(CYListenServer);
 
 		_CYListenServer(1337);
+
+		NSLog(@"CYListenServer = %lld called!\n", CYListenServer);
 	}
 
 	NSLog(@"Running cycript server on port 1337 at IP Address %@", ip_address);

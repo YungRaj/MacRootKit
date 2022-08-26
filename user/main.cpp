@@ -487,7 +487,7 @@ int main()
 
 	if(!libcycript)
 	{
-		err = injectLibrary("/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript.dylib");
+		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libcycript.dylib");
 
 		if(err != 0)
 		{
@@ -499,7 +499,7 @@ int main()
 
 	if(!libcycript_runner)
 	{
-		err = injectLibrary("/Applications/QR Reader.app/Wrapper/QRReaderiPad.app/Frameworks/libcycript_runner.dylib");
+		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libcycript_runner.dylib");
 
 		if(err != 0)
 		{
