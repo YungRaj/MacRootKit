@@ -111,8 +111,6 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
 #endif
 
-	printf("sp = 0x%llx\n", *(uint64_t*) &state.__opaque_sp);
-
 	char *local_fake_stack = (char *)malloc((size_t) STACK_SIZE);
 
 	char *argp = (char *)argMap;
@@ -443,15 +441,11 @@ int injectLibrary(char *dylib)
 
 	mach_vm_address_t pthread = remote_stack;
 
-	printf("Pthread arguments = 0x%llx\n", pthread);
-
 #ifdef __arm64e__
 	state.__opaque_pc = ptrauth_sign_unauthenticated((void*) remote_code, ptrauth_key_process_independent_code, 0);
 
 	remote_code = reinterpret_cast<mach_vm_address_t>(state.__opaque_pc);
 #endif
-
-	printf("remote_code = 0x%llx\n", (uint64_t) remote_code);
 
 	ropcall(pthread_create_from_mach_thread, (char *)"uuuu", (uint64_t*) pthread, NULL, (uint64_t*) remote_code, NULL );
 
@@ -509,9 +503,25 @@ int main()
 		libcycript_runner = task->getDyld()->getImageLoadedAt("libcycript_runner.dylib", NULL);
 	}
 
+	mach_vm_address_t libAppStore_crawler = task->getDyld()->getImageLoadedAt("libAppStore_crawler.dylib", NULL);
+
+	if(!libAppStore_crawler)
+	{
+		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libAppStore_crawler.dylib");
+
+		if(err != 0)
+		{
+			return err;
+		}
+
+		libAppStore_crawler = task->getDyld()->getImageLoadedAt("libAppStore_crawler.dylib", NULL);
+	}
+
 	printf("libcycript.dylib loaded at 0x%llx\n", libcycript);
 
 	printf("libcycript_runner.dylib loaded at 0x%llx\n", libcycript_runner);
+
+	printf("libAppStore_crawler.dylib loaded at 0x%llx\n", libAppStore_crawler);
 
 	delete task;
 
