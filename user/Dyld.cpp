@@ -130,6 +130,8 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 {
 	struct mach_header_64 hdr;
 
+	mach_vm_address_t where;
+
 	struct dyld_all_image_infos all_images;
 
 	this->getImageInfos();
@@ -165,7 +167,7 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 		image_file = task->readString(image_file_path);
 
-		if(EndsWith(image_file, image_name))
+		if(EndsWith(image_file, image_name) || strcmp(image_file, image_name) == 0)
 		{
 			task->read(image_load_addr, &hdr, sizeof(hdr));
 
@@ -176,7 +178,12 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 				if(image_path)
 					*image_path = image_file;
 
-				return image_load_addr;
+				where = image_load_addr;
+
+				if(strcmp(image_file, image_name) == 0)
+				{
+					return where;
+				}
 			}
 		}
 
@@ -186,7 +193,7 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 	if(image_path)
 		*image_path = NULL;
 
-	return 0;
+	return where;
 }
 
 struct dyld_cache_header* Dyld::cacheGetHeader()
@@ -852,6 +859,9 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		printf("dylib in cache? %s %d\n", dylibInSharedCache ? "YES" : "NO", hdr->filetype);
 
+		if(!dylibInSharedCache)
+			aslr_slide = 0;
+
 		this->task->read(address + sizeof(struct mach_header_64), image_dump + sizeof(struct mach_header_64), hdr->sizeofcmds);
 
 		align = sizeof(struct mach_header_64) + hdr->sizeofcmds;
@@ -902,7 +912,14 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 					printf("Dumping %s at 0x%llx with size 0x%llx at 0x%llx\n", segment->segname, vmaddr + aslr_slide, filesize, (uint64_t) (image_dump + current_offset));
 
-					if(!this->task->read(vmaddr + aslr_slide, image_dump + current_offset, filesize))
+					if(dylibInSharedCache && !this->task->read(vmaddr + aslr_slide, image_dump + current_offset, filesize))
+					{
+						printf("Failed to dump segment %s\n", segment->segname);
+
+						goto exit;
+					}
+
+					if(!dylibInSharedCache && !this->task->read(address + vmaddr + aslr_slide, image_dump + current_offset, filesize))
 					{
 						printf("Failed to dump segment %s\n", segment->segname);
 

@@ -49,6 +49,12 @@ static inline classname getIvar(id self, const char *name)
 
 @end
 
+@interface ASKRestrictions
+
+-(bool)isAppInstallationAllowed;
+
+@end
+
 @interface _TtC19AppStoreKitInternal23AppOfferButtonPresenter
 
 -(void)offerButtonTapped;
@@ -58,6 +64,8 @@ static inline classname getIvar(id self, const char *name)
 @interface _TtC9App_Store15OfferButtonView
 
 -(_TtC19AppStoreKitInternal23AppOfferButtonPresenter*)target;
+
+-(void)setAccessibilityOfferIsImmediateBuy:(bool)value;
 
 -(void)performClick:(id)click;
 
@@ -165,11 +173,23 @@ _TtC9App_Store15OfferButtonView* CrawlForOfferButton()
 
 							if([view isKindOfClass:objc_getClass("_TtC9App_Store18NavigationClipView")])
 							{
-								view = [view subviews][1];
-
 								NSLog(@"AppStoreCrawler::_TtC9App_Store18NavigationClipView was found!");
 
-								if([view isKindOfClass:objc_getClass("_TtC9App_Store21NavigationPaletteView")])
+								NSArray *vviews = [view subviews];
+
+								view = NULL; 
+
+								for(NSView *vv in vviews)
+								{
+									if([vv isKindOfClass:objc_getClass("_TtC9App_Store21NavigationPaletteView")])
+									{
+										view = vv;
+
+										break;
+									}
+								}
+
+								if(view)
 								{
 									view = [[view subviews][0] subviews][0];
 
@@ -181,13 +201,13 @@ _TtC9App_Store15OfferButtonView* CrawlForOfferButton()
 
 										NSLog(@"AppStoreCrawler::_TtC9App_Store17ProductLockupView was found!");
 
-										for(NSView *v in [productLockupView accessibilityChildren])
+										for(NSView *vv in [productLockupView accessibilityChildren])
 										{
-											if([v isKindOfClass:objc_getClass("_TtC9App_Store15OfferButtonView")])
+											if([vv isKindOfClass:objc_getClass("_TtC9App_Store15OfferButtonView")])
 											{
 												NSLog(@"AppStoreCrawler::_TtC9App_Store15OfferButtonView was found!");
 
-												return (_TtC9App_Store15OfferButtonView*) v;
+												return (_TtC9App_Store15OfferButtonView*) vv;
 											}
 										}
 									}
@@ -228,7 +248,30 @@ NSString* DownloadApp(NSString *appID)
 
 	storeItemID = [formatter numberFromString:appID];
 
+	// dispatch_sempahore_t sempahore = dispatch_semaphore_create(0);
+
 	dispatch_async(dispatch_get_main_queue(), ^{
+		[offerButtonView setAccessibilityOfferIsImmediateBuy:YES];
+
+		object_setInstanceVariable([offerButtonView target], "theme", 0);
+
+		id buttonAction = getIvar<id>([offerButtonView target], "buttonAction");
+		id buyAction = getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction");
+
+		id confirmationAccessibilityAction = getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction");
+
+		NSLog(@"AppStoreCrawler::appID buttonAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>([offerButtonView target], "buttonAction"))), (uint64_t) getIvar<id>([offerButtonView target], "buttonAction"));
+		NSLog(@"AppStoreCrawler::appID \t->buyAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction"))), (uint64_t) getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction"));
+		NSLog(@"AppStoreCrawler::appID confirmationInitiationAction = %s", class_getName(object_getClass(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationInitiationAction"))));
+		NSLog(@"AppStoreCrawler::appID confirmationAccessibilityAction = %s", class_getName(object_getClass(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction"))));
+		NSLog(@"AppStoreCrawler::appID \t->defaultAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction"), "defaultAction"))), (uint64_t) getIvar<id>(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction"), "defaultAction"));
+		NSLog(@"AppStoreCrawler::appID \t->buyAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction"), "buyAction"))), (uint64_t) getIvar<id>(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction"), "buyAction"));
+		NSLog(@"AppStoreCrawler::appID restrictions = %@", getIvar<id>([offerButtonView target], "restrictions"));
+		NSLog(@"AppStoreCrawler::appID \t>isAppInstallationAllowed = %d", [getIvar<ASKRestrictions*>([offerButtonView target], "restrictions") isAppInstallationAllowed]);
+		NSLog(@"AppStoreCrawler::appID stateMachine = %s", class_getName(object_getClass(getIvar<id>([offerButtonView target], "stateMachine"))));
+		NSLog(@"AppStoreCrawler::appID \t->state = 0x%llx", (uint64_t) getIvar<id>(getIvar<id>([offerButtonView target], "stateMachine"), "state"));
+		NSLog(@"AppStoreCrawler::appID currentState = 0x%llx", (uint64_t) getIvar<id>([offerButtonView target], "currentState"));
+		NSLog(@"AppStoreCrawler::appID previousState = 0x%llx", (uint64_t) getIvar<id>([offerButtonView target], "previousState"));
 
 		[[offerButtonView target] offerButtonTapped];
 
@@ -236,7 +279,12 @@ NSString* DownloadApp(NSString *appID)
 
 		[[offerButtonView target] offerButtonTapped];
 
+		// dispatch_semaphore_signal(semaphore);
+
 	});
+
+	/*
+	dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
 
 	query = [objc_getClass("ASDAppQuery") queryForStoreItemIDs:@[storeItemID]];
 
@@ -250,6 +298,7 @@ NSString* DownloadApp(NSString *appID)
 			NSLog(@"AppStore:ASDAppQuery results = %@\n", queryResults);
 		}];
 	}
+	*/
 
 	return NULL;
 }
