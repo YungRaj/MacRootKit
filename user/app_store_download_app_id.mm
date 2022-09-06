@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> 
+#include <string.h>
 
 #include <sys/sysctl.h>
 #include <sys/mman.h>
@@ -13,14 +14,6 @@
 
 #include <netinet/in.h>
 #include <sys/un.h>
-
-#include <mach/mach.h> 
-#include <mach/exc.h>
-
-#include <pthread.h>
-#include <ptrauth.h>
-
-#include <objc/objc.h>
 
 int main(int argc, const char * argv[])
 {
@@ -37,6 +30,7 @@ int main(int argc, const char * argv[])
 	socket_ = socket(AF_INET, SOCK_STREAM, 0);
 
 	serv_addr.sin_family = AF_INET;
+	// serv_addr.sin_addr.s_addr = inet_addr("169.254.21.35");
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(1448);
 

@@ -16,9 +16,9 @@ CXX := $(CLANGPP) -isysroot $(SYSROOT) -arch $(ARCH)
 
 NONE = NONE
 
-TARGET = libAppStore_crawler.dylib
+TARGET = libmacOSAppStore_crawler.dylib
 
-COMMON_SOURCES := user/app_store_crawler.mm
+COMMON_SOURCES := user/app_store_crawler_macos.mm
 COMMON_OBJECTS := $(patsubst user/%.mm, $(OBJ)/%.o, $(COMMON_SOURCES))
 
 CFLAGS += -g -I$(shell pwd)/mac_rootkit -arch arm64e -target arm64e-apple-macos
