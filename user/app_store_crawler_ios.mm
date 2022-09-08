@@ -46,17 +46,31 @@ static inline classname getIvar(id self, const char *name)
 
 @end
 
+@interface ASDApp
+
+-(bool)isKindOfClass:(Class)cls;
+
+-(NSString*)artistName;
+-(NSString*)localizedName;
+
+-(uint32_t)storeItemID;
+-(NSNumber*)storeFront;
+-(NSString*)storeCohort;
+
+-(NSString*)bundleID;
+-(NSString*)bundlePath;
+-(NSString*)bundleVersion;
+
+@end
+
 @interface ASDAppQuery
-{
-	NSDictionary *_resultCache;
-}
 
 +(ASDAppQuery*)queryForBundleIDs:(NSString*)bundleID;
 +(ASDAppQuery*)queryForStoreApps;
 +(ASDAppQuery*)queryForStoreItemIDs:(NSArray*)storeItemID;
 +(ASDAppQuery*)queryWithPredicate:(id)predicate;
 
--(void)executeQueryWithResultHandler:(void (^)(void))handler;
+-(void)executeQueryWithResultHandler:(void (^)(NSArray*))handler;
 
 @end
 
@@ -72,9 +86,146 @@ extern "C"
 	void init_app_store_crawl_client(int socket);
 }
 
+void DownloadApp(NSString *appID);
+int OpenAppStoreURL(NSString *appID);
+
 static AppStoreCrawlServer *appStoreCrawlServer;
 
 static Array<AppStoreCrawlClient*> appStoreCrawlClients;
+
+struct AppStoreCrawlServer
+{
+	pthread_t thread;
+	uint16_t port;
+	int socket_;
+
+	AppStoreCrawlServer(uint16_t port)
+	{
+		this->port = port;
+		this->socket_ = -1;
+	}
+
+	~AppStoreCrawlServer()
+	{
+		if(socket_ != -1)
+		{
+			close(socket_);
+		}
+	}
+
+	void Listen()
+	{
+		sockaddr_in address;
+
+		int value;
+
+		this->socket_ = socket(PF_INET, SOCK_STREAM, 0);
+
+		setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, &(value = 1), sizeof(value));
+
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = INADDR_ANY;
+		address.sin_port = htons(port);
+
+		bind(socket_, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+
+		listen(socket_, -1);
+
+		while(1)
+		{
+			socklen_t length(sizeof(address));
+
+			int sock = accept(socket_, reinterpret_cast<sockaddr*>(&address), &length);
+
+			init_app_store_crawl_client(sock);
+		}
+	}
+};
+
+struct AppStoreCrawlClient
+{
+	pthread_t thread;
+
+	int socket_;
+
+	bool done;
+
+	NSString *appID;
+	NSNumber *storeItemID;
+
+	AppStoreCrawlClient(int socket_)
+	{
+		this->socket_ = socket_;
+	}
+
+	~AppStoreCrawlClient()
+	{
+		close(this->socket_);
+	}
+
+	void Handle()
+	{
+		int status;
+
+		char received[2048];
+
+		this->done = false;
+
+		while(!this->done)
+		{
+			NSString *URL;
+
+			size_t bytes_received;
+
+			bytes_received = recv(socket_, received, 2048, 0);
+
+			if(bytes_received > 0)
+			{
+				NSNumberFormatter *formatter;
+
+				appID = [NSString stringWithUTF8String:received];
+
+				formatter = [[NSNumberFormatter alloc] init];
+
+				formatter.numberStyle = NSNumberFormatterDecimalStyle;
+
+				storeItemID = [formatter numberFromString:appID];
+
+				NSLog(@"%@ app ID for crawling!\n", appID);
+
+				status = OpenAppStoreURL(appID);
+
+				sleep(5);
+
+				if(status == 0)
+				{
+					DownloadApp(appID);
+				}
+			} else
+			{
+				return;
+			}
+		}
+
+		printf("Finishing client connection!\n");
+	}
+
+	void Finish(char *response)
+	{
+		NSString *path = [NSString stringWithUTF8String:response];
+
+		NSLog(@"AppStore:path = %@", path);
+
+		if(!this->done)
+		{
+			send(socket_, [path UTF8String], strlen([path UTF8String]), 0);
+
+			this->done = true;
+
+			shutdown(socket_, SHUT_RDWR);
+		}
+	}
+};
 
 _TtC8AppStore11OfferButton* CrawlForOfferButton()
 {
@@ -197,24 +348,93 @@ bool ClickProductViewControllerBackButton(_TtC8AppStore11OfferButton *offerButto
 	return true;
 }
 
-NSString* DownloadApp(NSString *appID)
+void FetchInstalledApp()
 {
-	ASDAppQuery *query;
+	ASDAppQuery *query = [objc_getClass("ASDAppQuery") queryForStoreApps];
 
+	if(query)
+	{
+		[query executeQueryWithResultHandler: ^void (NSArray *res)
+		{
+			ASDApp *installedApp;
+
+			NSArray *results = res;
+
+			NSString *path;
+
+			NSLog(@"AppStore:ASDAppQuery results = %@", results);
+
+			installedApp = NULL;
+
+			for(int i = 0; i < appStoreCrawlClients.getSize(); i++)
+			{
+				AppStoreCrawlClient *client = appStoreCrawlClients.get(i);
+
+				NSNumber *storeItemID = client->storeItemID;
+
+				NSLog(@"AppStore::client index %d", i);
+
+				for(int j = 0; j < [results count]; j++)
+				{
+					ASDApp *app = (ASDApp*) [results objectAtIndex:j];
+
+					if(![app isKindOfClass:objc_getClass("ASDApp")])
+						continue;
+
+					if([app bundlePath] && [[app bundlePath] hasPrefix:@"/private/var/containers"])
+					{
+						if([app storeItemID] == [storeItemID unsignedIntValue])
+						{
+							installedApp = app;
+						}
+					}
+				}
+
+				NSLog(@"AppStore:installed ASDApp = %@", installedApp);
+
+				if(installedApp)
+				{
+					NSDictionary *response = @{@"localizedName" : [installedApp localizedName],
+										  @"storeItemID" : [NSNumber numberWithUnsignedInt:[installedApp storeItemID]],
+										  @"storeFront"  : [installedApp storeFront], 
+										  @"storeCohort" : [installedApp storeCohort],
+										  @"bundleID"    : [installedApp bundleID],
+										  @"bundlePath"  : [installedApp bundlePath],
+										  @"bundleVersion" : [installedApp bundleVersion]};
+
+					NSLog(@"AppStore:localizedName = %@ storeCohort = %@ bundleID = %@ bundlePath = %@", [installedApp localizedName], [installedApp storeCohort], [installedApp bundleID], [installedApp bundlePath]);
+
+					NSError *error;
+
+					NSString *fileName = [NSString stringWithFormat:@"%@.plist", [installedApp bundleID]];
+
+					NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+
+					NSString *documentsDirectory = [paths objectAtIndex:0];
+
+					NSString *plistPath = [documentsDirectory stringByAppendingPathComponent:fileName];
+
+					[response writeToFile:plistPath atomically: YES];
+
+					path = plistPath;
+
+					client->Finish((char*) [path UTF8String]);
+				}
+			}
+		}];
+	}
+}
+
+void DownloadApp(NSString *appID)
+{
 	NSNumber *storeItemID;
 
 	NSNumberFormatter *formatter;
 
-	// ASDApp *app;
-
-	NSString *path;
-
 	_TtC8AppStore11OfferButton *offerButton = CrawlForOfferButton();
 
 	if(!offerButton)
-	{
-		return NULL;
-	}
+		return;
 
 	formatter = [[NSNumberFormatter alloc] init];
 
@@ -237,23 +457,6 @@ NSString* DownloadApp(NSString *appID)
 	});
 
 	dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-
-	/*
-	query = [objc_getClass("ASDAppQuery") queryForStoreItemIDs:@[storeItemID]];
-
-	if(query)
-	{
-		[query executeQueryWithResultHandler: ^void (void)
-		{
-
-			NSDictionary *queryResults = getIvar<NSDictionary*>(query, "_resultCache");
-
-			NSLog(@"AppStore:ASDAppQuery results = %@\n", queryResults);
-		}];
-	}
-	*/
-
-	return NULL;
 }
 
 int OpenAppStoreURL(NSString *appID)
@@ -278,103 +481,37 @@ int OpenAppStoreURL(NSString *appID)
 	return -1;
 }
 
-struct AppStoreCrawlServer
+void* _newProgressForApp_fromRemoteProgress_usingServiceBroker_swizzled(void *self_, SEL cmd_, void* arg1, void *arg2, void *arg3)
 {
-	pthread_t thread;
-	uint16_t port;
-	int socket_;
+	void *orig = (void*) objc_msgSend((id) self_, @selector(_swizzled_newProgressForApp:fromRemoteProgress:usingServiceBroker:), self_, cmd_, arg1, arg2, arg3);
 
-	AppStoreCrawlServer(uint16_t port)
-	{
-		this->port = port;
-		this->socket_ = -1;
-	}
+	FetchInstalledApp();
 
-	~AppStoreCrawlServer()
-	{
-		if(socket_ != -1)
-		{
-			close(socket_);
-		}
-	}
+	return orig;
+}
 
-	void Listen()
-	{
-		sockaddr_in address;
-
-		int value;
-
-		this->socket_ = socket(PF_INET, SOCK_STREAM, 0);
-
-		setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, &(value = 1), sizeof(value));
-
-		address.sin_family = AF_INET;
-		address.sin_addr.s_addr = INADDR_ANY;
-		address.sin_port = htons(port);
-
-		bind(socket_, reinterpret_cast<sockaddr*>(&address), sizeof(address));
-
-		listen(socket_, -1);
-
-		while(1)
-		{
-			socklen_t length(sizeof(address));
-
-			int sock = accept(socket_, reinterpret_cast<sockaddr*>(&address), &length);
-
-			init_app_store_crawl_client(sock);
-		}
-	}
-};
-
-struct AppStoreCrawlClient
+void swizzleImplementations()
 {
-	pthread_t thread;
+	Class cls = objc_getClass("ASDAppQuery");
+	Class metacls = objc_getMetaClass("ASDAppQuery");
 
-	int socket_;
+	SEL originalSelector = @selector(_newProgressForApp:fromRemoteProgress:usingServiceBroker:);
+	SEL swizzledSelector = @selector(_swizzled_newProgressForApp:fromRemoteProgress:usingServiceBroker:);
 
-	AppStoreCrawlClient(int socket_)
+	BOOL didAddMethod = class_addMethod(metacls,
+										swizzledSelector,
+										(IMP)  _newProgressForApp_fromRemoteProgress_usingServiceBroker_swizzled,
+										"@:@");
+
+	if(didAddMethod)
 	{
-		this->socket_ = socket_;
+		Method originalMethod = class_getClassMethod(cls ,originalSelector);
+		Method swizzledMethod = class_getClassMethod(cls, swizzledSelector);
+
+		method_exchangeImplementations(originalMethod, swizzledMethod);
 	}
 
-	~AppStoreCrawlClient()
-	{
-		close(this->socket_);
-	}
-
-	void Handle()
-	{
-		int status;
-
-		char received[2048];
-
-		while(1)
-		{
-			NSString *URL;
-
-			size_t bytes_received;
-
-			bytes_received = recv(socket_, received, 2048, 0);
-
-			if(bytes_received > 0)
-			{
-				NSString *appID = [NSString stringWithUTF8String:received];
-
-				printf("%s app ID for crawling!\n", [appID UTF8String]);
-
-				status = OpenAppStoreURL(appID);
-
-				sleep(5);
-
-				if(status == 0)
-				{
-					NSString *path = DownloadApp(appID);
-				}
-			}
-		}
-	}
-};
+}
 
 void* app_store_crawl_start_server(void *server)
 {
@@ -398,6 +535,8 @@ void* app_store_crawl_start_client(void *client)
 	appStoreCrawlClients.remove(appStoreCrawlClient);
 
 	delete appStoreCrawlClient;
+
+	printf("Finishing client\n");
 
 	return NULL;
 }
@@ -424,8 +563,6 @@ extern "C"
 
 		AppStoreCrawlClient *crawlerClient = new AppStoreCrawlClient(socket);
 
-		appStoreCrawlClients.add(crawlerClient);
-
 		status = pthread_create(&crawlerClient->thread, NULL, app_store_crawl_start_client, crawlerClient);
 
 		assert(status == 0);
@@ -436,7 +573,11 @@ extern "C"
 	{
 		printf("[%s] initializer()\n", __FILE__);
 
+		signal(SIGPIPE, SIG_IGN);
+
 		init_app_store_crawl_server(1448);
+
+		swizzleImplementations();
 	}
 
 	__attribute__ ((destructor))

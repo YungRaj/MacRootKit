@@ -16,7 +16,7 @@ CXX := $(CLANGPP) -isysroot $(SYSROOT) -arch $(ARCH)
 
 NONE = NONE
 
-TARGET = libKernelTFP0.dylib
+TARGET = mrk_inject
 
 COMMON_CSOURCES := $(wildcard mac_rootkit/*.c)
 USER_CSOURCES := $(wildcard user/*.c)

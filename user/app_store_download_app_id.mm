@@ -17,6 +17,8 @@
 
 int main(int argc, const char * argv[])
 {
+	char response[2048];
+
 	int socket_, client_fd;
 
 	struct sockaddr_in serv_addr;
@@ -30,13 +32,26 @@ int main(int argc, const char * argv[])
 	socket_ = socket(AF_INET, SOCK_STREAM, 0);
 
 	serv_addr.sin_family = AF_INET;
-	// serv_addr.sin_addr.s_addr = inet_addr("169.254.21.35");
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(1448);
 
 	client_fd = connect(socket_, reinterpret_cast<sockaddr*>(&serv_addr), sizeof(serv_addr));
 
 	send(socket_, appID, strlen(appID), 0);
+
+	while(1)
+	{
+		size_t bytes_received;
+
+		bytes_received = recv(socket_, response, 2048, 0);
+
+		if(bytes_received > 0)
+		{
+			fprintf(stdout, "%s\n", response);
+
+			break;
+		}
+	}
 
 	close(client_fd);
 

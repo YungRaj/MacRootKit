@@ -91,7 +91,7 @@ Dyld::Dyld(Kernel *kernel, Task *task)
 	this->dyld = this->getImageLoadedAt("libdyld.dylib", NULL);
 	this->dyld_shared_cache = this->all_image_infos->sharedCacheBaseAddress;
 
-	printf("dyld_shared_cache = 0x%llx\n", this->dyld_shared_cache);
+	// printf("dyld_shared_cache = 0x%llx\n", this->dyld_shared_cache);
 
 	assert(this->dyld);
 	assert(this->dyld_shared_cache);
@@ -130,7 +130,7 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 {
 	struct mach_header_64 hdr;
 
-	mach_vm_address_t where;
+	mach_vm_address_t where = 0;
 
 	struct dyld_all_image_infos all_images;
 

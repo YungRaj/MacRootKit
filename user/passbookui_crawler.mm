@@ -96,6 +96,36 @@ void PKPASVC_viewDidLoad_swizzled(void *self_, SEL cmd_)
 	}
 }
 
+void AKMSIVC_viewDidLoad_swizzled(void *self_, SEL cmd_)
+{
+	UITextField *passwordField;
+
+	UIButton *signInButton;
+
+	objc_msgSend((id) self_, @selector(swizzled_viewDidLoad));
+
+	passwordField = getIvar<UITextField*>((id) self_, "_passwordField");
+
+	signInButton = getIvar<UIButton*>((id) self_, "_signInButton");
+
+	if(passwordField && [passwordField isKindOfClass:objc_getClass("_AKInsetTextField")])
+	{
+		if(signInButton && [signInButton isKindOfClass:objc_getClass("AKRoundedButton")])
+		{
+			NSLog(@"PassbookUIServiceCrawler::passwordField and signInButton found! %@ %@\n", passwordField, signInButton);
+
+			dispatch_async(dispatch_get_main_queue(), ^
+			{
+				sleep(3);
+
+				[passwordField setText:@"JayBilas123!"];
+
+				[signInButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+			});
+		}
+	}
+}
+
 void swizzleImplementations()
 {
 	Class cls = objc_getClass("PKPaymentAuthorizationServiceViewController");
@@ -107,6 +137,24 @@ void swizzleImplementations()
 										swizzledSelector,
 										(IMP) PKPASVC_viewDidLoad_swizzled,
 										"@:");
+
+	if(didAddMethod)
+	{
+		Method originalMethod = class_getInstanceMethod(cls ,originalSelector);
+		Method swizzledMethod = class_getInstanceMethod(cls, swizzledSelector);
+
+		method_exchangeImplementations(originalMethod, swizzledMethod);
+	}
+
+	cls = objc_getClass("AKModalSignInViewController");
+
+	originalSelector = @selector(viewDidLoad);
+	swizzledSelector = @selector(swizzled_viewDidLoad);
+
+	didAddMethod = class_addMethod(cls,
+								   swizzledSelector,
+								   (IMP) AKMSIVC_viewDidLoad_swizzled,
+								   "@:");
 
 	if(didAddMethod)
 	{

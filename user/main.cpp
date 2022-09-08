@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> 
+#include <getopt.h>
 
 #include <sys/sysctl.h>
 #include <sys/mman.h>
@@ -470,64 +471,93 @@ int injectLibrary(char *dylib)
 	return 0;
 }
 
-int main()
+static struct option long_options[] =
+{
+	{"pid", required_argument, 0, 'p'},
+};
+
+void print_usage()
+{
+	printf("mrk_inject -p <pid> libs\n");
+
+	exit(-1);
+}
+
+int main(int argc, char **argv)
 {
 	int err;
+
+	char *process_name;
+
+	int pid = -1;
+
+	int c;
 
 	kernel = new Kernel();
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
-	task = new Task(kernel, "Instagram");
+	while(1)
+	{
+		int option_index = 0;
 
-	printf("PID 1382 task = 0x%llx proc = 0x%llx\n", task->getTask(), task->getProc());
+		c = getopt_long (argc, argv, "p:", long_options, &option_index);
+
+		if (c == -1)
+			break; 
+
+		switch(c)
+		{
+			case 'p':
+				pid = atoi(optarg);
+
+				break;
+			default:
+				break;
+		}
+	}
+
+	if(pid <= 0)
+	{
+		print_usage();
+	}
+
+	if(pid)
+	{
+		task = new Task(kernel, pid);
+	}
+
+	if(!task)
+	{
+		print_usage();
+	}
+
+	int argi = optind;
+
+	printf("PID = %d task = 0x%llx proc = 0x%llx\n", task->getPid(), task->getTask(), task->getProc());
+
+	while(argi < argc)
+	{
+		char *library = argv[argi];
+
+		mach_vm_address_t libraryLoadedAt = task->getDyld()->getImageLoadedAt(library, NULL);
 	
-	mach_vm_address_t libcycript = task->getDyld()->getImageLoadedAt("libcycript.dylib", NULL);
-	mach_vm_address_t libcycript_runner = task->getDyld()->getImageLoadedAt("libcycript_runner.dylib", NULL);
-
-	if(!libcycript)
-	{
-		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libcycript.dylib");
-
-		if(err != 0)
+		if(!libraryLoadedAt)
 		{
-			return err;
+			err = injectLibrary(library);
+
+			if(err != 0)
+			{
+				return err;
+			}
+
+			libraryLoadedAt = task->getDyld()->getImageLoadedAt(library, NULL);
 		}
 
-		libcycript = task->getDyld()->getImageLoadedAt("libcycript.dylib", NULL);
+		printf("%s loaded at 0x%llx\n", library, libraryLoadedAt);
+
+		argi++;
 	}
-
-	if(!libcycript_runner)
-	{
-		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libcycript_runner.dylib");
-
-		if(err != 0)
-		{
-			return err;
-		}
-
-		libcycript_runner = task->getDyld()->getImageLoadedAt("libcycript_runner.dylib", NULL);
-	}
-
-	mach_vm_address_t libAppStore_crawler = task->getDyld()->getImageLoadedAt("libAppStore_crawler.dylib", NULL);
-
-	if(!libAppStore_crawler)
-	{
-		err = injectLibrary("/Users/ilhanraja/Downloads/AppStore.app/Contents/PlugIns/libAppStore_crawler.dylib");
-
-		if(err != 0)
-		{
-			return err;
-		}
-
-		libAppStore_crawler = task->getDyld()->getImageLoadedAt("libAppStore_crawler.dylib", NULL);
-	}
-
-	printf("libcycript.dylib loaded at 0x%llx\n", libcycript);
-
-	printf("libcycript_runner.dylib loaded at 0x%llx\n", libcycript_runner);
-
-	printf("libAppStore_crawler.dylib loaded at 0x%llx\n", libAppStore_crawler);
 
 	delete task;
 
