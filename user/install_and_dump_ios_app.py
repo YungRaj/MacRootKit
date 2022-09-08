@@ -52,7 +52,7 @@ for i in range(1, argc):
 	if bundle_id == None:
 		continue
 
-	command = ['bagbak','--override', bundle_id]
+	command = ['bagbak','--no-extension', '--override', bundle_id]
 
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
 
