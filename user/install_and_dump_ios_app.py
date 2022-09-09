@@ -20,8 +20,6 @@ for i in range(1, argc):
 
 	output, error = process.communicate()
 
-	print(output)
-
 	output = output.decode('utf-8');
 
 	if(len(output) == 0):
@@ -36,8 +34,6 @@ for i in range(1, argc):
 	output, error = process.communicate()
 
 	plist_filename = plist_filename.split('/')[-1]
-
-	print('plist = %s' % (plist_filename))
 
 	plist = open(plist_filename, 'rb')
 
@@ -66,14 +62,6 @@ for i in range(1, argc):
 
 	new_ipa = decrypt_folder + '/' + localized_name + '.ipa'
 
-	command = ['zip', new_ipa, payload_folder, '-x', '\"*.DS_Store\"']
-
-	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
-
-	output, error = process.communicate()
-
-	output = output.decode('utf-8')
-
 	app_bundle_name = bundle_path.split('/')[-1].split('.app')[0]
 
 	app_bundle = payload_folder + '/' + app_bundle_name + ".app"
@@ -98,6 +86,10 @@ for i in range(1, argc):
 
 	output = output.decode('utf-8')
 
-	print(output)
+	command = ['zip', '-r', new_ipa, payload_folder, '-x', '\"*.DS_Store\"']
 
-	print('localizedName = %s' %(localized_name))
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
+
+	output, error = process.communicate()
+
+	output = output.decode('utf-8')
