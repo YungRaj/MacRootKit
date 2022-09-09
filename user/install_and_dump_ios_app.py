@@ -8,7 +8,7 @@ def print_usage():
 argv = sys.argv;
 argc = len(sys.argv)
 
-if(argc < 2):
+if argc < 2:
 	print_usage();
 
 for i in range(1, argc):
@@ -22,7 +22,7 @@ for i in range(1, argc):
 
 	output = output.decode('utf-8');
 
-	if(len(output) == 0):
+	if len(output) == 0:
 		continue
 
 	plist_filename = output.split('.plist')[0] + '.plist'
@@ -56,6 +56,9 @@ for i in range(1, argc):
 
 	output = output.decode('utf-8')
 
+	if error is not None:
+		continue
+
 	decrypt_folder = './dump/' + bundle_id
 
 	payload_folder = decrypt_folder + '/Payload'
@@ -69,6 +72,32 @@ for i in range(1, argc):
 	entitlements = decrypt_folder + "/entitlements.xml"
 
 	entitlements_file = open(entitlements, 'w+')
+
+	command = ['sshpass', '-p', 'ilhan123', 'ssh', '-o', 'StrictHostKeyChecking=no', '-p', '2222', 'root@localhost', 'ps aux']
+
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
+
+	output, error = process.communicate()
+
+	output = output.decode('utf-8')
+
+	stream = output.split('\n')
+
+	pid = None
+
+	for line in stream:
+		if bundle_path in line or bundle_path.split('/')[-1] in line:
+			output = subprocess.check_output(['awk', '{print $2}'], input=line, text=True)
+
+			pid = int(output)
+
+	command = ['sshpass', '-p', 'ilhan123', 'ssh', '-o', 'StrictHostKeyChecking=no', '-p', '2222', 'root@localhost', 'kill', '-9', '%d' % (pid)]
+
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
+
+	output, error = process.communicate()
+
+	output = output.decode('utf-8')
 
 	command = ['codesign', '-d', '--entitlements', ':-', app_bundle]
 
@@ -86,7 +115,15 @@ for i in range(1, argc):
 
 	output = output.decode('utf-8')
 
-	command = ['zip', '-r', new_ipa, payload_folder, '-x', '\"*.DS_Store\"']
+	command = ['zip', '-r',  new_ipa, payload_folder, '-x', '\"*.DS_Store\"']
+
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
+
+	output, error = process.communicate()
+
+	output = output.decode('utf-8')
+
+	command = ['sshpass', '-p', 'ilhan123', 'ssh', '-o', 'StrictHostKeyChecking=no', '-p', '2222', 'root@localhost', 'open', 'com.apple.AppStore']
 
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
 
