@@ -366,7 +366,7 @@ void FetchInstalledApp()
 
 			installedApp = NULL;
 
-			for(int i = 0; i < appStoreCrawlClients.getSize(); i++)
+			for(int i = appStoreCrawlClients.getSize() - 1; i >= 0; i--)
 			{
 				AppStoreCrawlClient *client = appStoreCrawlClients.get(i);
 
@@ -481,6 +481,8 @@ int OpenAppStoreURL(NSString *appID)
 	return -1;
 }
 
+
+
 void* _newProgressForApp_fromRemoteProgress_usingServiceBroker_swizzled(void *self_, SEL cmd_, void* arg1, void *arg2, void *arg3)
 {
 	void *orig = (void*) objc_msgSend((id) self_, @selector(_swizzled_newProgressForApp:fromRemoteProgress:usingServiceBroker:), self_, cmd_, arg1, arg2, arg3);
@@ -488,6 +490,18 @@ void* _newProgressForApp_fromRemoteProgress_usingServiceBroker_swizzled(void *se
 	FetchInstalledApp();
 
 	return orig;
+}
+
+void applicationDidEnterBackground_swizzled(void *self_, SEL cmd_, UIApplication *application)
+{
+	(void) objc_msgSend((id) self_, @selector(swizzled_applicationDidEnterBackground:));
+
+	for(int i = appStoreCrawlClients.getSize() - 1; i >= 0 ; i--)
+	{
+		AppStoreCrawlClient *client = appStoreCrawlClients.get(i);
+
+		client->Finish((char*) "Error");
+	}
 }
 
 void swizzleImplementations()
@@ -511,6 +525,23 @@ void swizzleImplementations()
 		method_exchangeImplementations(originalMethod, swizzledMethod);
 	}
 
+	cls = objc_getClass("_TtC8AppStore11AppDelegate");
+
+	originalSelector = @selector(applicationDidEnterBackground:);
+	swizzledSelector = @selector(swizzled_applicationDidEnterBackground:);
+
+	didAddMethod = class_addMethod(cls,
+									swizzledSelector,
+									(IMP)  applicationDidEnterBackground_swizzled,
+									"@:@");
+
+	if(didAddMethod)
+	{
+		Method originalMethod = class_getInstanceMethod(cls ,originalSelector);
+		Method swizzledMethod = class_getInstanceMethod(cls, swizzledSelector);
+
+		method_exchangeImplementations(originalMethod, swizzledMethod);
+	}
 }
 
 void* app_store_crawl_start_server(void *server)

@@ -24,6 +24,8 @@ for i in range(1, argc):
 
 	if len(output) == 0:
 		continue
+	if'Error' in output:
+		continue
 
 	plist_filename = output.split('.plist')[0] + '.plist'
 
