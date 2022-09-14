@@ -58,10 +58,10 @@ namespace ObjectiveC
 	mach_vm_address_t object_getClass(id obj);
 	mach_vm_address_t object_setClass(id obj, mach_vm_address_t cls);
 
-	char * method_getName(mach_vm_address_t m);
+	char*             method_getName(mach_vm_address_t m);
 	mach_vm_address_t method_getmach_vm_address_tlementation(mach_vm_address_t m);
 	mach_vm_address_t method_setmach_vm_address_tlementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
-	void method_exchangemach_vm_address_tlementations(mach_vm_address_t m1, mach_vm_address_t m2);
+	void              method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
 
 	ObjCData* parseObjectiveC(UserMachO *macho);
 
