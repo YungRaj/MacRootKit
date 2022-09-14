@@ -30,6 +30,16 @@ struct _objc_protocol
     uint32_t methodCount;
 };
 
+struct objc_category
+{
+    char *category_name;
+    char *class_name;
+
+    struct _objc_method *instance_methods;
+    struct _objc_method *class_methods;
+    struct _objc_protocol *protocols;
+};
+
 struct _objc_class
 {
     struct _objc_class *superCls;

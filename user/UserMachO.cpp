@@ -456,7 +456,7 @@ bool UserMachO::parseLoadCommands()
 
 					if(strstr("__objc_classlist__DATA_CONST", section->sectname))
 					{
-						this->parseObjC(segment, segment->getSection("__DATA_CONST"));
+						this->parseObjC();
 					}
 
 					sect_offset += sizeof(struct section_64);
@@ -721,11 +721,6 @@ bool UserMachO::parseLoadCommands()
 	}
 
 	return true;
-}
-
-void UserMachO::parseObjC(Segment *segment, Section *section)
-{
-
 }
 
 void UserMachO::parseCodeSignature(CodeSignature *signature)

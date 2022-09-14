@@ -4,6 +4,7 @@
 #include "MachO.hpp"
 #include "Array.hpp"
 #include "SymbolTable.hpp"
+#include "ObjC.hpp"
 
 #include "mach-o.h"
 
@@ -14,7 +15,7 @@ class Task;
 class Dyld;
 
 class CodeSignature;
-class ObjC;
+class ObjCData;
 
 class UserMachO : public MachO
 {
@@ -50,7 +51,10 @@ class UserMachO : public MachO
 
 		void parseCodeSignature(CodeSignature *signature);
 		
-		void parseObjC(Segment *segment, Section *section);
+		void parseObjC()
+		{
+			ObjectiveC::parseObjectiveC(this);
+		}
 
 	private:
 		Task *task;
@@ -62,7 +66,7 @@ class UserMachO : public MachO
 
 		CodeSignature *codeSignature;
 
-		ObjC *objc;
+		ObjCData *objc;
 
 		uint64_t readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx);
 		int64_t  readSleb128(uint8_t *start, uint8_t *end, uint32_t *idx);

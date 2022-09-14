@@ -8,25 +8,74 @@
 #include "Array.hpp"
 
 class MachO;
+class UserMachO;
+
 class Segment;
 class Section;
 
-class Ivar;
-class Property;
+namespace ObjectiveC
+{
+	class Ivar;
+	class Property;
 
-class Method;
-class Protocol;
+	class Method;
 
-class ObjCClass;
+	class Category;
+	class Protocol;
 
-class ObjC;
+	class ObjCClass;
+
+	class ObjCData;
+};
+
+typedef void* id;
 
 namespace ObjectiveC
 {
+	mach_vm_address_t getClass(const char *name);
+
+	const char*       class_getName(mach_vm_address_t cls);
+	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls);
+	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls, mach_vm_address_t new_super);
+	bool              class_isMetaClass(mach_vm_address_t cls);
+	mach_vm_address_t class_getInstanceVariable(mach_vm_address_t cls, const char *name);
+	mach_vm_address_t class_getClassVariable(mach_vm_address_t cls, const char *name);
+	bool              class_addIvar(mach_vm_address_t cls, const char *name, size_t size, uint8_t alignment, const char *types);
+	mach_vm_address_t class_getProperty(mach_vm_address_t cls, const char *name);
+	bool              class_addMethod(mach_vm_address_t cls, char *name, mach_vm_address_t mach_vm_address_t, const char *types);
+	mach_vm_address_t class_getInstanceMethod(mach_vm_address_t cls, char *name);
+	mach_vm_address_t class_getClassMethod(mach_vm_address_t cls, char *name);
+	mach_vm_address_t               class_getMethodmach_vm_address_tlementation(mach_vm_address_t cls, char * name);
+	bool              class_addProtocol(mach_vm_address_t cls, mach_vm_address_t protocol);
+	bool              class_addProperty(mach_vm_address_t cls, const char *name, mach_vm_address_t attributes, unsigned int attributeCount);
+
+	mach_vm_address_t object_getClass(id obj);
+	void              object_setInstanceVariable(id obj, const char *name, void *value);
+	mach_vm_address_t object_getInstanceVariable(id obj, const char *name);
+	void              object_setIvar(id obj, const char *name, id value);
+	mach_vm_address_t object_getIvar(id obj, mach_vm_address_t ivar);
+	const char *      object_getClassName(id obj);
+	mach_vm_address_t object_getClass(id obj);
+	mach_vm_address_t object_setClass(id obj, mach_vm_address_t cls);
+
+	char * method_getName(mach_vm_address_t m);
+	mach_vm_address_t method_getmach_vm_address_tlementation(mach_vm_address_t m);
+	mach_vm_address_t method_setmach_vm_address_tlementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
+	void method_exchangemach_vm_address_tlementations(mach_vm_address_t m1, mach_vm_address_t m2);
+
+	ObjCData* parseObjectiveC(UserMachO *macho);
+
+	Array<ObjCClass*>* parseClassList(ObjCData *data);
+	Array<Category*>* parseCategoryList(ObjCData *data);
+	Array<Protocol*>* parseProtocolList(ObjCData *data);
+
 	class Protocol
 	{
 		public:
-			Protocol(struct _objc_2_class_property *property);
+			Protocol(struct _objc_protocol *prot)
+			{
+
+			}
 
 			char* getName() { return name; }
 
@@ -40,10 +89,33 @@ namespace ObjectiveC
 			Array<Method*> methods;
 	};
 
+	class Category
+	{
+		public:
+			Category(struct _objc_category *cat)
+			{
+
+			}
+
+			char* getName() { return category_name; }
+
+			char* getClassName() { return class_name; }
+
+		private:
+			char *category_name;
+			char *class_name;
+
+			Array<Method*> class_methods;
+			Array<Method*> instance_methods;
+	};
+
 	class Ivar
 	{
 		public:
-			Ivar(struct _objc_2_class_ivar *ivar);
+			Ivar(struct _objc_2_class_ivar *ivar)
+			{
+
+			}
 
 			char* getName() { return name; }
 
@@ -66,7 +138,10 @@ namespace ObjectiveC
 	class Property
 	{
 		public:
-			Property(struct _objc_2_class_property *property);
+			Property(struct _objc_2_class_property *property)
+			{
+
+			}
 
 			char* getName() { return name; }
 
@@ -81,26 +156,34 @@ namespace ObjectiveC
 	class Method
 	{
 		public:
-			Method(struct _objc2_class_method *method);
+			Method(struct _objc2_class_method *method)
+			{
+
+			}
 
 			char* getName() { return name; }
 
 			uint64_t getType() { return type; }
 
-			mach_vm_address_t getImpl() { return impl; }
+			mach_vm_address_t getmach_vm_address_tl() { return mach_vm_address_tl; }
 
 		private:
 			char *name;
 
 			uint64_t type;
 
-			mach_vm_address_t impl;
+			mach_vm_address_t mach_vm_address_tl;
 	};
 
 	class ObjCClass
 	{
 		public:
-			ObjCClass(struct _objc_2_class *c);
+			ObjCClass(struct _objc_2_class *c)
+			{
+
+			}
+
+			char* getName() { return name; }
 
 			ObjCClass* getSuperClass() { return superclass; }
 
@@ -110,13 +193,21 @@ namespace ObjectiveC
 
 			mach_vm_address_t getVtable() { return vtable; }
 
-			Method* getMethod(char *name);
+			Method* getMethod(char *methodname);
 
-			Protocol* getProtocol(char *name);
+			Protocol* getProtocol(char *protocolname);
 
-			Ivar* getIvar(char *name);
+			Ivar* getIvar(char *ivarname);
 
-			Property* getProperty(char *name);
+			Property* getProperty(char *propertyname);
+
+			Array<Method*>* getMethods() { return &methods; }
+
+			Array<Protocol*>* getProtocols() { return &protocols; }
+
+			Array<Ivar*>* getIvars() { return &ivars; }
+
+			Array<Property*>* getProperties() { return &properties; }
 
 		private:
 			char *name;
@@ -129,7 +220,7 @@ namespace ObjectiveC
 
 			Array<Method*> methods;
 
-			Array<Protocol*> protocol;
+			Array<Protocol*> protocols;
 
 			Array<Ivar*> ivars;
 
@@ -139,36 +230,65 @@ namespace ObjectiveC
 	class ObjCData
 	{
 		public:
-			ObjCData(MachO *macho, Segment *objc, Section *classlist) 
+			ObjCData(MachO *macho) 
 			{
 				this->macho = macho;
-				this->objc = objc;
-				this->classlist = classlist;
 
 				this->parseObjC();
 			}
 
 			MachO* getMachO() { return macho; }
 
+			Segment* getDataSegment() { return data; }
+			Segment* getDataConstSegment() { return data_const; }
+
+			Section* getClassList() { return classlist; }
+			Section* getCategoryList() { return catlist; }
+			Section* getProtocolList() { return protolist; }
+
+			Section* getSelRefs() { return selrefs; }
+			Section* getProtoRefs() { return protorefs; }
+			Section* getClassRefs() { return classrefs; }
+			Section* getSuperRefs() { return superrefs; }
+
+			Section* getIvars( ) { return ivar; }
+			Section* getObjcData() { return objc_data; }
+
 			void parseObjC();
 
 			ObjCClass* getClassByName(char *classname);
 
-			Protocol* getProtocol(char *classname, char *protocol);
+			Protocol* getProtocol(char *protoname);
 
-			Method* getMethod(char *classname, char *method);
+			Category* getCategory(char *catname);
 
-			Ivar* getIvar(char *classname, char *ivar);
+			Method* getMethod(char *classname, char *methodname);
 
-			Property getProperty(char *classname, char *property);
+			Ivar* getIvar(char *classname, char *ivarname);
+
+			Property* getProperty(char *classname, char *propertyname);
 
 		private:
 			MachO *macho;
 
-			Array<ObjCClass*> classes;
+			Array<ObjCClass*> *classes;
+			Array<Category*> *categories;
+			Array<Protocol*> *protocols;
 
-			Segment *objc;
+			Segment *data;
+			Segment *data_const;
+
 			Section *classlist;
+			Section *catlist;
+			Section *protolist;
+
+			Section *selrefs;
+			Section *protorefs;
+			Section *classrefs;
+			Section *superrefs;
+
+			Section *ivar;
+			Section *objc_data;
 	};
 };
 
