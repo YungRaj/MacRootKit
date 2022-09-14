@@ -16,5 +16,10 @@ uint64_t PAC::signPointerWithBKey(uint64_t pointer)
 	return pointer;
 }
 
+void PAC::stripPointerAuthenticationCode(uint64_t pointer)
+{
+
+}
+
 
 #endif

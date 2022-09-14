@@ -3,6 +3,9 @@
 
 #include <mach/mach_types.h>
 
+#include <ptrauth.h>
+
+
 #ifdef __arm64__
 
 namespace PAC
@@ -10,6 +13,8 @@ namespace PAC
 	uint64_t signPointerWithAKey(uint64_t pointer);
 
 	uint64_t signPointerWithBKey(uint64_t pointer);
+
+	void 	 stripPointerAuthenticationCode(uint64_t pointer);
 }
 
 #define PACSignPointerWithAKey(ptr) PAC::signPointerWithAKey(ptr)

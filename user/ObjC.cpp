@@ -3,6 +3,8 @@
 #include "MachO.hpp"
 #include "UserMachO.hpp"
 
+#include "PAC.hpp"
+
 #include <assert.h>
 #include <string.h>
 
@@ -35,7 +37,7 @@ namespace ObjectiveC
 		{
 			ObjCClass *c;
 
-			uint64_t cls = *(clslist + off / sizeof(uint64_t));
+			uint64_t cls = reinterpret_cast<uint64_t>(ptrauth_strip(*(clslist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
 
 			struct _objc_2_class *objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
 
@@ -63,7 +65,7 @@ namespace ObjectiveC
 		{
 			Category *cat;
 
-			uint64_t category = *(categorylist + off / sizeof(uint64_t));
+			uint64_t category = reinterpret_cast<uint64_t>(ptrauth_strip(*(categorylist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
 
 			struct _objc_category *objc_category = reinterpret_cast<struct _objc_category*>(category);
 
@@ -93,7 +95,7 @@ namespace ObjectiveC
 		{
 			Protocol *p;
 
-			uint64_t proto = *(protolist + off / sizeof(uint64_t));
+			uint64_t proto = reinterpret_cast<uint64_t>(ptrauth_strip(*(protolist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
 
 			struct _objc_protocol *objc_protocol = reinterpret_cast<struct _objc_protocol*>(proto);
 
