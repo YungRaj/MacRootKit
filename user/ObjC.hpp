@@ -165,14 +165,14 @@ namespace ObjectiveC
 
 			uint64_t getType() { return type; }
 
-			mach_vm_address_t getmach_vm_address_tl() { return mach_vm_address_tl; }
+			mach_vm_address_t getImpl() { return impl; }
 
 		private:
 			char *name;
 
 			uint64_t type;
 
-			mach_vm_address_t mach_vm_address_tl;
+			mach_vm_address_t impl;
 	};
 
 	class ObjCClass
@@ -210,11 +210,14 @@ namespace ObjectiveC
 			Array<Property*>* getProperties() { return &properties; }
 
 		private:
+			struct _objc_2_class *metadata;
+
 			char *name;
 
 			ObjCClass *superclass;
 
 			mach_vm_address_t isa;
+			mach_vm_address_t superclass;
 			mach_vm_address_t cache;
 			mach_vm_address_t vtable;
 
