@@ -454,11 +454,6 @@ bool UserMachO::parseLoadCommands()
 						return false;
 					}
 
-					if(strstr("__objc_classlist__DATA_CONST", section->sectname))
-					{
-						this->parseObjC();
-					}
-
 					sect_offset += sizeof(struct section_64);
 				}
 
@@ -718,6 +713,11 @@ bool UserMachO::parseLoadCommands()
 		}
 
 		current_offset += cmdsize;
+	}
+
+	if(this->getSection("__objc_classlist", "__DATA_CONST"))
+	{
+		this->parseObjC();
 	}
 
 	return true;

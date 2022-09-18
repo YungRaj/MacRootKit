@@ -3,9 +3,8 @@
 
 #include <mach/mach_types.h>
 
-#include "objc.h"
-
 #include "Array.hpp"
+#include "PAC.hpp"
 
 class MachO;
 class UserMachO;
@@ -26,6 +25,175 @@ namespace ObjectiveC
 	class ObjCClass;
 
 	class ObjCData;
+
+	struct _objc_ivar
+	{
+	    uint64_t offset;
+	    uint64_t name;
+	    uint64_t type;
+	    uint8_t size;
+	};
+
+	enum _objc_method_type
+	{
+	    _objc_method_invalid_type = 0,
+	    _objc_method_instance_type,
+	    _objc_method_class_type
+	};
+
+	struct _objc_method
+	{
+	    uint32_t name;
+	    uint32_t type;
+	    uint32_t offset;
+	};
+
+	struct _objc_protocol
+	{
+	    char *name;
+	    uint64_t offset;
+	    struct _objc_method *method;
+	    uint32_t methodCount;
+	};
+
+	struct objc_category
+	{
+	    char *category_name;
+	    char *class_name;
+
+	    struct _objc_method *instance_methods;
+	    struct _objc_method *class_methods;
+	    struct _objc_protocol *protocols;
+	};
+
+	struct _objc_class
+	{
+	    struct _objc_class *superCls;
+	    char *className;
+	    struct _objc_ivar *ivar;
+	    uint32_t ivarCount;
+	    struct _objc_method *method;
+	    uint32_t methodCount;
+	    struct _objc_protocol *protocol;
+	    uint32_t protocolCount;
+	};
+
+	struct _objc_module
+	{
+	    char *impName;
+	    struct _objc_class *symbol;
+	};
+
+	struct _objc_module_raw
+	{
+	    uint32_t version;
+	    uint32_t size;
+	    uint32_t name;
+	    uint32_t symtab;
+	};
+
+	enum _objc_2_class_type
+	{
+	    _objc_2_class_invalid_type = 0,
+	    _objc_2_class_class_type,
+	    _objc_2_class_metaclass_type
+	};
+
+	#define kObjc2SelRef     "__objc_selrefs"
+	#define kObjc2MsgRefs    "__objc_msgrefs"
+	#define kObjc2ClassRefs "__objc_classrefs"
+	#define kObjc2SuperRefs "__objc_superrefs"
+	#define kObjc2ClassList "__objc_classlist"
+	#define kObjc2NlClsList "__objc_nlclslist"
+	#define kObjc2CatList     "__objc_catlist"
+	#define kObjc2NlCatList "__objc_nlcatlist"
+	#define kObjc2ProtoList "__objc_protolist"
+	#define kObjc2ProtoRefs "__objc_protorefs"
+
+	struct _objc_2_class_method_info
+	{
+	    uint32_t entrySize;
+	    uint32_t count;
+	};
+
+	struct _objc_2_class_protocol_info
+	{
+	    uint64_t count;
+	};
+
+	struct _objc_2_class_ivar_info
+	{
+	    uint32_t entrySize;
+	    uint32_t count;
+	};
+
+	struct _objc_2_class_property_info
+	{
+	    uint32_t entrySize;
+	    uint32_t count;
+	};
+
+	struct _objc_2_class_method
+	{
+	    uint64_t name;
+	    uint64_t type;
+	    uint64_t imp;
+	};
+
+	struct _objc_2_class_protocol
+	{
+	    uint64_t isa;
+	    uint64_t name;
+	    uint64_t protocols;
+	    uint64_t instance_methods;
+	    uint64_t class_methods;
+	    uint64_t opt_instance_methods;
+	    uint64_t opt_class_methods;
+	    uint64_t instance_properties;
+	};
+
+	struct _objc_2_class_ivar
+	{
+	    uint64_t offset;
+	    uint64_t name;
+	    uint64_t type;
+	    uint32_t align;
+	    uint32_t size;
+	};
+
+	struct _objc_2_class_property
+	{
+	    uint64_t name;
+	    uint64_t attributes;
+	};
+
+	struct _objc_2_class_data
+	{
+	    uint32_t flags;
+	    uint32_t instanceStart;
+	    uint32_t instanceSize;
+	    uint32_t reserved;
+	    uint64_t iVarLayout;
+	    uint64_t name;
+	    //char*
+	    uint64_t methods;
+	    //struct _objc_2_class_method_info*
+	    uint64_t protocols;
+	    //struct _objc_2_class_protocol_info*
+	    uint64_t ivars;
+	    //struct _objc_2_class_ivar_info*
+	    uint64_t weakIVarLayout;
+	    uint64_t properties; //struct _objc_2_class_property_info*
+	};
+
+	struct _objc_2_class
+	{
+	    uint64_t isa;
+	    uint64_t superclass;
+	    uint64_t cache;
+	    uint64_t vtable;
+	    struct _objc_2_class_data *data;
+	};
 };
 
 typedef void* id;
@@ -72,9 +240,9 @@ namespace ObjectiveC
 	class Protocol
 	{
 		public:
-			Protocol(struct _objc_protocol *prot)
+			Protocol(ObjCData *data, struct _objc_protocol *prot)
 			{
-
+				this->metadata = data;
 			}
 
 			char* getName() { return name; }
@@ -82,6 +250,8 @@ namespace ObjectiveC
 			mach_vm_address_t getOffset() { return offset; }
 
 		private:
+			ObjCData *metadata;
+
 			char *name;
 
 			mach_vm_address_t offset;
@@ -112,10 +282,7 @@ namespace ObjectiveC
 	class Ivar
 	{
 		public:
-			Ivar(struct _objc_2_class_ivar *ivar)
-			{
-
-			}
+			Ivar(ObjCClass *cls, struct _objc_2_class_ivar *ivar);
 
 			char* getName() { return name; }
 
@@ -126,6 +293,10 @@ namespace ObjectiveC
 			size_t getSize() { return size; }
 
 		private:
+			ObjCClass *cls;
+
+			struct _objc_2_class_ivar *ivar;
+
 			char *name;
 
 			mach_vm_address_t offset;
@@ -138,28 +309,26 @@ namespace ObjectiveC
 	class Property
 	{
 		public:
-			Property(struct _objc_2_class_property *property)
-			{
-
-			}
+			Property(ObjCClass *cls, struct _objc_2_class_property *property);
 
 			char* getName() { return name; }
 
-			uint64_t getAttributes() { return attributes; }
+			char* getAttributes() { return attributes; }
 
 		private:
+			ObjCClass *cls;
+
+			struct _objc_2_class_property *property;
+
 			char *name;
 
-			uint64_t attributes;
+			char *attributes;
 	};
 
 	class Method
 	{
 		public:
-			Method(struct _objc2_class_method *method)
-			{
-
-			}
+			Method(ObjCClass *cls, struct _objc_method *method);
 
 			char* getName() { return name; }
 
@@ -168,6 +337,10 @@ namespace ObjectiveC
 			mach_vm_address_t getImpl() { return impl; }
 
 		private:
+			ObjCClass *cls;
+
+			struct _objc_method *method;
+
 			char *name;
 
 			uint64_t type;
@@ -178,14 +351,13 @@ namespace ObjectiveC
 	class ObjCClass
 	{
 		public:
-			ObjCClass(struct _objc_2_class *c)
-			{
-
-			}
+			ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass);
 
 			char* getName() { return name; }
 
-			ObjCClass* getSuperClass() { return superclass; }
+			ObjCData* getMetadata() { return metadata; }
+
+			ObjCClass* getSuperClass() { return super; }
 
 			mach_vm_address_t getIsa() { return isa; }
 
@@ -209,12 +381,26 @@ namespace ObjectiveC
 
 			Array<Property*>* getProperties() { return &properties; }
 
+			void parseMethods();
+
+			void parseProtocols();
+
+			void parseIvars();
+
+			void parseProperties();
+
 		private:
-			struct _objc_2_class *metadata;
+			ObjCData *metadata;
+
+			bool metaclass;
+
+			struct _objc_2_class *cls;
+
+			struct _objc_2_class_data *data;
 
 			char *name;
 
-			ObjCClass *superclass;
+			ObjCClass *super;
 
 			mach_vm_address_t isa;
 			mach_vm_address_t superclass;

@@ -36,14 +36,27 @@ namespace ObjectiveC
 		for(uint64_t off = 0; off < classlist_size; off = off + sizeof(uint64_t))
 		{
 			ObjCClass *c;
+			ObjCClass *metac;
 
 			uint64_t cls = reinterpret_cast<uint64_t>(ptrauth_strip(*(clslist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
 
 			struct _objc_2_class *objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
 
-			c = new ObjCClass(objc_class);
+			if(objc_class)
+			{
+				c = new ObjCClass(data, objc_class, false);
 
-			classes->add(c);
+				classes->add(c);
+			}
+
+			struct _objc_2_class *objc_metaclass = reinterpret_cast<struct _objc_2_class*>(objc_class->isa);
+
+			if(objc_metaclass)
+			{
+				metac = new ObjCClass(data, objc_class, true);
+
+				classes->add(metac);
+			}
 		}
 
 		return classes;
@@ -99,12 +112,66 @@ namespace ObjectiveC
 
 			struct _objc_protocol *objc_protocol = reinterpret_cast<struct _objc_protocol*>(proto);
 
-			p = new Protocol(objc_protocol);
+			p = new Protocol(data, objc_protocol);
 
 			protocols->add(p);
 		}
 
 		return protocols;
+	}
+}
+
+namespace ObjectiveC
+{
+	ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass)
+	{
+		this->metadata = metadata;
+		this->metaclass = metaclass;
+		this->cls = c;
+		this->super = NULL;
+
+		this->data = reinterpret_cast<struct _objc_2_class_data*>(data);
+
+		this->name = reinterpret_cast<char*>(data->name);
+
+		this->isa = reinterpret_cast<mach_vm_address_t>(c->isa);
+		this->superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
+		this->cache = reinterpret_cast<mach_vm_address_t>(c->cache);
+		this->vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+
+		this->parseMethods();
+		this->parseIvars();
+		this->parseProperties();
+	}
+
+	Ivar::Ivar(ObjCClass *cls, struct _objc_2_class_ivar *ivar)
+	{
+		this->cls = cls;
+		this->ivar = ivar;
+		this->name = reinterpret_cast<char*>(ptrauth_strip(ivar->name, ptrauth_key_process_dependent_data));
+		this->type = ivar->type;
+		this->size = ivar->size;
+	}
+
+	Property::Property(ObjCClass *cls, struct _objc_2_class_property *property)
+	{
+		this->cls = cls;
+		this->property = property;
+		this->name = reinterpret_cast<char*>(ptrauth_strip(property->name, ptrauth_key_process_dependent_data));
+		this->attributes = reinterpret_cast<char*>(ptrauth_strip(property->attributes, ptrauth_key_process_dependent_data));
+	}
+
+	Method::Method(ObjCClass *cls, struct _objc_method *method)
+	{
+		mach_vm_address_t name_;
+
+		name_ = *reinterpret_cast<mach_vm_address_t*>(method->name + (mach_vm_address_t) &method->name);
+		
+		this->cls = cls;
+		this->method = method;
+		this->name = reinterpret_cast<char*>(ptrauth_strip(name_, ptrauth_key_process_dependent_data));
+		this->impl = reinterpret_cast<mach_vm_address_t>(method->offset + (mach_vm_address_t) &method->offset - cls->getMetadata()->getMachO()->getBase());
+		this->type = method->type;
 	}
 }
 
@@ -168,6 +235,131 @@ namespace ObjectiveC
 		}
 
 		return NULL;
+	}
+
+	void ObjCClass::parseMethods()
+	{
+		struct _objc_2_class *c;
+
+		struct _objc_2_class_data *d;
+
+		struct _objc_2_class_method_info *methods;
+
+		off_t off;
+
+		c = this->cls;
+
+		d = this->data;
+
+		methods = reinterpret_cast<struct _objc_2_class_method_info*>(d->methods);
+
+		off = sizeof(struct _objc_2_class_method_info);
+
+		MAC_RK_LOG("\t\t\tMethods\n");
+
+		for(int i = 0; i < methods->count; i++)
+		{
+			struct _objc_method *method = reinterpret_cast<struct _objc_method*>(reinterpret_cast<uint8_t*>(methods) + off);
+
+			Method *meth = new Method(this, method);
+
+			this->methods.add(meth);
+
+			if(metaclass)
+			{
+				MAC_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->getImpl(), meth->getName());
+			} else
+			{
+				MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
+			}
+		
+			off += sizeof(struct _objc_method);
+		}
+	}
+
+	void ObjCClass::parseProtocols()
+	{
+		struct _objc_2_class *c;
+
+		struct _objc_2_class_data *d;
+
+		struct _objc_2_class_protocol_info *protocols;
+
+		off_t off;
+
+		c = this->cls;
+
+		d = this->data;
+
+		protocols = reinterpret_cast<struct _objc_2_class_protocol_info*>(data->protocols);
+
+		off = sizeof(struct _objc_2_class_protocol_info);
+	}
+
+	void ObjCClass::parseIvars()
+	{
+		struct _objc_2_class *c;
+
+		struct _objc_2_class_data *d;
+
+		struct _objc_2_class_ivar_info *ivars;
+
+		off_t off;
+
+		c = this->cls;
+
+		d = this->data;
+
+		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(d->ivars);
+
+		off = sizeof(struct _objc_2_class_ivar_info);
+
+		MAC_RK_LOG("\t\t\tIvars\n");
+
+		for(int i = 0; i < ivars->count; i++)
+		{
+			struct _objc_2_class_ivar *ivar = reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<uint8_t*>(ivars) + off);
+
+			Ivar *iv = new Ivar(this, ivar);
+
+			this->ivars.add(iv);
+
+			MAC_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->getOffset(), iv->getName());
+
+			off += sizeof(struct _objc_ivar);
+		}
+	}
+
+	void ObjCClass::parseProperties()
+	{
+		struct _objc_2_class *c;
+
+		struct _objc_2_class_data *d;
+
+		struct _objc_2_class_property_info *properties;
+
+		off_t off;
+
+		c = this->cls;
+
+		d = this->data;
+
+		properties = reinterpret_cast<struct _objc_2_class_property_info*>(d->properties);
+
+		MAC_RK_LOG("\t\t\tProperties\n");
+
+		for(int i = 0; i < properties->count; i++)
+		{
+			struct _objc_2_class_property *property = reinterpret_cast<struct _objc_2_class_property*>(reinterpret_cast<uint8_t*>(properties) + off);
+
+			Property *prop = new Property(this, property);
+
+			this->properties.add(prop);
+
+			MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
+
+			off += sizeof(struct _objc_2_class_property);
+		}
 	}
 }
 
