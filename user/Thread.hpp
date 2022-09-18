@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <mach/mach_types.h>
 
+#include <Arch.hpp>
+
 class Thread
 {
 	public:
@@ -16,16 +18,18 @@ class Thread
 
 		~Thread() { }
 
+		thread_t getThread() { return thread; }
+
+		pthread_t getPthread() { return pthread; }
+
 		Task* getTask() { return task; }
 
 		mach_port_t getPortHandle() { return handle; }
 
-		pthread_t getPthread() { return pthread; }
-
 		mach_vm_address_t getThread() { return thread; }
 		mach_vm_address_t  getUThread() { return uthread; }
 
-		arm_thread_state64_t* getThreadState() { return state; }
+		union ThreadState* getThreadState() { return &state; }
 
 		void resume();
 
@@ -33,20 +37,24 @@ class Thread
 
 		void terminate();
 
-		void setThreadState(arm_thread_state64_t *thread_state);
+		void setThreadState(union ThreadState *thread_state);
 
-		void getThreadState(arm_thread_state64_t *thread_state);
+		void getThreadState(union ThreadState *thread_state);
 
-		void convertThreadState(Task *task, arm_thread_state64_t *thread_state);
+		void convertThreadState(Task *task, union ThreadState *thread_state);
 
 		void setEntryPoint(mach_vm_address_t address);
 
 		void setReturnAddress(mach_vm_address_t address);
 
-		void pthreadCreateFromMachThread(mach_port_t thread);
+		void createPosixThreadFromMachThread(thread_t thread);
 
 	private:
 		Task *task;
+
+		pthread_t pthread;
+
+		thread_t thread;
 
 		mach_port_t handle;
 
@@ -57,9 +65,7 @@ class Thread
 		mach_vm_address_t code;
 		mach_vm_address_t data;
 
-		pthread_t pthread;
-
-		arm_thread_state64_t state;
+		union ThreadState state;
 };
 
 #endif

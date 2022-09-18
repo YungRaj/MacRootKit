@@ -33,7 +33,7 @@ KernelPatcher::KernelPatcher(Kernel *kernel)
 
 	this->installEntitlementHook();
 	// this->installBinaryLoadHook();
-	// this->installKextLoadHook();
+	this->installKextLoadHook();
 
 	// this->installDummyBreakpoint();
 }

@@ -144,6 +144,12 @@ namespace Arch
 		Breakpoint_arm64 breakpoint_arm64;
 	};
 
+	union ThreadState
+	{
+		x86_thread_state64_t state_x86_64;
+		arm_thread_state64_t state_arm64;
+	};
+
 	class Architecture
 	{
 		public:

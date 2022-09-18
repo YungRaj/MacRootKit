@@ -1,3 +1,5 @@
+set -e
+
 make -f make_appstore_crawler_ios.mk
 
 sudo codesign -fs - build/libiOSAppStore_crawler.dylib --deep

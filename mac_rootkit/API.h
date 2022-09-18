@@ -49,6 +49,17 @@ enum kIOKernelRootKitOperation
 	kIOKernelRootKitMapSharedMemory,
 };
 
+#define xStringify(a) Stringify(a)
+#define Stringify(a) #a
+
+#define xConcat(a, b) Concat(a, b)
+#define Concat(a, b) a ## b
+
+/**
+ *  Prefix name with your plugin name (to ease symbolication and avoid conflicts)
+ */
+#define ADDPR(a) xConcat(xConcat(PRODUCT_NAME, _), a)
+
 extern void* kern_os_malloc(size_t size);
 extern void* kern_os_calloc(size_t num, size_t size);
 extern void* kern_os_realloc(void *addr, size_t nsize);
