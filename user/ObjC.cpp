@@ -60,15 +60,14 @@ namespace ObjectiveC
 				classes->add(c);
 			}
 
-			/*
-			struct _objc_2_class *objc_metaclass = reinterpret_cast<struct _objc_2_class*>(objc_class->isa);
+			struct _objc_2_class *objc_metaclass = reinterpret_cast<struct _objc_2_class*>((objc_class->isa & 0xFFFFFFFF) + header);
 
-			if(objc_metaclass)
+			if(objc_metaclass && objc_class != objc_metaclass)
 			{
-				metac = new ObjCClass(data, objc_class, true);
+				metac = new ObjCClass(data, objc_metaclass, true);
 
 				classes->add(metac);
-			}*/
+			}
 		}
 
 		return classes;
@@ -82,6 +81,10 @@ namespace ObjectiveC
 		Section *catlist = data->getCategoryList();
 
 		size_t catlist_size = catlist->getSize();
+
+		mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+
+		mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
 
 		mach_vm_address_t address = catlist->getAddress();
 
@@ -106,18 +109,23 @@ namespace ObjectiveC
 
 	Array<Protocol*>* parseProtocolList(ObjCData *data)
 	{
+		UserMachO *macho = data->getMachO();
+
 		Array<Protocol*> *protocols = new Array<Protocol*>();
 
-		/*
 		Section *protlist = data->getProtocolList();
 
 		Section *protrefs = data->getProtoRefs();
 
 		size_t protolist_size = protlist->getSize();
 
+		mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+
+		mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
+
 		mach_vm_address_t address = protlist->getAddress();
 
-		uint64_t *protolist = reinterpret_cast<uint64_t*>(address);
+		uint64_t *protolist = reinterpret_cast<uint64_t*>(header + protlist->getOffset());
 
 		for(uint64_t off = 0; off < protolist_size; off = off + sizeof(uint64_t))
 		{
@@ -125,13 +133,12 @@ namespace ObjectiveC
 
 			uint64_t proto = reinterpret_cast<uint64_t>(ptrauth_strip(*(protolist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
 
-			struct _objc_protocol *objc_protocol = reinterpret_cast<struct _objc_protocol*>(proto);
+			struct _objc_2_class_protocol *objc_protocol = reinterpret_cast<struct _objc_2_class_protocol*>(proto);
 
 			p = new Protocol(data, objc_protocol);
 
 			protocols->add(p);
 		}
-		*/
 
 		return protocols;
 	}
@@ -147,11 +154,7 @@ namespace ObjectiveC
 		this->cls = c;
 		this->super = NULL;
 
-		// printf("data = 0x%llx \n", (uint64_t) c->data);
-
 		this->data = reinterpret_cast<struct _objc_2_class_data*>((uint64_t) c->data & 0xFFFFFFF8);
-
-		// printf("data = 0x%llx \n", data);
 
 		if(this->macho->sectionForOffset(reinterpret_cast<mach_vm_address_t>(this->data)))
 		{
@@ -210,19 +213,12 @@ namespace ObjectiveC
 
 		pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
 
-		// printf("method->name = 0x%llx pointer_to_name = 0x%llx &method->name = 0x%llx\n", method->name, pointer_to_name, (uint64_t) &method->name);
-
-		pointer_to_name = reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()) + (*(uint64_t*) pointer_to_name & 0xFFFFFF);
+		pointer_to_name = reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()) + ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
 		
-		// printf("method = 0x%llx name = 0x%llx\n", method->name, pointer_to_name);
-
 		this->cls = cls;
 		this->method = method;
 		this->name = reinterpret_cast<char*>(pointer_to_name);
 		this->impl = reinterpret_cast<mach_vm_address_t>((method->imp & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()));
-
-		// printf("@ impl = 0x%llx\n", *(uint32_t*) this->impl);
-
 		this->type = method->type;
 	}
 }
@@ -318,18 +314,31 @@ namespace ObjectiveC
 		{
 			struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<uint8_t*>(methods) + off);
 
-			// printf("method = 0x%llx\n", method);
+			mach_vm_address_t pointer_to_name;
+			mach_vm_address_t offset_to_name;
 
-			Method *meth = new Method(this, method);
+			pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
 
-			this->methods.add(meth);
+			offset_to_name = ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
 
-			if(metaclass)
+			if(offset_to_name)
 			{
-				MAC_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->getImpl(), meth->getName());
-			} else
-			{
-				MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
+				Section *sect = this->macho->sectionForOffset(offset_to_name);
+
+				if(sect && strcmp(sect->getSectionName(), "__objc_methname") == 0)
+				{
+					Method *meth = new Method(this, method);
+
+					this->methods.add(meth);
+
+					if(metaclass)
+					{
+						MAC_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->getImpl(), meth->getName());
+					} else
+					{
+						MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
+					}
+				}
 			}
 		
 			off += sizeof(struct _objc_2_class_method);

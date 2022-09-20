@@ -174,7 +174,6 @@ namespace ObjectiveC
 	    uint32_t instanceSize;
 	    uint32_t reserved;
 	    uint64_t iVarLayout;
-	    
 	    uint64_t name;
 	    //char*
 	    uint64_t methods;
@@ -241,7 +240,7 @@ namespace ObjectiveC
 	class Protocol
 	{
 		public:
-			Protocol(ObjCData *data, struct _objc_protocol *prot)
+			Protocol(ObjCData *data, struct _objc_2_class_protocol *prot)
 			{
 				this->metadata = data;
 			}
