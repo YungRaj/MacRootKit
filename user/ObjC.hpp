@@ -150,6 +150,8 @@ namespace ObjectiveC
 	    uint64_t opt_instance_methods;
 	    uint64_t opt_class_methods;
 	    uint64_t instance_properties;
+	    uint32_t cb;
+	    uint32_t flags;
 	};
 
 	struct _objc_2_class_ivar
@@ -231,39 +233,71 @@ namespace ObjectiveC
 	mach_vm_address_t method_setmach_vm_address_tlementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
 	void              method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
 
+	class ObjC
+	{
+		public:
+			virtual ~ObjC() = default;
+
+			ObjCData* getMetadata() { return metadata; }
+		protected:
+			ObjCData *metadata;
+	};
+
 	ObjCData* parseObjectiveC(UserMachO *macho);
 
 	Array<ObjCClass*>* parseClassList(ObjCData *data);
 	Array<Category*>* parseCategoryList(ObjCData *data);
 	Array<Protocol*>* parseProtocolList(ObjCData *data);
 
-	class Protocol
+	enum MethodType
+	{
+		PROTOCOL_INSTANCE_METHOD = 0,
+		PROTOCOL_CLASS_METHOD,
+		PROTOCOL_OPT_INSTANCE_METHOD,
+		PROTOCOL_OPT_CLASS_METHOD,
+	};
+
+	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo);
+
+	class Protocol : ObjC
 	{
 		public:
-			Protocol(ObjCData *data, struct _objc_2_class_protocol *prot)
-			{
-				this->metadata = data;
-			}
+			Protocol(ObjCData *data, struct _objc_2_class_protocol *prot);
 
 			char* getName() { return name; }
+
+			Array<Method*>* getInstanceMethods() { return &instance_methods; }
+			Array<Method*>* getClassMethods() { return &class_methods; }
+
+			Array<Method*>* getOptionalInstanceMethods() { return &optional_instance_methods; }
+			Array<Method*>* getOptionalClassMethods() { return &optional_class_methods; }
+
+			Array<Property*>* getInstanceProperties() { return &instance_properties; }
 
 			mach_vm_address_t getOffset() { return offset; }
 
 		private:
-			ObjCData *metadata;
+			struct _objc_2_class_protocol *protocol;
 
 			char *name;
 
 			mach_vm_address_t offset;
 
-			Array<Method*> methods;
+			Array<Method*> instance_methods;
+			Array<Method*> class_methods;
+
+			Array<Method*> optional_instance_methods;
+			Array<Method*> optional_class_methods;
+
+			Array<Property*> instance_properties;
 	};
 
-	class Category
+	class Category : ObjC
 	{
 		public:
-			Category(struct _objc_category *cat)
+			Category(ObjCData *data, struct _objc_category *cat)
 			{
+				this->metadata = data;
 
 			}
 
@@ -282,7 +316,7 @@ namespace ObjectiveC
 	class Ivar
 	{
 		public:
-			Ivar(ObjCClass *cls, struct _objc_2_class_ivar *ivar);
+			Ivar(ObjC *object, struct _objc_2_class_ivar *ivar);
 
 			char* getName() { return name; }
 
@@ -293,7 +327,7 @@ namespace ObjectiveC
 			size_t getSize() { return size; }
 
 		private:
-			ObjCClass *cls;
+			ObjC *object;
 
 			struct _objc_2_class_ivar *ivar;
 
@@ -309,14 +343,14 @@ namespace ObjectiveC
 	class Property
 	{
 		public:
-			Property(ObjCClass *cls, struct _objc_2_class_property *property);
+			Property(ObjC *object, struct _objc_2_class_property *property);
 
 			char* getName() { return name; }
 
 			char* getAttributes() { return attributes; }
 
 		private:
-			ObjCClass *cls;
+			ObjC *object;
 
 			struct _objc_2_class_property *property;
 
@@ -328,7 +362,7 @@ namespace ObjectiveC
 	class Method
 	{
 		public:
-			Method(ObjCClass *cls, struct _objc_2_class_method *method);
+			Method(ObjC *object, struct _objc_2_class_method *method);
 
 			char* getName() { return name; }
 
@@ -337,7 +371,7 @@ namespace ObjectiveC
 			mach_vm_address_t getImpl() { return impl; }
 
 		private:
-			ObjCClass *cls;
+			ObjC *object;
 
 			struct _objc_2_class_method *method;
 
@@ -348,7 +382,7 @@ namespace ObjectiveC
 			mach_vm_address_t impl;
 	};
 
-	class ObjCClass
+	class ObjCClass : ObjC
 	{
 		public:
 			ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass);
@@ -356,8 +390,6 @@ namespace ObjectiveC
 			char* getName() { return name; }
 
 			UserMachO* getMachO() { return macho; }
-
-			ObjCData* getMetadata() { return metadata; }
 
 			ObjCClass* getSuperClass() { return super; }
 
@@ -393,8 +425,6 @@ namespace ObjectiveC
 
 		private:
 			UserMachO *macho;
-
-			ObjCData *metadata;
 
 			bool metaclass;
 

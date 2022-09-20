@@ -131,16 +131,93 @@ namespace ObjectiveC
 		{
 			Protocol *p;
 
-			uint64_t proto = reinterpret_cast<uint64_t>(ptrauth_strip(*(protolist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
+			uint64_t proto = macho->getBufferAddress((*(protolist + off / sizeof(uint64_t))) & 0xFFFFFFFFFFF);
+
+			if(!proto)
+			{
+				proto = header + *(protolist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF;
+			}
 
 			struct _objc_2_class_protocol *objc_protocol = reinterpret_cast<struct _objc_2_class_protocol*>(proto);
 
-			p = new Protocol(data, objc_protocol);
+			if(objc_protocol)
+			{
+				p = new Protocol(data, objc_protocol);
 
-			protocols->add(p);
+				protocols->add(p);
+			}
 		}
 
 		return protocols;
+	}
+
+	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
+	{
+		UserMachO *macho = metadata->getMachO();
+
+		struct _objc_2_class_method_info *methods;
+
+		off_t off;
+
+		if(!methodInfo)
+		{
+			return;
+		}
+
+		methods = reinterpret_cast<struct _objc_2_class_method_info*>(methodInfo);
+
+		off = sizeof(struct _objc_2_class_method_info);
+
+		char *type = "";
+		char *prefix = "";
+
+		switch(methtype)
+		{
+			case PROTOCOL_INSTANCE_METHOD:
+				type = "Instance";
+				prefix = "-";
+
+				break;
+			case PROTOCOL_CLASS_METHOD:
+				type = "Class";
+				prefix = "+";
+
+				break;
+			case PROTOCOL_OPT_INSTANCE_METHOD:
+				type = "Optional Instance";
+				prefix = "-";
+
+				break;
+			case PROTOCOL_OPT_CLASS_METHOD:
+				type = "Optional Class";
+				prefix = "+";
+
+				break;
+			default:
+				break;
+		}
+
+		MAC_RK_LOG("\t\t\t%s Methods\n", type);
+
+		for(int i = 0; i < methods->count; i++)
+		{
+			struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<uint8_t*>(methods) + off);
+
+			mach_vm_address_t pointer_to_name;
+			mach_vm_address_t offset_to_name;
+
+			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
+
+			offset_to_name = ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
+
+			Method *meth = new Method(object, method);
+
+			methodList->add(meth);
+
+			MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
+		
+			off += sizeof(struct _objc_2_class_method);
+		}
 	}
 }
 
@@ -148,8 +225,8 @@ namespace ObjectiveC
 {
 	ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass)
 	{
-		this->macho = metadata->getMachO();
 		this->metadata = metadata;
+		this->macho = metadata->getMachO();
 		this->metaclass = metaclass;
 		this->cls = c;
 		this->super = NULL;
@@ -189,36 +266,96 @@ namespace ObjectiveC
 		}
 	}
 
-	Ivar::Ivar(ObjCClass *cls, struct _objc_2_class_ivar *ivar)
+	Protocol::Protocol(ObjCData *data, struct _objc_2_class_protocol *prot)
 	{
-		this->cls = cls;
+		UserMachO *macho;
+
+		struct _objc_2_class_method_info *instanceMethods;
+		struct _objc_2_class_method_info *classMethods;
+
+		struct _objc_2_class_method_info *optionalInstanceMethods;
+		struct _objc_2_class_method_info *optionalClassMethods;
+
+		this->metadata = data;
+		this->protocol = prot;
+
+		macho = this->metadata->getMachO();
+
+		this->name = reinterpret_cast<char*>((prot->name & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+
+		printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
+
+		if(prot->instance_methods)
+		{
+			instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->instance_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+
+			ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(), PROTOCOL_INSTANCE_METHOD, instanceMethods);
+		}
+
+		if(prot->class_methods)
+		{
+			classMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->class_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+
+			ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), PROTOCOL_CLASS_METHOD, classMethods);
+		}
+
+		if(prot->opt_instance_methods)
+		{
+			optionalInstanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_instance_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+				
+			ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalInstanceMethods(), PROTOCOL_OPT_INSTANCE_METHOD, optionalInstanceMethods);
+		}
+		
+		if(prot->opt_class_methods)
+		{
+			optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_class_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+
+			ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(), PROTOCOL_OPT_CLASS_METHOD, optionalClassMethods);
+		}
+	}
+
+	Ivar::Ivar(ObjC *object, struct _objc_2_class_ivar *ivar)
+	{
+		UserMachO *macho = object->getMetadata()->getMachO();
+
+		this->object = object;
 		this->ivar = ivar;
-		this->offset = reinterpret_cast<mach_vm_address_t>((ivar->offset & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()));
-		this->name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
+		this->offset = reinterpret_cast<mach_vm_address_t>((ivar->offset & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		this->name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) + reinterpret_cast<char*>(macho->getMachHeader()));
 		this->type = ivar->type;
 		this->size = ivar->size;
 	}
 
-	Property::Property(ObjCClass *cls, struct _objc_2_class_property *property)
+	Property::Property(ObjC *object, struct _objc_2_class_property *property)
 	{
-		this->cls = cls;
+		UserMachO *macho = object->getMetadata()->getMachO();
+
+		this->object = object;
 		this->property = property;
-		this->name = reinterpret_cast<char*>((property->name & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
-		this->attributes = reinterpret_cast<char*>((property->attributes & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
+		this->name = reinterpret_cast<char*>((property->name & 0xFFFFFF) + reinterpret_cast<char*>(macho->getMachHeader()));
+		this->attributes = reinterpret_cast<char*>((property->attributes & 0xFFFFFF) + reinterpret_cast<char*>(macho->getMachHeader()));
 	}
 
-	Method::Method(ObjCClass *cls, struct _objc_2_class_method *method)
+	Method::Method(ObjC *object, struct _objc_2_class_method *method)
 	{
+		UserMachO *macho = object->getMetadata()->getMachO();
+
 		mach_vm_address_t pointer_to_name;
 
-		pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
+		if(dynamic_cast<ObjCClass*>(object))
+		{
+			pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
 
-		pointer_to_name = reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()) + ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
-		
-		this->cls = cls;
+			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
+		} else
+		{
+			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
+		}
+
+		this->object = object;
 		this->method = method;
 		this->name = reinterpret_cast<char*>(pointer_to_name);
-		this->impl = reinterpret_cast<mach_vm_address_t>((method->imp & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()));
+		this->impl = reinterpret_cast<mach_vm_address_t>((method->imp & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
 		this->type = method->type;
 	}
 }
@@ -447,8 +584,6 @@ namespace ObjectiveC
 {
 	void ObjCData::parseObjC()
 	{
-		MAC_RK_LOG("We got here!\n");
-
 		this->data = this->macho->getSegment("__DATA");
 		this->data_const = this->macho->getSegment("__DATA_CONST");
 
