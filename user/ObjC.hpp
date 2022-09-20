@@ -154,6 +154,17 @@ namespace ObjectiveC
 	    uint32_t flags;
 	};
 
+	struct _objc_2_category
+	{
+	    uint64_t category_name;
+	    uint64_t class_name;
+
+	    uint64_t instance_methods;
+	    uint64_t class_methods;
+	    uint64_t protocols;
+	    uint64_t properties;
+	};
+
 	struct _objc_2_class_ivar
 	{
 	    uint64_t offset;
@@ -251,15 +262,17 @@ namespace ObjectiveC
 
 	enum MethodType
 	{
-		PROTOCOL_INSTANCE_METHOD = 0,
-		PROTOCOL_CLASS_METHOD,
-		PROTOCOL_OPT_INSTANCE_METHOD,
-		PROTOCOL_OPT_CLASS_METHOD,
+		INSTANCE_METHOD = 0,
+		CLASS_METHOD,
+		OPT_INSTANCE_METHOD,
+		OPT_CLASS_METHOD,
 	};
 
 	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo);
 
-	class Protocol : ObjC
+	void parsePropertyList(ObjCData *metadata, ObjC *object, Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
+
+	class Protocol : public ObjC
 	{
 		public:
 			Protocol(ObjCData *data, struct _objc_2_class_protocol *prot);
@@ -292,25 +305,30 @@ namespace ObjectiveC
 			Array<Property*> instance_properties;
 	};
 
-	class Category : ObjC
+	class Category : public ObjC
 	{
 		public:
-			Category(ObjCData *data, struct _objc_category *cat)
-			{
-				this->metadata = data;
+			Category(ObjCData *data, struct _objc_2_category *cat);
 
-			}
-
-			char* getName() { return category_name; }
+			char* getName() { return name; }
 
 			char* getClassName() { return class_name; }
 
+			Array<Method*>* getInstanceMethods() { return &instance_methods; }
+			Array<Method*>* getClassMethods() { return &class_methods; }
+
+			Array<Property*>* getProperties() { return &properties; }
+
 		private:
-			char *category_name;
+			struct _objc_2_category *category;
+
+			char *name;
 			char *class_name;
 
 			Array<Method*> class_methods;
 			Array<Method*> instance_methods;
+
+	    	Array<Property*> properties;
 	};
 
 	class Ivar
@@ -382,12 +400,16 @@ namespace ObjectiveC
 			mach_vm_address_t impl;
 	};
 
-	class ObjCClass : ObjC
+	class ObjCClass : public ObjC
 	{
 		public:
 			ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass);
 
 			char* getName() { return name; }
+
+			struct _objc_2_class* getClass() { return cls; }
+
+			struct _objc_2_class_data* getData() { return data; }
 
 			UserMachO* getMachO() { return macho; }
 
@@ -480,6 +502,7 @@ namespace ObjectiveC
 			void parseObjC();
 
 			ObjCClass* getClassByName(char *classname);
+			ObjCClass* getClassByIsa(mach_vm_address_t isa);
 
 			Protocol* getProtocol(char *protoname);
 
