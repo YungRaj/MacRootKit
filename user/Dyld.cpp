@@ -706,6 +706,16 @@ void Dyld::rebuildSymtabStrtab(struct symtab_command *symtab_command, mach_vm_ad
 	}
 }
 
+void Dyld::fixupObjectiveC(MachO *macho)
+{
+
+}
+
+void Dyld::fixupDyldRebaseBindOpcodes(MachO *macho, Segment *linkedit)
+{
+
+}
+
 size_t Dyld::getImageSize(mach_vm_address_t address)
 {
 	bool ok;

@@ -51,6 +51,9 @@ public:
 
 	void rebuildSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, off_t linkedit_fileoff);
 
+	void fixupObjectiveC(MachO *macho);
+	void fixupDyldRebaseBindOpcodes(MachO *macho, Segment *linkedit);
+
 	size_t getImageSize(mach_vm_address_t address);
 
 	MachO* cacheDumpImage(char *image);

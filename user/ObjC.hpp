@@ -226,7 +226,7 @@ namespace ObjectiveC
 	bool              class_addMethod(mach_vm_address_t cls, char *name, mach_vm_address_t mach_vm_address_t, const char *types);
 	mach_vm_address_t class_getInstanceMethod(mach_vm_address_t cls, char *name);
 	mach_vm_address_t class_getClassMethod(mach_vm_address_t cls, char *name);
-	mach_vm_address_t               class_getMethodmach_vm_address_tlementation(mach_vm_address_t cls, char * name);
+	mach_vm_address_t class_getMethodImplementation(mach_vm_address_t cls, char * name);
 	bool              class_addProtocol(mach_vm_address_t cls, mach_vm_address_t protocol);
 	bool              class_addProperty(mach_vm_address_t cls, const char *name, mach_vm_address_t attributes, unsigned int attributeCount);
 
@@ -240,8 +240,8 @@ namespace ObjectiveC
 	mach_vm_address_t object_setClass(id obj, mach_vm_address_t cls);
 
 	char*             method_getName(mach_vm_address_t m);
-	mach_vm_address_t method_getmach_vm_address_tlementation(mach_vm_address_t m);
-	mach_vm_address_t method_setmach_vm_address_tlementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
+	mach_vm_address_t method_getImplementation(mach_vm_address_t m);
+	mach_vm_address_t method_setImplementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
 	void              method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
 
 	class ObjC
