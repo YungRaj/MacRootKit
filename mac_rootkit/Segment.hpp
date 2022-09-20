@@ -61,7 +61,8 @@ class Segment
 			{
 				Section *section = sections.get(i);
 
-				if(strcmp(section->getSectionName(), sectname) == 0)
+				if(strcmp(section->getSectionName(), sectname) == 0 ||
+				   strncmp(section->getSectionName(), sectname, strlen(sectname)) == 0)
 				{
 					return section;
 				}

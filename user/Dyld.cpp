@@ -1296,7 +1296,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	macho = new UserMachO();
 
-	macho->initWithBuffer(image_dump, aslr_slide);
+	macho->initWithBuffer(address, image_dump, aslr_slide);
 
 	return reinterpret_cast<MachO*>(macho);
 

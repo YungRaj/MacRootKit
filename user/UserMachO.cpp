@@ -8,6 +8,11 @@
 #include "Task.hpp"
 #include "Dyld.hpp"
 
+UserMachO::UserMachO(const char *path)
+{
+	this->initWithFilePath(path);
+}
+
 void UserMachO::initWithTask(Task *task)
 {
 	this->task = task;
@@ -17,7 +22,7 @@ void UserMachO::initWithTask(Task *task)
 	this->symbolTable = new SymbolTable();
 }
 
-void UserMachO::initWithFilePath(char *path)
+void UserMachO::initWithFilePath(const char *path)
 {
 	FILE *file;
 
@@ -37,6 +42,9 @@ void UserMachO::initWithFilePath(char *path)
 
 	fseek(file, 0, SEEK_SET);
 	fread(this->buffer, 1, size, file);
+
+	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
 
 	fclose(file);
 
@@ -59,6 +67,19 @@ void UserMachO::initWithBuffer(char *buf)
 void UserMachO::initWithBuffer(char *buf, off_t slide)
 {
 	buffer = buf;
+
+	header = (struct mach_header_64*) buffer;
+
+	this->symbolTable = new SymbolTable();
+	this->aslr_slide = slide;
+
+	this->parseMachO();
+}
+
+void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide)
+{
+	buffer = buf;
+	base = base_;
 
 	header = (struct mach_header_64*) buffer;
 
@@ -278,6 +299,25 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 	return false;
 }
 
+mach_vm_address_t UserMachO::getBufferAddress(mach_vm_address_t address)
+{
+	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(this->getMachHeader());
+
+	Segment *segment = this->segmentForAddress(address);
+
+	Section *section = this->sectionForAddress(address);
+
+	if(!segment || !section)
+	{
+		address -= this->getAslrSlide();
+
+		segment = this->segmentForAddress(address);
+		section = this->sectionForAddress(address);
+	}
+
+	return segment && section ? header + section->getOffset() + (address - section->getAddress()) : 0;
+}
+
 void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
 {
 	for(int i = 0; i < nsyms; i++)
@@ -429,10 +469,10 @@ bool UserMachO::parseLoadCommands()
 				if(segment_command->fileoff > this->size || segment_command->filesize > this->size - segment_command->fileoff)
 					return false;
 
-				/* printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
+				printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
 		                                  segment_command->segname,
-		                                  segment_command->vmaddr + macho->aslr_slide,
-		                                  segment_command->vmaddr + macho->aslr_slide + segment_command->vmsize); */
+		                                  segment_command->vmaddr,
+		                                  segment_command->vmaddr + segment_command->vmsize);
 				int j = 0;
 
 				if(nsects * sizeof(struct section_64) + sizeof(struct segment_command_64) > cmdsize)
@@ -444,10 +484,10 @@ bool UserMachO::parseLoadCommands()
 				{
 					struct section_64 *section = (struct section_64*) this->getOffset(sect_offset);
 
-					/* printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
-					                            section->addr + macho->aslr_slide,
-					                            section->addr + macho->aslr_slide + section->size,
-					                            section->sectname); */
+					printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
+					                            section->addr,
+					                            section->addr + section->size,
+					                            section->sectname);
 
 					if(section->offset > this->size || section->size > this->size - section->offset)
 					{
@@ -715,7 +755,7 @@ bool UserMachO::parseLoadCommands()
 		current_offset += cmdsize;
 	}
 
-	if(this->getSection("__objc_classlist", "__DATA_CONST"))
+	if(this->getSection("__DATA_CONST", "__objc_classlist"))
 	{
 		this->parseObjC();
 	}

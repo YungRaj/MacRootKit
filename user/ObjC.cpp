@@ -17,6 +17,8 @@ namespace ObjectiveC
 
 	Array<ObjCClass*>* parseClassList(ObjCData *data)
 	{
+		UserMachO *macho = data->getMachO();
+
 		Array<ObjCClass*> *classes = new Array<ObjCClass*>();
 
 		Section *classlist = data->getClassList();
@@ -31,14 +33,23 @@ namespace ObjectiveC
 
 		mach_vm_address_t address = classlist->getAddress();
 
-		uint64_t *clslist = reinterpret_cast<uint64_t*>(address);
+		mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+
+		mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
+
+		uint64_t *clslist = reinterpret_cast<uint64_t*>(header + classlist->getOffset());
 
 		for(uint64_t off = 0; off < classlist_size; off = off + sizeof(uint64_t))
 		{
 			ObjCClass *c;
 			ObjCClass *metac;
 
-			uint64_t cls = reinterpret_cast<uint64_t>(ptrauth_strip(*(clslist + off / sizeof(uint64_t)), ptrauth_key_process_dependent_data));
+			uint64_t cls = macho->getBufferAddress(*(clslist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF);
+
+			if(!cls)
+			{
+				cls = header + *(clslist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF;
+			}
 
 			struct _objc_2_class *objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
 
@@ -49,6 +60,7 @@ namespace ObjectiveC
 				classes->add(c);
 			}
 
+			/*
 			struct _objc_2_class *objc_metaclass = reinterpret_cast<struct _objc_2_class*>(objc_class->isa);
 
 			if(objc_metaclass)
@@ -56,7 +68,7 @@ namespace ObjectiveC
 				metac = new ObjCClass(data, objc_class, true);
 
 				classes->add(metac);
-			}
+			}*/
 		}
 
 		return classes;
@@ -66,6 +78,7 @@ namespace ObjectiveC
 	{
 		Array<Category*> *categories = new Array<Category*>();
 
+		/*
 		Section *catlist = data->getCategoryList();
 
 		size_t catlist_size = catlist->getSize();
@@ -86,6 +99,7 @@ namespace ObjectiveC
 
 			categories->add(cat);
 		}
+		*/
 
 		return categories;
 	}
@@ -94,6 +108,7 @@ namespace ObjectiveC
 	{
 		Array<Protocol*> *protocols = new Array<Protocol*>();
 
+		/*
 		Section *protlist = data->getProtocolList();
 
 		Section *protrefs = data->getProtoRefs();
@@ -116,6 +131,7 @@ namespace ObjectiveC
 
 			protocols->add(p);
 		}
+		*/
 
 		return protocols;
 	}
@@ -125,30 +141,57 @@ namespace ObjectiveC
 {
 	ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass)
 	{
+		this->macho = metadata->getMachO();
 		this->metadata = metadata;
 		this->metaclass = metaclass;
 		this->cls = c;
 		this->super = NULL;
 
-		this->data = reinterpret_cast<struct _objc_2_class_data*>(data);
+		// printf("data = 0x%llx \n", (uint64_t) c->data);
 
-		this->name = reinterpret_cast<char*>(data->name);
+		this->data = reinterpret_cast<struct _objc_2_class_data*>((uint64_t) c->data & 0xFFFFFFF8);
 
-		this->isa = reinterpret_cast<mach_vm_address_t>(c->isa);
-		this->superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
-		this->cache = reinterpret_cast<mach_vm_address_t>(c->cache);
-		this->vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+		// printf("data = 0x%llx \n", data);
 
-		this->parseMethods();
-		this->parseIvars();
-		this->parseProperties();
+		if(this->macho->sectionForOffset(reinterpret_cast<mach_vm_address_t>(this->data)))
+		{
+			this->data = reinterpret_cast<struct _objc_2_class_data*>((uint64_t) this->data + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+			this->name = reinterpret_cast<char*>((data->name & 0xFFFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+
+			if(metaclass)
+				printf("\t\t$OBJC_METACLASS_%s\n",name);
+			else
+				printf("\t\t$OBJC_CLASS_%s\n",name);
+
+			this->isa = reinterpret_cast<mach_vm_address_t>(c->isa);
+			this->superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
+			this->cache = reinterpret_cast<mach_vm_address_t>(c->cache);
+			this->vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+
+			this->parseMethods();
+			this->parseIvars();
+			this->parseProperties();
+		} else if(this->macho->sectionForAddress(reinterpret_cast<mach_vm_address_t>(this->data)))
+		{
+			this->name = reinterpret_cast<char*>(data->name);
+
+			this->isa = reinterpret_cast<mach_vm_address_t>(c->isa);
+			this->superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
+			this->cache = reinterpret_cast<mach_vm_address_t>(c->cache);
+			this->vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+
+			this->parseMethods();
+			this->parseIvars();
+			this->parseProperties();
+		}
 	}
 
 	Ivar::Ivar(ObjCClass *cls, struct _objc_2_class_ivar *ivar)
 	{
 		this->cls = cls;
 		this->ivar = ivar;
-		this->name = reinterpret_cast<char*>(ptrauth_strip(ivar->name, ptrauth_key_process_dependent_data));
+		this->offset = reinterpret_cast<mach_vm_address_t>((ivar->offset & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()));
+		this->name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
 		this->type = ivar->type;
 		this->size = ivar->size;
 	}
@@ -157,20 +200,29 @@ namespace ObjectiveC
 	{
 		this->cls = cls;
 		this->property = property;
-		this->name = reinterpret_cast<char*>(ptrauth_strip(property->name, ptrauth_key_process_dependent_data));
-		this->attributes = reinterpret_cast<char*>(ptrauth_strip(property->attributes, ptrauth_key_process_dependent_data));
+		this->name = reinterpret_cast<char*>((property->name & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
+		this->attributes = reinterpret_cast<char*>((property->attributes & 0xFFFFFF) + reinterpret_cast<char*>(cls->getMachO()->getMachHeader()));
 	}
 
-	Method::Method(ObjCClass *cls, struct _objc_method *method)
+	Method::Method(ObjCClass *cls, struct _objc_2_class_method *method)
 	{
-		mach_vm_address_t name_;
+		mach_vm_address_t pointer_to_name;
 
-		name_ = *reinterpret_cast<mach_vm_address_t*>(method->name + (mach_vm_address_t) &method->name);
+		pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint64_t>(method->name & 0xFFFFFF);
+
+		// printf("method->name = 0x%llx pointer_to_name = 0x%llx &method->name = 0x%llx\n", method->name, pointer_to_name, (uint64_t) &method->name);
+
+		pointer_to_name = reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()) + (*(uint64_t*) pointer_to_name & 0xFFFFFF);
 		
+		// printf("method = 0x%llx name = 0x%llx\n", method->name, pointer_to_name);
+
 		this->cls = cls;
 		this->method = method;
-		this->name = reinterpret_cast<char*>(ptrauth_strip(name_, ptrauth_key_process_dependent_data));
-		this->impl = reinterpret_cast<mach_vm_address_t>(method->offset + (mach_vm_address_t) &method->offset - cls->getMetadata()->getMachO()->getBase());
+		this->name = reinterpret_cast<char*>(pointer_to_name);
+		this->impl = reinterpret_cast<mach_vm_address_t>((method->imp & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(cls->getMachO()->getMachHeader()));
+
+		// printf("@ impl = 0x%llx\n", *(uint32_t*) this->impl);
+
 		this->type = method->type;
 	}
 }
@@ -251,7 +303,12 @@ namespace ObjectiveC
 
 		d = this->data;
 
-		methods = reinterpret_cast<struct _objc_2_class_method_info*>(d->methods);
+		if(!d->methods)
+		{
+			return;
+		}
+
+		methods = reinterpret_cast<struct _objc_2_class_method_info*>((d->methods & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
 
 		off = sizeof(struct _objc_2_class_method_info);
 
@@ -259,7 +316,9 @@ namespace ObjectiveC
 
 		for(int i = 0; i < methods->count; i++)
 		{
-			struct _objc_method *method = reinterpret_cast<struct _objc_method*>(reinterpret_cast<uint8_t*>(methods) + off);
+			struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<uint8_t*>(methods) + off);
+
+			// printf("method = 0x%llx\n", method);
 
 			Method *meth = new Method(this, method);
 
@@ -273,7 +332,7 @@ namespace ObjectiveC
 				MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
 			}
 		
-			off += sizeof(struct _objc_method);
+			off += sizeof(struct _objc_2_class_method);
 		}
 	}
 
@@ -310,12 +369,17 @@ namespace ObjectiveC
 
 		d = this->data;
 
-		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(d->ivars);
+		if(!d->ivars)
+		{
+			return;
+		}
+
+		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>((d->ivars & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
 
 		off = sizeof(struct _objc_2_class_ivar_info);
 
 		MAC_RK_LOG("\t\t\tIvars\n");
-
+		
 		for(int i = 0; i < ivars->count; i++)
 		{
 			struct _objc_2_class_ivar *ivar = reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<uint8_t*>(ivars) + off);
@@ -326,7 +390,7 @@ namespace ObjectiveC
 
 			MAC_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->getOffset(), iv->getName());
 
-			off += sizeof(struct _objc_ivar);
+			off += sizeof(struct _objc_2_class_ivar);
 		}
 	}
 
@@ -344,7 +408,14 @@ namespace ObjectiveC
 
 		d = this->data;
 
-		properties = reinterpret_cast<struct _objc_2_class_property_info*>(d->properties);
+		if(!d->properties)
+		{
+			return;
+		}
+
+		properties = reinterpret_cast<struct _objc_2_class_property_info*>((d->properties & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+
+		off = sizeof(struct _objc_2_class_property_info);
 
 		MAC_RK_LOG("\t\t\tProperties\n");
 
@@ -367,6 +438,8 @@ namespace ObjectiveC
 {
 	void ObjCData::parseObjC()
 	{
+		MAC_RK_LOG("We got here!\n");
+
 		this->data = this->macho->getSegment("__DATA");
 		this->data_const = this->macho->getSegment("__DATA_CONST");
 

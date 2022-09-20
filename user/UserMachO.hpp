@@ -21,13 +21,15 @@ class UserMachO : public MachO
 {
 	public:
 		UserMachO() { }
+		UserMachO(const char *path);
 
 		~UserMachO() { }
 
 		virtual void initWithTask(Task *task);
-		virtual void initWithFilePath(char *path);
+		virtual void initWithFilePath(const char *path);
 		virtual void initWithBuffer(char *buffer);
-		virtual void initWithBuffer(char *buf, off_t slide);
+		virtual void initWithBuffer(char *buffer, off_t slide);
+		virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide);
 		virtual void initWithBuffer(char *buffer, uint64_t size);
 
 		static MachO* taskAt(mach_port_t task);
@@ -36,6 +38,8 @@ class UserMachO : public MachO
 		static uint64_t untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fixupKind, uint64_t ptr, bool *bind, bool *auth, uint16_t *pac, size_t *skip);
 
 		bool isPointerInPacFixupChain(mach_vm_address_t ptr);
+
+		mach_vm_address_t getBufferAddress(mach_vm_address_t address);
 
 		virtual void parseMachO();
 

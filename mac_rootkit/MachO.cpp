@@ -174,7 +174,8 @@ Segment* MachO::getSegment(char *segmentname)
 	{
 		Segment *segment = this->getSegments()->get(i);
 
-		if(strcmp(segment->getSegmentName(), segmentname) == 0)
+		if(strcmp(segment->getSegmentName(), segmentname) == 0 ||
+		   strncmp(segment->getSegmentName(), segmentname, strlen(segmentname)) == 0)
 		{
 			return segment;
 		}
@@ -185,18 +186,23 @@ Segment* MachO::getSegment(char *segmentname)
 
 Section* MachO::getSection(char *segmentname, char *sectionname)
 {
-	Segment *segment = this->getSegment(segmentname);
-
-	if(!segment)
-		return NULL;
-
-	for(uint32_t i = 0; i < segment->getSections()->getSize(); i++)
+	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
 	{
-		Section *section = segment->getSections()->get(i);
+		Segment *segment = this->getSegments()->get(i);
 
-		if(strcmp(section->getSectionName(), sectionname) == 0)
+		if(strcmp(segment->getSegmentName(), segmentname) == 0 ||
+			strncmp(segment->getSegmentName(), segmentname, strlen(segmentname)) == 0)
 		{
-			return section;
+			for(uint32_t j = 0; j < segment->getSections()->getSize(); j++)
+			{
+				Section *section = segment->getSections()->get(j);
+
+				if(strcmp(section->getSectionName(), sectionname) == 0 ||
+				   strncmp(section->getSectionName(), sectionname, strlen(sectionname)) == 0)
+				{
+					return section;
+				}
+			}
 		}
 	}
 

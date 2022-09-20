@@ -174,6 +174,7 @@ namespace ObjectiveC
 	    uint32_t instanceSize;
 	    uint32_t reserved;
 	    uint64_t iVarLayout;
+	    
 	    uint64_t name;
 	    //char*
 	    uint64_t methods;
@@ -328,7 +329,7 @@ namespace ObjectiveC
 	class Method
 	{
 		public:
-			Method(ObjCClass *cls, struct _objc_method *method);
+			Method(ObjCClass *cls, struct _objc_2_class_method *method);
 
 			char* getName() { return name; }
 
@@ -339,7 +340,7 @@ namespace ObjectiveC
 		private:
 			ObjCClass *cls;
 
-			struct _objc_method *method;
+			struct _objc_2_class_method *method;
 
 			char *name;
 
@@ -354,6 +355,8 @@ namespace ObjectiveC
 			ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass);
 
 			char* getName() { return name; }
+
+			UserMachO* getMachO() { return macho; }
 
 			ObjCData* getMetadata() { return metadata; }
 
@@ -390,6 +393,8 @@ namespace ObjectiveC
 			void parseProperties();
 
 		private:
+			UserMachO *macho;
+
 			ObjCData *metadata;
 
 			bool metaclass;
@@ -419,14 +424,14 @@ namespace ObjectiveC
 	class ObjCData
 	{
 		public:
-			ObjCData(MachO *macho) 
+			ObjCData(UserMachO *macho) 
 			{
 				this->macho = macho;
 
 				this->parseObjC();
 			}
 
-			MachO* getMachO() { return macho; }
+			UserMachO* getMachO() { return macho; }
 
 			Segment* getDataSegment() { return data; }
 			Segment* getDataConstSegment() { return data_const; }
@@ -458,7 +463,7 @@ namespace ObjectiveC
 			Property* getProperty(char *classname, char *propertyname);
 
 		private:
-			MachO *macho;
+			UserMachO *macho;
 
 			Array<ObjCClass*> *classes;
 			Array<Category*> *categories;
