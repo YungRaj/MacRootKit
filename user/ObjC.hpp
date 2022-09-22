@@ -140,6 +140,13 @@ namespace ObjectiveC
 	    int32_t imp;
 	};
 
+	struct _objc_2_method
+	{
+	    uint64_t name;
+	    uint64_t type;
+	    uint64_t imp;
+	};
+
 	struct _objc_2_class_protocol
 	{
 	    uint64_t isa;
@@ -383,6 +390,7 @@ namespace ObjectiveC
 	{
 		public:
 			Method(ObjC *object, struct _objc_2_class_method *method);
+			Method(ObjC *object, struct _objc_2_method *method);
 
 			char* getName() { return name; }
 
@@ -438,6 +446,8 @@ namespace ObjectiveC
 			Array<Ivar*>* getIvars() { return &ivars; }
 
 			Array<Property*>* getProperties() { return &properties; }
+
+			bool isValid() { return (name && isa);}
 
 			void parseMethods();
 
