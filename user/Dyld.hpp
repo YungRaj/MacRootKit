@@ -11,7 +11,10 @@
 
 class Task;
 class Kernel;
+
 class MachO;
+class Segment;
+class Section;
 
 #define MH_DYLIB_IN_CACHE 0x80000000
 

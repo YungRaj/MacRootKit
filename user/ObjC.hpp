@@ -135,9 +135,9 @@ namespace ObjectiveC
 
 	struct _objc_2_class_method
 	{
-	    uint64_t name;
-	    uint64_t type;
-	    uint64_t imp;
+	    uint32_t name;
+	    uint32_t type;
+	    int32_t imp;
 	};
 
 	struct _objc_2_class_protocol
@@ -271,6 +271,8 @@ namespace ObjectiveC
 	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo);
 
 	void parsePropertyList(ObjCData *metadata, ObjC *object, Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
+
+	mach_vm_address_t findSelectorsBase(UserMachO *macho);
 
 	class Protocol : public ObjC
 	{

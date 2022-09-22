@@ -10,6 +10,8 @@
 
 UserMachO::UserMachO(const char *path)
 {
+	this->objc = NULL;
+
 	this->initWithFilePath(path);
 }
 
@@ -83,6 +85,39 @@ void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide)
 
 	header = (struct mach_header_64*) buffer;
 
+	this->setIsDyldCache(false);
+
+	this->symbolTable = new SymbolTable();
+	this->aslr_slide = slide;
+
+	this->parseMachO();
+}
+
+void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide, bool is_dyld_cache)
+{
+	buffer = buf;
+	base = base_;
+
+	header = (struct mach_header_64*) buffer;
+
+	this->setIsDyldCache(is_dyld_cache);
+
+	this->symbolTable = new SymbolTable();
+	this->aslr_slide = slide;
+
+	this->parseMachO();
+}
+
+void UserMachO::initWithBuffer(UserMachO *libobjc, mach_vm_address_t base_, char *buf, off_t slide)
+{
+	buffer = buf;
+	base = base_;
+
+	header = (struct mach_header_64*) buffer;
+
+	this->setIsDyldCache(true);
+
+	this->libobjc = libobjc;
 	this->symbolTable = new SymbolTable();
 	this->aslr_slide = slide;
 
@@ -307,7 +342,12 @@ mach_vm_address_t UserMachO::getBufferAddress(mach_vm_address_t address)
 
 	Section *section = this->sectionForAddress(address);
 
-	if(!segment || !section)
+	if(segment && !section)
+	{
+		return header + segment->getFileOffset() + (address - segment->getAddress());
+	}
+
+	if(!segment && !section)
 	{
 		address -= this->getAslrSlide();
 

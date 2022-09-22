@@ -29,7 +29,24 @@ class UserMachO : public MachO
 		virtual void initWithFilePath(const char *path);
 		virtual void initWithBuffer(char *buffer);
 		virtual void initWithBuffer(char *buffer, off_t slide);
+
 		virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide);
+		virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide, bool is_dyld_cache);
+		
+		virtual void initWithBuffer(UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
+
+		bool isDyldCache() { return is_dyldCache; }
+
+		void setIsDyldCache(bool isDyldCache) { this->is_dyldCache = isDyldCache; }
+
+		UserMachO* getObjectiveCLibrary() { return libobjc; }
+
+		bool isObjectiveCLibrary() { return is_libobjc; }
+
+		void setIsObjectiveCLibrary(bool is_libobjc) { this->is_libobjc = is_libobjc; }
+
+		void setObjectiveCLibrary(UserMachO* libobjc) { this->libobjc = libobjc; }
+
 		virtual void initWithBuffer(char *buffer, uint64_t size);
 
 		static MachO* taskAt(mach_port_t task);
@@ -41,17 +58,17 @@ class UserMachO : public MachO
 
 		mach_vm_address_t getBufferAddress(mach_vm_address_t address);
 
-		virtual void parseMachO();
+		virtual void parseMachO() override;
 
-		virtual void parseHeader();
+		virtual void parseHeader() override;
 
-		virtual void parseFatHeader();
+		virtual void parseFatHeader() override;
 
-		virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
+		virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize) override;
 		
-		virtual void parseLinkedit();
+		virtual void parseLinkedit() override;
 
-		virtual bool parseLoadCommands();
+		virtual bool parseLoadCommands() override;
 
 		void parseCodeSignature(CodeSignature *signature);
 		
@@ -62,6 +79,11 @@ class UserMachO : public MachO
 
 	private:
 		Task *task;
+
+		bool is_dyldCache;
+		bool is_libobjc;
+
+		UserMachO *libobjc;
 
 		Dyld *dyld;
 

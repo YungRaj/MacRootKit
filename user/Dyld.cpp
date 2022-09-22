@@ -815,6 +815,9 @@ exit:
 MachO* Dyld::cacheDumpImage(char *image)
 {
 	UserMachO *macho;
+	UserMachO *objc;
+
+	bool objC = false;
 
 	struct mach_header_64 *hdr;
 
@@ -844,6 +847,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 	off_t aslr_slide = this->getImageSlide(address);
 
 	FILE *fp;
+
+	objc = NULL;
 
 	if(size)
 	{
@@ -920,6 +925,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 					segment->fileoff = current_offset;
 					segment->filesize = filesize;
 
+					printf("current_offset = 0x%llx\n", current_offset);
+
 					printf("Dumping %s at 0x%llx with size 0x%llx at 0x%llx\n", segment->segname, vmaddr + aslr_slide, filesize, (uint64_t) (image_dump + current_offset));
 
 					if(dylibInSharedCache && !this->task->read(vmaddr + aslr_slide, image_dump + current_offset, filesize))
@@ -940,9 +947,17 @@ MachO* Dyld::cacheDumpImage(char *image)
 					{
 						struct section_64 *section = reinterpret_cast<struct section_64*>(q + sizeof(struct segment_command_64) + sizeof(struct section_64) * j);
 						
+						if(!strstr(image, "libobjc.A.dylib") &&
+							strstr(section->sectname, "__objc"))
+						{
+							objC = true;
+						}
+
 						if(section->offset)
 						{
 							section->offset = current_offset + (section->offset - fileoffset); 
+
+							printf("section->offset = 0x%llx\n", section->offset);
 						}
 					}
 
@@ -1298,6 +1313,14 @@ MachO* Dyld::cacheDumpImage(char *image)
 		}
 	}
 
+	if(objC)
+	{
+		objc = dynamic_cast<UserMachO*>(this->cacheDumpImage("libobjc.A.dylib"));
+
+		objc->setObjectiveCLibrary(objc);
+		objc->setIsObjectiveCLibrary(true);
+	}
+
 	fp = fopen("file.bin", "w");
 
 	fwrite(image_dump, image_size, 1, fp);
@@ -1306,7 +1329,19 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	macho = new UserMachO();
 
-	macho->initWithBuffer(address, image_dump, aslr_slide);
+	if(objc)
+	{
+		macho->initWithBuffer(objc, address, image_dump, aslr_slide);
+	} else
+	{
+		if(strstr(image, "libobjc.A.dylib"))
+		{
+			macho->initWithBuffer(macho, address, image_dump, aslr_slide);
+		} else
+		{
+			macho->initWithBuffer(address, image_dump, aslr_slide, true);
+		}
+	}
 
 	return reinterpret_cast<MachO*>(macho);
 
