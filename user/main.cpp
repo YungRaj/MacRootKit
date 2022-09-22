@@ -506,8 +506,8 @@ int main(int argc, char **argv)
 	MachO *AppStoreDaemon = task->getDyld()->cacheDumpImage("AppStoreDaemon");
 
 	return 0;
-
-	// UserMachO *AS = new UserMachO("/Users/ilhanraja/Downloads/Files/Work/AppStore.app/Contents/MacOS/AppStore_");
+	
+	UserMachO *AS = new UserMachO("/Users/ilhanraja/Downloads/Files/Work/AppStore.app/Contents/MacOS/AppStore_");
 
 	return 0;
 

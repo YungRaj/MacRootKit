@@ -303,6 +303,11 @@ namespace ObjectiveC
 
 			this->name = reinterpret_cast<char*>(macho->getBufferAddress(data->name - macho->getAslrSlide()));
 
+			if(metaclass)
+				printf("\t\t$OBJC_METACLASS_%s\n",name);
+			else
+				printf("\t\t$OBJC_CLASS_%s\n",name);
+
 			this->isa = reinterpret_cast<mach_vm_address_t>(c->isa);
 			this->superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
 			this->cache = reinterpret_cast<mach_vm_address_t>(c->cache);
@@ -503,7 +508,7 @@ namespace ObjectiveC
 
 		selectors = ObjectiveC::findSelectorsBase(macho);
 
-		if(selectors)
+		if(macho->isDyldCache() && selectors)
 		{
 			pointer_to_name = selectors + method->name;
 
@@ -560,6 +565,11 @@ namespace ObjectiveC
 		Symbol *symbol;
 
 		libobjc = macho->getObjectiveCLibrary();
+
+		if(!libobjc)
+		{
+			return 0;
+		}
 
 		symbol = libobjc->getSymbolByName("_method_getName");
 
@@ -678,12 +688,19 @@ namespace ObjectiveC
 			selectors = ObjectiveC::findSelectorsBase(this->macho);
 		}
 		
-		methods = reinterpret_cast<struct _objc_2_class_method_info*>(this->macho->getBufferAddress((d->methods & 0xFFFFFFFFFF)  - this->macho->getAslrSlide()));
-
-		if(!this->macho->isDyldCache() && !methods)
+		methods = NULL;
+		
+		if(this->macho->isDyldCache())
 		{
-			methods = reinterpret_cast<struct _objc_2_class_method_info*>((d->methods & 0xFFFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
-		} else if(!methods)
+			methods = reinterpret_cast<struct _objc_2_class_method_info*>(this->macho->getBufferAddress((d->methods & 0xFFFFFFFFFF)  - this->macho->getAslrSlide()));
+		} else
+		{
+			methods = reinterpret_cast<struct _objc_2_class_method_info*>((d->methods & 0xFFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+		}
+
+		printf("d->methods = 0x%llx\n", d->methods);
+
+		if(!methods)
 		{
 			return;
 		}
@@ -787,12 +804,17 @@ namespace ObjectiveC
 			return;
 		}
 
-		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(this->macho->getBufferAddress(d->ivars  - this->macho->getAslrSlide()));
+		ivars = NULL;
 
-		if(!this->macho->isDyldCache() && !ivars)
+		if(this->macho->isDyldCache())
+		{
+			ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(this->macho->getBufferAddress(d->ivars  - this->macho->getAslrSlide()));
+		} else
 		{
 			ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>((d->ivars & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
-		} else if(!ivars)
+		}
+
+		if(!ivars)
 		{
 			return;
 		}
@@ -834,12 +856,17 @@ namespace ObjectiveC
 			return;
 		}
 
-		properties = reinterpret_cast<struct _objc_2_class_property_info*>(this->macho->getBufferAddress(d->properties  - this->macho->getAslrSlide()));
+		properties = NULL;
 
-		if(!this->macho->isDyldCache() && !properties)
+		if(this->macho->isDyldCache())
+		{
+			properties = reinterpret_cast<struct _objc_2_class_property_info*>(this->macho->getBufferAddress(d->properties  - this->macho->getAslrSlide()));
+		} else
 		{
 			properties = reinterpret_cast<struct _objc_2_class_property_info*>((d->properties & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
-		} else if(!properties)
+		}
+
+		if(!properties)
 		{
 			return;
 		}
@@ -893,8 +920,16 @@ namespace ObjectiveC
 		assert(this->objc_data);
 
 		this->classes = parseClassList(this);
-		//this->categories = parseCategoryList(this);
-		//this->protocols = parseProtocolList(this);
+
+		if(!this->macho->isDyldCache())
+		{
+			this->categories = parseCategoryList(this);
+			this->protocols = parseProtocolList(this);
+
+			// do not parse categories and protocols when dyld cache is being parsed
+			// all of the class pointers will be invalid because they will exist in other libraries
+			// we aren't going to need categories during runtime anyways
+		}
 	}
 
 	ObjCClass* ObjCData::getClassByName(char *classname)
