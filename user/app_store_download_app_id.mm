@@ -39,7 +39,7 @@ int main(int argc, const char * argv[])
 
 	send(socket_, appID, strlen(appID), 0);
 
-	while(1)
+	/*while(1)
 	{
 		size_t bytes_received;
 
@@ -51,7 +51,7 @@ int main(int argc, const char * argv[])
 
 			break;
 		}
-	}
+	}*/
 
 	close(client_fd);
 

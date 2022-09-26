@@ -71,7 +71,7 @@ namespace Arch
 	#define pop_registers             pop_registers_x86_64
 	#define pop_registers_end         pop_registers_x86_64_end
 
-#elif __arm64__
+#elif __arm64__ || __arm64e__
 
 	extern "C"
 	{

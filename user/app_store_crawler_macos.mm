@@ -223,15 +223,11 @@ _TtC9App_Store15OfferButtonView* CrawlForOfferButton()
 	return NULL;
 }
 
-NSString* DownloadApp(NSString *appID)
+NSString* GetBundleID(NSString *appID)
 {
-	ASDAppQuery *query;
-
 	NSNumber *storeItemID;
 
 	NSNumberFormatter *formatter;
-
-	// ASDApp *app;
 
 	NSString *path;
 
@@ -248,10 +244,10 @@ NSString* DownloadApp(NSString *appID)
 
 	storeItemID = [formatter numberFromString:appID];
 
-	// dispatch_sempahore_t sempahore = dispatch_semaphore_create(0);
+	dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
 	dispatch_async(dispatch_get_main_queue(), ^{
-		[offerButtonView setAccessibilityOfferIsImmediateBuy:YES];
+		// [offerButtonView setAccessibilityOfferIsImmediateBuy:YES];
 
 		object_setInstanceVariable([offerButtonView target], "theme", 0);
 
@@ -259,6 +255,8 @@ NSString* DownloadApp(NSString *appID)
 		id buyAction = getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction");
 
 		id confirmationAccessibilityAction = getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "confirmationAccessibilityAction");
+
+		id offerAction = getIvar<id>(confirmationAccessibilityAction3, "defaultAction");
 
 		NSLog(@"AppStoreCrawler::appID buttonAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>([offerButtonView target], "buttonAction"))), (uint64_t) getIvar<id>([offerButtonView target], "buttonAction"));
 		NSLog(@"AppStoreCrawler::appID \t->buyAction = %s 0x%llx", class_getName(object_getClass(getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction"))), (uint64_t) getIvar<id>(getIvar<id>([offerButtonView target], "buttonAction"), "buyAction"));
@@ -273,32 +271,17 @@ NSString* DownloadApp(NSString *appID)
 		NSLog(@"AppStoreCrawler::appID currentState = 0x%llx", (uint64_t) getIvar<id>([offerButtonView target], "currentState"));
 		NSLog(@"AppStoreCrawler::appID previousState = 0x%llx", (uint64_t) getIvar<id>([offerButtonView target], "previousState"));
 
+		NSLog(@"AppStoreCrawler::bundle ID = %@ 0x%llx\n", getIvar<NSString*>(offerAction, "bundleId"), getIvar<NSString*>(offerAction, "bundleId"));
+		/*
 		[[offerButtonView target] offerButtonTapped];
 
 		sleep(2);
 
 		[[offerButtonView target] offerButtonTapped];
 
-		// dispatch_semaphore_signal(semaphore);
-
+		dispatch_semaphore_signal(semaphore);
+		*/
 	});
-
-	/*
-	dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-
-	query = [objc_getClass("ASDAppQuery") queryForStoreItemIDs:@[storeItemID]];
-
-	if(query)
-	{
-		[query executeQueryWithResultHandler: ^void (void)
-		{
-
-			NSDictionary *queryResults = getIvar<NSDictionary*>(query, "_resultCache");
-
-			NSLog(@"AppStore:ASDAppQuery results = %@\n", queryResults);
-		}];
-	}
-	*/
 
 	return NULL;
 }
@@ -416,7 +399,7 @@ struct AppStoreCrawlClient
 
 				if(status == 0)
 				{
-					NSString *path = DownloadApp(appID);
+					NSString *path = GetBundleID(appID);
 				}
 			}
 		}
@@ -470,8 +453,6 @@ extern "C"
 		int status;
 
 		AppStoreCrawlClient *crawlerClient = new AppStoreCrawlClient(socket);
-
-		appStoreCrawlClients.add(crawlerClient);
 
 		status = pthread_create(&crawlerClient->thread, NULL, app_store_crawl_start_client, crawlerClient);
 

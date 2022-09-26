@@ -497,6 +497,7 @@ int main(int argc, char **argv)
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
 
+	/*
 	task = new Task(kernel, 614);
 
 	mach_vm_address_t ASD = task->getDyld()->getImageLoadedAt("AppStoreDaemon", NULL);
@@ -506,10 +507,11 @@ int main(int argc, char **argv)
 	MachO *AppStoreDaemon = task->getDyld()->cacheDumpImage("AppStoreDaemon");
 
 	return 0;
-	
+
 	UserMachO *AS = new UserMachO("/Users/ilhanraja/Downloads/Files/Work/AppStore.app/Contents/MacOS/AppStore_");
 
 	return 0;
+	*/
 
 	while(1)
 	{
