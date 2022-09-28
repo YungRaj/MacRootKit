@@ -80,6 +80,17 @@ bool swizzled_skipDeviceFamilyCheck()
 	return YES;
 }
 
+mach_vm_address_t sign_ptr(mach_vm_address_t ptr)
+{
+#ifdef __arm64__
+
+	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (ptr));
+
+#endif
+
+	return ptr;
+}
+
 void swizzleImplementations()
 {
 	Class cls = objc_getClass("MIInstallableBundle");
@@ -89,7 +100,7 @@ void swizzleImplementations()
 
 	BOOL didAddMethod = class_addMethod(cls,
 										swizzledSelector,
-										(IMP)  swizzled_performVerificationWithError,
+										(IMP) sign_ptr((mach_vm_address_t) swizzled_performVerificationWithError),
 										"@:@");
 
 	if(didAddMethod)
@@ -107,7 +118,7 @@ void swizzleImplementations()
 
 	didAddMethod = class_addMethod(cls,
 									swizzledSelector,
-									(IMP)  swizzled_skipDeviceFamilyCheck,
+									(IMP)  sign_ptr((mach_vm_address_t) swizzled_skipDeviceFamilyCheck),
 									"@:@");
 
 	if(didAddMethod)
@@ -126,7 +137,7 @@ extern "C"
 	{
 		printf("[%s] initializer()\n", __FILE__);
 
-		
+		swizzleImplementations();
 	}
 
 	__attribute__ ((destructor))
