@@ -62,6 +62,8 @@ class MachO
 
 		void* addressToPointer(mach_vm_address_t address);
 
+		mach_vm_address_t getBufferAddress(mach_vm_address_t address);
+
 		Segment* getSegment(char *segmentname);
 		Section* getSection(char *segmentname, char *sectionname);
 

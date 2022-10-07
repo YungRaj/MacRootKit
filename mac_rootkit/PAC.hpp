@@ -5,7 +5,6 @@
 
 #include <ptrauth.h>
 
-
 #ifdef __arm64__
 
 namespace PAC

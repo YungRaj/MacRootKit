@@ -21,6 +21,15 @@ extern "C"
 	void pop_registers_arm64_end();
 }
 
+#define IS_OP_INS(x, op) ((bool (*)(uint32_t*)) is_##x)(&op)
+
+#define DEFINE_IS_MOV(Rn, Rt) bool is_mov_ ## Rn ## Rt(mov_t *mov){ return is_mov(mov) && mov->Rd == Rn && mov->Rm == Rt; }
+#define DEFINE_IS_ZERO() bool is_zero(uint32_t *op) { return *op == 0x0; }
+
+#define IS_ZERO() (bool (*)(uint32_t*)) is_zero
+#define IS_INS(x) (bool (*)(uint32_t*)) is_##x
+#define IS_MOV(Rd, Rm) (bool (*)(uint32_t*)) is_mov_## Rd ## Rm
+
 namespace Arch
 {
 	namespace arm64

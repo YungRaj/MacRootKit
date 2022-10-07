@@ -168,6 +168,30 @@ void* MachO::addressToPointer(mach_vm_address_t address)
 	return reinterpret_cast<void*>(reinterpret_cast<mach_vm_address_t>(buffer + this->addressToOffset(address)));
 }
 
+mach_vm_address_t MachO::getBufferAddress(mach_vm_address_t address)
+{
+	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(this->getMachHeader());
+
+	Segment *segment = this->segmentForAddress(address);
+
+	Section *section = this->sectionForAddress(address);
+
+	if(segment && !section)
+	{
+		return header + segment->getFileOffset() + (address - segment->getAddress());
+	}
+
+	if(!segment && !section)
+	{
+		address -= this->getAslrSlide();
+
+		segment = this->segmentForAddress(address);
+		section = this->sectionForAddress(address);
+	}
+
+	return segment && section ? header + section->getOffset() + (address - section->getAddress()) : 0;
+}
+
 Segment* MachO::getSegment(char *segmentname)
 {
 	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
