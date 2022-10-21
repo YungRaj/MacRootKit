@@ -15,6 +15,8 @@ class Disassembler;
 
 typedef void* pmap_t;
 
+typedef void* proc_t;
+
 class Task
 {
 	public:

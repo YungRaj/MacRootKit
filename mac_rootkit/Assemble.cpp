@@ -3,10 +3,7 @@
 #include "MachO.hpp"
 #include "Assemble.hpp"
 
-extern "C"
-{
-	#include "strparse.h"
-}
+#include "strparse.hpp"
 
 using namespace Arch::arm64;
 using namespace Arch::arm64::Assembler;

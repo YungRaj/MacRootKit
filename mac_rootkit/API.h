@@ -1,10 +1,16 @@
 #ifndef __API_H_
 #define __API_H_
 
+#ifndef __KERNEL__
+
 #include <stdio.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <unistd.h>
+
+#endif
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 
 #include <machine/limits.h>
