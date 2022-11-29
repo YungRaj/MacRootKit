@@ -17,6 +17,74 @@
 #include <ifaddrs.h>
 
 #include <Foundation/Foundation.h>
+#include <AppKit/NSAlert.h>
+
+bool try_port(int port)
+{
+	struct sockaddr_in serv_addr;
+
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	
+	if(sockfd < 0)
+	{
+		printf("socket error\n");
+
+		return false;
+	}
+
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(port);
+
+	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0)
+	{
+		if(errno == EADDRINUSE)
+		{
+			NSLog(@"port %d is not available\n", port);
+		} else {
+			printf("could not bind to process (%d) %s\n", errno, strerror(errno));
+		}
+
+		return false;
+	}
+
+	if(close(sockfd) < 0)
+	{
+		printf("did not close fd: %s\n", strerror(errno));
+		
+		return false;
+	}
+
+	return true;
+}
+
+#define MAX_PORT 2000
+
+int get_unused_port()
+{
+	bool found = false;
+
+	int port = 1337;
+
+	while(!found)
+	{
+		if(port == MAX_PORT)
+		{
+			return -1;
+		}
+
+		if(try_port(port) == true)
+		{
+			break;
+		}
+
+		++port;
+	}
+
+	return port;
+}
 
 NSString* get_ip_address()
 {
@@ -61,23 +129,47 @@ void run_cycript_server()
 
 	NSString *ip_address;
 
+	int port;
+
 	ip_address = get_ip_address();
+
+	port = get_unused_port();
+
+	if(port == -1)
+	{
+		NSLog(@"Could not find available port!\n");
+	}
 
 	CYListenServer = reinterpret_cast<mach_vm_address_t>(dlsym((void*) 0xFFFFFFFFFFFFFFFE, "CYListenServer"));
 
-	if(CYListenServer)
+	if(CYListenServer && port > 0)
 	{
 		typedef void (*_CYListenServer_) (int port);
 		void (*_CYListenServer) (int port);
 
 		_CYListenServer = reinterpret_cast<_CYListenServer_>(CYListenServer);
 
-		_CYListenServer(1337);
+		_CYListenServer(port);
 
 		NSLog(@"CYListenServer = %lld called!\n", CYListenServer);
+
+		dispatch_async(dispatch_get_main_queue(), ^
+		{
+			NSString *message = [NSString stringWithFormat:@"%@ - MacRootKit", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"]];
+			NSString *informativeText = [NSString stringWithFormat:@"Cycript is now running on port %d on %@!", port, [[NSBundle mainBundle] bundleIdentifier]];
+
+			NSAlert *alert = [[NSAlert alloc] init];
+
+			[alert setAlertStyle:NSAlertStyleCritical];
+			[alert setMessageText:message];
+			[alert addButtonWithTitle: @"OK"];
+			[alert setInformativeText:informativeText];
+
+			[alert runModal];
+		});
 	}
 
-	NSLog(@"Running cycript server on port 1337 at IP Address %@", ip_address);
+	NSLog(@"Running cycript server on port %d at IP Address %@", port, ip_address);
 }
 
 extern "C"
