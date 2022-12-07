@@ -17,7 +17,6 @@
 #include "KernelMachO.hpp"
 #include "Symbol.hpp"
 
-class MacRootKit;
 class IOKernelRootKitService;
 
 class MachO;
@@ -25,135 +24,160 @@ class Symbol;
 
 class Disassembler;
 
-class Kernel : public Task
+namespace mrk
 {
-	static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
+	class MacRootKit;
+};
 
-	static off_t tempExecutableMemoryOffset;
+using namespace mrk;
 
-	static uint8_t tempExecutableMemory[tempExecutableMemorySize];
+namespace xnu
+{
+	class Kernel : public Task
+	{
+		static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
 
-	public:
+		static off_t tempExecutableMemoryOffset;
 
-		Kernel(mach_port_t kernel_task_port);
+		static uint8_t tempExecutableMemory[tempExecutableMemorySize];
 
-		Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+		public:
+			static Kernel* create(mach_port_t kernel_task_port);
 
-		Kernel(mach_vm_address_t base, off_t slide);
+			static Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
 
-		~Kernel();
+			static Kernel* create(mach_vm_address_t base, off_t slide);
 
-		static mach_vm_address_t findKernelCache();
+			static mach_vm_address_t findKernelCache();
 
-		static mach_vm_address_t findKernelCollection();
+			static mach_vm_address_t findKernelCollection();
 
-		static mach_vm_address_t findKernelBase();
+			static mach_vm_address_t findKernelBase();
 
-		static off_t findKernelSlide();
+			static off_t findKernelSlide();
 
-		static mach_vm_address_t getExecutableMemory() { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[0]); }
+			static mach_vm_address_t getExecutableMemory() { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[0]); }
 
-		static mach_vm_address_t getExecutableMemoryAtOffset(off_t offset) { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[tempExecutableMemoryOffset]); }
+			static mach_vm_address_t getExecutableMemoryAtOffset(off_t offset) { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[tempExecutableMemoryOffset]); }
 
-		static size_t getExecutableMemorySize() { return tempExecutableMemorySize; }
+			static size_t getExecutableMemorySize() { return tempExecutableMemorySize; }
 
-		static off_t getExecutableMemoryOffset() { return tempExecutableMemoryOffset; }
+			static off_t getExecutableMemoryOffset() { return tempExecutableMemoryOffset; }
 
-		static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
+			static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
 
-		MachO* getMachO() { return macho; }
+			~Kernel();
 
-		virtual mach_vm_address_t getBase();
+			MachO* getMachO() { return macho; }
 
-		virtual off_t getSlide();
+			virtual mach_vm_address_t getBase();
 
-		void setRootKit(MacRootKit *rootkit) { this->rootkit = rootkit; }
+			virtual off_t getSlide();
 
-		MacRootKit* getRootKit() { return this->rootkit; }
+			void setRootKit(MacRootKit *rootkit) { this->rootkit = rootkit; }
 
-		void setRootKitService(IOKernelRootKitService *service) { this->rootkitService = service; }
+			MacRootKit* getRootKit() { return this->rootkit; }
 
-		IOKernelRootKitService* getRootKitService() { return this->rootkitService; }
+			void setRootKitService(IOKernelRootKitService *service) { this->rootkitService = service; }
 
-		mach_port_t getKernelTaskPort() { return this->kernel_task_port; }
+			IOKernelRootKitService* getRootKitService() { return this->rootkitService; }
 
-		bool setKernelWriting(bool enable);
+			mach_port_t getKernelTaskPort() { return this->kernel_task_port; }
 
-		bool setNXBit(bool enable);
+			bool setKernelWriting(bool enable);
 
-		bool setInterrupts(bool enable);
+			bool setNXBit(bool enable);
 
-		void getKernelObjects();
+			bool setInterrupts(bool enable);
 
-		virtual task_t getKernelTask() { return this->getTask(); }
+			void getKernelObjects();
 
-		virtual vm_map_t getKernelMap() { return this->getMap(); }
+			virtual task_t getKernelTask() { return this->getTask(); }
 
-		virtual pmap_t getKernelPmap() { return this->getPmap(); }
+			virtual vm_map_t getKernelMap() { return this->getMap(); }
 
-		virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
-		virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
+			virtual pmap_t getKernelPmap() { return this->getPmap(); }
 
-		virtual mach_vm_address_t vmAllocate(size_t size);
-		virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
+			virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
+			virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
 
-		virtual void vmDeallocate(mach_vm_address_t address, size_t size);
+			virtual mach_vm_address_t vmAllocate(size_t size);
+			virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
 
-		virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
+			virtual void vmDeallocate(mach_vm_address_t address, size_t size);
 
-		virtual void* vmRemap(mach_vm_address_t address, size_t size);
+			virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
 
-		virtual uint64_t virtualToPhysical(mach_vm_address_t address);
+			virtual void* vmRemap(mach_vm_address_t address, size_t size);
 
-		virtual bool physicalRead(uint64_t paddr, void *data, size_t size);
+			virtual uint64_t virtualToPhysical(mach_vm_address_t address);
 
-		virtual uint64_t physicalRead64(uint64_t paddr);
-		virtual uint32_t physicalRead32(uint64_t paddr);
-		virtual uint16_t physicalRead16(uint64_t paddr);
-		virtual uint8_t  physicalRead8(uint64_t paddr);
+			virtual bool physicalRead(uint64_t paddr, void *data, size_t size);
 
-		virtual bool physicalWrite(uint64_t paddr, void *data, size_t size);
+			virtual uint64_t physicalRead64(uint64_t paddr);
+			virtual uint32_t physicalRead32(uint64_t paddr);
+			virtual uint16_t physicalRead16(uint64_t paddr);
+			virtual uint8_t  physicalRead8(uint64_t paddr);
 
-		virtual void physicalWrite64(uint64_t paddr, uint64_t value);
-		virtual void physicalWrite32(uint64_t paddr, uint32_t value);
-		virtual void physicalWrite16(uint64_t paddr, uint16_t value);
-		virtual void  physicalWrite8(uint64_t paddr, uint8_t value);
+			virtual bool physicalWrite(uint64_t paddr, void *data, size_t size);
 
-		virtual bool read(mach_vm_address_t address, void *data, size_t size);
-		virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual void physicalWrite64(uint64_t paddr, uint64_t value);
+			virtual void physicalWrite32(uint64_t paddr, uint32_t value);
+			virtual void physicalWrite16(uint64_t paddr, uint16_t value);
+			virtual void  physicalWrite8(uint64_t paddr, uint8_t value);
 
-		virtual uint8_t read8(mach_vm_address_t address);
-		virtual uint16_t read16(mach_vm_address_t address);
-		virtual uint32_t read32(mach_vm_address_t address);
-		virtual uint64_t read64(mach_vm_address_t address);
+			virtual bool read(mach_vm_address_t address, void *data, size_t size);
+			virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
 
-		virtual bool write(mach_vm_address_t address, void *data, size_t size);
-		virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual uint8_t read8(mach_vm_address_t address);
+			virtual uint16_t read16(mach_vm_address_t address);
+			virtual uint32_t read32(mach_vm_address_t address);
+			virtual uint64_t read64(mach_vm_address_t address);
 
-		virtual void write8(mach_vm_address_t address, uint8_t value);
-		virtual void write16(mach_vm_address_t address, uint16_t value);
-		virtual void write32(mach_vm_address_t address, uint32_t value);
-		virtual void write64(mach_vm_address_t address, uint64_t value);
+			virtual bool write(mach_vm_address_t address, void *data, size_t size);
+			virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
 
-		virtual char* readString(mach_vm_address_t address);
+			virtual void write8(mach_vm_address_t address, uint8_t value);
+			virtual void write16(mach_vm_address_t address, uint16_t value);
+			virtual void write32(mach_vm_address_t address, uint32_t value);
+			virtual void write64(mach_vm_address_t address, uint64_t value);
 
-		virtual Symbol* getSymbolByName(char *symbolname);
-		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
+			virtual char* readString(mach_vm_address_t address);
 
-		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
+			virtual Symbol* getSymbolByName(char *symbolname);
+			virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
-	private:
-		MachO *macho;
+			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
-		IOKernelRootKitService *rootkitService;
+		protected:
+			MachO *macho;
 
-		MacRootKit *rootkit;
+			IOKernelRootKitService *rootkitService;
 
-		IOSimpleLock *kernelWriteLock;
+			MacRootKit *rootkit;
 
-		mach_port_t kernel_task_port;
+			mach_port_t kernel_task_port;
 
-		void createKernelTaskPort();
+		private:
+			IOSimpleLock *kernelWriteLock;
+
+			Kernel(mach_port_t kernel_task_port);
+
+			Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+
+			Kernel(mach_vm_address_t base, off_t slide);
+
+			void createKernelTaskPort();
+	};
+
+	class KDKKernel : Kernel
+	{
+		public:
+			static KDKKernel* KDKKernelFromFilePath(const char *path);
+
+		private:
+			KDKKernel(const char *path);
+	};
 };
 
 #endif

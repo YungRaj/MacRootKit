@@ -9,12 +9,17 @@
 
 #include <mach-o.h>
 
-class Task;
-class Kernel;
-
 class MachO;
 class Segment;
 class Section;
+
+namespace xnu
+{
+	class Task;
+	class Kernel;
+}
+
+using namespace xnu;
 
 #define MH_DYLIB_IN_CACHE 0x80000000
 

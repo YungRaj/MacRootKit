@@ -10,91 +10,100 @@
 
 #include <string.h>
 
+namespace xnu
+{
+	class Kext;
+	class Kernel;
+}
+
 using namespace Arch;
+using namespace xnu;
 
 class IOKernelRootKitService;
 
-class Kernel;
-class Kext;
-
-template <typename T, typename Y=void *>
-using StoredPair = Pair<T, Y>;
-
-template <typename T, typename Y=void *>
-using StoredArray = Array<StoredPair<T, Y>*>;
-
-class MacRootKit
+namespace mrk
 {
-	public:
-		using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, void *original);
+	class Hook;
 
-		using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, size_t len);
+	template <typename T, typename Y=void *>
+	using StoredPair = Pair<T, Y>;
 
-		using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
+	template <typename T, typename Y=void *>
+	using StoredArray = Array<StoredPair<T, Y>*>;
 
-	public:
-		MacRootKit(Kernel *kernel);
+	class MacRootKit
+	{
+		public:
+			using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, void *original);
 
-		~MacRootKit();
+			using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, size_t len);
 
-		Kernel* getKernel() { return kernel; }
+			using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
 
-		Architecture* getArchitecture() { return architecture; }
+		public:
+			MacRootKit(Kernel *kernel);
 
-		enum Architectures getPlatformArchitecture() { return platformArchitecture; }
+			~MacRootKit();
 
-		Array<Kext*>* getKexts() { return &kexts; }
+			Kernel* getKernel() { return kernel; }
 
-		Kext* getKextByIdentifier(char *name);
+			Architecture* getArchitecture() { return architecture; }
 
-		Kext* getKextByAddress(mach_vm_address_t address);
+			enum Architectures getPlatformArchitecture() { return platformArchitecture; }
 
-		KernelPatcher* getKernelPatcher() { return kernelPatcher; }
+			Array<Kext*>* getKexts() { return &kexts; }
 
-		StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
+			Kext* getKextByIdentifier(char *name);
 
-		StoredArray<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
+			Kext* getKextByAddress(mach_vm_address_t address);
 
-		StoredArray<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
+			KernelPatcher* getKernelPatcher() { return kernelPatcher; }
 
-		void registerCallbacks();
+			StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
 
-		void registerEntitlementCallback(void *user, entitlement_callback_t callback);
+			StoredArray<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
 
-		void registerBinaryLoadCallback(void *user, binaryload_callback_t callback);
+			StoredArray<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
 
-		void registerKextLoadCallback(void *user, kextload_callback_t callback);
+			void registerCallbacks();
 
-		void onEntitlementRequest(task_t task, const char *entitlement, void *original);
+			void registerEntitlementCallback(void *user, entitlement_callback_t callback);
 
-		void onProcLoad(task_t task, const char *path, size_t len);
+			void registerBinaryLoadCallback(void *user, binaryload_callback_t callback);
 
-		void onKextLoad(void *kext, kmod_info_t *kmod);
+			void registerKextLoadCallback(void *user, kextload_callback_t callback);
 
-		kmod_info_t* findKmodInfo(const char *kextname);
+			void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-		void* findOSKextByIdentifier(const char *kextidentifier);
+			void onProcLoad(task_t task, const char *path, size_t len);
 
-	private:
-		Architecture *architecture;
+			void onKextLoad(void *kext, kmod_info_t *kmod);
 
-		Kernel *kernel;
+			kmod_info_t* findKmodInfo(const char *kextname);
 
-		KernelPatcher *kernelPatcher;
+			void* findOSKextByIdentifier(const char *kextidentifier);
 
-		enum Architectures platformArchitecture;
+		private:
+			Architecture *architecture;
 
-		bool waitingForAlreadyLoadedKexts;
+			Kernel *kernel;
 
-		Array<Kext*> kexts;
+			KernelPatcher *kernelPatcher;
 
-		kmod_info_t **kextKmods;
+			enum Architectures platformArchitecture;
 
-		StoredArray<entitlement_callback_t> entitlementCallbacks;
+			bool waitingForAlreadyLoadedKexts;
 
-		StoredArray<binaryload_callback_t> binaryLoadCallbacks;
+			Array<Kext*> kexts;
 
-		StoredArray<kextload_callback_t> kextLoadCallbacks;
-};
+			kmod_info_t **kextKmods;
+
+			StoredArray<entitlement_callback_t> entitlementCallbacks;
+
+			StoredArray<binaryload_callback_t> binaryLoadCallbacks;
+
+			StoredArray<kextload_callback_t> kextLoadCallbacks;
+	};
+}
 
 #endif

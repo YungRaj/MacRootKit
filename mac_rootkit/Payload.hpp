@@ -9,64 +9,71 @@
 
 #include "Hook.hpp"
 
-class Kernel;
-class Task;
-class Payload;
-
-class Payload
+namespace xnu
 {
-#ifdef __arm64__
-	static constexpr uint32_t expectedSize = 1 << 14;
-#elif  __x86_64__
-	static constexpr uint32_t expectedSize = 1 << 12;
-#endif
+	class Kernel;
+	class Task;
+};
 
-	public:
-		Payload(Task *task, Hook *hook, vm_prot_t prot);
+using namespace xnu;
 
-		~Payload();
+namespace mrk
+{
+	class Payload
+	{
+	#ifdef __arm64__
+		static constexpr uint32_t expectedSize = 1 << 14;
+	#elif  __x86_64__
+		static constexpr uint32_t expectedSize = 1 << 12;
+	#endif
 
-		Hook* getHook() { return hook; }
+		public:
+			Payload(Task *task, Hook *hook, vm_prot_t prot);
 
-		mach_vm_address_t getAddress() { return address; }
+			~Payload();
 
-		void setCurrentOffset(off_t offset);
+			Hook* getHook() { return hook; }
 
-		off_t getCurrentOffset() { return current_offset; }
+			mach_vm_address_t getAddress() { return address; }
 
-		size_t getSize() { return size; }
+			void setCurrentOffset(off_t offset);
 
-		vm_prot_t getProt() { return prot; }
+			off_t getCurrentOffset() { return current_offset; }
 
-		Task* getTask() { return task; }
+			size_t getSize() { return size; }
 
-		bool readBytes(uint8_t *bytes, size_t size);
-		bool readBytes(off_t offset, uint8_t *bytes, size_t size);
+			vm_prot_t getProt() { return prot; }
 
-		bool writeBytes(uint8_t *bytes, size_t size);
-		bool writeBytes(off_t offset, uint8_t *bytes, size_t size);
+			Task* getTask() { return task; }
 
-		void setWritable();
-		void setExecutable();
+			bool readBytes(uint8_t *bytes, size_t size);
+			bool readBytes(off_t offset, uint8_t *bytes, size_t size);
 
-		bool prepare();
+			bool writeBytes(uint8_t *bytes, size_t size);
+			bool writeBytes(off_t offset, uint8_t *bytes, size_t size);
 
-		bool commit();
-	
-	private:
-		Task *task;
+			void setWritable();
+			void setExecutable();
 
-		mach_vm_address_t address;
+			bool prepare();
 
-		off_t current_offset;
+			bool commit();
+		
+		private:
+			Task *task;
 
-		Hook *hook;
+			mach_vm_address_t address;
 
-		bool kernelPayload = false;
+			off_t current_offset;
 
-		size_t size;
+			Hook *hook;
 
-		vm_prot_t prot;
+			bool kernelPayload = false;
+
+			size_t size;
+
+			vm_prot_t prot;
+	};
 };
 
 #endif

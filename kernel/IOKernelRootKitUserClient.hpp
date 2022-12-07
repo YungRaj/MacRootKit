@@ -13,8 +13,15 @@
 
 #include "Kernel.hpp"
 
+namespace mrk
+{
+	class MacRootKit;
+}
+
+using namespace xnu;
+using namespace mrk;
+
 class IOKernelRootKitService;
-class Kernel;
 
 class IOKernelRootKitUserClient : public IOUserClient
 {

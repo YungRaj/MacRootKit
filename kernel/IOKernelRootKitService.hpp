@@ -9,13 +9,16 @@
 #include "Kernel.hpp"
 #include "Kext.hpp"
 
-class MacRootKit;
-
-class Kernel;
-class Kext;
+namespace mrk
+{
+	class MacRootKit;
+};
 
 class IOKernelRootKitService;
 class IOKernelRootKitUserClient;
+
+using namespace xnu;
+using namespace mrk;
 
 extern kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext **kext);
 extern kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext **kext);

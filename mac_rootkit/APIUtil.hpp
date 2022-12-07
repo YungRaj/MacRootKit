@@ -29,7 +29,12 @@
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
 
-class Kernel;
+namespace xnu
+{
+    class Kernel;
+}
+
+using namespace xnu;
 
 /**
  *  Export function or symbol for linking

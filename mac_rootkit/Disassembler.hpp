@@ -4,10 +4,11 @@
 #include <capstone/capstone.h>
 
 #include "Arch.hpp"
+#include "Task.hpp"
 
 using namespace Arch;
 
-class Task;
+using namespace xnu;
 
 struct DisasmSig
 {

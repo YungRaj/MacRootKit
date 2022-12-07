@@ -7,54 +7,62 @@
 #include <mach/kmod.h>
 #include <mach/mach_types.h>
 
-class Kernel;
-class KextMachO;
+namespace xnu {}
 
-class Kext
+using namespace xnu;
+
+namespace xnu
 {
-	public:
-		Kext(Kernel *kernel, mach_vm_address_t base, char *identifier);
+	class Kernel;
+	class KextMachO;
 
-		Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info);
+	class Kext
+	{
+		public:
+			Kext(Kernel *kernel, mach_vm_address_t base, char *identifier);
 
-		~Kext();
+			Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info);
 
-		static Kext* findKextWithIdentifier(Kernel *kernel, char *name);
-		static Kext* findKextWithIdentifier_deprecated(Kernel *kernel, char *name);
+			~Kext();
 
-		static Kext* findKextWithId(Kernel *kernel, uint32_t kext_id);
+			static Kext* findKextWithIdentifier(Kernel *kernel, char *name);
+			static Kext* findKextWithIdentifier_deprecated(Kernel *kernel, char *name);
 
-		static void onKextLoad(void *kext, kmod_info_t *kmod_info);
+			static Kext* findKextWithId(Kernel *kernel, uint32_t kext_id);
 
-		char* getName() { return identifier; }
+			static void onKextLoad(void *kext, kmod_info_t *kmod_info);
 
-		mach_vm_address_t getBase() { return address; }
+			char* getName() { return identifier; }
 
-		mach_vm_address_t getAddress() { return address; }
+			mach_vm_address_t getBase() { return address; }
 
-		size_t getSize() { return size; }
+			mach_vm_address_t getAddress() { return address; }
 
-		void* getOSKext() { return kext; }
+			size_t getSize() { return size; }
 
-		kmod_info_t* getKmodInfo() { return kmod_info; }
+			void* getOSKext() { return kext; }
 
-		kmod_start_func_t* getKmodStart() { return kmod_info->start; }
-		kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
+			kmod_info_t* getKmodInfo() { return kmod_info; }
 
-	private:
-		Kernel *kernel;
+			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
+			kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
 
-		KextMachO *macho;
+		private:
+			Kernel *kernel;
 
-		kmod_info_t *kmod_info;
+			KextMachO *macho;
 
-		void *kext;
+			kmod_info_t *kmod_info;
 
-		mach_vm_address_t address;
+			void *kext;
 
-		size_t size;
+			mach_vm_address_t address;
 
-		char *identifier;
+			size_t size;
+
+			char *identifier;
+	};
+
 };
 
 #endif

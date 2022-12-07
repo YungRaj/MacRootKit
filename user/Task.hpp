@@ -7,142 +7,156 @@
 #include <sys/types.h>
 #include <mach/mach_types.h>
 
-class Kernel;
+namespace xnu
+{
+	class Kernel;
+};
+
+using namespace xnu;
 
 class Dyld;
 class Process;
 
 class Disassembler;
 
-class MachO;
-class UserMachO;
-
 class Symbol;
 class Segment;
 class Section;
 
-class Task
+class MachO;
+
+namespace mrk
 {
-	public:
-		Task();
+	class UserMachO;
+};
 
-		Task(Kernel *kernel, int pid);
+using namespace mrk;
 
-		Task(Kernel *kernel, char *name);
-		
-		Task(Kernel *kernel, mach_port_t task_port);
+namespace xnu
+{
+	class Task
+	{
+		public:
+			Task();
 
-		~Task();
+			Task(Kernel *kernel, int pid);
 
-		Kernel* getKernel();
+			Task(Kernel *kernel, char *name);
+			
+			Task(Kernel *kernel, mach_port_t task_port);
 
-		int getPid() { return pid; }
+			~Task();
 
-		int findPid();
+			Kernel* getKernel();
 
-		mach_port_t getTaskPort() { return task_port; }
+			int getPid() { return pid; }
 
-		mach_vm_address_t getTask() { return task; }
+			int findPid();
 
-		mach_vm_address_t getProc() { return proc; }
+			mach_port_t getTaskPort() { return task_port; }
 
-		char* getName() { return name; }
+			mach_vm_address_t getTask() { return task; }
 
-		Dyld* getDyld() { return dyld; }
+			mach_vm_address_t getProc() { return proc; }
 
-		Process* getProcess() { return process; }
+			char* getName() { return name; }
 
-		Disassembler* getDisassembler() { return disassembler; }
+			Dyld* getDyld() { return dyld; }
 
-		static mach_port_t getTaskForPid(int pid);
+			Process* getProcess() { return process; }
 
-		static Task* getTaskInfo(Kernel *kernel, char *task_name);
+			Disassembler* getDisassembler() { return disassembler; }
 
-		static mach_vm_address_t findProcByPid(Kernel *kernel, int pid);
-		static mach_vm_address_t findProcByName(Kernel *kernel, char *name);
+			static mach_port_t getTaskForPid(int pid);
 
-		static mach_vm_address_t findTaskByPid(Kernel *kernel, int pid);
-		static mach_vm_address_t findTaskByName(Kernel *kernel, char *name);
+			static Task* getTaskInfo(Kernel *kernel, char *task_name);
 
-		static mach_vm_address_t findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port);
+			static mach_vm_address_t findProcByPid(Kernel *kernel, int pid);
+			static mach_vm_address_t findProcByName(Kernel *kernel, char *name);
 
-		virtual mach_vm_address_t getBase();
+			static mach_vm_address_t findTaskByPid(Kernel *kernel, int pid);
+			static mach_vm_address_t findTaskByName(Kernel *kernel, char *name);
 
-		virtual off_t getSlide();
+			static mach_vm_address_t findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port);
 
-		virtual char* getTaskName();
+			virtual mach_vm_address_t getBase();
 
-		virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
-		virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
+			virtual off_t getSlide();
 
-		virtual mach_vm_address_t vmAllocate(size_t size);
-		virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
+			virtual char* getTaskName();
 
-		virtual void vmDeallocate(mach_vm_address_t address, size_t size);
+			virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
+			virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
 
-		virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
+			virtual mach_vm_address_t vmAllocate(size_t size);
+			virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
 
-		virtual void* vmRemap(mach_vm_address_t address, size_t size);
+			virtual void vmDeallocate(mach_vm_address_t address, size_t size);
 
-		virtual uint64_t virtualToPhysical(mach_vm_address_t address);
+			virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
 
-		virtual bool read(mach_vm_address_t address, void *data, size_t size);
-		virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual void* vmRemap(mach_vm_address_t address, size_t size);
 
-		virtual uint8_t read8(mach_vm_address_t address);
-		virtual uint16_t read16(mach_vm_address_t address);
-		virtual uint32_t read32(mach_vm_address_t address);
-		virtual uint64_t read64(mach_vm_address_t address);
+			virtual uint64_t virtualToPhysical(mach_vm_address_t address);
 
-		virtual bool write(mach_vm_address_t address, void *data, size_t size);
-		virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual bool read(mach_vm_address_t address, void *data, size_t size);
+			virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
 
-		virtual void write8(mach_vm_address_t address, uint8_t value);
-		virtual void write16(mach_vm_address_t address, uint16_t value);
-		virtual void write32(mach_vm_address_t address, uint32_t value);
-		virtual void write64(mach_vm_address_t address, uint64_t value);
+			virtual uint8_t read8(mach_vm_address_t address);
+			virtual uint16_t read16(mach_vm_address_t address);
+			virtual uint32_t read32(mach_vm_address_t address);
+			virtual uint64_t read64(mach_vm_address_t address);
 
-		virtual char* readString(mach_vm_address_t address);
+			virtual bool write(mach_vm_address_t address, void *data, size_t size);
+			virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
 
-		virtual Symbol* getSymbolByName(char *symname);
-		virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
+			virtual void write8(mach_vm_address_t address, uint8_t value);
+			virtual void write16(mach_vm_address_t address, uint16_t value);
+			virtual void write32(mach_vm_address_t address, uint32_t value);
+			virtual void write64(mach_vm_address_t address, uint64_t value);
 
-		virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
+			virtual char* readString(mach_vm_address_t address);
 
-		mach_vm_address_t getImageLoadedAt(char *image_name, char **image_path);
+			virtual Symbol* getSymbolByName(char *symname);
+			virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 
-		virtual void printLoadedImages();
+			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
-	protected:
-		Kernel *kernel;
+			mach_vm_address_t getImageLoadedAt(char *image_name, char **image_path);
 
-		UserMachO *macho;
+			virtual void printLoadedImages();
 
-		Disassembler *disassembler;
+		protected:
+			Kernel *kernel;
 
-		mach_port_t task_port;
+			UserMachO *macho;
 
-		off_t slide;
+			Disassembler *disassembler;
 
-		mach_vm_address_t task;
-		mach_vm_address_t proc;
+			mach_port_t task_port;
 
-		mach_vm_address_t map;
-		mach_vm_address_t pmap;
+			off_t slide;
 
-		char *name; 
-		char *path;
+			mach_vm_address_t task;
+			mach_vm_address_t proc;
 
-		Process *process;
+			mach_vm_address_t map;
+			mach_vm_address_t pmap;
 
-		int pid;
+			char *name; 
+			char *path;
 
-		mach_vm_address_t base;
+			Process *process;
 
-		mach_vm_address_t dyld_base;
-		mach_vm_address_t dyld_shared_cache;
+			int pid;
 
-		Dyld *dyld;
-};	
+			mach_vm_address_t base;
+
+			mach_vm_address_t dyld_base;
+			mach_vm_address_t dyld_shared_cache;
+
+			Dyld *dyld;
+	};
+};
 
 #endif

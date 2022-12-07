@@ -32,7 +32,11 @@ KernelPatcher::KernelPatcher(Kernel *kernel)
 	this->waitingForAlreadyLoadedKexts = false;
 
 	this->installEntitlementHook();
+	
+	// binary load hook does not work in Monterey because symbol to hook does not exist
 	// this->installBinaryLoadHook();
+
+	// kext load hook does not work in Monterey because symbol to hook does not exist
 	// this->installKextLoadHook();
 
 	// this->installDummyBreakpoint();

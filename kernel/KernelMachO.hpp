@@ -5,45 +5,50 @@
 #include "Kext.hpp"
 #include "MachO.hpp"
 
-class Kernel;
 class MachO;
 
-class KernelMachO : public MachO 
+namespace xnu
 {
-	public:
-		KernelMachO(Kernel *kernel);
+	class Kernel;
 
-		~KernelMachO();
+	class KernelMachO : public MachO 
+	{
+		public:
+			KernelMachO(Kernel *kernel);
 
-		mach_vm_address_t getKernelCache() { return kernel_cache; }
+			~KernelMachO();
 
-		mach_vm_address_t getKernelCollection() { return kernel_collection; }
+			mach_vm_address_t getKernelCache() { return kernel_cache; }
 
-		void setKernelCache(mach_vm_address_t kc) { this->kernel_cache = kc; }
+			mach_vm_address_t getKernelCollection() { return kernel_collection; }
 
-		void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
+			void setKernelCache(mach_vm_address_t kc) { this->kernel_cache = kc; }
 
-		static Kext* kextLoadedAt(Kernel *kernel, mach_vm_address_t address);
-		static Kext* kextWithIdentifier(Kernel *kernel, char *kext);
+			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
-		virtual void parseLinkedit();
+			static Kext* kextLoadedAt(Kernel *kernel, mach_vm_address_t address);
+			static Kext* kextWithIdentifier(Kernel *kernel, char *kext);
 
-		virtual bool parseLoadCommands();
+			virtual void parseLinkedit();
 
-		virtual void parseMachO();
+			virtual bool parseLoadCommands();
 
-	private:
-		Kernel *kernel;
+			virtual void parseMachO();
 
-		mach_vm_address_t kernel_cache;
+		private:
+			Kernel *kernel;
 
-		mach_vm_address_t kernel_collection;
+			mach_vm_address_t kernel_cache;
 
-		uint8_t *linkedit;
+			mach_vm_address_t kernel_collection;
 
-		mach_vm_address_t linkedit_off;
-		
-		size_t linkedit_size;
-};
+			uint8_t *linkedit;
+
+			mach_vm_address_t linkedit_off;
+			
+			size_t linkedit_size;
+	};
+
+}
 
 #endif

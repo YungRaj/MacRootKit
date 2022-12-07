@@ -7,30 +7,33 @@
 #include "API.h"
 #include "APIUtil.hpp"
 
-struct Plugin
+namespace mrk
 {
-	const char *product;
+	struct Plugin
+	{
+		const char *product;
 
-	size_t version;
-	
-	uint32_t runmode;
-	
-	const char **disableArg;
-	size_t disableArgNum;
-	
-	const char **debugArg;
-	size_t debugArgNum;
+		size_t version;
+		
+		uint32_t runmode;
+		
+		const char **disableArg;
+		size_t disableArgNum;
+		
+		const char **debugArg;
+		size_t debugArgNum;
 
-	const char **betaArg;
-	size_t betaArgNum;
-	
-	void (*pluginStart)();
-	void (*pluginStop)();
-};
+		const char **betaArg;
+		size_t betaArgNum;
+		
+		void (*pluginStart)();
+		void (*pluginStop)();
+	};
 
-extern Plugin ADDPR(config);
+	extern Plugin ADDPR(config);
 
-extern bool ADDPR(startSuccess);
+	extern bool ADDPR(startSuccess);
+}
 
 #ifdef MRK_PLUGIN
 
@@ -48,6 +51,5 @@ public:
 extern PRODUCT_NAME *ADDPR(selfInstance);
 
 #endif
-
 
 #endif

@@ -12,6 +12,8 @@ extern "C"
 	#include "kern.h"
 }
 
+// using namespace xnu;
+
 off_t Kernel::tempExecutableMemoryOffset = 0;
 
 uint8_t Kernel::tempExecutableMemory[tempExecutableMemorySize] __attribute__((section("__TEXT,__text")));

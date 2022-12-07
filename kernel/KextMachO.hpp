@@ -12,56 +12,64 @@
 #include "Kernel.hpp"
 #include "Kext.hpp"
 
-class Kernel;
+using namespace xnu;
 
-class KextMachO : public MachO
+namespace xnu
 {
-	public:
-		KextMachO(Kernel *kernel, char *name, mach_vm_address_t base);
-		KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info);
+	class Kernel;
+}
 
-		~KextMachO();
+namespace xnu
+{
+	class KextMachO : public MachO
+	{
+		public:
+			KextMachO(Kernel *kernel, char *name, mach_vm_address_t base);
+			KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info);
 
-		Kernel* getKernel() { return kernel; }
+			~KextMachO();
 
-		char* getKextName() { return name; }
+			Kernel* getKernel() { return kernel; }
 
-		mach_vm_address_t getAddress() { return address; }
+			char* getKextName() { return name; }
 
-		size_t getSize() { return kmod_info->size; }
+			mach_vm_address_t getAddress() { return address; }
 
-		kmod_start_func_t* getKmodStart() { return kmod_info->start; }
-		kmod_stop_func_t* getKmodStop() { return kmod_info->stop; }
+			size_t getSize() { return kmod_info->size; }
 
-		void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
+			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
+			kmod_stop_func_t* getKmodStop() { return kmod_info->stop; }
 
-		virtual void parseLinkedit();
+			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
-		virtual bool parseLoadCommands();
+			virtual void parseLinkedit();
 
-		virtual void parseHeader();
+			virtual bool parseLoadCommands();
 
-		virtual void parseMachO();
+			virtual void parseHeader();
 
-	private:
-		Kernel *kernel;
+			virtual void parseMachO();
 
-		mach_vm_address_t address;
+		private:
+			Kernel *kernel;
 
-		char *name;
+			mach_vm_address_t address;
 
-		off_t base_offset;
+			char *name;
 
-		mach_vm_address_t kernel_cache;
-		mach_vm_address_t kernel_collection;
+			off_t base_offset;
 
-		kmod_info_t *kmod_info;
+			mach_vm_address_t kernel_cache;
+			mach_vm_address_t kernel_collection;
 
-		uint8_t *linkedit;
+			kmod_info_t *kmod_info;
 
-		off_t linkedit_off;
+			uint8_t *linkedit;
 
-		size_t linkedit_size;
-};
+			off_t linkedit_off;
+
+			size_t linkedit_size;
+	};
+}
 
 #endif

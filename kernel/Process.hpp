@@ -1,9 +1,12 @@
 #ifndef __PROCESS_HPP_
 #define __PROCESS_HPP_
 
-class Task;
+namespace xnu
+{
+	class Task;
+};
 
-class Disassembler;
+using namespace xnu;
 
 class Process
 {

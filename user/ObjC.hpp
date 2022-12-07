@@ -6,15 +6,21 @@
 #include "Array.hpp"
 #include "PAC.hpp"
 
-class MachO;
-class UserMachO;
-
 class Segment;
 class Section;
+
+class MachO;
+
+namespace mrk
+{
+	class UserMachO;
+}
 
 #define RELATIVE_METHODS_SELECTORS_ARE_DIRECT_FLAG = 0x40000000
 #define RELATIVE_METHOD_FLAG = 0x80000000
 #define METHOD_LIST_FLAGS_MASK = 0xFFFF0000
+
+using namespace mrk;
 
 namespace ObjectiveC
 {

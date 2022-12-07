@@ -11,16 +11,22 @@
 #include <x86_64/Isa_x86_64.hpp>
 #include <arm64/Isa_arm64.hpp>
 
-class MacRootKit;
+namespace mrk
+{
+	class MacRootKit;
 
-class Patcher;
+	class Patcher;
 
-class Payload;
+	class Payload;
+};
 
-class Kernel;
-class Kext;
+namespace xnu
+{
+	class Kernel;
+	class Kext;
 
-class Task;
+	class Task;
+}
 
 using namespace Arch;
 
@@ -52,8 +58,6 @@ struct HookPatch
 	size_t patch_size;
 };
 
-class Patcher;
-
 template<typename T, typename Y = enum HookType>
 using HookCallbackPair = Pair<T, Y>;
 
@@ -63,91 +67,94 @@ using HookCallbackArray = Array<HookCallbackPair<T, Y>*>;
 template<typename T = struct HookPatch*>
 using HookArray = Array<T>;
 
-class Hook
+namespace mrk
 {
-	public:
-		Hook(Patcher *patcher, enum HookType hooktype);
-		Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address_t from);
+	class Hook
+	{
+		public:
+			Hook(Patcher *patcher, enum HookType hooktype);
+			Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address_t from);
 
-		void initWithHookParams(Task *task, mach_vm_address_t from);
-		void initWithBreakpointParams(Task *task, mach_vm_address_t breakpoint);
+			void initWithHookParams(Task *task, mach_vm_address_t from);
+			void initWithBreakpointParams(Task *task, mach_vm_address_t breakpoint);
 
-		static Hook* hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t address);
-		static Hook* breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t address);
+			static Hook* hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t address);
+			static Hook* breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t address);
 
-		Patcher* getPatcher() { return patcher; }
+			Patcher* getPatcher() { return patcher; }
 
-		Task* getTask() { return task; }
+			Task* getTask() { return task; }
 
-		Architecture* getArchitecture() { return architecture; }
+			Architecture* getArchitecture() { return architecture; }
 
-		Disassembler* getDisassembler() { return disassembler; }
+			Disassembler* getDisassembler() { return disassembler; }
 
-		mach_vm_address_t getFrom() { return from; }
+			mach_vm_address_t getFrom() { return from; }
 
-		struct HookPatch* getLatestRegisteredHook();
+			struct HookPatch* getLatestRegisteredHook();
 
-		mach_vm_address_t getTrampoline() { return trampoline; }
+			mach_vm_address_t getTrampoline() { return trampoline; }
 
-		mach_vm_address_t getTrampolineFromChain(mach_vm_address_t address);
+			mach_vm_address_t getTrampolineFromChain(mach_vm_address_t address);
 
-		HookArray<struct HookPatch*>* getHooks() { return &hooks; }
+			HookArray<struct HookPatch*>* getHooks() { return &hooks; }
 
-		HookCallbackArray<mach_vm_address_t>* getCallbacks() { return &callbacks; }
+			HookCallbackArray<mach_vm_address_t>* getCallbacks() { return &callbacks; }
 
-		enum HookType getHookType() { return hooktype; }
+			enum HookType getHookType() { return hooktype; }
 
-		enum HookType getHookTypeForCallback(mach_vm_address_t callback);
+			enum HookType getHookTypeForCallback(mach_vm_address_t callback);
 
-		void setPatcher(Patcher *patcher) { this->patcher = patcher; }
+			void setPatcher(Patcher *patcher) { this->patcher = patcher; }
 
-		void setDisassembler(Disassembler *disassembler) { this->disassembler = disassembler; }
+			void setDisassembler(Disassembler *disassembler) { this->disassembler = disassembler; }
 
-		void setTask(Task *task) { this->task = task; }
+			void setTask(Task *task) { this->task = task; }
 
-		void setFrom(mach_vm_address_t from) { this->from = from; }
+			void setFrom(mach_vm_address_t from) { this->from = from; }
 
-		void setTrampoline(mach_vm_address_t trampoline) { this->trampoline = trampoline; }
+			void setTrampoline(mach_vm_address_t trampoline) { this->trampoline = trampoline; }
 
-		void setHookType(enum HookType hooktype) { this->hooktype = hooktype; }
+			void setHookType(enum HookType hooktype) { this->hooktype = hooktype; }
 
-		Payload* prepareTrampoline();
+			Payload* prepareTrampoline();
 
-		void registerHook(struct HookPatch *patch);
+			void registerHook(struct HookPatch *patch);
 
-		void registerCallback(mach_vm_address_t callback, enum HookType hooktype = kHookTypeCallback);
+			void registerCallback(mach_vm_address_t callback, enum HookType hooktype = kHookTypeCallback);
 
-		void hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookTypeInstrumentFunction);
+			void hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookTypeInstrumentFunction);
 
-		void uninstallHook();
+			void uninstallHook();
 
-		void addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint);
+			void addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint);
 
-		void removeBreakpoint();
+			void removeBreakpoint();
 
-	private:
-		Patcher *patcher;
+		private:
+			Patcher *patcher;
 
-		Task *task;
+			Task *task;
 
-		Architecture *architecture;
+			Architecture *architecture;
 
-		Disassembler *disassembler;
+			Disassembler *disassembler;
 
-		Payload *payload;
+			Payload *payload;
 
-		bool kernelHook = false;
+			bool kernelHook = false;
 
-		mach_vm_address_t from;
+			mach_vm_address_t from;
 
-		mach_vm_address_t trampoline;
+			mach_vm_address_t trampoline;
 
-		enum HookType hooktype;
+			enum HookType hooktype;
 
-		HookCallbackArray<mach_vm_address_t> callbacks;
+			HookCallbackArray<mach_vm_address_t> callbacks;
 
-		HookArray<struct HookPatch*> hooks;
+			HookArray<struct HookPatch*> hooks;
+	};
 
-};
+}
 
 #endif

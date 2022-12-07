@@ -53,7 +53,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 
-	this->kernel = new Kernel(kernel_base, kernel_slide);
+	this->kernel = Kernel::create(kernel_base, kernel_slide);
 
 	this->kernel->setRootKitService(this);
 

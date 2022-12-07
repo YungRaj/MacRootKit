@@ -23,7 +23,16 @@
 
 #include <IOKit/IOKitLib.h>
 
+#ifdef TARGET_OS_IPHONE
+
+#include <UIKit/UIKit.h>
+
+#elif TARGET_OS_MAC
+
 #include <AppKit/AppKit.h>
+
+#endif
+
 #include <Foundation/Foundation.h>
 
 @class NSString, NSArray, NSSet, NSURL;
@@ -82,7 +91,7 @@ bool swizzled_skipDeviceFamilyCheck()
 
 mach_vm_address_t sign_ptr(mach_vm_address_t ptr)
 {
-#ifdef __arm64__
+#ifdef __arm64e__
 
 	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (ptr));
 

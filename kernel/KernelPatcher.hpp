@@ -9,16 +9,17 @@
 #include "Patcher.hpp"
 #include "Arch.hpp"
 
-using namespace Arch;
+namespace xnu
+{
+	class Kernel;
+	class Kext;
+}
 
-class Kernel;
-class Kext;
+using namespace Arch;
+using namespace xnu;
 
 class MachO;
 class Symbol;
-
-class Hook;
-class Payload;
 
 struct KextPatch
 {
@@ -54,81 +55,88 @@ struct KernelPatch
 		off_t offset;
 };
 
-class KernelPatcher : public Patcher
+namespace mrk
 {
-	public:
-		KernelPatcher();
-		KernelPatcher(Kernel *kernel);
+	class Hook;
+	class Payload;
 
-		~KernelPatcher();
+	class KernelPatcher : public Patcher
+	{
+		public:
+			KernelPatcher();
+			KernelPatcher(Kernel *kernel);
 
-		Kernel* getKernel() { return kernel; }
+			~KernelPatcher();
 
-		kmod_info_t** getKextKmods() { return kextKmods; }
+			Kernel* getKernel() { return kernel; }
 
-		Hook* getEntitlementHook() { return entitlementHook; }
-		Hook* getBinaryLoadHook() { return binaryLoadHook; }
-		Hook* getKextLoadHook() { return kextLoadHook; }
+			kmod_info_t** getKextKmods() { return kextKmods; }
 
-		static bool dummyBreakpoint(union RegisterState *state);
+			Hook* getEntitlementHook() { return entitlementHook; }
+			Hook* getBinaryLoadHook() { return binaryLoadHook; }
+			Hook* getKextLoadHook() { return kextLoadHook; }
 
-		static void onOSKextSaveLoadedKextPanicList();
+			static bool dummyBreakpoint(union RegisterState *state);
 
-		static void* OSKextLookupKextWithIdentifier(const char *identifier);
+			static void onOSKextSaveLoadedKextPanicList();
 
-		static OSObject* copyClientEntitlement(task_t task, const char *entitlement);
+			static void* OSKextLookupKextWithIdentifier(const char *identifier);
 
-		static void taskSetMainThreadQos(task_t task, thread_t thread);
+			static OSObject* copyClientEntitlement(task_t task, const char *entitlement);
 
-		virtual void findAndReplace(void *data, size_t data_size,
-									const void *find, size_t find_size,
-									const void *replace, size_t replace_size);
+			static void taskSetMainThreadQos(task_t task, thread_t thread);
 
-		virtual void routeFunction(Hook *hook);
+			virtual void findAndReplace(void *data, size_t data_size,
+										const void *find, size_t find_size,
+										const void *replace, size_t replace_size);
 
-		virtual void onKextLoad(void *kext, kmod_info_t *kmod);
+			virtual void routeFunction(Hook *hook);
 
-		virtual void onExec(task_t task, const char *path, size_t len);
+			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
-		virtual void onEntitlementRequest(task_t task, const char *entitlement, void *original);
+			virtual void onExec(task_t task, const char *path, size_t len);
 
-		Hook* installDummyBreakpoint();
+			virtual void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-		Hook* installEntitlementHook();
-		Hook* installBinaryLoadHook();
-		Hook* installKextLoadHook();
+			Hook* installDummyBreakpoint();
 
-		void registerCallbacks();
+			Hook* installEntitlementHook();
+			Hook* installBinaryLoadHook();
+			Hook* installKextLoadHook();
 
-		void processAlreadyLoadedKexts();
+			void registerCallbacks();
 
-		void processKext(kmod_info_t *kmod, bool loaded);
+			void processAlreadyLoadedKexts();
 
-		mach_vm_address_t injectPayload(mach_vm_address_t address, Payload *payload);
+			void processKext(kmod_info_t *kmod, bool loaded);
 
-		mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
+			mach_vm_address_t injectPayload(mach_vm_address_t address, Payload *payload);
 
-		void applyKernelPatch(struct KernelPatch *patch);
-		void applyKextPatch(struct KextPatch *patch);
+			mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
 
-		void patchPmapEnterOptions();
+			void applyKernelPatch(struct KernelPatch *patch);
+			void applyKextPatch(struct KextPatch *patch);
 
-		void removeKernelPatch(struct KernelPatch *patch);
-		void removeKextPatch(struct KextPatch *patch);
+			void patchPmapEnterOptions();
 
-	private:
-		Kernel *kernel;
+			void removeKernelPatch(struct KernelPatch *patch);
+			void removeKextPatch(struct KextPatch *patch);
 
-		kmod_info_t **kextKmods;
+		private:
+			Kernel *kernel;
 
-		Hook *entitlementHook;
-		Hook *binaryLoadHook;
-		Hook *kextLoadHook;
+			kmod_info_t **kextKmods;
 
-		bool waitingForAlreadyLoadedKexts = false;
+			Hook *entitlementHook;
+			Hook *binaryLoadHook;
+			Hook *kextLoadHook;
 
-		Array<struct KernelPatch*> kernelPatches;
-		Array<struct KextPatch*> kextPatches;
+			bool waitingForAlreadyLoadedKexts = false;
+
+			Array<struct KernelPatch*> kernelPatches;
+			Array<struct KextPatch*> kextPatches;
+	};
+
 };
 
 
