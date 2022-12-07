@@ -16,7 +16,7 @@ CXX := $(CLANGPP) -isysroot $(SYSROOT) -arch $(ARCH)
 
 NONE = NONE
 
-TARGET = mrk_inject
+TARGET = libMacRootKit.a
 
 COMMON_CSOURCES := $(wildcard mac_rootkit/*.c)
 USER_CSOURCES := $(wildcard user/*.c)
@@ -35,6 +35,8 @@ USER_CPPOBJECTS := $(patsubst user/%.cpp, $(OBJ)/%.o, $(USER_CPPSOURCES))
 
 X86_64_CPPOBJECTS := $(patsubst x86_64/%.cpp, $(OBJ)/%.o, $(X86_64_CPPSOURCES))
 ARM64_CPPOBJECTS := $(patsubst arm64/%.cpp, $(OBJ)/%.o, $(ARM64_CPPSOURCES))
+
+USER_CPPOBJECTS  := $(filter-out user/main.cpp, $(USER_CPPOBJECTS))
 
 CFLAGS += -target arm64-apple-macos -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
@@ -68,8 +70,8 @@ $(OBJ):
 	rm $(OBJ)/*.o
 
 $(BUILD)/$(TARGET):  $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
-	$(CXX)  $(LDFLAGS) -framework CoreFoundation -framework IOKit -o $@ $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
-	# libtool -o $(BUILD)/libKTFP0.a -static $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
+	# $(CXX)  $(LDFLAGS) -framework CoreFoundation -framework IOKit -o $@ $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
+	libtool -o $(BUILD)/libKTFP0.a -static $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
 
 clean:
 	rm -rf obj/*
