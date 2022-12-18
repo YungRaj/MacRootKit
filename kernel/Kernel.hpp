@@ -170,13 +170,52 @@ namespace xnu
 			void createKernelTaskPort();
 	};
 
-	class KDKKernel : Kernel
+	class KDKKernel
 	{
 		public:
-			static KDKKernel* KDKKernelFromFilePath(const char *path);
+			static KDKKernel* KDKKernelFromFilePath(Kernel *kernel, const char *path);
+
+			char* getPath();
+
+			Kernel* getKernel();
+
+			Dwarf* debugInfo();
+
+			MachO* getDevelopmentKernel();
+
+			mach_vm_address_t getBase();
+
+			mach_vm_address_t findSymbolByName(Kernel *kernel, const char *sym);
+
+			Symbol* getKDKSymbolByName(char *symname);
+			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
+
+			Symbol* matchSymbolWithKDK(Symbol *s);
+			Symbol* matchSymbolWithKDK(mach_vm_address_t address);
+
+			mach_vm_address_t matchAddressWithKDK(mach_vm_address_t addr);
+
+			char* findString(char *s);
+
+			Array<mach_vm_address_t> getExternalReferences(mach_vm_address_t addr);
+
+			Array<mach_vm_address_t> getStringReferences(mach_vm_address_t addr);
+			Array<mach_vm_address_t> getStringReferences(const char *s);
+
+			void parseDebugInformation();
 
 		private:
 			KDKKernel(const char *path);
+
+			const char *path;
+
+			Kernel *kernel;
+
+			MachO *kdk;
+
+			Dwarf *debugInfo;
+
+			mach_vm_address_t base;
 	};
 };
 

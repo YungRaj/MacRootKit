@@ -33,7 +33,8 @@ namespace mrk
 	extern Plugin ADDPR(config);
 
 	extern bool ADDPR(startSuccess);
-}
+};
+
 
 #ifdef MRK_PLUGIN
 
