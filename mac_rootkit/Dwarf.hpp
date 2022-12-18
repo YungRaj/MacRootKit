@@ -549,7 +549,7 @@ namespace dwarf
 
 	};
 
-	class LineTable``
+	class LineTable
 	{
 
 	};
