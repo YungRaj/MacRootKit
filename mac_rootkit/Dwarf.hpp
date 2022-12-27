@@ -28,7 +28,28 @@ namespace Debug
 	class LineTable;
 	class AbbreviationTable;
 
-	struct AttrAbbrev;
+	struct AttrSpec
+	{
+		enum DW_AT name;
+		enum DW_FORM form;
+	};
+
+	struct AttrAbbrev
+	{
+		enum DW_TAG tag;
+		enum DW_CHILDREN children;
+
+		struct AttrSpec attr_spec;
+
+		uint64_t code;
+	};
+
+	struct Attribute
+	{
+		struct AttrAbbrev abbreviation;
+
+		uint64_t value;
+	};
 
 	Dwarf* parseDebugSymbols(MachO *macho, const char *dSYM);
 
@@ -52,22 +73,10 @@ namespace Debug
 			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.get(index); }
 
 			char* getName() { return name; }
-			char* getMangledName();
-
-			DIE* getParent() { return parent; }
-
-			Array<DIE*>* getChildren() { return &children; }
 
 			off_t getOffset() { return offset; }
 
-			void setParent(DIE *die) { this->parent = die; }
-
-			void setCompilationUnit(CompilationUnit *unit) { this->compilationUnit = unit; }
-
 			void setOffset(off_t offset) { this->offset = offset; }
-
-			void addChild(DIE *die);
-			void removeChild(DIE *die);
 
 			struct AttrAbbrev* getAbbreviation(int index) { return this->abbreviationTable.get(index); }
 			struct AttrAbbrev* getAbbreviation(enum DW_AT attr);
@@ -80,8 +89,6 @@ namespace Debug
 
 			uint64_t code;
 
-			CompilationUnit *compilationUnit;
-
 			Array<struct AttrAbbrev*> abbreviationTable;
 
 			enum DW_TAG tag;
@@ -92,13 +99,56 @@ namespace Debug
 
 			DIE *parent;
 
-			Array<DIE*> children;
-
 			uint32_t idx;
 			uint32_t sibling_idx;
 			uint32_t parent_idx;
 
 			off_t offset;
+	};
+
+	class DwarfDIE
+	{
+		public:
+			explicit DwarfDIE(Dwarf *dwarf,
+							  CompilationUnit *unit,
+							  DIE *die,
+							  DwarfDIE *parent);
+
+			Dwarf* getDwarf() { return dwarf; }
+
+			DIE* getDebugInfoEntry() { return die; }
+
+			enum DW_TAG getTag() { return die->getTag(); }
+			enum DW_CHILDREN hasChildren() { return die->getHasChildren(); }
+
+			DwarfDIE* getParent() { return parent; }
+
+			Array<DwarfDIE*>* getChildren() { return &children; }
+
+			Array<struct Attribute*>* getAttributes() { return &attributes; }
+
+			void addChild(DwarfDIE *child) { this->children.add(child); }
+			void removeChild(DwarfDIE *child) { this->children.remove(child); }
+
+			void addAttribute(struct Attribute *attribute) { this->attributes.add(attribute); }
+			void addAttributes(Array<struct Attribute*> &attrs) { for(int i = 0; i < attrs.getSize(); i++) this->attributes.add(attrs.get(i)); }
+
+			struct Attribute* getAttribute(enum DW_AT attr);
+			struct Attribute* getAttribute(int index) { return this->attributes.get(index); }
+
+			uint64_t getAttributeValue(enum DW_AT attr);
+
+		private:
+			Dwarf *dwarf;
+
+			CompilationUnit *compilationUnit;
+
+			DIE *die;
+
+			DwarfDIE *parent;
+
+			Array<DwarfDIE*> children;
+			Array<struct Attribute*> attributes;
 	};
 
 	#pragma pack(1)
@@ -119,11 +169,15 @@ namespace Debug
 		public:
 			explicit CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die);
 
+			Array<DwarfDIE*>* getDebugInfoEntries() { return &debugInfoEntries; }
+
 			Dwarf* getDwarf() { return dwarf; }
 
 			LineTable* getLineTable() { return lineTable; }
 
 			char* getSourceFileName() { return source_file; }
+
+			void addDebugInfoEntry(DwarfDIE *dwarfDIE) { this->debugInfoEntries.add(dwarfDIE); }
 
 		private:
 			Dwarf *dwarf;
@@ -131,6 +185,8 @@ namespace Debug
 			DIE *die;
 
 			struct CompileUnitHeader *header;
+
+			Array<DwarfDIE*> debugInfoEntries;
 
 			LineTable *lineTable;
 	
@@ -182,38 +238,6 @@ namespace Debug
 			CompilationUnit *unit;
 
 			Array<SourceLine*> sources;
-	};
-
-	struct AttrSpec
-	{
-		enum DW_AT name;
-		enum DW_FORM form;
-	};
-
-	struct AttrAbbrev
-	{
-		enum DW_TAG tag;
-		enum DW_CHILDREN children;
-
-		struct AttrSpec attr_spec;
-
-		uint64_t code;
-
-		int64_t value;
-	};
-
-	class AbbreviationTable
-	{
-		public:
-			explicit AbbreviationTable(CompilationUnit *cu, DIE *tag);
-
-			void addAbbreviation(struct AttrAbbrev *abbreviation);
-			void removeAbbreviation(struct AttrAbbrev *abbreviation);
-
-		private:
-			CompilationUnit *compilationUnit;
-
-			DIE *tag;
 	};
 
 	class Dwarf

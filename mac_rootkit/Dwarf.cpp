@@ -640,6 +640,43 @@ struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
 	return NULL;
 }
 
+DwarfDIE::DwarfDIE(Dwarf *dwarf,
+				   CompilationUnit *unit,
+				   DIE *die,
+				   DwarfDIE *parent)
+{
+	this->dwarf = dwarf;
+	this->compilationUnit = unit;
+	this->die = die;
+	this->parent = parent;
+}
+
+struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
+{
+	for(int i = 0; i < this->attributes.getSize(); i++)
+	{
+		struct Attribute *attribute = this->attributes.get(i);
+
+		if(attribute->abbreviation.attr_spec.name == attr)
+			return attribute;
+	}
+
+	return NULL;
+}
+
+uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
+{
+	for(int i = 0; i < this->attributes.getSize(); i++)
+	{
+		struct Attribute *attribute = this->attributes.get(i);
+
+		if(attribute->abbreviation.attr_spec.name == attr)
+			return attribute->value;
+	}
+
+	return 0;
+}
+
 CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die)
 {
 	this->dwarf = dwarf;
@@ -812,6 +849,8 @@ void Dwarf::parseDebugAbbrev()
 			}
 		}
 	}
+
+	printf("\n\n");
 }
 
 DIE* Dwarf::getDebugInfoEntryByCode(uint64_t code)
@@ -854,9 +893,10 @@ void Dwarf::parseDebugInfo()
 	uint32_t debug_info_offset = 0;
 	uint32_t debug_abbrev_offset = 0;
 
+	struct CompilationUnit *compilationUnit = NULL;
 	struct CompileUnitHeader *header = NULL;
 
-	Array<DIE*> stack;
+	Array<DwarfDIE*> stack;
 
 	uint32_t next_unit = 0;
 	uint32_t consecutive_zeroes = 0;
@@ -876,11 +916,7 @@ void Dwarf::parseDebugInfo()
 			new_compile_unit = true;
 		}
 
-		printf("offset = 0x%llx ", debug_info_offset);
-
 		uint64_t code = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
-
-		printf("code = 0x%llx\n", code);
 
 		if(code == 0)
 		{
@@ -891,30 +927,30 @@ void Dwarf::parseDebugInfo()
 				header = NULL;
 			}
 
-			printf("Stack size = 0x%llx\n", stack.getSize());
-
 			continue;
 		}
-
-		printf("Stack size = 0x%llx\n", stack.getSize());
 
 		DIE *die = getDebugInfoEntryByCode(code);
 
 		assert(die);
 
-		if(static_cast<bool>(die->getHasChildren()))
-		{
-			stack.add(die);
-		}
+		DwarfDIE *parent = stack.getSize() > 0 ? stack.get(stack.getSize() - 1) : NULL;
+
+		DwarfDIE *dwarfDIE = new DwarfDIE(this, compilationUnit, die, parent);
 
 		if(new_compile_unit)
 		{
-			CompilationUnit *compilationUnit = new CompilationUnit(this, header, die);
+			compilationUnit = new CompilationUnit(this, header, die);
 
 			this->compilationUnits.add(compilationUnit);
 
 			new_compile_unit = false;
 		}
+
+		for(int i = 0; i < stack.getSize(); i++)
+				printf("\t");
+
+		printf("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.getSize());
 
 		uint64_t die_code = die->getCode();
 
@@ -922,183 +958,144 @@ void Dwarf::parseDebugInfo()
 
 		for(int i = 0; i < attributes_count; i++)
 		{
+			struct Attribute *attribute = new Attribute;
+
 			struct AttrAbbrev *ab = die->getAttribute(i);
 
 			DW_AT attr = ab->attr_spec.name;
 			DW_FORM form = ab->attr_spec.form;
 
+			DW_TAG tag = ab->tag;
+			DW_CHILDREN ch = ab->children;
+
+			attribute->abbreviation.attr_spec.name = attr;
+			attribute->abbreviation.attr_spec.form = form;
+			attribute->abbreviation.tag = tag;
+			attribute->abbreviation.children = ch;
+
 			if(form == DW_FORM::flag_present)
 			{
 				continue;
-			}
-
-			if(form == DW_FORM::block)
+			} else if(form == DW_FORM::block)
 			{
 				value = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				continue;
-			}
-
-			if(form == DW_FORM::block1)
+			} else if(form == DW_FORM::block1)
 			{
 				value = *reinterpret_cast<uint8_t*>(debug_info_begin + debug_info_offset);
 
 				debug_info_offset += sizeof(uint8_t);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				debug_info_offset += value;
 
 				continue;
-			}
-
-			if(form == DW_FORM::block2)
+			} else if(form == DW_FORM::block2)
 			{
 				value = *reinterpret_cast<uint16_t*>(debug_info_begin + debug_info_offset);
 
 				debug_info_offset += sizeof(uint16_t);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				debug_info_offset += value;
 
 				continue;
-			}
-
-			if(form == DW_FORM::block4)
+			} else if(form == DW_FORM::block4)
 			{
 				value = *reinterpret_cast<uint32_t*>(debug_info_begin + debug_info_offset);
 
 				debug_info_offset += sizeof(uint32_t);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				debug_info_offset += value;
 
 				continue;
-			}
-
-			if(form == DW_FORM::indirect)
+			} else if(form == DW_FORM::indirect)
 			{
 				value = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				continue;
-			}
-
-			if(form == DW_FORM::ref_udata)
+			} else if(form == DW_FORM::ref_udata)
 			{
 				value = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				continue;
-			}
-
-			if(form == DW_FORM::udata)
+			} else if(form == DW_FORM::udata)
 			{
 				value = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				continue;
-			}
-
-			if(form == DW_FORM::sdata)
+			} else if(form == DW_FORM::sdata)
 			{
-				printf("debug_info_offset = 0x%llx\n", debug_info_offset);
-
 				value = Debug::ReadSleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
-				printf("debug_info_offset = 0x%llx\n", debug_info_offset);
-
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
-
 				continue;
-			}
-
-			if(form == DW_FORM::string)
+			} else if(form == DW_FORM::string)
 			{
 				uint64_t string_size = GetStringSize(debug_info_begin + debug_info_offset);
-
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
 
 				debug_info_offset += string_size;
 
 				continue;
-			}
-
-			if(form == DW_FORM::exprloc)
+			}else if(form == DW_FORM::exprloc)
 			{
 				value = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
-
-				printf("\tform = 0x%llx\n", static_cast<uint32_t>(form));
-				printf("\tvalue = 0x%llx\n", value);
 
 				debug_info_offset += value;
 
 				continue;
-			}
-
-			size_t form_size = DWFormSize(form);
+			} else
+			{
+				size_t form_size = DWFormSize(form);
 			
-			printf("\tform = 0x%llx form_size = 0x%llx\n", static_cast<uint32_t>(form), form_size);
+				assert(form_size != 0);
 
-			assert(form_size != 0);
+				switch(form_size)
+				{
+					case 0:
+						break;
+					case 1:
+						value = *reinterpret_cast<uint8_t*>(debug_info_begin + debug_info_offset);
 
-			switch(form_size)
-			{
-				case 0:
-					break;
-				case 1:
-					value = *reinterpret_cast<uint8_t*>(debug_info_begin + debug_info_offset);
+						break;
+					case 2:
+						value = *reinterpret_cast<uint16_t*>(debug_info_begin + debug_info_offset);
 
-					printf("\tvalue = 0x%llx\n", value);
+						break;
+					case 4:
+						value = *reinterpret_cast<uint32_t*>(debug_info_begin + debug_info_offset);
 
-					break;
-				case 2:
-					value = *reinterpret_cast<uint16_t*>(debug_info_begin + debug_info_offset);
+						break;
+					case 8:
+						value = *reinterpret_cast<uint64_t*>(debug_info_begin + debug_info_offset);
 
-					printf("\tvalue = 0x%llx\n", value);
-
-					break;
-				case 4:
-					value = *reinterpret_cast<uint32_t*>(debug_info_begin + debug_info_offset);
-
-					printf("\tvalue = 0x%llx\n", value);
-
-					break;
-				case 8:
-					value = *reinterpret_cast<uint64_t*>(debug_info_begin + debug_info_offset);
-
-					printf("\tvalue = 0x%llx\n", value);
-
-					break;
-				default:
+						break;
+					default:
 
 
-					break;
+						break;
+				}
+
+				debug_info_offset += form_size;
 			}
 
-			debug_info_offset += form_size;
+			attribute->value = value;
 
-			if(value)
-			{
+			dwarfDIE->addAttribute(attribute);
 
-			}
+			for(int i = 0; i < stack.getSize(); i++)
+				printf("\t");
+
+			printf("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
 		}
+
+		if(static_cast<bool>(die->getHasChildren()))
+		{
+			stack.add(dwarfDIE);
+		}
+
+		if(parent)
+			parent->addChild(dwarfDIE);
+
+		compilationUnit->addDebugInfoEntry(dwarfDIE);
 	}
 }
 
