@@ -37,6 +37,7 @@ class Section
 		mach_vm_address_t getAddress() { return address; }
 
 		off_t getOffset() { return offset; }
+		off_t getOffsetEnd() { return offset + size; }
 
 		size_t getSize() { return size; }
 

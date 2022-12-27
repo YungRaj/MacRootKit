@@ -18,9 +18,9 @@ class Section;
 
 #include "Log.hpp"
 
-namespace Dwarf
+namespace Debug
 {
-	using namespace Dwarf;
+	using namespace Debug;
 
 	class Dwarf;
 	class CompilationUnit;
@@ -28,59 +28,126 @@ namespace Dwarf
 	class LineTable;
 	class AbbreviationTable;
 
+	struct AttrAbbrev;
+
 	Dwarf* parseDebugSymbols(MachO *macho, const char *dSYM);
 
 	class DIE
 	{
 		public:
+			explicit DIE(Dwarf *dwarf,
+						 uint64_t code,
+						 char *name,
+						 enum DW_TAG tag,
+						 enum DW_CHILDREN has_children);
+
 			enum DW_TAG getTag() { return tag; }
+			enum DW_CHILDREN getHasChildren() { return has_children; }
+
+			uint64_t getCode() { return code; }
+
+			uint32_t getAttributesCount() { return abbreviationTable.getSize(); }
+
+			struct AttrAbbrev* getAttribute(enum DW_AT attr);
+			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.get(index); }
 
 			char* getName() { return name; }
 			char* getMangledName();
 
 			DIE* getParent() { return parent; }
 
-			Array<DIE*>* getSiblings() { return &siblings; }
 			Array<DIE*>* getChildren() { return &children; }
 
 			off_t getOffset() { return offset; }
 
+			void setParent(DIE *die) { this->parent = die; }
+
+			void setCompilationUnit(CompilationUnit *unit) { this->compilationUnit = unit; }
+
+			void setOffset(off_t offset) { this->offset = offset; }
+
+			void addChild(DIE *die);
+			void removeChild(DIE *die);
+
+			struct AttrAbbrev* getAbbreviation(int index) { return this->abbreviationTable.get(index); }
+			struct AttrAbbrev* getAbbreviation(enum DW_AT attr);
+
+			void addAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.add(abbreviation); }
+			void removeAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.remove(abbreviation); }
+
 		private:
 			Dwarf *dwarf;
 
-			CompilationUnit *unit;
+			uint64_t code;
+
+			CompilationUnit *compilationUnit;
+
+			Array<struct AttrAbbrev*> abbreviationTable;
 
 			enum DW_TAG tag;
+
+			enum DW_CHILDREN has_children;
 
 			char *name;
 
 			DIE *parent;
 
-			Array<DIE*> siblings;
 			Array<DIE*> children;
 
+			uint32_t idx;
 			uint32_t sibling_idx;
 			uint32_t parent_idx;
 
 			off_t offset;
 	};
 
+	#pragma pack(1)
+
+	struct CompileUnitHeader
+	{
+		uint32_t length;
+		uint16_t format;
+		uint16_t version;
+		uint16_t abbr_offset;
+		uint8_t addr_size;
+	};
+
+	#pragma options align=reset
+
 	class CompilationUnit
 	{
 		public:
+			explicit CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die);
 
-			DIE* getDebugInfoEntry() { return die; }
+			Dwarf* getDwarf() { return dwarf; }
 
 			LineTable* getLineTable() { return lineTable; }
 
 			char* getSourceFileName() { return source_file; }
 
 		private:
+			Dwarf *dwarf;
+
 			DIE *die;
+
+			struct CompileUnitHeader *header;
 
 			LineTable *lineTable;
 	
 			char *source_file;
+			char *source_language;
+
+			uint16_t dwarf_version;
+
+			uint8_t unit_type;
+			uint64_t dwo_id;
+
+			uint64_t unit_type_signature;
+			uint64_t unit_type_offset;
+
+			mach_vm_address_t address_base = 0;
+			mach_vm_address_t str_offsets_base = 0;
+			mach_vm_address_t range_lists_base = 0;
 	};
 
 	class LineTable
@@ -117,26 +184,36 @@ namespace Dwarf
 			Array<SourceLine*> sources;
 	};
 
+	struct AttrSpec
+	{
+		enum DW_AT name;
+		enum DW_FORM form;
+	};
+
+	struct AttrAbbrev
+	{
+		enum DW_TAG tag;
+		enum DW_CHILDREN children;
+
+		struct AttrSpec attr_spec;
+
+		uint64_t code;
+
+		int64_t value;
+	};
+
 	class AbbreviationTable
 	{
-		struct Abbreviation
-		{
-			enum DW_TAG tag;
-			enum DW_CHILDREN children;
-
-			struct AttrSpec
-			{
-				enum DW_AT name;
-				enum DW_FORM form;
-			} attr_spec;
-
-			int64_t value;
-		};
-
 		public:
+			explicit AbbreviationTable(CompilationUnit *cu, DIE *tag);
+
+			void addAbbreviation(struct AttrAbbrev *abbreviation);
+			void removeAbbreviation(struct AttrAbbrev *abbreviation);
 
 		private:
-			Array<Abbreviation*> abbreviations;
+			CompilationUnit *compilationUnit;
+
+			DIE *tag;
 	};
 
 	class Dwarf
@@ -147,7 +224,8 @@ namespace Dwarf
 
 			CompilationUnit getCompilationUnit(const char *source_file);
 
-			DIE* getDebugInfoEntry(const char *name);
+			DIE* getDebugInfoEntryByName(const char *name);
+			DIE* getDebugInfoEntryByCode(uint64_t code);
 
 			Segment* getDwarfSegment() { return dwarf; }
 
@@ -164,9 +242,7 @@ namespace Dwarf
 			Section* getAppleObjc() { return __apple_objc; }
 
 			Array<CompilationUnit*>* getCompilationUnits() { return &compilationUnits; }
-			Array<LineTable*>* getLineTables() { return &lineTable; }
-
-			CompilationUnit* getCompilationUnit(const char *name);
+			Array<LineTable*>* getLineTables() { return &lineTables; }
 
 			LineTable* getLineTable(const char *name);
 			LineTable* getLineTable(CompilationUnit *unit);
@@ -175,6 +251,9 @@ namespace Dwarf
 			DIE* getFunction(const char *name);
 			DIE* getType(const char *name);
 
+			void populateDebugSymbols();
+
+			void parseDebugAbbrev();
 			void parseDebugInfo();
 			void parseDebugLocations();
 
@@ -185,11 +264,10 @@ namespace Dwarf
 			MachO *macho;
 			MachO *machoWithDebug;
 
+			Array<DIE*> dies;
 			Array<CompilationUnit*> compilationUnits;
 
-			Array<LineTables*> *lineTables;
-
-			AbbreviationTable *abbreviationTable;
+			Array<LineTable*> lineTables;
 
 			Segment *dwarf;
 
@@ -207,8 +285,12 @@ namespace Dwarf
 
 	};
 
+	uint64_t GetStringSize(uint8_t *p);
+
+	uint64_t ReadUleb128(uint8_t *p, uint8_t *end);
 	uint64_t ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx);
 
+	int64_t ReadSleb128(uint8_t *p, uint8_t *end);
 	int64_t ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx);
 };
 

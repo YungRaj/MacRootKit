@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <assert.h>
 
 template<typename T>
 struct Node
@@ -162,6 +163,8 @@ class Array
 		void remove(int index)
 		{
 			Node<T> *current = head;
+
+			assert(index >= 0 && index < size);
 
 			if(index < 0 && index >= size)
 				return;

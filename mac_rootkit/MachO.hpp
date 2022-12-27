@@ -44,6 +44,7 @@ class MachO
 		size_t getSize();
 
 		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
+		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
 
 		Array<Segment*>* getSegments() { return &segments; }
 		

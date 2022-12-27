@@ -1,9 +1,11 @@
 #ifndef __DWARF_V5_HPP_
 #define __DWARF_V5_HPP_
 
-namespace Dwarf
+#include "MachO.hpp"
+
+namespace Debug
 {
-	enum class DW_TAG
+	enum class DW_TAG : uint64_t
 	{
 		array_type	       = 0x01,
 		class_type	       = 0x02,
@@ -73,7 +75,7 @@ namespace Dwarf
 	};
 
 	// Child determination (Section 7, figure 19).
-	enum class DW_CHILDREN : ubyte
+	enum class DW_CHILDREN : uint8_t
 	{
 		no  = 0x00,
 		yes = 0x01,
@@ -82,7 +84,7 @@ namespace Dwarf
 	// Attribute names (Section 7, figure 20).  inline, friend, mutable,
 	// and explicit have a trailing underscore because they are reserved
 	// words.
-	enum class DW_AT
+	enum class DW_AT : uint32_t
 	{
 		sibling	      = 0x01,			 // reference
 		location	     = 0x02,		 // exprloc, loclistptr
@@ -189,7 +191,7 @@ namespace Dwarf
 	};
 
 	// Attribute form encodings (Section 7, figure 21)
-	enum class DW_FORM
+	enum class DW_FORM : uint16_t
 	{
 		addr	 = 0x01,    		// address
 		block2       = 0x03,    	// block
@@ -205,7 +207,7 @@ namespace Dwarf
 		sdata	= 0x0d,    			// constant
 		strp	 = 0x0e,    		// string
 		udata	= 0x0f,    			// constant
-		ref_addr     = 0x10,    	// reference
+		ref_addr   = 0x10,    	// reference
 		ref1	 = 0x11,    		// reference
 		ref2	 = 0x12,    		// reference
 		ref4	 = 0x13,    		// reference
@@ -222,7 +224,7 @@ namespace Dwarf
 	};
 
 	// DWARF operation encodings (Section 7.7.1 and figure 24)
-	enum class DW_OP : ubyte
+	enum class DW_OP : uint8_t
 	{
 		addr		= 0x03, 		// [constant address (size target specific)]
 		deref	       = 0x06,

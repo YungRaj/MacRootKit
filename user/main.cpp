@@ -17,6 +17,7 @@
 #include <IOKit/IOKitLib.h>
 
 #include "Kernel.hpp"
+#include "Dwarf.hpp"
 #include "UserMachO.hpp"
 #include "Task.hpp"
 #include "Dyld.hpp"
@@ -512,6 +513,13 @@ int main(int argc, char **argv)
 
 	return 0;
 	*/
+
+	using namespace Debug;
+
+	Dwarf *dwarf = new Dwarf("/Library/Developer/KDKs/KDK_12.5_21G72.kdk/System/Library/Kernels/kernel.development.t8020.dSYM/Contents/Resources/DWARF/kernel.development.t8020");
+
+
+	return 0;
 
 	while(1)
 	{
