@@ -1134,10 +1134,12 @@ void Dwarf::parseDebugLocations()
 
 	printf("0x%08x:\n", debug_loc_offset);
 
+	struct LocationTableEntry *location_entry = new LocationTableEntry;
+
+	location_entry->offset = debug_loc_offset;
+
 	while(debug_loc_offset < debug_loc->getSize())
 	{
-		struct LocationTableEntry *location_entry = new LocationTableEntry;
-
 		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset);
 
 		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset + sizeof(uint64_t));
