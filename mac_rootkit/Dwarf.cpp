@@ -750,8 +750,8 @@ void Dwarf::populateDebugSymbols()
 {
 	// this->parseDebugAbbrev();
 	// this->parseDebugInfo();
-	this->parseDebugLines();
-	// this->parseDebugLocations();
+	// this->parseDebugLines();
+	this->parseDebugLocations();
 }
 
 void Dwarf::parseDebugAbbrev()
@@ -1121,7 +1121,72 @@ void Dwarf::parseDebugInfo()
 
 void Dwarf::parseDebugLocations()
 {
+	MachO *macho = this->macho;
 
+	Segment *dwarf = this->dwarf;
+
+	Section *debug_loc = this->__debug_loc;
+
+	uint8_t *debug_loc_begin = macho->getOffset(debug_loc->getOffset());
+	uint8_t *debug_loc_end = macho->getOffset(debug_loc->getOffset() + debug_loc->getSize());
+
+	uint32_t debug_loc_offset = 0;
+
+	printf("0x%08x:\n", debug_loc_offset);
+
+	while(debug_loc_offset < debug_loc->getSize())
+	{
+		struct LocationTableEntry *location_entry = new LocationTableEntry;
+
+		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset);
+
+		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset + sizeof(uint64_t));
+
+		if(value0 != 0 || value1 != 0)
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			uint16_t bytes = *reinterpret_cast<uint16_t*>(debug_loc_begin + debug_loc_offset);
+		
+			debug_loc_offset += sizeof(uint16_t);
+
+			printf("\t(0x%016llx, 0x%016llx) ", value0, value1);
+
+			for(int i = 0; i < bytes; i++)
+			{
+				uint8_t byte = *reinterpret_cast<uint8_t*>(debug_loc_begin + debug_loc_offset);
+
+				location_entry->location_ops.add(static_cast<DW_OP>(byte));
+
+				printf("0x%x ", byte);
+
+				debug_loc_offset++;
+			}
+
+			printf("\n");
+
+		} else if(value0 == -1ULL)
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			location_entry->kind = DW_LLE::base_address;
+			
+			location_entry->value0 = value1;
+		} else
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			location_entry->kind = DW_LLE::end_of_list;
+
+			this->locationTable.add(location_entry);
+
+			location_entry = new LocationTableEntry;
+
+			printf("0x%08x:\n", debug_loc_offset);
+
+			location_entry->offset = debug_loc_offset;
+		}
+	}
 }
 
 void Dwarf::parseDebugLines()
@@ -1247,10 +1312,17 @@ void Dwarf::parseDebugLines()
 					case DW_LNE::end_sequence:
 					;
 					{
-						sourceLine->state.end_sequence = 1;
-						
-						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						sequence->sourceLines.add(sourceLine);
 
+						struct LTSourceLine *newSourceLine = new LTSourceLine;
+
+						memcpy(newSourceLine, sourceLine, sizeof(struct LTSourceLine));
+
+						sourceLine = newSourceLine;
+
+						sourceLine->state.end_sequence = 1;
+
+						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
 
@@ -1270,6 +1342,14 @@ void Dwarf::parseDebugLines()
 						sourceLine->state.address = program_counter;
 
 						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+
+						sequence->sourceLines.add(sourceLine);
+
+						struct LTSourceLine *newSourceLine = new LTSourceLine;
+
+						memcpy(newSourceLine, sourceLine, sizeof(struct LTSourceLine));
+
+						sourceLine = newSourceLine;
 
 						break;
 					}
@@ -1460,6 +1540,14 @@ void Dwarf::parseDebugLines()
 				printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 			
 				sourceLine->state.prologue_end = 0;
+
+				sequence->sourceLines.add(sourceLine);
+
+				struct LTSourceLine *newSourceLine = new LTSourceLine;
+
+				memcpy(newSourceLine, sourceLine, sizeof(struct LTSourceLine));
+
+				sourceLine = newSourceLine;
 			}
 		}
 

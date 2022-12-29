@@ -308,6 +308,20 @@ namespace Debug
 		hi_user	     = 0xff,
 	};
 
+	// DW_LLE constants (DWARF5 section 2.6 figure 2)
+	enum class DW_LLE
+	{
+		end_of_list = 0x1,
+		base_addressx = 0x2,
+		startx_endx = 0x3,
+		startx_length = 0x4,
+		offset_pair = 0x5,
+		default_location = 0x6,
+		base_address = 0x7,
+		start_end = 0x8,
+		start_length = 0x9,
+	};
+
 	// DW_AT::encoding constants (DWARF4 section 7.8 figure 25)
 	enum class DW_ATE
 	{

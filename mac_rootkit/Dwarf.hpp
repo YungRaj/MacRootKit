@@ -345,6 +345,20 @@ namespace Debug
 			Array<struct LTSourceFile*> files;
 	};
 
+	struct LocationTableEntry
+	{
+		DW_LLE kind;
+
+		uint32_t offset;
+
+		uint64_t value0;
+		uint64_t value1;
+
+		Segment *segment;
+
+		Array<DW_OP> location_ops;
+	};
+
 	class Dwarf
 	{
 		public:
@@ -398,6 +412,8 @@ namespace Debug
 			Array<CompilationUnit*> compilationUnits;
 
 			Array<LineTable*> lineTables;
+
+			Array<struct LocationTableEntry*> locationTable;
 
 			Segment *dwarf;
 
