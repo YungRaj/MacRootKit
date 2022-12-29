@@ -297,7 +297,7 @@ namespace Debug
 		.column = 1,
 		.file = 1,
 		.discriminator = 1,
-		.statement = 0,
+		.statement = 1,
 		.basic_block = 0,
 		.end_sequence = 0,
 		.prologue_end = 0,

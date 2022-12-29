@@ -465,6 +465,15 @@ size_t DWFormSize(enum DW_FORM form)
 	return 0;
 }
 
+char* SourceLineFlagsToString(struct LTSourceLine *sourceLine)
+{
+	char buffer[1024];
+
+	snprintf(buffer, 1024, "%s %s %s %s %s", sourceLine->state.statement > 0 ? "is_stmt" : "", sourceLine->state.basic_block > 0 ? "basic_block" : "", sourceLine->state.end_sequence > 0 ? "end_sequence" : "", sourceLine->state.prologue_end > 0 ? "prologue_end" : "", sourceLine->state.epilogue_begin > 0 ? "epilogue_begin" : "");
+
+	return strdup(buffer);
+}
+
 uint64_t Debug::GetStringSize(uint8_t *p)
 {
 	uint8_t *s = p;
@@ -1141,7 +1150,7 @@ void Dwarf::parseDebugLines()
 		uint32_t prologue_length = prologue.prologue_length;
 
 		uint8_t *prologue_end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + offsetof(struct LTPrologue, min_inst_length) + prologue_length);
-		uint8_t *end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + total_length);
+		uint8_t *end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + total_length + sizeof(uint32_t));
 
 		debug_line_offset += sizeof(struct LTPrologue);
 
@@ -1239,8 +1248,17 @@ void Dwarf::parseDebugLines()
 					;
 					{
 						sourceLine->state.end_sequence = 1;
+						
+						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+
 
 						memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
+
+						sourceLine->state.discriminator = 0;
+						sourceLine->state.basic_block = 0;
+						sourceLine->state.prologue_end = 0;
+						sourceLine->state.epilogue_begin = 0;
+						sourceLine->state.end_sequence = 0;
 
 						break;
 					}
@@ -1250,6 +1268,8 @@ void Dwarf::parseDebugLines()
 						uint64_t program_counter = *reinterpret_cast<uint64_t*>(debug_line_begin + debug_line_offset);
 
 						sourceLine->state.address = program_counter;
+
+						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1261,11 +1281,11 @@ void Dwarf::parseDebugLines()
 					case DW_LNE::set_discriminator:
 					;
 					{
-						uint64_t discriminator = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						uint64_t discriminator = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end);
 
 						sourceLine->state.discriminator = discriminator;
 
-					 	// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+					 	// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1283,13 +1303,18 @@ void Dwarf::parseDebugLines()
 
 				debug_line_offset += num_bytes;
 			} else if(op > 0 && op < 13)
-			{	
-
+			{
 				switch(static_cast<DW_LNS>(op))
 				{
 					case DW_LNS::copy:
 					{
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+
+						sourceLine->state.discriminator = 0;
+						sourceLine->state.basic_block = 0;
+						sourceLine->state.prologue_end = 0;
+						sourceLine->state.epilogue_begin = 0;
+						sourceLine->state.end_sequence = 0;
 
 						break;
 					}
@@ -1299,8 +1324,9 @@ void Dwarf::parseDebugLines()
 						uint64_t program_counter = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.address += program_counter;
+						sourceLine->state.prologue_end = 0;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1312,7 +1338,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.line += line;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1323,7 +1349,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.file = file;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1334,16 +1360,16 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.column = column;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
 					case DW_LNS::negate_stmt:
 					;
 					{
-						sourceLine->state.statement = 0;
+						sourceLine->state.statement = ~sourceLine->state.statement;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1352,7 +1378,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.basic_block = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1380,7 +1406,9 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.address += program_counter;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						sourceLine->state.prologue_end = 0;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1389,7 +1417,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.prologue_end = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1398,7 +1426,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.epilogue_begin = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1409,7 +1437,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.isa = isa;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1429,11 +1457,13 @@ void Dwarf::parseDebugLines()
 				sourceLine->state.address += address_change;
 				sourceLine->state.line += line_change;
 
-				printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+				printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+			
+				sourceLine->state.prologue_end = 0;
 			}
 		}
 
-		debug_line_offset = (end - debug_line_begin) + sizeof(uint32_t);
+		debug_line_offset = (end - debug_line_begin);
 
 		this->lineTables.add(lineTable);
 	}
