@@ -206,38 +206,143 @@ namespace Debug
 			mach_vm_address_t range_lists_base = 0;
 	};
 
+	#pragma pack(1)
+
+	struct LTPrologue
+	{
+		uint32_t total_length;
+		uint8_t format;
+		uint8_t version;
+		uint32_t prologue_length;
+		uint8_t min_inst_length;
+		uint8_t max_ops_per_inst;
+		uint8_t default_is_stmt;
+		int8_t line_base;
+		uint8_t line_range;
+		uint8_t opcode_base;
+	};
+
+	struct LTStandardOpcodeLengths
+	{
+		DW_LNS copy;
+		DW_LNS advance_pc;
+		DW_LNS advance_line;
+		DW_LNS set_file;
+		DW_LNS set_column;
+		DW_LNS negate_stmt;
+		DW_LNS set_basic_block;
+		DW_LNS const_add_pc;
+		DW_LNS fixed_advance_pc;
+		DW_LNS set_prologue_end;
+		DW_LNS set_epilogue_begin;
+		DW_LNS set_isa;
+	};
+
+	struct LTSourceFileMetadata
+	{
+		uint8_t dir_index;
+		uint8_t mod_time;
+		uint8_t length;
+	};
+
+	#pragma options align=reset
+
+	struct LTSourceFile
+	{
+		char *source_file;
+
+		struct LTSourceFileMetadata metadata;
+	};
+
+	struct LTStateMachine
+	{
+		mach_vm_address_t address;
+
+		uint8_t  isa;
+		int64_t line;
+		uint64_t column;
+		uint16_t file;
+		uint32_t discriminator;
+
+		uint8_t statement : 1,
+				basic_block : 1,
+				end_sequence : 1,
+				prologue_end : 1,
+				epilogue_begin : 1;
+	};
+
+	struct LTSourceLine
+	{
+		struct LTSourceFile *source_file;
+
+		struct LTStateMachine state;
+	};
+
+	struct Sequence
+	{
+		uint64_t LowPC;
+		uint64_t HighPC;
+
+		Segment *segment;
+		Section *section;
+
+		Array<LTSourceLine*> sourceLines;
+	};
+
+	static LTStateMachine gInitialState =
+	{
+		.address = 0,
+		.isa = 0,
+		.line = 1,
+		.column = 1,
+		.file = 1,
+		.discriminator = 1,
+		.statement = 0,
+		.basic_block = 0,
+		.end_sequence = 0,
+		.prologue_end = 0,
+		.epilogue_begin = 0
+	};
+
 	class LineTable
 	{
-		struct SourceLine
-		{
-			mach_vm_address_t address;
-
-			uint32_t line;
-			uint16_t column;
-			uint16_t file;
-			uint32_t discriminator;
-
-			uint8_t statement : 1,
-					basic_block : 1,
-					end_sequence : 1,
-					prologue_end : 1,
-					epilogue_begin : 1;
-		};
-
 		public:
-			explicit LineTable(Dwarf *dwarf, CompilationUnit *unit);
+			explicit LineTable(MachO *macho, Dwarf *dwarf) { this->macho = macho; this->dwarf = dwarf; }
 
-			CompilationUnit* getCompilationUnit();
+			Array<struct LTSourceFile*>* getSourceFileNames() { return &files; }
+			Array<char*>* getIncludeDirectories() { return &include_directories; }
 
-			SourceLine* getSourceLine(mach_vm_address_t pc);
-			SourceLine* getSourceLine(uint32_t line, uint16_t column);
+			CompilationUnit* getCompilationUnit() { return compilationUnit; }
 
-			void parseLineTable();
+			LTSourceLine* getSourceLine(mach_vm_address_t pc);
+			
+			LTSourceFile* getSourceFile(int index) { return this->files.get(index); }
+
+			void setCompilationUnit(CompilationUnit *cu) { this->compilationUnit = cu; }
+
+			void setPrologue(struct LTPrologue *p) { memcpy(&prologue, p, sizeof(struct LTPrologue)); }
+
+			void setStandardOpcodeLengths(struct LTStandardOpcodeLengths *opcodes) { memcpy(&standardOpcodeLengths, opcodes, sizeof(struct LTStandardOpcodeLengths)); }
+
+			void addSequence(Sequence *sequence) { this->sources.add(sequence); }
+			void addSourceFile(struct LTSourceFile *file) { this->files.add(file); }
+			void addIncludeDirectory(char *directory) { this->include_directories.add(directory); }
 
 		private:
-			CompilationUnit *unit;
+			MachO *macho;
 
-			Array<SourceLine*> sources;
+			Dwarf *dwarf;
+
+			struct LTPrologue prologue;
+
+			struct LTStandardOpcodeLengths standardOpcodeLengths;
+
+			CompilationUnit *compilationUnit;
+
+			Array<Sequence*> sources;
+
+			Array<char*> include_directories;
+			Array<struct LTSourceFile*> files;
 	};
 
 	class Dwarf
@@ -280,6 +385,7 @@ namespace Debug
 			void parseDebugAbbrev();
 			void parseDebugInfo();
 			void parseDebugLocations();
+			void parseDebugLines();
 
 			const char* getSourceFile(mach_vm_address_t instruction);
 			int64_t getSourceLineNumber(mach_vm_address_t instruction);

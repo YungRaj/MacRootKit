@@ -471,7 +471,7 @@ uint64_t Debug::GetStringSize(uint8_t *p)
 
 	uint64_t size = 0;
 
-	while(*s) size++;
+	while(*s++) { size++; }
 
 	return size;
 }
@@ -727,11 +727,22 @@ Dwarf::Dwarf(MachO *macho, const char *debugSymbols)
 	this->__apple_objc = macho->getSection("__DWARF", "__apple_objc");
 }
 
+DIE* Dwarf::getDebugInfoEntryByName(const char *name)
+{
+	return NULL;
+}
+
+DIE* getDebugInfoEntryByCode(uint64_t code)
+{
+	return NULL;
+}
+
 void Dwarf::populateDebugSymbols()
 {
-	this->parseDebugAbbrev();
-	this->parseDebugInfo();
-	this->parseDebugLocations();
+	// this->parseDebugAbbrev();
+	// this->parseDebugInfo();
+	this->parseDebugLines();
+	// this->parseDebugLocations();
 }
 
 void Dwarf::parseDebugAbbrev()
@@ -1102,6 +1113,330 @@ void Dwarf::parseDebugInfo()
 void Dwarf::parseDebugLocations()
 {
 
+}
+
+void Dwarf::parseDebugLines()
+{
+	MachO *macho = this->macho;
+
+	Segment *dwarf = this->dwarf;
+
+	Section *debug_line = this->__debug_line;
+
+	uint8_t *debug_line_begin = macho->getOffset(debug_line->getOffset());
+	uint8_t *debug_line_end = macho->getOffset(debug_line->getOffset() + debug_line->getSize());
+
+	uint32_t debug_line_offset = 0;
+	
+	while(debug_line_offset < debug_line->getSize())
+	{
+		LineTable *lineTable = new LineTable(this->macho, this);
+
+		struct LTPrologue prologue;
+		struct LTStandardOpcodeLengths opcodes;
+
+		memcpy(&prologue, debug_line_begin + debug_line_offset, sizeof(struct LTPrologue));
+
+		uint32_t total_length = prologue.total_length;
+		uint32_t prologue_length = prologue.prologue_length;
+
+		uint8_t *prologue_end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + offsetof(struct LTPrologue, min_inst_length) + prologue_length);
+		uint8_t *end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + total_length);
+
+		debug_line_offset += sizeof(struct LTPrologue);
+
+		memcpy(&opcodes, debug_line_begin + debug_line_offset, sizeof(struct LTStandardOpcodeLengths));
+
+		debug_line_offset += sizeof(struct LTStandardOpcodeLengths);
+
+		bool source_file_names = false;
+
+		while((debug_line_begin + debug_line_offset) < prologue_end)
+		{
+			if(source_file_names)
+			{
+				struct LTSourceFile *source_file = new LTSourceFile;
+
+				char *source_file_name = reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
+
+				printf("Source File Name: %s\n", source_file_name);
+
+				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
+
+				debug_line_offset += string_size + 1;
+
+				lineTable->addSourceFile(source_file);
+
+				memcpy(&source_file->metadata, debug_line_begin + debug_line_offset, sizeof(struct LTSourceFileMetadata));
+
+				debug_line_offset += sizeof(struct LTSourceFileMetadata);
+
+				if(*(debug_line_begin + debug_line_offset) == 0)
+				{
+					debug_line_offset++;
+
+					break;
+				}
+
+			} else
+			{
+				char *include_directory = reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
+
+				printf("Include Directory: %s\n", include_directory);
+
+				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
+
+				debug_line_offset += string_size + 1;
+
+				lineTable->addIncludeDirectory(include_directory);
+
+				if(*(debug_line_begin + debug_line_offset) == 0)
+				{
+					debug_line_offset++;
+
+					source_file_names = true;
+				}
+			}
+		}
+
+		printf("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "Address", "Line", "Column", "File", "ISA", "Discriminator", "Flags");
+		printf("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "--------------------", "--------", "------", "------", "----", "-------------", "-------------");
+
+		struct Sequence *sequence = new Sequence;
+
+		struct LTSourceFile *sourceFile = NULL;
+		struct LTSourceLine *sourceLine = NULL;
+
+		sourceLine = new LTSourceLine;
+
+		memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
+
+		sourceFile = lineTable->getSourceFile(sourceLine->state.file);
+
+		sourceLine->source_file = sourceFile;
+
+		uint8_t op_index = 0;
+
+		while((debug_line_begin + debug_line_offset) < end)
+		{
+			uint8_t op = *(debug_line_begin + debug_line_offset);
+
+			debug_line_offset++;
+
+			if(op == 0)
+			{
+				uint64_t num_bytes = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+				op = *reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset);
+
+				debug_line_offset++;
+
+				num_bytes--;
+
+				switch(static_cast<DW_LNE>(op))
+				{
+					case DW_LNE::end_sequence:
+					;
+					{
+						sourceLine->state.end_sequence = 1;
+
+						memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
+
+						break;
+					}
+					case DW_LNE::set_address:
+					;
+					{
+						uint64_t program_counter = *reinterpret_cast<uint64_t*>(debug_line_begin + debug_line_offset);
+
+						sourceLine->state.address = program_counter;
+
+						break;
+					}
+					case DW_LNE::define_file:
+					;
+					{
+						break;
+					}
+					case DW_LNE::set_discriminator:
+					;
+					{
+						uint64_t discriminator = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.discriminator = discriminator;
+
+					 	// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNE::lo_user:
+					;
+					{
+						break;
+					}
+					case DW_LNE::hi_user:
+					;
+					{
+						break;
+					}
+				}
+
+				debug_line_offset += num_bytes;
+			} else if(op > 0 && op < 13)
+			{	
+
+				switch(static_cast<DW_LNS>(op))
+				{
+					case DW_LNS::copy:
+					{
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::advance_pc:
+					;
+					{
+						uint64_t program_counter = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.address += program_counter;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+
+					case DW_LNS::advance_line:
+					;
+					{
+						int64_t line = Debug::ReadSleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.line += line;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_file:
+					;
+					{
+						uint64_t file = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.file = file;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_column:
+					;
+					{
+						uint64_t column = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.column = column;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::negate_stmt:
+					;
+					{
+						sourceLine->state.statement = 0;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_basic_block:
+					;
+					{
+						sourceLine->state.basic_block = 1;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::const_add_pc:
+					;
+					{
+						int64_t line_base = prologue.line_base;
+						uint8_t line_range = prologue.line_range;
+
+						uint8_t opcode_base = prologue.opcode_base;
+						uint8_t min_inst_length = prologue.min_inst_length;
+
+						uint64_t inc = min_inst_length * ((255 - opcode_base) / line_range);
+
+						sourceLine->state.address += inc;
+
+						break;
+					}
+					case DW_LNS::fixed_advance_pc:
+					;
+					{
+						uint64_t program_counter = *reinterpret_cast<uint16_t*>(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						debug_line_offset += sizeof(uint16_t);
+
+						sourceLine->state.address += program_counter;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_prologue_end:
+					;
+					{
+						sourceLine->state.prologue_end = 1;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_epilogue_begin:
+					;
+					{
+						sourceLine->state.epilogue_begin = 1;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+					case DW_LNS::set_isa:
+					;
+					{
+						uint64_t isa = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+
+						sourceLine->state.isa = isa;
+
+						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+
+						break;
+					}
+				}
+
+			} else
+			{
+				int64_t line_base = prologue.line_base;
+				uint8_t line_range = prologue.line_range;
+
+				uint8_t opcode_base = prologue.opcode_base;
+				uint8_t min_inst_length = prologue.min_inst_length;
+
+				int64_t address_change = ((op - opcode_base) / line_range) * min_inst_length;
+				int64_t line_change = line_base + (op - opcode_base) % line_range;
+
+				sourceLine->state.address += address_change;
+				sourceLine->state.line += line_change;
+
+				printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13u\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, sourceLine->state.statement | sourceLine->state.basic_block | sourceLine->state.end_sequence | sourceLine->state.prologue_end | sourceLine->state.epilogue_begin);
+			}
+		}
+
+		debug_line_offset = (end - debug_line_begin) + sizeof(uint32_t);
+
+		this->lineTables.add(lineTable);
+	}
 }
 
 

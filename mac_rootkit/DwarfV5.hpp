@@ -449,7 +449,7 @@ namespace Debug
 	};
 
 	// Line number standard opcodes (DWARF4 section 7.21 figure 37)
-	enum class DW_LNS
+	enum class DW_LNS : uint8_t
 	{
 		copy = 0x01,
 		advance_pc = 0x02,
