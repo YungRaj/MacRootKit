@@ -1575,6 +1575,8 @@ void Dwarf::parseDebugRanges()
 	uint32_t debug_ranges_offset = 0;
 
 	uint32_t current_ranges_offset = 0;
+
+	Ranges *r = new Ranges;
 	
 	while(debug_ranges_offset < debug_ranges->getSize())
 	{
@@ -1589,9 +1591,21 @@ void Dwarf::parseDebugRanges()
 			printf("%08x <End of list>\n", current_ranges_offset);
 
 			current_ranges_offset = debug_ranges_offset;
+
+			this->ranges.add(r);
+
+			r = new Ranges;
 		} else
 		{
 			printf("%08x %016x %016x\n", current_ranges_offset, value0, value1);
+
+			struct Range *range = new Range;
+
+			range->offset = current_ranges_offset;
+			range->value0 = value0;
+			range->value1 = value1;
+
+			r->add(range);
 		}
 	}
 }
@@ -1623,6 +1637,10 @@ void Dwarf::parseDebugAddressRanges()
 
 		uint32_t offset = debug_aranges_offset + sizeof(struct AddressRangeHeader);
 
+		uint32_t segment_selector = *reinterpret_cast<uint32_t*>(debug_aranges_begin + offset);
+
+		offset += sizeof(uint32_t);
+
 		printf("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, addr_size = 0x%02x, seg_size = 0x%02x\n", address_range_header->length, address_range_header->version, address_range_header->offset, address_range_header->addr_size, address_range_header->seg_size);
 
 		while(offset < debug_aranges_offset + length)
@@ -1635,11 +1653,9 @@ void Dwarf::parseDebugAddressRanges()
 
 			if(value0 != 0 || value1 != 0)
 			{
-				uint32_t segment_selector = *reinterpret_cast<uint32_t*>(debug_aranges_begin + offset);
+				uint64_t address = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset);
 
-				uint64_t address = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint32_t));
-
-				uint64_t size = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint32_t) + sizeof(uint64_t));
+				uint64_t size = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint64_t));
 
 				range->start = address;
 				range->end = address + size;
@@ -1647,12 +1663,9 @@ void Dwarf::parseDebugAddressRanges()
 				printf("(0x%016llx, 0x%016llx)\n", address, address + size);
 
 				arange_entry->ranges.add(range);
-
-				offset += ((sizeof(uint64_t) * 2) + sizeof(uint32_t));
-			} else
-			{
-				offset += (sizeof(uint64_t) * 2);
 			}
+
+			offset += (sizeof(uint64_t) * 2);
 		}
 
 		this->addressRanges.add(arange_entry);

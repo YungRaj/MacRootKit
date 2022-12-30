@@ -383,6 +383,16 @@ namespace Debug
 		Array<struct AddressRange*> ranges;
 	};
 
+	struct Range
+	{
+		uint32_t offset;
+
+		uint64_t value0;
+		uint64_t value1;
+	};
+
+	using Ranges = Array<struct Range*>;
+
 	#pragma options align=reset
 
 	class Dwarf
@@ -443,6 +453,7 @@ namespace Debug
 
 			Array<struct LocationTableEntry*> locationTable;
 
+			Array<Ranges*> ranges;
 			Array<struct AddressRangeEntry*> addressRanges;
 
 			Segment *dwarf;
