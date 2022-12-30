@@ -383,7 +383,7 @@ namespace Debug
 		Array<struct AddressRange*> ranges;
 	};
 
-	struct Range
+	struct RangeEntry
 	{
 		uint32_t offset;
 
@@ -391,7 +391,7 @@ namespace Debug
 		uint64_t value1;
 	};
 
-	using Ranges = Array<struct Range*>;
+	using RangeEntries = Array<struct RangeEntry*>;
 
 	#pragma options align=reset
 
@@ -453,7 +453,7 @@ namespace Debug
 
 			Array<struct LocationTableEntry*> locationTable;
 
-			Array<Ranges*> ranges;
+			Array<RangeEntries*> ranges;
 			Array<struct AddressRangeEntry*> addressRanges;
 
 			Segment *dwarf;

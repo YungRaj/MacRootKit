@@ -752,8 +752,8 @@ void Dwarf::populateDebugSymbols()
 	// this->parseDebugInfo();
 	// this->parseDebugLines();
 	// this->parseDebugLocations();
-	// this->parseDebugRanges();
-	this->parseDebugAddressRanges();
+	this->parseDebugRanges();
+	// this->parseDebugAddressRanges();
 }
 
 void Dwarf::parseDebugAbbrev()
@@ -1576,7 +1576,7 @@ void Dwarf::parseDebugRanges()
 
 	uint32_t current_ranges_offset = 0;
 
-	Ranges *r = new Ranges;
+	RangeEntries *rangeEntries = new RangeEntries;
 	
 	while(debug_ranges_offset < debug_ranges->getSize())
 	{
@@ -1592,20 +1592,20 @@ void Dwarf::parseDebugRanges()
 
 			current_ranges_offset = debug_ranges_offset;
 
-			this->ranges.add(r);
+			this->ranges.add(rangeEntries);
 
-			r = new Ranges;
+			rangeEntries = new RangeEntries;
 		} else
 		{
 			printf("%08x %016x %016x\n", current_ranges_offset, value0, value1);
 
-			struct Range *range = new Range;
+			struct RangeEntry *range = new RangeEntry;
 
 			range->offset = current_ranges_offset;
 			range->value0 = value0;
 			range->value1 = value1;
 
-			r->add(range);
+			rangeEntries->add(range);
 		}
 	}
 }
