@@ -751,7 +751,9 @@ void Dwarf::populateDebugSymbols()
 	// this->parseDebugAbbrev();
 	// this->parseDebugInfo();
 	// this->parseDebugLines();
-	this->parseDebugLocations();
+	// this->parseDebugLocations();
+	// this->parseDebugRanges();
+	this->parseDebugAddressRanges();
 }
 
 void Dwarf::parseDebugAbbrev()
@@ -1116,78 +1118,6 @@ void Dwarf::parseDebugInfo()
 			parent->addChild(dwarfDIE);
 
 		compilationUnit->addDebugInfoEntry(dwarfDIE);
-	}
-}
-
-void Dwarf::parseDebugLocations()
-{
-	MachO *macho = this->macho;
-
-	Segment *dwarf = this->dwarf;
-
-	Section *debug_loc = this->__debug_loc;
-
-	uint8_t *debug_loc_begin = macho->getOffset(debug_loc->getOffset());
-	uint8_t *debug_loc_end = macho->getOffset(debug_loc->getOffset() + debug_loc->getSize());
-
-	uint32_t debug_loc_offset = 0;
-
-	printf("0x%08x:\n", debug_loc_offset);
-
-	struct LocationTableEntry *location_entry = new LocationTableEntry;
-
-	location_entry->offset = debug_loc_offset;
-
-	while(debug_loc_offset < debug_loc->getSize())
-	{
-		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset);
-
-		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset + sizeof(uint64_t));
-
-		if(value0 != 0 || value1 != 0)
-		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
-
-			uint16_t bytes = *reinterpret_cast<uint16_t*>(debug_loc_begin + debug_loc_offset);
-		
-			debug_loc_offset += sizeof(uint16_t);
-
-			printf("\t(0x%016llx, 0x%016llx) ", value0, value1);
-
-			for(int i = 0; i < bytes; i++)
-			{
-				uint8_t byte = *reinterpret_cast<uint8_t*>(debug_loc_begin + debug_loc_offset);
-
-				location_entry->location_ops.add(static_cast<DW_OP>(byte));
-
-				printf("0x%x ", byte);
-
-				debug_loc_offset++;
-			}
-
-			printf("\n");
-
-		} else if(value0 == -1ULL)
-		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
-
-			location_entry->kind = DW_LLE::base_address;
-			
-			location_entry->value0 = value1;
-		} else
-		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
-
-			location_entry->kind = DW_LLE::end_of_list;
-
-			this->locationTable.add(location_entry);
-
-			location_entry = new LocationTableEntry;
-
-			printf("0x%08x:\n", debug_loc_offset);
-
-			location_entry->offset = debug_loc_offset;
-		}
 	}
 }
 
@@ -1556,6 +1486,178 @@ void Dwarf::parseDebugLines()
 		debug_line_offset = (end - debug_line_begin);
 
 		this->lineTables.add(lineTable);
+	}
+}
+
+void Dwarf::parseDebugLocations()
+{
+	MachO *macho = this->macho;
+
+	Segment *dwarf = this->dwarf;
+
+	Section *debug_loc = this->__debug_loc;
+
+	uint8_t *debug_loc_begin = macho->getOffset(debug_loc->getOffset());
+	uint8_t *debug_loc_end = macho->getOffset(debug_loc->getOffset() + debug_loc->getSize());
+
+	uint32_t debug_loc_offset = 0;
+
+	printf("0x%08x:\n", debug_loc_offset);
+
+	struct LocationTableEntry *location_entry = new LocationTableEntry;
+
+	location_entry->offset = debug_loc_offset;
+
+	while(debug_loc_offset < debug_loc->getSize())
+	{
+		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset);
+
+		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset + sizeof(uint64_t));
+
+		if(value0 != 0 || value1 != 0)
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			uint16_t bytes = *reinterpret_cast<uint16_t*>(debug_loc_begin + debug_loc_offset);
+		
+			debug_loc_offset += sizeof(uint16_t);
+
+			printf("\t(0x%016llx, 0x%016llx) ", value0, value1);
+
+			for(int i = 0; i < bytes; i++)
+			{
+				uint8_t byte = *reinterpret_cast<uint8_t*>(debug_loc_begin + debug_loc_offset);
+
+				location_entry->location_ops.add(static_cast<DW_OP>(byte));
+
+				printf("0x%x ", byte);
+
+				debug_loc_offset++;
+			}
+
+			printf("\n");
+
+		} else if(value0 == -1ULL)
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			location_entry->kind = DW_LLE::base_address;
+			
+			location_entry->value0 = value1;
+		} else
+		{
+			debug_loc_offset += sizeof(uint64_t) * 2;
+
+			location_entry->kind = DW_LLE::end_of_list;
+
+			this->locationTable.add(location_entry);
+
+			location_entry = new LocationTableEntry;
+
+			printf("0x%08x:\n", debug_loc_offset);
+
+			location_entry->offset = debug_loc_offset;
+		}
+	}
+}
+
+void Dwarf::parseDebugRanges()
+{
+	MachO *macho = this->macho;
+
+	Segment *dwarf = this->dwarf;
+
+	Section *debug_ranges = this->__debug_ranges;
+
+	uint8_t *debug_ranges_begin = macho->getOffset(debug_ranges->getOffset());
+	uint8_t *debug_ranges_end = macho->getOffset(debug_ranges->getOffset() + debug_ranges->getSize());
+
+	uint32_t debug_ranges_offset = 0;
+
+	uint32_t current_ranges_offset = 0;
+	
+	while(debug_ranges_offset < debug_ranges->getSize())
+	{
+		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_ranges_begin + debug_ranges_offset);
+
+		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_ranges_begin + debug_ranges_offset + sizeof(uint64_t));
+
+		debug_ranges_offset += sizeof(uint64_t) * 2;
+
+		if(value0 == 0 && value1 == 0)
+		{
+			printf("%08x <End of list>\n", current_ranges_offset);
+
+			current_ranges_offset = debug_ranges_offset;
+		} else
+		{
+			printf("%08x %016x %016x\n", current_ranges_offset, value0, value1);
+		}
+	}
+}
+
+void Dwarf::parseDebugAddressRanges()
+{
+	MachO *macho = this->macho;
+
+	Segment *dwarf = this->dwarf;
+
+	Section *debug_aranges = this->__debug_aranges;
+
+	uint8_t *debug_aranges_begin = macho->getOffset(debug_aranges->getOffset());
+	uint8_t *debug_aranges_end = macho->getOffset(debug_aranges->getOffset() + debug_aranges->getSize());
+
+	uint32_t debug_aranges_offset = 0;
+
+	uint32_t current_aranges_offset = 0;
+	
+	while(debug_aranges_offset < debug_aranges->getSize())
+	{
+		struct AddressRangeEntry *arange_entry = new AddressRangeEntry;
+
+		struct AddressRangeHeader *address_range_header = &arange_entry->header;
+
+		memcpy(address_range_header, debug_aranges_begin + debug_aranges_offset, sizeof(struct AddressRangeHeader));
+
+		uint32_t length = address_range_header->length + sizeof(((struct AddressRangeHeader *)0)->length);
+
+		uint32_t offset = debug_aranges_offset + sizeof(struct AddressRangeHeader);
+
+		printf("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, addr_size = 0x%02x, seg_size = 0x%02x\n", address_range_header->length, address_range_header->version, address_range_header->offset, address_range_header->addr_size, address_range_header->seg_size);
+
+		while(offset < debug_aranges_offset + length)
+		{
+			struct AddressRange *range = new AddressRange;
+
+			uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset);
+
+			uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint64_t));
+
+			if(value0 != 0 || value1 != 0)
+			{
+				uint32_t segment_selector = *reinterpret_cast<uint32_t*>(debug_aranges_begin + offset);
+
+				uint64_t address = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint32_t));
+
+				uint64_t size = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint32_t) + sizeof(uint64_t));
+
+				range->start = address;
+				range->end = address + size;
+
+				printf("(0x%016llx, 0x%016llx)\n", address, address + size);
+
+				arange_entry->ranges.add(range);
+
+				offset += ((sizeof(uint64_t) * 2) + sizeof(uint32_t));
+			} else
+			{
+				offset += (sizeof(uint64_t) * 2);
+			}
+		}
+
+		this->addressRanges.add(arange_entry);
+
+		debug_aranges_offset += length;
 	}
 }
 

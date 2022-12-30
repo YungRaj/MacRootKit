@@ -359,6 +359,32 @@ namespace Debug
 		Array<DW_OP> location_ops;
 	};
 
+	#pragma pack(1)
+
+	struct AddressRange
+	{
+		mach_vm_address_t start;
+		mach_vm_address_t end;
+	};
+
+	struct AddressRangeHeader
+	{
+		uint32_t length;
+		uint16_t version;
+		uint32_t offset;
+		uint8_t addr_size;
+		uint8_t seg_size;
+	};
+
+	struct AddressRangeEntry
+	{
+		struct AddressRangeHeader header;
+
+		Array<struct AddressRange*> ranges;
+	};
+
+	#pragma options align=reset
+
 	class Dwarf
 	{
 		public:
@@ -400,6 +426,8 @@ namespace Debug
 			void parseDebugInfo();
 			void parseDebugLocations();
 			void parseDebugLines();
+			void parseDebugRanges();
+			void parseDebugAddressRanges();
 
 			const char* getSourceFile(mach_vm_address_t instruction);
 			int64_t getSourceLineNumber(mach_vm_address_t instruction);
@@ -414,6 +442,8 @@ namespace Debug
 			Array<LineTable*> lineTables;
 
 			Array<struct LocationTableEntry*> locationTable;
+
+			Array<struct AddressRangeEntry*> addressRanges;
 
 			Segment *dwarf;
 
