@@ -51,6 +51,7 @@ namespace Debug
 		uint64_t value;
 	};
 
+	Dwarf* parseDebugSymbols(MachO *macho);
 	Dwarf* parseDebugSymbols(MachO *macho, const char *dSYM);
 
 	class DIE
