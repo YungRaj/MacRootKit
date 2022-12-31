@@ -33,8 +33,8 @@ Task::Task(Kernel *kernel, int pid)
 	this->kernel = kernel;
 	this->pid = pid;
 	this->task_port = Task::getTaskForPid(pid);
-	this->task = Task::findTaskByPid(kernel, pid);
 	this->proc = Task::findProcByPid(kernel, pid);
+	this->task = Task::getTaskFromProc(kernel, this->proc);
 	this->name = this->getTaskName();
 	this->dyld = new Dyld(kernel, this);
 	this->macho = new UserMachO();
@@ -45,8 +45,8 @@ Task::Task(Kernel *kernel, char *name)
 {
 	this->kernel = kernel;
 	this->name = name;
-	this->task = Task::findTaskByName(kernel, name);
 	this->proc = Task::findProcByName(kernel, name);
+	this->task = Task::getTaskFromProc(kernel, this->proc);
 	this->pid = this->findPid();
 	this->task_port = Task::getTaskForPid(pid);
 	this->dyld = new Dyld(kernel, this);
@@ -233,6 +233,22 @@ mach_vm_address_t Task::findTaskByName(Kernel *kernel, char *name)
 	MAC_RK_LOG("MacPE::could not find task by name = %s\n", name);
 
 	assert(false);
+
+	return 0;
+}
+
+mach_vm_address_t Task::getTaskFromProc(Kernel *kernel, mach_vm_address_t proc)
+{
+	mach_vm_address_t task;
+
+	if(proc)
+	{
+		uint64_t arguments[] = { proc };
+
+		task = kernel->call("_proc_task", arguments, 1);
+
+		return task;
+	}
 
 	return 0;
 }

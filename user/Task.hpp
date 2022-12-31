@@ -77,6 +77,8 @@ namespace xnu
 			static mach_vm_address_t findTaskByPid(Kernel *kernel, int pid);
 			static mach_vm_address_t findTaskByName(Kernel *kernel, char *name);
 
+			static mach_vm_address_t getTaskFromProc(Kernel *kernel, mach_vm_address_t proc);
+
 			static mach_vm_address_t findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port);
 
 			virtual mach_vm_address_t getBase();
