@@ -78,10 +78,25 @@ bool KernelMachO::parseLoadCommands()
 				snprintf(buffer1, 128, "0x%08llx", segment_command->vmaddr);
 				snprintf(buffer2, 128, "0x%08llx", segment_command->vmaddr + segment_command->vmsize);
 
-				MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n", segment_command->fileoff,
+				vm_prot_t maxprot = segment_command->maxprot;
+
+				char r[24];
+				memcpy(r, ((maxprot & VM_PROT_READ) ? "read" : "-"), 24);
+
+				char w[24];
+				memcpy(w, ((maxprot & VM_PROT_WRITE) ? "write" : "-"), 24);
+				
+				char x[24];
+				memcpy(x, ((maxprot & VM_PROT_EXECUTE) ? "execute" : "-"), 24);
+
+				printf("MacRK::LC_SEGMENT_64 at 0x%llx (%s/%s/%s) - %s %s to %s \n", segment_command->fileoff,
+																						r,
+																						w,
+																						x,
 																						segment_command->segname,
 																						buffer1,
-																						buffer2); 
+																						buffer2
+																						); 
 				
 				
 				if (!strcmp(segment_command->segname, "__LINKEDIT"))
@@ -160,6 +175,7 @@ bool KernelMachO::parseLoadCommands()
 
 					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
 					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+					
 				} else if(this->kernel_collection)
 				{
 					symtab = reinterpret_cast<struct nlist_64*>(linkedit + (symtab_command->symoff - linkedit_off));

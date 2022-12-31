@@ -10,7 +10,9 @@ extern "C"
 
 #ifdef __KERNEL__
 
-#define MAC_RK_LOG IOLog
+#include <os/log.h>
+
+#define MAC_RK_LOG(...) os_log(OS_LOG_DEFAULT, __VA_ARGS__)
 
 #endif
 

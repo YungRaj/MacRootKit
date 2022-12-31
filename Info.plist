@@ -26,6 +26,8 @@
 			<string>IOResources</string>
 			<key>IOUserClientClass</key>
 			<string>IOKernelRootKitUserClient</string>
+			<key>IOResourceMatch</key>
+			<string>IOBSD</string>
 		</dict>
 	</dict>
 	<key>OSBundleLibraries</key>

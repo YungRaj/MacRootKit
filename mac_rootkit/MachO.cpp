@@ -307,15 +307,9 @@ void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strt
 		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
 
 		this->symbolTable->addSymbol(symbol);
-
-		char buffer[128];
-
-		snprintf(buffer, 128, "0x%llx", address);
-
-		// MAC_RK_LOG("MacRK::MachO::symbol address %s name = %s\n", buffer, name);
 	}
 
-	// MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+	MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
 }
 
 void MachO::parseLinkedit()

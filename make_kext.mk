@@ -50,7 +50,7 @@ CFLAGS += -g -target arm64e-apple-macos -I/usr/include -I/usr/local/include $(KE
 
 LDFLAGS += -g -target arm64e-apple-macos -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -std=c++11 -Wc++11-extensions -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit-I./ -Iinclude -Wl,-kext -lkmod -lkmodc++ -lcc_kext
 
-CXXFLAGS += -g -target arm64e-apple-macos $(KERNEL_HEADERS)-fno-builtin -fno-common  -std=c++11  -Wc++11-extensions -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
+CXXFLAGS += -g -target arm64e-apple-macos $(KERNEL_HEADERS) -fno-builtin -fno-common  -std=c++11  -Wc++11-extensions -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
 
 ASM_FLAGS = -f macho64
 

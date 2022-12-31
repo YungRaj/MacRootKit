@@ -14,6 +14,7 @@
 
 #include "Disassembler.hpp"
 
+#include "Dwarf.hpp"
 #include "KernelMachO.hpp"
 #include "Symbol.hpp"
 
@@ -40,6 +41,8 @@ namespace xnu
 		static off_t tempExecutableMemoryOffset;
 
 		static uint8_t tempExecutableMemory[tempExecutableMemorySize];
+
+		static Kernel *kernel;
 
 		public:
 			static Kernel* create(mach_port_t kernel_task_port);
@@ -170,18 +173,22 @@ namespace xnu
 			void createKernelTaskPort();
 	};
 
+	using namespace Debug;
+
 	class KDKKernel
 	{
 		public:
 			static KDKKernel* KDKKernelFromFilePath(Kernel *kernel, const char *path);
 
+			explicit KDKKernel(Kernel *kernel, const char *path);
+
 			char* getPath();
 
 			Kernel* getKernel();
 
-			Dwarf* debugInfo();
+			Dwarf* getDwarf();
 
-			MachO* getDevelopmentKernel();
+			MachO* getKernelDebugKitKernel();
 
 			mach_vm_address_t getBase();
 
@@ -205,15 +212,13 @@ namespace xnu
 			void parseDebugInformation();
 
 		private:
-			KDKKernel(const char *path);
-
 			const char *path;
 
 			Kernel *kernel;
 
 			MachO *kdk;
 
-			Dwarf *debugInfo;
+			Dwarf *dwarf;
 
 			mach_vm_address_t base;
 	};

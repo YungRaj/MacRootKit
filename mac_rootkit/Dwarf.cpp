@@ -1,7 +1,6 @@
 #include "Dwarf.hpp"
 #include "KernelMachO.hpp"
 
-#include <assert.h>
 #include <string.h>
 
 using namespace Debug;
@@ -136,11 +135,11 @@ char* DWTagToString(enum DW_TAG tag)
 			return "hi_user";
 	}
 
-	char *ret;
+	char *ret = new char[1024];
 	
-	asprintf(&ret, "unknown 0x%llx", static_cast<uint32_t>(tag));
+	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(tag));
 
-	return strdup(ret);
+	return ret;
 }
 
 
@@ -338,11 +337,11 @@ char* DWAttrToString(enum DW_AT attr)
 			return "call_line";
 	}
 
-	char *ret;
+	char *ret = new char[1024];
 	
-	asprintf(&ret, "unknown 0x%llx", static_cast<uint32_t>(attr));
+	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(attr));
 
-	return strdup(ret);
+	return ret;
 }
 
 char* DWFormToString(enum DW_FORM form)
@@ -401,11 +400,11 @@ char* DWFormToString(enum DW_FORM form)
 			return "ref_sdata";
 	}
 
-	char *ret;
+	char *ret = new char[1024];
 	
-	asprintf(&ret, "unknown 0x%llx", static_cast<uint32_t>(form));
+	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(form));
 
-	return strdup(ret);
+	return ret;
 }
 
 size_t DWFormSize(enum DW_FORM form)
@@ -467,11 +466,11 @@ size_t DWFormSize(enum DW_FORM form)
 
 char* SourceLineFlagsToString(struct LTSourceLine *sourceLine)
 {
-	char buffer[1024];
+	char *buffer = new char[1024];
 
 	snprintf(buffer, 1024, "%s %s %s %s %s", sourceLine->state.statement > 0 ? "is_stmt" : "", sourceLine->state.basic_block > 0 ? "basic_block" : "", sourceLine->state.end_sequence > 0 ? "end_sequence" : "", sourceLine->state.prologue_end > 0 ? "prologue_end" : "", sourceLine->state.epilogue_begin > 0 ? "epilogue_begin" : "");
 
-	return strdup(buffer);
+	return buffer;
 }
 
 uint64_t Debug::GetStringSize(uint8_t *p)
@@ -495,7 +494,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end)
 	{
 		if(p == end)
 		{
-			fprintf(stderr, "malformed uleb128\n");
+			MAC_RK_LOG("malformed uleb128\n");
 
 			break;
 		}
@@ -504,7 +503,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end)
 
 		if(bit > 63)
 		{
-			fprintf(stderr, "uleb128 too big for uint64\n");
+			MAC_RK_LOG("uleb128 too big for uint64\n");
 
 			break;
 		} else 
@@ -529,7 +528,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 	{
 		if(p == end)
 		{
-			fprintf(stderr, "malformed uleb128\n");
+			MAC_RK_LOG("malformed uleb128\n");
 
 			break;
 		}
@@ -538,7 +537,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 
 		if(bit > 63)
 		{
-			fprintf(stderr, "uleb128 too big for uint64\n");
+			MAC_RK_LOG("uleb128 too big for uint64\n");
 
 			break;
 		} else 
@@ -567,7 +566,7 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end)
 	{
 		if(p == end)
 		{
-			fprintf(stderr, "malformed sleb128\n");
+			MAC_RK_LOG("malformed sleb128\n");
 
 			break;
 		}
@@ -598,7 +597,7 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 	{
 		if(p == end)
 		{
-			fprintf(stderr, "malformed sleb128\n");
+			MAC_RK_LOG("malformed sleb128\n");
 
 			break;
 		}
@@ -695,7 +694,7 @@ CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DI
 
 Dwarf::Dwarf(const char *debugSymbols)
 {
-	this->macho = new KernelMachO(debugSymbols);
+	// this->macho = new KernelMachO(debugSymbols);
 
 	this->machoWithDebug = macho;
 
@@ -802,7 +801,7 @@ void Dwarf::parseDebugAbbrev()
 
 				dies.add(die);
 
-				printf("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
+				MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
 			}
 
 		} else
@@ -844,7 +843,7 @@ void Dwarf::parseDebugAbbrev()
 
 					DIE *die = new DIE(this, code, name, tag, children);
 
-					printf("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
+					MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
 
 					stack.add(die);
 
@@ -853,7 +852,7 @@ void Dwarf::parseDebugAbbrev()
 
 			} else
 			{
-				printf("\tDW_AT = %s 0x%llx DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
+				MAC_RK_LOG("\tDW_AT = %s 0x%llx DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
 				
 				DIE *die = stack.get(stack.getSize() - 1);
 
@@ -872,7 +871,7 @@ void Dwarf::parseDebugAbbrev()
 		}
 	}
 
-	printf("\n\n");
+	MAC_RK_LOG("\n\n");
 }
 
 DIE* Dwarf::getDebugInfoEntryByCode(uint64_t code)
@@ -954,8 +953,6 @@ void Dwarf::parseDebugInfo()
 
 		DIE *die = getDebugInfoEntryByCode(code);
 
-		assert(die);
-
 		DwarfDIE *parent = stack.getSize() > 0 ? stack.get(stack.getSize() - 1) : NULL;
 
 		DwarfDIE *dwarfDIE = new DwarfDIE(this, compilationUnit, die, parent);
@@ -970,9 +967,9 @@ void Dwarf::parseDebugInfo()
 		}
 
 		for(int i = 0; i < stack.getSize(); i++)
-				printf("\t");
+				MAC_RK_LOG("\t");
 
-		printf("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.getSize());
+		MAC_RK_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.getSize());
 
 		uint64_t die_code = die->getCode();
 
@@ -1067,8 +1064,6 @@ void Dwarf::parseDebugInfo()
 			} else
 			{
 				size_t form_size = DWFormSize(form);
-			
-				assert(form_size != 0);
 
 				switch(form_size)
 				{
@@ -1104,9 +1099,9 @@ void Dwarf::parseDebugInfo()
 			dwarfDIE->addAttribute(attribute);
 
 			for(int i = 0; i < stack.getSize(); i++)
-				printf("\t");
+				MAC_RK_LOG("\t");
 
-			printf("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
+			MAC_RK_LOG("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
 		}
 
 		if(static_cast<bool>(die->getHasChildren()))
@@ -1165,7 +1160,7 @@ void Dwarf::parseDebugLines()
 
 				char *source_file_name = reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
 
-				printf("Source File Name: %s\n", source_file_name);
+				MAC_RK_LOG("Source File Name: %s\n", source_file_name);
 
 				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
@@ -1188,7 +1183,7 @@ void Dwarf::parseDebugLines()
 			{
 				char *include_directory = reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
 
-				printf("Include Directory: %s\n", include_directory);
+				MAC_RK_LOG("Include Directory: %s\n", include_directory);
 
 				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
@@ -1205,8 +1200,8 @@ void Dwarf::parseDebugLines()
 			}
 		}
 
-		printf("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "Address", "Line", "Column", "File", "ISA", "Discriminator", "Flags");
-		printf("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "--------------------", "--------", "------", "------", "----", "-------------", "-------------");
+		MAC_RK_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "Address", "Line", "Column", "File", "ISA", "Discriminator", "Flags");
+		MAC_RK_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "--------------------", "--------", "------", "------", "----", "-------------", "-------------");
 
 		struct Sequence *sequence = new Sequence;
 
@@ -1254,7 +1249,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.end_sequence = 1;
 
-						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
 
@@ -1273,7 +1268,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.address = program_counter;
 
-						printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						sequence->sourceLines.add(sourceLine);
 
@@ -1297,7 +1292,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.discriminator = discriminator;
 
-					 	// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+					 	// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1320,7 +1315,7 @@ void Dwarf::parseDebugLines()
 				{
 					case DW_LNS::copy:
 					{
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						sourceLine->state.discriminator = 0;
 						sourceLine->state.basic_block = 0;
@@ -1338,7 +1333,7 @@ void Dwarf::parseDebugLines()
 						sourceLine->state.address += program_counter;
 						sourceLine->state.prologue_end = 0;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1350,7 +1345,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.line += line;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1361,7 +1356,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.file = file;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1372,7 +1367,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.column = column;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1381,7 +1376,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.statement = ~sourceLine->state.statement;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1390,7 +1385,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.basic_block = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1420,7 +1415,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.prologue_end = 0;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1429,7 +1424,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.prologue_end = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1438,7 +1433,7 @@ void Dwarf::parseDebugLines()
 					{
 						sourceLine->state.epilogue_begin = 1;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1449,7 +1444,7 @@ void Dwarf::parseDebugLines()
 
 						sourceLine->state.isa = isa;
 
-						// printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+						// MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
 						break;
 					}
@@ -1469,7 +1464,7 @@ void Dwarf::parseDebugLines()
 				sourceLine->state.address += address_change;
 				sourceLine->state.line += line_change;
 
-				printf("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
+				MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 			
 				sourceLine->state.prologue_end = 0;
 
@@ -1502,7 +1497,7 @@ void Dwarf::parseDebugLocations()
 
 	uint32_t debug_loc_offset = 0;
 
-	printf("0x%08x:\n", debug_loc_offset);
+	MAC_RK_LOG("0x%08x:\n", debug_loc_offset);
 
 	struct LocationTableEntry *location_entry = new LocationTableEntry;
 
@@ -1522,7 +1517,7 @@ void Dwarf::parseDebugLocations()
 		
 			debug_loc_offset += sizeof(uint16_t);
 
-			printf("\t(0x%016llx, 0x%016llx) ", value0, value1);
+			MAC_RK_LOG("\t(0x%016llx, 0x%016llx) ", value0, value1);
 
 			for(int i = 0; i < bytes; i++)
 			{
@@ -1530,12 +1525,12 @@ void Dwarf::parseDebugLocations()
 
 				location_entry->location_ops.add(static_cast<DW_OP>(byte));
 
-				printf("0x%x ", byte);
+				MAC_RK_LOG("0x%x ", byte);
 
 				debug_loc_offset++;
 			}
 
-			printf("\n");
+			MAC_RK_LOG("\n");
 
 		} else if(value0 == -1ULL)
 		{
@@ -1554,7 +1549,7 @@ void Dwarf::parseDebugLocations()
 
 			location_entry = new LocationTableEntry;
 
-			printf("0x%08x:\n", debug_loc_offset);
+			MAC_RK_LOG("0x%08x:\n", debug_loc_offset);
 
 			location_entry->offset = debug_loc_offset;
 		}
@@ -1588,7 +1583,7 @@ void Dwarf::parseDebugRanges()
 
 		if(value0 == 0 && value1 == 0)
 		{
-			printf("%08x <End of list>\n", current_ranges_offset);
+			MAC_RK_LOG("%08x <End of list>\n", current_ranges_offset);
 
 			current_ranges_offset = debug_ranges_offset;
 
@@ -1597,7 +1592,7 @@ void Dwarf::parseDebugRanges()
 			rangeEntries = new RangeEntries;
 		} else
 		{
-			printf("%08x %016x %016x\n", current_ranges_offset, value0, value1);
+			MAC_RK_LOG("%08x %016x %016x\n", current_ranges_offset, value0, value1);
 
 			struct RangeEntry *range = new RangeEntry;
 
@@ -1641,7 +1636,7 @@ void Dwarf::parseDebugAddressRanges()
 
 		offset += sizeof(uint32_t);
 
-		printf("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, addr_size = 0x%02x, seg_size = 0x%02x\n", address_range_header->length, address_range_header->version, address_range_header->offset, address_range_header->addr_size, address_range_header->seg_size);
+		MAC_RK_LOG("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, addr_size = 0x%02x, seg_size = 0x%02x\n", address_range_header->length, address_range_header->version, address_range_header->offset, address_range_header->addr_size, address_range_header->seg_size);
 
 		while(offset < debug_aranges_offset + length)
 		{
@@ -1660,7 +1655,7 @@ void Dwarf::parseDebugAddressRanges()
 				range->start = address;
 				range->end = address + size;
 
-				printf("(0x%016llx, 0x%016llx)\n", address, address + size);
+				MAC_RK_LOG("(0x%016llx, 0x%016llx)\n", address, address + size);
 
 				arange_entry->ranges.add(range);
 			}

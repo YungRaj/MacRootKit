@@ -12,11 +12,37 @@ extern "C"
 	#include "kern.h"
 }
 
-using namespace XNU;
+using namespace xnu;
 
 off_t Kernel::tempExecutableMemoryOffset = 0;
 
 uint8_t Kernel::tempExecutableMemory[tempExecutableMemorySize] __attribute__((section("__TEXT,__text")));
+
+Kernel *Kernel::kernel = NULL;
+
+Kernel* Kernel::create(mach_port_t kernel_task_port)
+{
+	if(!kernel)
+		kernel = new Kernel(kernel_task_port);
+
+	return kernel;
+}
+
+Kernel* Kernel::create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
+{
+	if(!kernel)
+		kernel = new Kernel(cache, base, slide);
+
+	return kernel;
+}
+
+Kernel* Kernel::create(mach_vm_address_t base, off_t slide)
+{
+	if(!kernel)
+		kernel = new Kernel(base, slide);
+
+	return kernel;
+}
 
 Kernel::Kernel(mach_port_t kernel_task_port)
 {
@@ -107,6 +133,8 @@ mach_vm_address_t Kernel::findKernelCache()
 
 	near &= ~(kaslr_align - 1);
 
+	bool found = false;
+
 	while(true)
 	{
 		struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(near);
@@ -115,6 +143,8 @@ mach_vm_address_t Kernel::findKernelCache()
 		{
 			if(mh->filetype == 0xC && mh->flags == 0 && mh->reserved == 0)
 			{
+				found = true;
+
 				break;
 			}
 		}
@@ -122,9 +152,14 @@ mach_vm_address_t Kernel::findKernelCache()
 		near -= kaslr_align;
 	}
 
-	kernel_cache = near;
+	if(found)
+	{
+		kernel_cache = near;
 
-	return kernel_cache;
+		return kernel_cache;
+	}
+	
+	return 0;
 }
 
 mach_vm_address_t Kernel::findKernelCollection()
@@ -173,6 +208,9 @@ mach_vm_address_t Kernel::findKernelBase()
 
 	kc = Kernel::findKernelCache();
 
+	if(!kc)
+		return 0;
+
 	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
@@ -191,12 +229,14 @@ mach_vm_address_t Kernel::findKernelBase()
 			{
 				kernel_base = 0xfffffe0000000000 | fileset_entry_command->vmaddr;
 
-				break;
+				return kernel_base;
 			}
 		}
 
 		q += load_command->cmdsize;
 	}
+
+	kernel_base = 0;
 
 
 #endif
@@ -243,9 +283,12 @@ off_t Kernel::findKernelSlide()
 
 	base = Kernel::findKernelBase();
 
+	if((base - 0xfffffe0007004000) > 0xFFFFFFFF)
+		panic("kernel base minus unslid base is overflown!");
+
 #ifdef __arm64__
 
-	return base - 0xfffffe0007004000;
+	return (off_t) (base - 0xfffffe0007004000);
 
 #endif
 
