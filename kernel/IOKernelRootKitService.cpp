@@ -44,9 +44,9 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	loaded = true;
 
-	mach_vm_address_t kernel_base = Kernel::findKernelBase();
+	mach_vm_address_t kernel_base = xnu::Kernel::findKernelBase();
 
-	uint64_t kernel_slide = Kernel::findKernelSlide();
+	uint64_t kernel_slide = xnu::Kernel::findKernelSlide();
 
 	char buffer[128];
 
@@ -66,7 +66,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	if(kernel_base && kernel_slide)
 	{
-		this->kernel = Kernel::create(kernel_base, kernel_slide);
+		this->kernel = xnu::Kernel::create(kernel_base, kernel_slide);
 
 		this->kernel->setRootKitService(this);
 

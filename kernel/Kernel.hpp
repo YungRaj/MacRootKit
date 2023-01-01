@@ -30,11 +30,9 @@ namespace mrk
 	class MacRootKit;
 };
 
-using namespace mrk;
-
 namespace xnu
 {
-	class Kernel : public Task
+	class Kernel : public xnu::Task
 	{
 		static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
 
@@ -42,14 +40,14 @@ namespace xnu
 
 		static uint8_t tempExecutableMemory[tempExecutableMemorySize];
 
-		static Kernel *kernel;
+		static xnu::Kernel *kernel;
 
 		public:
-			static Kernel* create(mach_port_t kernel_task_port);
+			static xnu::Kernel* create(mach_port_t kernel_task_port);
 
-			static Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+			static xnu::Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
 
-			static Kernel* create(mach_vm_address_t base, off_t slide);
+			static xnu::Kernel* create(mach_vm_address_t base, off_t slide);
 
 			static mach_vm_address_t findKernelCache();
 
@@ -77,9 +75,9 @@ namespace xnu
 
 			virtual off_t getSlide();
 
-			void setRootKit(MacRootKit *rootkit) { this->rootkit = rootkit; }
+			void setRootKit(mrk::MacRootKit *rootkit) { this->rootkit = rootkit; }
 
-			MacRootKit* getRootKit() { return this->rootkit; }
+			mrk::MacRootKit* getRootKit() { return this->rootkit; }
 
 			void setRootKitService(IOKernelRootKitService *service) { this->rootkitService = service; }
 
@@ -157,7 +155,7 @@ namespace xnu
 
 			IOKernelRootKitService *rootkitService;
 
-			MacRootKit *rootkit;
+			mrk::MacRootKit *rootkit;
 
 			mach_port_t kernel_task_port;
 
@@ -173,26 +171,24 @@ namespace xnu
 			void createKernelTaskPort();
 	};
 
-	using namespace Debug;
-
 	class KDKKernel
 	{
 		public:
-			static KDKKernel* KDKKernelFromFilePath(Kernel *kernel, const char *path);
+			static KDKKernel* KDKKernelFromFilePath(xnu::Kernel *kernel, const char *path);
 
-			explicit KDKKernel(Kernel *kernel, const char *path);
+			explicit KDKKernel(xnu::Kernel *kernel, const char *path);
 
 			char* getPath();
 
-			Kernel* getKernel();
+			xnu::Kernel* getKernel();
 
-			Dwarf* getDwarf();
+			Debug::Dwarf* getDwarf();
 
 			MachO* getKernelDebugKitKernel();
 
 			mach_vm_address_t getBase();
 
-			mach_vm_address_t findSymbolByName(Kernel *kernel, const char *sym);
+			mach_vm_address_t findSymbolByName(xnu::Kernel *kernel, const char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
@@ -214,11 +210,11 @@ namespace xnu
 		private:
 			const char *path;
 
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			MachO *kdk;
 
-			Dwarf *dwarf;
+			Debug::Dwarf *dwarf;
 
 			mach_vm_address_t base;
 	};

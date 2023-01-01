@@ -50,7 +50,7 @@ namespace xnu
 
 			Disassembler* getDisassembler() { return disassembler; }
 
-			Process* getProcess() { return process; }
+			bsd::Process* getProcess() { return process; }
 
 			int getPid() { return pid; }
 
@@ -112,7 +112,7 @@ namespace xnu
 
 			mach_port_t task_port;
 
-			Process *process;
+			bsd::Process *process;
 
 			task_t task;
 			proc_t proc;

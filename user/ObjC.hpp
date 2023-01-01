@@ -20,8 +20,6 @@ namespace mrk
 #define RELATIVE_METHOD_FLAG = 0x80000000
 #define METHOD_LIST_FLAGS_MASK = 0xFFFF0000
 
-using namespace mrk;
-
 namespace ObjectiveC
 {
 	class Ivar;
@@ -271,7 +269,7 @@ namespace ObjectiveC
 			ObjCData *metadata;
 	};
 
-	ObjCData* parseObjectiveC(UserMachO *macho);
+	ObjCData* parseObjectiveC(mrk::UserMachO *macho);
 
 	Array<ObjCClass*>* parseClassList(ObjCData *data);
 	Array<Category*>* parseCategoryList(ObjCData *data);
@@ -289,7 +287,7 @@ namespace ObjectiveC
 
 	void parsePropertyList(ObjCData *metadata, ObjC *object, Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
 
-	mach_vm_address_t findSelectorsBase(UserMachO *macho);
+	mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho);
 
 	class Protocol : public ObjC
 	{
@@ -431,7 +429,7 @@ namespace ObjectiveC
 
 			struct _objc_2_class_data* getData() { return data; }
 
-			UserMachO* getMachO() { return macho; }
+			mrk::UserMachO* getMachO() { return macho; }
 
 			ObjCClass* getSuperClass() { return super; }
 
@@ -468,7 +466,7 @@ namespace ObjectiveC
 			void parseProperties();
 
 		private:
-			UserMachO *macho;
+			mrk::UserMachO *macho;
 
 			bool metaclass;
 
@@ -497,14 +495,14 @@ namespace ObjectiveC
 	class ObjCData
 	{
 		public:
-			ObjCData(UserMachO *macho) 
+			ObjCData(mrk::UserMachO *macho) 
 			{
 				this->macho = macho;
 
 				this->parseObjC();
 			}
 
-			UserMachO* getMachO() { return macho; }
+			mrk::UserMachO* getMachO() { return macho; }
 
 			Segment* getDataSegment() { return data; }
 			Segment* getDataConstSegment() { return data_const; }
@@ -537,7 +535,7 @@ namespace ObjectiveC
 			Property* getProperty(char *classname, char *propertyname);
 
 		private:
-			UserMachO *macho;
+			mrk::UserMachO *macho;
 
 			Array<ObjCClass*> *classes;
 			Array<Category*> *categories;

@@ -27,6 +27,9 @@
 
 using namespace std;
 
+using namespace mrk;
+using namespace dyld;
+
 #define STACK_SIZE ((1024 * 1024) * 512)
 
 #define ROP_ret "\xff\x0f\x5f\xd6"

@@ -22,7 +22,7 @@ extern "C"
 
 OSDefineMetaClassAndStructors(IOKernelRootKitUserClient, IOUserClient)
 
-IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
+IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
 {
 	IOKernelRootKitUserClient *client;
 
@@ -41,7 +41,7 @@ IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKerne
 	return client;
 }
 
-IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
+IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
 {
 	IOKernelRootKitUserClient *client;
 
@@ -60,7 +60,7 @@ IOKernelRootKitUserClient* IOKernelRootKitUserClient::rootKitUserClientWithKerne
 	return client;
 }
 
-bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
+bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type)
 {
 	bool result = IOUserClient::initWithTask(owningTask, securityToken, type);
 
@@ -75,7 +75,7 @@ bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, 
 	return result;
 }
 
-bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
+bool IOKernelRootKitUserClient::initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties)
 {
 	bool result = IOUserClient::initWithTask(owningTask, securityToken, type, properties);
 

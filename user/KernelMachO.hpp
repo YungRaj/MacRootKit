@@ -24,7 +24,7 @@ namespace xnu
 			virtual void parseMachO();
 
 		private:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			uint8_t *linkedit;
 

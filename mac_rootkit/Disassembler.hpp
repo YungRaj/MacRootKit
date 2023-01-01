@@ -8,8 +8,6 @@
 
 using namespace Arch;
 
-using namespace xnu;
-
 struct DisasmSig
 {
 	union
@@ -44,7 +42,7 @@ enum DisassemblerType
 class Disassembler
 {
 	public:
-		Disassembler(Task *task);
+		Disassembler(xnu::Task *task);
 
 		~Disassembler();
 
@@ -75,7 +73,7 @@ class Disassembler
 
 		enum DisassemblerType disassembler;
 
-		Task *task;
+		xnu::Task *task;
 
 		enum DisassemblerType getDisassemblerFromArch();
 };

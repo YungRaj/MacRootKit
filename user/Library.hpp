@@ -9,27 +9,31 @@ class Dyld;
 class MachO;
 class UserMachO;
 
-class Library
+namespace dyld
 {
-	public:
-		Library();
+	class Library
+	{
+		public:
+			Library();
 
-		~Library();
+			~Library();
 
-		UserMachO* getMachO() { return macho; }
+			xnu::UserMachO* getMachO() { return macho; }
 
-		Dyld* getDyld() { return dyld; }
+			dyld::Dyld* getDyld() { return dyld; }
 
-		Task* getTask() { return task; }
+			xnu::Task* getTask() { return task; }
 
-		static Library* injectLibrary(Task *task, const char *path);
+			static Library* injectLibrary(Task *task, const char *path);
 
-	private:
-		UserMachO *macho;
+		private:
+			xnu::UserMachO *macho;
 
-		Dyld *dyld;
+			dyld::Dyld *dyld;
 
-		Task *task;
-}
+			xnu::Task *task;
+	};
+
+};
 
 #endif

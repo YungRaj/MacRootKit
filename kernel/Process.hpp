@@ -6,18 +6,21 @@ namespace xnu
 	class Task;
 };
 
-using namespace xnu;
-
-class Process
+namespace bsd
 {
-	public:
-		Process();
 
-		~Process();
+	class Process
+	{
+		public:
+			Process();
 
-		Task* getTask();
-	private:
-		Task *task;
+			~Process();
+
+			xnu::Task* getTask();
+		private:
+			xnu::Task *task;
+	};
+
 };
 
 #endif

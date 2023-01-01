@@ -11,61 +11,64 @@
 
 #include <Arch.hpp>
 
-class Thread
+namespace mrk
 {
-	public:
-		Thread() { }
+	class Thread
+	{
+		public:
+			Thread() { }
 
-		~Thread() { }
+			~Thread() { }
 
-		thread_t getThread() { return thread; }
+			thread_t getThread() { return thread; }
 
-		pthread_t getPthread() { return pthread; }
+			pthread_t getPthread() { return pthread; }
 
-		Task* getTask() { return task; }
+			Task* getTask() { return task; }
 
-		mach_port_t getPortHandle() { return handle; }
+			mach_port_t getPortHandle() { return handle; }
 
-		mach_vm_address_t getThread() { return thread; }
-		mach_vm_address_t  getUThread() { return uthread; }
+			mach_vm_address_t getThread() { return thread; }
+			mach_vm_address_t  getUThread() { return uthread; }
 
-		union ThreadState* getThreadState() { return &state; }
+			union ThreadState* getThreadState() { return &state; }
 
-		void resume();
+			void resume();
 
-		void suspend();
+			void suspend();
 
-		void terminate();
+			void terminate();
 
-		void setThreadState(union ThreadState *thread_state);
+			void setThreadState(union ThreadState *thread_state);
 
-		void getThreadState(union ThreadState *thread_state);
+			void getThreadState(union ThreadState *thread_state);
 
-		void convertThreadState(Task *task, union ThreadState *thread_state);
+			void convertThreadState(Task *task, union ThreadState *thread_state);
 
-		void setEntryPoint(mach_vm_address_t address);
+			void setEntryPoint(mach_vm_address_t address);
 
-		void setReturnAddress(mach_vm_address_t address);
+			void setReturnAddress(mach_vm_address_t address);
 
-		void createPosixThreadFromMachThread(thread_t thread);
+			void createPosixThreadFromMachThread(thread_t thread);
 
-	private:
-		Task *task;
+		private:
+			xnu::Task *task;
 
-		pthread_t pthread;
+			pthread_t pthread;
 
-		thread_t thread;
+			thread_t thread;
 
-		mach_port_t handle;
+			mach_port_t handle;
 
-		mach_vm_address_t thread;
-		mach_vm_address_t uthread;
+			mach_vm_address_t thread;
+			mach_vm_address_t uthread;
 
-		mach_vm_address_t stack;
-		mach_vm_address_t code;
-		mach_vm_address_t data;
+			mach_vm_address_t stack;
+			mach_vm_address_t code;
+			mach_vm_address_t data;
 
-		union ThreadState state;
-};
+			union ThreadState state;
+	};
+}
 
 #endif

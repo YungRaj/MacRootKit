@@ -14,7 +14,7 @@ namespace xnu
 	class KernelMachO : public MachO 
 	{
 		public:
-			KernelMachO(Kernel *kernel);
+			KernelMachO(xnu::Kernel *kernel);
 
 			~KernelMachO();
 
@@ -26,8 +26,8 @@ namespace xnu
 
 			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
-			static Kext* kextLoadedAt(Kernel *kernel, mach_vm_address_t address);
-			static Kext* kextWithIdentifier(Kernel *kernel, char *kext);
+			static Kext* kextLoadedAt(xnu::Kernel *kernel, mach_vm_address_t address);
+			static Kext* kextWithIdentifier(xnu::Kernel *kernel, char *kext);
 
 			virtual void parseLinkedit();
 
@@ -36,7 +36,7 @@ namespace xnu
 			virtual void parseMachO();
 
 		private:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			mach_vm_address_t kernel_cache;
 

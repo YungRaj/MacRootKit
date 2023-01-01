@@ -14,13 +14,16 @@
 
 #include "Disassembler.hpp"
 
+using namespace Arch;
+using namespace mrk;
+
 static KernelPatcher *that = nullptr;
 
 KernelPatcher::KernelPatcher()
 {
 }
 
-KernelPatcher::KernelPatcher(Kernel *kernel)
+KernelPatcher::KernelPatcher(xnu::Kernel *kernel)
 {
 	that = this;
 
@@ -32,7 +35,7 @@ KernelPatcher::KernelPatcher(Kernel *kernel)
 	this->waitingForAlreadyLoadedKexts = false;
 
 	this->installEntitlementHook();
-	
+
 	// binary load hook does not work in Monterey because symbol to hook does not exist
 	// this->installBinaryLoadHook();
 
@@ -46,7 +49,7 @@ KernelPatcher::~KernelPatcher()
 {
 }
 
-bool KernelPatcher::dummyBreakpoint(union RegisterState *state)
+bool KernelPatcher::dummyBreakpoint(union Arch::RegisterState *state)
 {
 	RegisterState_x86_64 *state_x86_64;
 	RegisterState_arm64  *state_arm64;
@@ -426,7 +429,7 @@ void KernelPatcher::patchPmapEnterOptions()
 {
 	using namespace Arch::arm64;
 
-	Kernel *kernel = this->kernel;
+	xnu::Kernel *kernel = this->kernel;
 
 	MachO *macho = kernel->getMachO();
 
@@ -517,7 +520,7 @@ void KernelPatcher::patchPmapEnterOptions()
 
 void KernelPatcher::applyKernelPatch(struct KernelPatch *patch)
 {
-	Kernel *kernel;
+	xnu::Kernel *kernel;
 
 	MachO *macho;
 
@@ -685,7 +688,7 @@ void KernelPatcher::applyKextPatch(struct KextPatch *patch)
 
 void KernelPatcher::removeKernelPatch(struct KernelPatch *patch)
 {
-	Kernel *kernel;
+	xnu::Kernel *kernel;
 
 	MachO *macho;
 

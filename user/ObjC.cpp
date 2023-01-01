@@ -10,14 +10,14 @@
 
 namespace ObjectiveC
 {
-	ObjCData* parseObjectiveC(UserMachO *macho)
+	ObjCData* parseObjectiveC(mrk::UserMachO *macho)
 	{
 		return new ObjCData(macho);
 	}
 
 	Array<ObjCClass*>* parseClassList(ObjCData *data)
 	{
-		UserMachO *macho = data->getMachO();
+		mrk::UserMachO *macho = data->getMachO();
 
 		Array<ObjCClass*> *classes = new Array<ObjCClass*>();
 
@@ -81,7 +81,7 @@ namespace ObjectiveC
 
 	Array<Category*>* parseCategoryList(ObjCData *data)
 	{
-		UserMachO *macho = data->getMachO();
+		mrk::UserMachO *macho = data->getMachO();
 
 		Array<Category*> *categories = new Array<Category*>();
 
@@ -126,7 +126,7 @@ namespace ObjectiveC
 
 	Array<Protocol*>* parseProtocolList(ObjCData *data)
 	{
-		UserMachO *macho = data->getMachO();
+		mrk::UserMachO *macho = data->getMachO();
 
 		Array<Protocol*> *protocols = new Array<Protocol*>();
 
@@ -170,7 +170,7 @@ namespace ObjectiveC
 
 	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
 	{
-		UserMachO *macho = metadata->getMachO();
+		mrk::UserMachO *macho = metadata->getMachO();
 
 		struct _objc_2_class_method_info *methods;
 
@@ -371,7 +371,7 @@ namespace ObjectiveC
 
 	Protocol::Protocol(ObjCData *data, struct _objc_2_class_protocol *prot)
 	{
-		UserMachO *macho;
+		mrk::UserMachO *macho;
 
 		struct _objc_2_class_method_info *instanceMethods;
 		struct _objc_2_class_method_info *classMethods;
@@ -471,7 +471,7 @@ namespace ObjectiveC
 
 	Category::Category(ObjCData *data, struct _objc_2_category *cat)
 	{
-		UserMachO *macho = data->getMachO();
+		mrk::UserMachO *macho = data->getMachO();
 
 		struct _objc_2_class_method_info *instanceMethods;
 		struct _objc_2_class_method_info *classMethods;
@@ -572,7 +572,7 @@ namespace ObjectiveC
 
 	Ivar::Ivar(ObjC *object, struct _objc_2_class_ivar *ivar)
 	{
-		UserMachO *macho = object->getMetadata()->getMachO();
+		mrk::UserMachO *macho = object->getMetadata()->getMachO();
 
 		if(macho->isDyldCache())
 		{
@@ -602,7 +602,7 @@ namespace ObjectiveC
 
 	Property::Property(ObjC *object, struct _objc_2_class_property *property)
 	{
-		UserMachO *macho = object->getMetadata()->getMachO();
+		mrk::UserMachO *macho = object->getMetadata()->getMachO();
 
 		if(macho->isDyldCache())
 		{
@@ -633,7 +633,7 @@ namespace ObjectiveC
 
 	Method::Method(ObjC *object, struct _objc_2_class_method *method)
 	{
-		UserMachO *macho = object->getMetadata()->getMachO();
+		mrk::UserMachO *macho = object->getMetadata()->getMachO();
 
 		mach_vm_address_t selectors;
 
@@ -688,7 +688,7 @@ namespace ObjectiveC
 
 	Method::Method(ObjC *object, struct _objc_2_method *method)
 	{
-		UserMachO *macho = object->getMetadata()->getMachO();
+		mrk::UserMachO *macho = object->getMetadata()->getMachO();
 
 		this->object = object;
 		
@@ -709,13 +709,13 @@ namespace ObjectiveC
 
 namespace ObjectiveC
 {
-	mach_vm_address_t findSelectorsBase(UserMachO *macho)
+	mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 	{
 		mach_vm_address_t selectors;
 
 		mach_vm_address_t method_getName;
 
-		UserMachO *libobjc;
+		mrk::UserMachO *libobjc;
 
 		Symbol *symbol;
 

@@ -12,8 +12,6 @@
 #include "Kernel.hpp"
 #include "Kext.hpp"
 
-using namespace xnu;
-
 namespace xnu
 {
 	class Kernel;
@@ -24,12 +22,12 @@ namespace xnu
 	class KextMachO : public MachO
 	{
 		public:
-			KextMachO(Kernel *kernel, char *name, mach_vm_address_t base);
-			KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info);
+			KextMachO(xnu::Kernel *kernel, char *name, mach_vm_address_t base);
+			KextMachO(xnu::Kernel *kernel, char *name, kmod_info_t *kmod_info);
 
 			~KextMachO();
 
-			Kernel* getKernel() { return kernel; }
+			xnu::Kernel* getKernel() { return kernel; }
 
 			char* getKextName() { return name; }
 
@@ -51,7 +49,7 @@ namespace xnu
 			virtual void parseMachO();
 
 		private:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			mach_vm_address_t address;
 

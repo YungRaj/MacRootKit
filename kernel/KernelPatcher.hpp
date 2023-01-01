@@ -15,16 +15,13 @@ namespace xnu
 	class Kext;
 }
 
-using namespace Arch;
-using namespace xnu;
-
 class MachO;
 class Symbol;
 
 struct KextPatch
 {
 	public:
-		Kext *kext;
+		xnu::Kext *kext;
 
 		MachO *macho;
 		Symbol *symbol;
@@ -41,7 +38,7 @@ struct KextPatch
 struct KernelPatch
 {
 	public:
-		Kernel *kernel;
+		xnu::Kernel *kernel;
 
 		MachO *macho;
 		Symbol *symbol;
@@ -60,23 +57,23 @@ namespace mrk
 	class Hook;
 	class Payload;
 
-	class KernelPatcher : public Patcher
+	class KernelPatcher : public mrk::Patcher
 	{
 		public:
 			KernelPatcher();
-			KernelPatcher(Kernel *kernel);
+			KernelPatcher(xnu::Kernel *kernel);
 
 			~KernelPatcher();
 
-			Kernel* getKernel() { return kernel; }
+			xnu::Kernel* getKernel() { return kernel; }
 
 			kmod_info_t** getKextKmods() { return kextKmods; }
 
-			Hook* getEntitlementHook() { return entitlementHook; }
-			Hook* getBinaryLoadHook() { return binaryLoadHook; }
-			Hook* getKextLoadHook() { return kextLoadHook; }
+			mrk::Hook* getEntitlementHook() { return entitlementHook; }
+			mrk::Hook* getBinaryLoadHook() { return binaryLoadHook; }
+			mrk::Hook* getKextLoadHook() { return kextLoadHook; }
 
-			static bool dummyBreakpoint(union RegisterState *state);
+			static bool dummyBreakpoint(union Arch::RegisterState *state);
 
 			static void onOSKextSaveLoadedKextPanicList();
 
@@ -90,7 +87,7 @@ namespace mrk
 										const void *find, size_t find_size,
 										const void *replace, size_t replace_size);
 
-			virtual void routeFunction(Hook *hook);
+			virtual void routeFunction(mrk::Hook *hook);
 
 			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
@@ -98,11 +95,11 @@ namespace mrk
 
 			virtual void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-			Hook* installDummyBreakpoint();
+			mrk::Hook* installDummyBreakpoint();
 
-			Hook* installEntitlementHook();
-			Hook* installBinaryLoadHook();
-			Hook* installKextLoadHook();
+			mrk::Hook* installEntitlementHook();
+			mrk::Hook* installBinaryLoadHook();
+			mrk::Hook* installKextLoadHook();
 
 			void registerCallbacks();
 
@@ -110,9 +107,9 @@ namespace mrk
 
 			void processKext(kmod_info_t *kmod, bool loaded);
 
-			mach_vm_address_t injectPayload(mach_vm_address_t address, Payload *payload);
+			mach_vm_address_t injectPayload(mach_vm_address_t address, mrk::Payload *payload);
 
-			mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
+			mach_vm_address_t injectSegment(mach_vm_address_t address, mrk::Payload *payload);
 
 			void applyKernelPatch(struct KernelPatch *patch);
 			void applyKextPatch(struct KextPatch *patch);
@@ -123,13 +120,13 @@ namespace mrk
 			void removeKextPatch(struct KextPatch *patch);
 
 		private:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			kmod_info_t **kextKmods;
 
-			Hook *entitlementHook;
-			Hook *binaryLoadHook;
-			Hook *kextLoadHook;
+			mrk::Hook *entitlementHook;
+			mrk::Hook *binaryLoadHook;
+			mrk::Hook *kextLoadHook;
 
 			bool waitingForAlreadyLoadedKexts = false;
 

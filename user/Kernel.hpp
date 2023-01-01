@@ -22,7 +22,7 @@ namespace xnu
 {
 	class Task;
 	
-	class Kernel : public Task
+	class Kernel : public xnu::Task
 	{
 		public:
 			Kernel();
@@ -94,7 +94,7 @@ namespace xnu
 			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 		private:
-			UserMachO *macho;
+			mrk::UserMachO *macho;
 
 			mach_port_t connection;
 

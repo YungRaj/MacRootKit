@@ -6,6 +6,8 @@
 
 #include "MachO.hpp"
 
+using namespace xnu;
+
 Kext::Kext(Kernel *kernel, mach_vm_address_t base, char *identifier)
 {
 	this->kernel = kernel;

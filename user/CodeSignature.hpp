@@ -12,30 +12,33 @@
 
 class MachO;
 
-class CodeSignature
+namespace mrk
 {
-public:
-	CodeSignature();
+	class CodeSignature
+	{
+		public:
+			CodeSignature();
 
-	static CodeSignature* codeSignatureWithLinkedit(MachO *macho, struct linkedit_data_command *cmd);
+			static CodeSignature* codeSignatureWithLinkedit(MachO *macho, struct linkedit_data_command *cmd);
 
-	bool verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char *signature, size_t sigsize);
-	
-	bool compareHash(uint8_t *hash1, uint8_t hash2, size_t hashSize);
+			bool verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char *signature, size_t sigsize);
+			
+			bool compareHash(uint8_t *hash1, uint8_t hash2, size_t hashSize);
 
-	uint8_t* computeHash(bool sha256, uint8_t *blob, size_t size);
+			uint8_t* computeHash(bool sha256, uint8_t *blob, size_t size);
 
-	bool parseCodeSignature();
+			bool parseCodeSignature();
 
-private:
-	MachO *macho;
+		private:
+			MachO *macho;
 
-	SuperBlob *superBlob;
+			SuperBlob *superBlob;
 
-	code_directory_t code_directory;
+			code_directory_t code_directory;
 
-	char *entitlements;
+			char *entitlements;
 
+	};
 };
 
 #endif

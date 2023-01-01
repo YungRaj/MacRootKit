@@ -41,7 +41,7 @@ namespace mrk
 			void removeHook(Hook *hook);
 
 		private:
-			Array<Hook*> hooks;
+			Array<mrk::Hook*> hooks;
 	};
 
 }

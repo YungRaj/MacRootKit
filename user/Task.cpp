@@ -9,6 +9,8 @@
 #include "Task.hpp"
 #include "Dyld.hpp"
 
+using namespace xnu;
+
 static int EndsWith(const char *str, const char *suffix)
 {
 	if (!str || !suffix)
@@ -36,8 +38,8 @@ Task::Task(Kernel *kernel, int pid)
 	this->proc = Task::findProcByPid(kernel, pid);
 	this->task = Task::getTaskFromProc(kernel, this->proc);
 	this->name = this->getTaskName();
-	this->dyld = new Dyld(kernel, this);
-	this->macho = new UserMachO();
+	this->dyld = new dyld::Dyld(kernel, this);
+	this->macho = new mrk::UserMachO();
 	// this->macho->initWithTask(this);
 }
 
@@ -49,8 +51,8 @@ Task::Task(Kernel *kernel, char *name)
 	this->task = Task::getTaskFromProc(kernel, this->proc);
 	this->pid = this->findPid();
 	this->task_port = Task::getTaskForPid(pid);
-	this->dyld = new Dyld(kernel, this);
-	this->macho = new UserMachO();
+	this->dyld = new dyld::Dyld(kernel, this);
+	this->macho = new mrk::UserMachO();
 
 }
 		

@@ -1,5 +1,7 @@
 #include "KextMachO.hpp"
 
+using namespace xnu;
+
 KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
 {
 	this->kernel = kernel;

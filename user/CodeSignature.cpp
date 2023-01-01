@@ -5,6 +5,8 @@
 
 #include "CodeSignature.hpp"
 
+using namespace mrk;
+
 CodeSignature* CodeSignature::codeSignatureWithLinkedit(MachO *macho, struct linkedit_data_command *cmd)
 {
 	CodeSignature *signature = NULL;

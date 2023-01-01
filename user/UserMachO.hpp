@@ -11,20 +11,26 @@
 class Segment;
 class Section;
 
-class Dyld;
+namespace dyld
+{
+	class Dyld;
+	class Library;
+};
 
-class CodeSignature;
-class ObjCData;
+namespace ObjectiveC
+{
+	class ObjCData;
+};
 
 namespace xnu
 {
 	class Task;
 };
 
-using namespace xnu;
-
 namespace mrk
 {
+	class CodeSignature;
+
 	class UserMachO : public MachO
 	{
 		public:
@@ -33,7 +39,7 @@ namespace mrk
 
 			~UserMachO() { }
 
-			virtual void initWithTask(Task *task);
+			virtual void initWithTask(xnu::Task *task);
 			virtual void initWithFilePath(const char *path);
 			virtual void initWithBuffer(char *buffer);
 			virtual void initWithBuffer(char *buffer, off_t slide);
@@ -41,7 +47,7 @@ namespace mrk
 			virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide);
 			virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide, bool is_dyld_cache);
 			
-			virtual void initWithBuffer(UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
+			virtual void initWithBuffer(mrk::UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
 
 			bool isDyldCache() { return is_dyldCache; }
 
@@ -78,7 +84,7 @@ namespace mrk
 
 			virtual bool parseLoadCommands() override;
 
-			void parseCodeSignature(CodeSignature *signature);
+			void parseCodeSignature(mrk::CodeSignature *signature);
 			
 			void parseObjC()
 			{
@@ -86,21 +92,21 @@ namespace mrk
 			}
 
 		private:
-			Task *task;
+			xnu::Task *task;
 
-			bool is_dyldCache;
-			bool is_libobjc;
+			mrk::UserMachO *libobjc;
 
-			UserMachO *libobjc;
-
-			Dyld *dyld;
+			dyld::Dyld *dyld;
 
 			mach_vm_address_t dyld_base;
 			mach_vm_address_t dyld_shared_cache;
 
-			CodeSignature *codeSignature;
+			mrk::CodeSignature *codeSignature;
 
-			ObjCData *objc;
+			ObjectiveC::ObjCData *objc;
+
+			bool is_dyldCache;
+			bool is_libobjc;
 
 			uint64_t readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx);
 			int64_t  readSleb128(uint8_t *start, uint8_t *end, uint32_t *idx);

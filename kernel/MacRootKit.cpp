@@ -1,5 +1,8 @@
 #include "MacRootKit.hpp"
 
+using namespace Arch;
+using namespace xnu;
+
 MacRootKit::MacRootKit(Kernel *kernel)
 {
 	this->kernel = kernel;

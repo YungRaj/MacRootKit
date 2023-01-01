@@ -28,13 +28,13 @@ class IOKernelRootKitUserClient : public IOUserClient
 	OSDeclareDefaultStructors(IOKernelRootKitUserClient)
 
 	public:
-		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
+		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
 
-		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
+		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
 
-		virtual bool initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
+		virtual bool initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
 
-		virtual bool initRootKitUserClientWithKernel(Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
+		virtual bool initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
 
 		virtual bool start(IOService *provider);
 		virtual void stop(IOService *provider);
@@ -61,7 +61,7 @@ class IOKernelRootKitUserClient : public IOUserClient
 
 		task_t kernelTask;
 
-		Kernel *kernel;
+		xnu::Kernel *kernel;
 
 		void initRootKit();
 

@@ -12,10 +12,15 @@ namespace xnu
 	class Kernel;
 };
 
-using namespace xnu;
+namespace dyld
+{
+	class Dyld;
+};
 
-class Dyld;
-class Process;
+namespace bsd
+{
+	class Process;
+};
 
 class Disassembler;
 
@@ -39,15 +44,15 @@ namespace xnu
 		public:
 			Task();
 
-			Task(Kernel *kernel, int pid);
+			Task(xnu::Kernel *kernel, int pid);
 
-			Task(Kernel *kernel, char *name);
+			Task(xnu::Kernel *kernel, char *name);
 			
-			Task(Kernel *kernel, mach_port_t task_port);
+			Task(xnu::Kernel *kernel, mach_port_t task_port);
 
 			~Task();
 
-			Kernel* getKernel();
+			xnu::Kernel* getKernel();
 
 			int getPid() { return pid; }
 
@@ -61,9 +66,9 @@ namespace xnu
 
 			char* getName() { return name; }
 
-			Dyld* getDyld() { return dyld; }
+			dyld::Dyld* getDyld() { return dyld; }
 
-			Process* getProcess() { return process; }
+			bsd::Process* getProcess() { return process; }
 
 			Disassembler* getDisassembler() { return disassembler; }
 
@@ -71,15 +76,15 @@ namespace xnu
 
 			static Task* getTaskInfo(Kernel *kernel, char *task_name);
 
-			static mach_vm_address_t findProcByPid(Kernel *kernel, int pid);
-			static mach_vm_address_t findProcByName(Kernel *kernel, char *name);
+			static mach_vm_address_t findProcByPid(xnu::Kernel *kernel, int pid);
+			static mach_vm_address_t findProcByName(xnu::Kernel *kernel, char *name);
 
-			static mach_vm_address_t findTaskByPid(Kernel *kernel, int pid);
-			static mach_vm_address_t findTaskByName(Kernel *kernel, char *name);
+			static mach_vm_address_t findTaskByPid(xnu::Kernel *kernel, int pid);
+			static mach_vm_address_t findTaskByName(xnu::Kernel *kernel, char *name);
 
-			static mach_vm_address_t getTaskFromProc(Kernel *kernel, mach_vm_address_t proc);
+			static mach_vm_address_t getTaskFromProc(xnu::Kernel *kernel, mach_vm_address_t proc);
 
-			static mach_vm_address_t findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port);
+			static mach_vm_address_t findPort(xnu::Kernel *kernel, mach_vm_address_t task, mach_port_t port);
 
 			virtual mach_vm_address_t getBase();
 
@@ -129,9 +134,9 @@ namespace xnu
 			virtual void printLoadedImages();
 
 		protected:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
-			UserMachO *macho;
+			mrk::UserMachO *macho;
 
 			Disassembler *disassembler;
 
@@ -148,7 +153,7 @@ namespace xnu
 			char *name; 
 			char *path;
 
-			Process *process;
+			bsd::Process *process;
 
 			int pid;
 
@@ -157,7 +162,7 @@ namespace xnu
 			mach_vm_address_t dyld_base;
 			mach_vm_address_t dyld_shared_cache;
 
-			Dyld *dyld;
+			dyld::Dyld *dyld;
 	};
 };
 

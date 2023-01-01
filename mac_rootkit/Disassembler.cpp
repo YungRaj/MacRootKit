@@ -10,7 +10,7 @@
 
 using namespace Arch;
 
-Disassembler::Disassembler(Task *task)
+Disassembler::Disassembler(xnu::Task *task)
 {
 	this->task = task;
 	this->architecture = Arch::getCurrentArchitecture();

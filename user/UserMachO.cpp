@@ -8,6 +8,8 @@
 #include "Task.hpp"
 #include "Dyld.hpp"
 
+using namespace mrk;
+
 UserMachO::UserMachO(const char *path)
 {
 	this->objc = NULL;

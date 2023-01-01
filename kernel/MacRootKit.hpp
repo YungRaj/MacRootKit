@@ -16,7 +16,6 @@ namespace xnu
 	class Kernel;
 }
 
-using namespace Arch;
 using namespace xnu;
 
 class IOKernelRootKitService;
@@ -41,23 +40,23 @@ namespace mrk
 			using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
 
 		public:
-			MacRootKit(Kernel *kernel);
+			MacRootKit(xnu::Kernel *kernel);
 
 			~MacRootKit();
 
-			Kernel* getKernel() { return kernel; }
+			xnu::Kernel* getKernel() { return kernel; }
 
-			Architecture* getArchitecture() { return architecture; }
+			Arch::Architecture* getArchitecture() { return architecture; }
 
-			enum Architectures getPlatformArchitecture() { return platformArchitecture; }
+			enum Arch::Architectures getPlatformArchitecture() { return platformArchitecture; }
 
-			Array<Kext*>* getKexts() { return &kexts; }
+			Array<xnu::Kext*>* getKexts() { return &kexts; }
 
-			Kext* getKextByIdentifier(char *name);
+			xnu::Kext* getKextByIdentifier(char *name);
 
-			Kext* getKextByAddress(mach_vm_address_t address);
+			xnu::Kext* getKextByAddress(mach_vm_address_t address);
 
-			KernelPatcher* getKernelPatcher() { return kernelPatcher; }
+			mrk::KernelPatcher* getKernelPatcher() { return kernelPatcher; }
 
 			StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
 
@@ -84,17 +83,17 @@ namespace mrk
 			void* findOSKextByIdentifier(const char *kextidentifier);
 
 		private:
-			Architecture *architecture;
+			Arch::Architecture *architecture;
 
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
-			KernelPatcher *kernelPatcher;
+			mrk::KernelPatcher *kernelPatcher;
 
-			enum Architectures platformArchitecture;
+			enum Arch::Architectures platformArchitecture;
 
 			bool waitingForAlreadyLoadedKexts;
 
-			Array<Kext*> kexts;
+			Array<xnu::Kext*> kexts;
 
 			kmod_info_t **kextKmods;
 

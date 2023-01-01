@@ -9,6 +9,8 @@
 
 #include <mach/mach.h>
 
+using namespace dyld;
+
 static int EndsWith(const char *str, const char *suffix)
 {
 	if (!str || !suffix)
@@ -22,7 +24,7 @@ static int EndsWith(const char *str, const char *suffix)
 	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
-Dyld::Dyld(Kernel *kernel, Task *task)
+Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 {
 	bool found_main_image = false;
 
