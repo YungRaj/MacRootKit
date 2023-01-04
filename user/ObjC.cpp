@@ -15,11 +15,11 @@ namespace ObjectiveC
 		return new ObjCData(macho);
 	}
 
-	Array<ObjCClass*>* parseClassList(ObjCData *data)
+	std::Array<ObjCClass*>* parseClassList(ObjCData *data)
 	{
 		mrk::UserMachO *macho = data->getMachO();
 
-		Array<ObjCClass*> *classes = new Array<ObjCClass*>();
+		std::Array<ObjCClass*> *classes = new std::Array<ObjCClass*>();
 
 		Section *classlist = data->getClassList();
 
@@ -79,11 +79,11 @@ namespace ObjectiveC
 		return classes;
 	}
 
-	Array<Category*>* parseCategoryList(ObjCData *data)
+	std::Array<Category*>* parseCategoryList(ObjCData *data)
 	{
 		mrk::UserMachO *macho = data->getMachO();
 
-		Array<Category*> *categories = new Array<Category*>();
+		std::Array<Category*> *categories = new std::Array<Category*>();
 
 		Section *catlist = data->getCategoryList();
 
@@ -124,11 +124,11 @@ namespace ObjectiveC
 		return categories;
 	}
 
-	Array<Protocol*>* parseProtocolList(ObjCData *data)
+	std::Array<Protocol*>* parseProtocolList(ObjCData *data)
 	{
 		mrk::UserMachO *macho = data->getMachO();
 
-		Array<Protocol*> *protocols = new Array<Protocol*>();
+		std::Array<Protocol*> *protocols = new std::Array<Protocol*>();
 
 		Section *protlist = data->getProtocolList();
 
@@ -168,7 +168,7 @@ namespace ObjectiveC
 		return protocols;
 	}
 
-	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
+	void parseMethodList(ObjCData *metadata, ObjC *object, std::Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
 	{
 		mrk::UserMachO *macho = metadata->getMachO();
 
@@ -272,7 +272,7 @@ namespace ObjectiveC
 		}
 	}
 
-	void parsePropertyList(ObjCData *metadata, ObjC *object, Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo)
+	void parsePropertyList(ObjCData *metadata, ObjC *object, std::Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo)
 	{
 		struct _objc_2_class_property_info *properties;
 

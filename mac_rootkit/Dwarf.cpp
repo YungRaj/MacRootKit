@@ -775,7 +775,7 @@ void Dwarf::parseDebugAbbrev()
 
 	uint32_t debug_abbrev_offset = 0;
 
-	Array<DIE*> stack;
+	std::Array<DIE*> stack;
 
 	uint64_t code = 0;
 
@@ -917,7 +917,7 @@ void Dwarf::parseDebugInfo()
 	struct CompilationUnit *compilationUnit = NULL;
 	struct CompileUnitHeader *header = NULL;
 
-	Array<DwarfDIE*> stack;
+	std::Array<DwarfDIE*> stack;
 
 	uint32_t next_unit = 0;
 	uint32_t consecutive_zeroes = 0;

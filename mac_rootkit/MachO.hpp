@@ -46,9 +46,9 @@ class MachO
 		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
 		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
 
-		Array<Segment*>* getSegments() { return &segments; }
+		std::Array<Segment*>* getSegments() { return &segments; }
 		
-		Array<Section*>* getSections(Segment* segment);
+		std::Array<Section*>* getSections(Segment* segment);
 
 		SymbolTable* getSymbolTable() { return symbolTable; }
 
@@ -93,7 +93,7 @@ class MachO
 
 		struct mach_header_64 *header;
 
-		Array<Segment*> segments;
+		std::Array<Segment*> segments;
 
 		SymbolTable *symbolTable;
 

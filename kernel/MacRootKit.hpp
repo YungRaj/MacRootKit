@@ -28,7 +28,7 @@ namespace mrk
 	using StoredPair = Pair<T, Y>;
 
 	template <typename T, typename Y=void *>
-	using StoredArray = Array<StoredPair<T, Y>*>;
+	using StoredArray = std::Array<StoredPair<T, Y>*>;
 
 	class MacRootKit
 	{
@@ -50,7 +50,7 @@ namespace mrk
 
 			enum Arch::Architectures getPlatformArchitecture() { return platformArchitecture; }
 
-			Array<xnu::Kext*>* getKexts() { return &kexts; }
+			std::Array<xnu::Kext*>* getKexts() { return &kexts; }
 
 			xnu::Kext* getKextByIdentifier(char *name);
 
@@ -93,7 +93,7 @@ namespace mrk
 
 			bool waitingForAlreadyLoadedKexts;
 
-			Array<xnu::Kext*> kexts;
+			std::Array<xnu::Kext*> kexts;
 
 			kmod_info_t **kextKmods;
 

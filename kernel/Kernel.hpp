@@ -200,10 +200,10 @@ namespace xnu
 
 			char* findString(char *s);
 
-			Array<mach_vm_address_t> getExternalReferences(mach_vm_address_t addr);
+			std::Array<mach_vm_address_t> getExternalReferences(mach_vm_address_t addr);
 
-			Array<mach_vm_address_t> getStringReferences(mach_vm_address_t addr);
-			Array<mach_vm_address_t> getStringReferences(const char *s);
+			std::Array<mach_vm_address_t> getStringReferences(mach_vm_address_t addr);
+			std::Array<mach_vm_address_t> getStringReferences(const char *s);
 
 			void parseDebugInformation();
 

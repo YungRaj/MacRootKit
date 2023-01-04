@@ -29,7 +29,7 @@ namespace Arch
 
 			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, arm64_insn insn, size_t num, size_t lookup_size);
 
-			mach_vm_address_t disassembleSignature(mach_vm_address_t address, Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
+			mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
 		}
 	}
 };

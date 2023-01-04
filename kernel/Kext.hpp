@@ -9,8 +9,6 @@
 
 namespace xnu {}
 
-using namespace xnu;
-
 namespace xnu
 {
 	class Kernel;
@@ -19,16 +17,16 @@ namespace xnu
 	class Kext
 	{
 		public:
-			Kext(Kernel *kernel, mach_vm_address_t base, char *identifier);
+			Kext(xnu::Kernel *kernel, mach_vm_address_t base, char *identifier);
 
-			Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info);
+			Kext(xnu::Kernel *kernel, void *kext, kmod_info_t *kmod_info);
 
 			~Kext();
 
-			static Kext* findKextWithIdentifier(Kernel *kernel, char *name);
-			static Kext* findKextWithIdentifier_deprecated(Kernel *kernel, char *name);
+			static xnu::Kext* findKextWithIdentifier(xnu::Kernel *kernel, char *name);
+			static xnu::Kext* findKextWithIdentifier_deprecated(xnu::Kernel *kernel, char *name);
 
-			static Kext* findKextWithId(Kernel *kernel, uint32_t kext_id);
+			static xnu::Kext* findKextWithId(xnu::Kernel *kernel, uint32_t kext_id);
 
 			static void onKextLoad(void *kext, kmod_info_t *kmod_info);
 
@@ -48,9 +46,9 @@ namespace xnu
 			kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
 
 		private:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
-			KextMachO *macho;
+			xnu::KextMachO *macho;
 
 			kmod_info_t *kmod_info;
 

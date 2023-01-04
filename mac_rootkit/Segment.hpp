@@ -53,7 +53,7 @@ class Segment
 
 		size_t getFileSize() { return filesize; }
 
-		Array<Section*>* getSections() { return &sections; }
+		std::Array<Section*>* getSections() { return &sections; }
 
 		Section* getSection(char *sectname)
 		{
@@ -95,7 +95,7 @@ class Segment
 	private:
 		struct segment_command_64 *segment;
 
-		Array<Section*> sections;
+		std::Array<Section*> sections;
 
 		char *name;
 

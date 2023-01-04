@@ -277,7 +277,7 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t disassembleSignature(mach_vm_address_t address, Array<DisasmSig*> *signature, size_t num, size_t lookup_size)
+			mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::Array<DisasmSig*> *signature, size_t num, size_t lookup_size)
 			{
 				return 0;
 			}

@@ -8,7 +8,6 @@ namespace xnu
 
 namespace bsd
 {
-
 	class Process
 	{
 		public:

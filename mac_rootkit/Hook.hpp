@@ -62,10 +62,10 @@ template<typename T, typename Y = enum HookType>
 using HookCallbackPair = Pair<T, Y>;
 
 template<typename T, typename Y = enum HookType>
-using HookCallbackArray = Array<HookCallbackPair<T, Y>*>;
+using HookCallbackArray = std::Array<HookCallbackPair<T, Y>*>;
 
 template<typename T = struct HookPatch*>
-using HookArray = Array<T>;
+using HookArray = std::Array<T>;
 
 namespace mrk
 {

@@ -3,59 +3,63 @@
 
 #include "Array.hpp"
 
-class Dictionary
+namespace std
 {
-	public:
-		Dictionary() { }
 
-		~Dictionary() { }
+	class Dictionary
+	{
+		public:
+			Dictionary() { }
 
-		void* get(char *key)
-		{
-			for(int i = 0; i < keys.getSize(); i++)
+			~Dictionary() { }
+
+			void* get(char *key)
 			{
-				char *k = keys.get(i);
-
-				if(strcmp(k, key) == 0)
+				for(int i = 0; i < keys.getSize(); i++)
 				{
-					return values.get(i);
-				}
-			}
-		}
+					char *k = keys.get(i);
 
-		int find(char *key)
-		{
-			for(int i = 0; i < keys.getSize(); i++)
-			{
-				char *k = keys.get(i);
-
-				if(strcmp(k, key) == 0)
-				{
-					return i;
+					if(strcmp(k, key) == 0)
+					{
+						return values.get(i);
+					}
 				}
 			}
 
-			return -1;
-		}
-
-		void set(char *key, void *value)
-		{
-			int index;
-
-			if((index = find(key)) != -1)
+			int find(char *key)
 			{
-				values.set(value, i);
+				for(int i = 0; i < keys.getSize(); i++)
+				{
+					char *k = keys.get(i);
 
-				return;
+					if(strcmp(k, key) == 0)
+					{
+						return i;
+					}
+				}
+
+				return -1;
 			}
 
-			keys.add(key);
-			values.add(value);
-		}
+			void set(char *key, void *value)
+			{
+				int index;
 
-	private:
-		Array<char*> keys;
-		Array<void*> values;
+				if((index = find(key)) != -1)
+				{
+					values.set(value, i);
+
+					return;
+				}
+
+				keys.add(key);
+				values.add(value);
+			}
+
+		private:
+			std::Array<char*> keys;
+			std::Array<void*> values;
+	};
 };
 
 #endif

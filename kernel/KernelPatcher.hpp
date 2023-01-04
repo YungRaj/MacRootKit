@@ -130,8 +130,8 @@ namespace mrk
 
 			bool waitingForAlreadyLoadedKexts = false;
 
-			Array<struct KernelPatch*> kernelPatches;
-			Array<struct KextPatch*> kextPatches;
+			std::Array<struct KernelPatch*> kernelPatches;
+			std::Array<struct KextPatch*> kextPatches;
 	};
 
 };

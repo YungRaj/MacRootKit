@@ -190,7 +190,7 @@ mach_vm_address_t Disassembler::disassembleNthInstruction(mach_vm_address_t addr
 	return 0;
 }
 
-mach_vm_address_t Disassembler::disassembleSignature(mach_vm_address_t address, Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size)
+mach_vm_address_t Disassembler::disassembleSignature(mach_vm_address_t address, std::Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size)
 {
 	switch(this->architecture)
 	{

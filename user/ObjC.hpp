@@ -271,9 +271,9 @@ namespace ObjectiveC
 
 	ObjCData* parseObjectiveC(mrk::UserMachO *macho);
 
-	Array<ObjCClass*>* parseClassList(ObjCData *data);
-	Array<Category*>* parseCategoryList(ObjCData *data);
-	Array<Protocol*>* parseProtocolList(ObjCData *data);
+	std::Array<ObjCClass*>* parseClassList(ObjCData *data);
+	std::Array<Category*>* parseCategoryList(ObjCData *data);
+	std::Array<Protocol*>* parseProtocolList(ObjCData *data);
 
 	enum MethodType
 	{
@@ -283,9 +283,9 @@ namespace ObjectiveC
 		OPT_CLASS_METHOD,
 	};
 
-	void parseMethodList(ObjCData *metadata, ObjC *object, Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo);
+	void parseMethodList(ObjCData *metadata, ObjC *object, std::Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo);
 
-	void parsePropertyList(ObjCData *metadata, ObjC *object, Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
+	void parsePropertyList(ObjCData *metadata, ObjC *object, std::Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
 
 	mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho);
 
@@ -296,13 +296,13 @@ namespace ObjectiveC
 
 			char* getName() { return name; }
 
-			Array<Method*>* getInstanceMethods() { return &instance_methods; }
-			Array<Method*>* getClassMethods() { return &class_methods; }
+			std::Array<Method*>* getInstanceMethods() { return &instance_methods; }
+			std::Array<Method*>* getClassMethods() { return &class_methods; }
 
-			Array<Method*>* getOptionalInstanceMethods() { return &optional_instance_methods; }
-			Array<Method*>* getOptionalClassMethods() { return &optional_class_methods; }
+			std::Array<Method*>* getOptionalInstanceMethods() { return &optional_instance_methods; }
+			std::Array<Method*>* getOptionalClassMethods() { return &optional_class_methods; }
 
-			Array<Property*>* getInstanceProperties() { return &instance_properties; }
+			std::Array<Property*>* getInstanceProperties() { return &instance_properties; }
 
 			mach_vm_address_t getOffset() { return offset; }
 
@@ -313,13 +313,13 @@ namespace ObjectiveC
 
 			mach_vm_address_t offset;
 
-			Array<Method*> instance_methods;
-			Array<Method*> class_methods;
+			std::Array<Method*> instance_methods;
+			std::Array<Method*> class_methods;
 
-			Array<Method*> optional_instance_methods;
-			Array<Method*> optional_class_methods;
+			std::Array<Method*> optional_instance_methods;
+			std::Array<Method*> optional_class_methods;
 
-			Array<Property*> instance_properties;
+			std::Array<Property*> instance_properties;
 	};
 
 	class Category : public ObjC
@@ -331,10 +331,10 @@ namespace ObjectiveC
 
 			char* getClassName() { return class_name; }
 
-			Array<Method*>* getInstanceMethods() { return &instance_methods; }
-			Array<Method*>* getClassMethods() { return &class_methods; }
+			std::Array<Method*>* getInstanceMethods() { return &instance_methods; }
+			std::Array<Method*>* getClassMethods() { return &class_methods; }
 
-			Array<Property*>* getProperties() { return &properties; }
+			std::Array<Property*>* getProperties() { return &properties; }
 
 		private:
 			struct _objc_2_category *category;
@@ -342,10 +342,10 @@ namespace ObjectiveC
 			char *name;
 			char *class_name;
 
-			Array<Method*> class_methods;
-			Array<Method*> instance_methods;
+			std::Array<Method*> class_methods;
+			std::Array<Method*> instance_methods;
 
-	    	Array<Property*> properties;
+	    	std::Array<Property*> properties;
 	};
 
 	class Ivar
@@ -447,13 +447,13 @@ namespace ObjectiveC
 
 			Property* getProperty(char *propertyname);
 
-			Array<Method*>* getMethods() { return &methods; }
+			std::Array<Method*>* getMethods() { return &methods; }
 
-			Array<Protocol*>* getProtocols() { return &protocols; }
+			std::Array<Protocol*>* getProtocols() { return &protocols; }
 
-			Array<Ivar*>* getIvars() { return &ivars; }
+			std::Array<Ivar*>* getIvars() { return &ivars; }
 
-			Array<Property*>* getProperties() { return &properties; }
+			std::Array<Property*>* getProperties() { return &properties; }
 
 			bool isValid() { return (name && isa);}
 
@@ -483,13 +483,13 @@ namespace ObjectiveC
 			mach_vm_address_t cache;
 			mach_vm_address_t vtable;
 
-			Array<Method*> methods;
+			std::Array<Method*> methods;
 
-			Array<Protocol*> protocols;
+			std::Array<Protocol*> protocols;
 
-			Array<Ivar*> ivars;
+			std::Array<Ivar*> ivars;
 
-			Array<Property*> properties;
+			std::Array<Property*> properties;
 	};
 
 	class ObjCData
@@ -537,9 +537,9 @@ namespace ObjectiveC
 		private:
 			mrk::UserMachO *macho;
 
-			Array<ObjCClass*> *classes;
-			Array<Category*> *categories;
-			Array<Protocol*> *protocols;
+			std::Array<ObjCClass*> *classes;
+			std::Array<Category*> *categories;
+			std::Array<Protocol*> *protocols;
 
 			Segment *data;
 			Segment *data_const;

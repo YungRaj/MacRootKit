@@ -26,7 +26,7 @@ namespace mrk
 
 			virtual void routeFunction(Hook *hook);
 
-			Array<Hook*>* getHooks() { return &hooks; }
+			std::Array<Hook*>* getHooks() { return &hooks; }
 
 			Hook* hookForFunction(mach_vm_address_t address);
 
@@ -41,7 +41,7 @@ namespace mrk
 			void removeHook(Hook *hook);
 
 		private:
-			Array<mrk::Hook*> hooks;
+			std::Array<mrk::Hook*> hooks;
 	};
 
 }

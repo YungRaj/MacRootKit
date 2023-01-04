@@ -16,7 +16,7 @@ class SymbolTable
 
 		SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
 
-		Array<Symbol*> getAllSymbols() { return symbolTable; }
+		std::Array<Symbol*> getAllSymbols() { return symbolTable; }
 
 		Symbol* getSymbolByName(char *name);
 
@@ -29,7 +29,7 @@ class SymbolTable
 		void removeSymbol(Symbol *symbol) { symbolTable.remove(symbol); }
 
 	private:
-		Array<Symbol*> symbolTable;
+		std::Array<Symbol*> symbolTable;
 
 		struct nlist_64 *symtab;
 		

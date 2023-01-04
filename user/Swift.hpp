@@ -43,7 +43,7 @@ namespace Swift
 
 			Segment *segment;
 
-			Array<Section>* sections;
+			std::Array<Section>* sections;
 	};
 };
 
