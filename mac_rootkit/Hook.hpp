@@ -132,15 +132,15 @@ namespace mrk
 			void removeBreakpoint();
 
 		private:
-			Patcher *patcher;
+			mrk::Patcher *patcher;
 
-			Task *task;
+			xnu::Task *task;
 
-			Architecture *architecture;
+			Arch::Architecture *architecture;
 
 			Disassembler *disassembler;
 
-			Payload *payload;
+			mrk::Payload *payload;
 
 			bool kernelHook = false;
 

@@ -2,6 +2,20 @@ global start
 
 section .text
 
+#define LOAD_IMMEDIATE_32(reg, val)                \
+	mov  reg, #(((val) >> 0x00) & 0xFFFF);         \
+	movk reg, #(((val) >> 0x10) & 0xFFFF), lsl#16
+
+#define LOAD_IMMEDIATE_64(reg, val)                \
+	mov  reg, #(((val) >> 0x00) & 0xFFFF);         \
+	movk reg, #(((val) >> 0x10) & 0xFFFF), lsl#16; \
+	movk reg, #(((val) >> 0x20) & 0xFFFF), lsl#32; \
+	movk reg, #(((val) >> 0x30) & 0xFFFF), lsl#48
+
+#define LOAD_FROM_LABEL(reg, label) \
+	adr reg, label;                 \
+	ldr reg, [reg]
+
 global _push_registers_arm64
 global _push_registers_arm64_end
 

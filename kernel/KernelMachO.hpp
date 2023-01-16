@@ -26,8 +26,8 @@ namespace xnu
 
 			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
 
-			static Kext* kextLoadedAt(xnu::Kernel *kernel, mach_vm_address_t address);
-			static Kext* kextWithIdentifier(xnu::Kernel *kernel, char *kext);
+			static xnu::Kext* kextLoadedAt(xnu::Kernel *kernel, mach_vm_address_t address);
+			static xnu::Kext* kextWithIdentifier(xnu::Kernel *kernel, char *kext);
 
 			virtual void parseLinkedit();
 
