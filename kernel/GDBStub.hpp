@@ -85,7 +85,7 @@ namespace Debug
 	class GDBStubA64 : public Debugger
 	{
 		public:
-			explicit GDBStubXnuArm64(xnu::Kernel *kernel);
+			explicit GDBStubArm64(xnu::Kernel *kernel);
 
 			void addBreakpoint(mach_vm_address_t address);
 
@@ -110,7 +110,7 @@ namespace Debug
 	class GDBStubX64 : public Debugger
 	{
 		public:
-			explicit GDBStubXnuX64(xnu::Kernel *kernel);
+			explicit GDBStubX64(xnu::Kernel *kernel);
 
 			void addBreakpoint(mach_vm_address_t address);
 
