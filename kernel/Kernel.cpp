@@ -859,16 +859,16 @@ mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot
 
 	ret = static_cast<kern_return_t>(this->call(vm_map_enter_mem_object_helper, vmMapEnterMemObjectHelperArgs, 15)); */
 
+	snprintf(buffer, 128, "0x%llx", address);
+
+	MAC_RK_LOG("MacRK::vm_map_enter() return address = %s\n", buffer);
+
 #endif
 
 	if(ret != KERN_SUCCESS)
 	{
 		address = 0;
 	}
-
-	snprintf(buffer, 128, "0x%llx", address);
-
-	MAC_RK_LOG("MacRK::vm_map_enter() return address = %s\n", buffer);
 
 	return address;
 }
@@ -884,7 +884,7 @@ bool Kernel::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 
 #ifdef __x86_64__
 
-	uint64_t mlStaticProtectArgs[3] = { address, size, prot };
+	uint64_t mlStaticProtectArgs[3] = { address, size, (uint64_t) prot };
 
 	ret = static_cast<kern_return_t>(this->call("_ml_static_protect", mlStaticProtectArgs, 3));
 
@@ -1304,7 +1304,7 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 	}
 
 	return true;
-#elif
+#elif __x86_64__
 
 	return kernel_write(address, data, size) || kernel_write_unsafe(address, data, size);
 

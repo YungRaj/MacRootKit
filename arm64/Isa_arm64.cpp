@@ -1,5 +1,6 @@
 #include "Isa_arm64.hpp"
 
+/*
 void push_registers_arm64() {}
 void push_registers_arm64_end() {}
 
@@ -14,6 +15,7 @@ void breakpoint_arm64_end() {}
 
 void pop_registers_arm64() {}
 void pop_registers_arm64_end() {}
+*/
 
 namespace Arch
 {

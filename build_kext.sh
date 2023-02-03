@@ -1,19 +1,30 @@
 set -e
 
-cd capstone
+export ARCH="$1"
 
-export CAPSTONE_ARCHS="x86 aarch64"
+export CFLAGS="-target $1-apple-macos"
+export CXXFLAGS="-target $1-apple-macos"
+export LDFLAGS="-target $1-apple-macos"
 
-export CFLAGS="-target arm64e-apple-macos12.0"
-export LDFLAGS="-target arm64e-apple-macos12.0"
+if [ "$2" == "all" ]; then
 
-make clean
+	cd capstone
 
-./make.sh osx-kernel
+	export CAPSTONE_ARCHS="x86 aarch64"
 
-sudo ./make.sh osx-kernel install
+	make clean
 
-cd ..
+	./make.sh osx-kernel
+
+	sudo ./make.sh osx-kernel install
+
+	cd ..
+
+fi
+
+if [ ! -d "obj" ]; then
+	mkdir obj
+fi
 
 make -f make_kext.mk clean
 

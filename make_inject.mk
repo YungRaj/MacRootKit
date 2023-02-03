@@ -1,5 +1,3 @@
-ARCH = arm64
-
 BUILD = build
 OBJ = obj
 
@@ -38,11 +36,11 @@ ARM64_CPPOBJECTS := $(patsubst arm64/%.cpp, $(OBJ)/%.o, $(ARM64_CPPSOURCES))
 
 USER_CPPOBJECTS  := $(filter-out user/main.cpp, $(USER_CPPOBJECTS))
 
-CFLAGS += -target arm64-apple-macos -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
+CFLAGS += -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
-LDFLAGS += -target arm64-apple-macos -framework IOKit -framework CoreFoundation -L/usr/local/lib /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
+LDFLAGS += -framework IOKit -framework CoreFoundation -L/usr/local/lib /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
-CXXFLAGS += -target arm64-apple-macos -D__USER__ -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
+CXXFLAGS += -D__USER__ -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
 
 .PHONY: all clean
 

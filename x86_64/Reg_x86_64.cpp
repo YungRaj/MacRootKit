@@ -41,7 +41,7 @@ namespace Arch
 			
 		#if __x86_64__
 			__asm__ volatile("rdmsr" : : "A" (efer), "c" (MSR_IA32_EFER));
-			__asm__ volatile("wdmsr" : : "a" (value), "c" (MSR_IA32_EFER));
+			__asm__ volatile("wrmsr" : : "a" (value), "c" (MSR_IA32_EFER));
 		#endif
 
 		}

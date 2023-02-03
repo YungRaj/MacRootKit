@@ -1,35 +1,42 @@
 set -e
 
-cd capstone
+export ARCH="$1"
 
-make clean
+export CFLAGS="-target $1-apple-macos"
+export CXXFLAGS="-target $1-apple-macos"
+export LDFLAGS="-target $1-apple-macos"
 
-export CAPSTONE_ARCHS="x86 aarch64"
+if [ "$2" == "all" ]; then
 
-./make.sh mac-universal-no
+    cd capstone
 
-sudo ./make.sh mac-universal-no install
+    make clean
 
-cd ..
+    export CAPSTONE_ARCHS="x86 aarch64"
 
-cd keystone
+    ./make.sh mac-universal-no
 
-export CFLAGS="-target arm64e-apple-macos"
-export LDFLAGS="-target arm64e-apple-macos"
+    sudo ./make.sh mac-universal-no install
 
-if [ ! -d build ]; then
-  mkdir build
+    cd ..
+
+    cd keystone
+
+    if [ ! -d build ]; then
+      mkdir build
+    fi
+
+    cd build
+
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DLLVM_TARGETS_TO_BUILD="AArch64;X86" -G "Unix Makefiles" ..
+
+    make -j8
+
+    sudo make install
+
+    cd ../..
+
 fi
-
-cd build
-
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DLLVM_TARGETS_TO_BUILD="AArch64;X86" -G "Unix Makefiles" ..
-
-make -j8
-
-sudo make install
-
-cd ../..
 
 make -f make_inject.mk clean
 

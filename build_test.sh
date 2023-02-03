@@ -1,5 +1,11 @@
 set -e
 
+export ARCH="$1"
+
+export CFLAGS="-target $1-apple-macos"
+export CXXFLAGS="-target $1-apple-macos"
+export LDFLAGS="-target $1-apple-macos"
+
 cd keystone
 
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DLLVM_TARGETS_TO_BUILD="AArch64;X86" -G "Unix Makefiles" ./

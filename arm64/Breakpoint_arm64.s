@@ -1,36 +1,21 @@
-global start
+.global start
 
-section .text
+.global _push_registers_arm64
+.global _push_registers_arm64_end
 
-#define LOAD_IMMEDIATE_32(reg, val)                \
-	mov  reg, #(((val) >> 0x00) & 0xFFFF);         \
-	movk reg, #(((val) >> 0x10) & 0xFFFF), lsl#16
+.global _set_argument_arm64
+.global _set_argument_arm64_end
 
-#define LOAD_IMMEDIATE_64(reg, val)                \
-	mov  reg, #(((val) >> 0x00) & 0xFFFF);         \
-	movk reg, #(((val) >> 0x10) & 0xFFFF), lsl#16; \
-	movk reg, #(((val) >> 0x20) & 0xFFFF), lsl#32; \
-	movk reg, #(((val) >> 0x30) & 0xFFFF), lsl#48
+.global _check_breakpoint_arm64
+.global _check_breakpoint_arm64_end
 
-#define LOAD_FROM_LABEL(reg, label) \
-	adr reg, label;                 \
-	ldr reg, [reg]
+.global _breakpoint_arm64
+.global _breakpoint_arm64_end
 
-global _push_registers_arm64
-global _push_registers_arm64_end
+.global _pop_register_arm64
+.global _pop_registers_arm64_end
 
-global _set_argument_arm64
-global _set_argument_arm64_end
-
-global _check_breakpoint_arm64
-global _check_breakpoint_arm64_end
-
-global _breakpoint_arm64
-global _breakpoint_arm64_end
-
-global _pop_register_arm64
-global _pop_registers_arm64_end
-
+.align 2
 _push_registers_arm64:
 	sub sp, sp, 0x110
 	stp x0, x1, [sp, 0x100]
@@ -48,15 +33,15 @@ _push_registers_arm64:
 	stp x24, x25, [sp, 0x40]
 	stp x26, x27, [sp, 0x30]
 	stp x28, x29, [sp, 0x20]
-	stp x30, sp, [sp, 0x10]
+	stp x30, x31, [sp, 0x10]
 _push_registers_arm64_end:
 	nop
 _set_argument_arm64:
-	lea rdi, [rsp + 0x80]
+	nop
 _set_argument_arm64_end:
 	nop
 _check_breakpoint_arm64:
-	cmp rax, 1
+	cmp x0, 1
 	b.ne 0x4
 _check_breakpoint_arm64_end:
 	nop
@@ -65,7 +50,7 @@ _breakpoint_arm64:
 _breakpoint_arm64_end:
 	nop
 _pop_registers_arm64:
-	ldp x30, sp, [sp, 0x10]
+	ldp x30, x31, [sp, 0x10]
 	ldp x28, x29, [sp, 0x20]
 	ldp x26, x27, [sp, 0x30]
 	ldp x24, x25, [sp, 0x40]
