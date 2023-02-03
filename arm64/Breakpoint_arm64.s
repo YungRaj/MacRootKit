@@ -12,7 +12,7 @@
 .global _breakpoint_arm64
 .global _breakpoint_arm64_end
 
-.global _pop_register_arm64
+.global _pop_registers_arm64
 .global _pop_registers_arm64_end
 
 .align 2
