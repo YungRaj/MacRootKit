@@ -137,7 +137,7 @@ char* DWTagToString(enum DW_TAG tag)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(tag));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(tag));
 
 	return ret;
 }
@@ -339,7 +339,7 @@ char* DWAttrToString(enum DW_AT attr)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(attr));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(attr));
 
 	return ret;
 }
@@ -402,7 +402,7 @@ char* DWFormToString(enum DW_FORM form)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%llx", static_cast<uint32_t>(form));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(form));
 
 	return ret;
 }
@@ -852,7 +852,7 @@ void Dwarf::parseDebugAbbrev()
 
 			} else
 			{
-				MAC_RK_LOG("\tDW_AT = %s 0x%llx DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
+				MAC_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
 				
 				DIE *die = stack.get(stack.getSize() - 1);
 

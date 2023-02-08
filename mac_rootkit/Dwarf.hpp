@@ -68,7 +68,7 @@ namespace Debug
 
 			uint64_t getCode() { return code; }
 
-			uint32_t getAttributesCount() { return abbreviationTable.getSize(); }
+			size_t getAttributesCount() { return abbreviationTable.getSize(); }
 
 			struct AttrAbbrev* getAttribute(enum DW_AT attr);
 			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.get(index); }

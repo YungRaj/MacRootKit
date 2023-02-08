@@ -24,21 +24,21 @@ namespace mrk
 
 			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
-			virtual void routeFunction(Hook *hook);
+			virtual void routeFunction(mrk::Hook *hook);
 
 			std::Array<Hook*>* getHooks() { return &hooks; }
 
-			Hook* hookForFunction(mach_vm_address_t address);
+			mrk::Hook* hookForFunction(mach_vm_address_t address);
 
-			Hook* breakpointForAddress(mach_vm_address_t address);
+			mrk::Hook* breakpointForAddress(mach_vm_address_t address);
 
 			bool isFunctionHooked(mach_vm_address_t address);
 
 			bool isBreakpointAtInstruction(mach_vm_address_t address);
 
-			void installHook(Hook *hook, mach_vm_address_t hooked);
+			void installHook(mrk::Hook *hook, mach_vm_address_t hooked);
 
-			void removeHook(Hook *hook);
+			void removeHook(mrk::Hook *hook);
 
 		private:
 			std::Array<mrk::Hook*> hooks;

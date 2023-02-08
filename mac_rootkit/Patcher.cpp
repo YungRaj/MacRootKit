@@ -2,6 +2,8 @@
 
 #include "Hook.hpp"
 
+using namespace mrk;
+
 Patcher::Patcher()
 {
 }

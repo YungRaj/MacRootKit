@@ -2,6 +2,9 @@
 
 #include "Hook.hpp"
 
+using namespace mrk;
+using namespace xnu;
+
 Payload::Payload(Task *task, Hook *hook, vm_prot_t protection)
 {
 	this->task = task;

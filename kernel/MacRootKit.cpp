@@ -3,6 +3,9 @@
 using namespace Arch;
 using namespace xnu;
 
+namespace mrk
+{
+
 MacRootKit::MacRootKit(Kernel *kernel)
 {
 	this->kernel = kernel;
@@ -151,4 +154,6 @@ void* MacRootKit::findOSKextByIdentifier(const char *kextidentifier)
 	void *OSKext = lookupKextWithIdentifier(kextidentifier);
 
 	return OSKext;
+}
+
 }

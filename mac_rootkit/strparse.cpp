@@ -177,7 +177,7 @@ enum strtodata_result strtodata(char *str,
 
 	uint32_t left = (p == NULL ? 0 : *size);
 
-	size_t realsize = 0;
+	uint32_t realsize = 0;
 
 	do
 	{
@@ -253,7 +253,7 @@ enum strparse_result strreplace(char *str, char find, char replace)
 
 char* strdup(char *s)
 {
-	int l;
+	size_t l;
 	char *t;
 
 	if (s == NULL) return NULL;
@@ -270,7 +270,7 @@ char* strdup(char *s)
 
 char* strstr(char *string, char *substring)
 {
-	register char *a, *b;
+	char *a, *b;
 
 	/* First scan quickly through the two strings looking for a
 	 * single-character match.  When it's found, then compare the

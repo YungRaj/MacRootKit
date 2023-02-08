@@ -12,9 +12,9 @@
 #include "IOKernelRootKitService.hpp"
 #include "MacRootKit.hpp"
 
-MacRootKit *rootkit = NULL;
+mrk::MacRootKit *rootkit = NULL;
 
-MacRootKit* mac_rootkit_get_rootkit()
+mrk::MacRootKit* mac_rootkit_get_rootkit()
 {
 	if(rootkit)
 		return rootkit;
@@ -26,7 +26,7 @@ kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel,
 {
 	kern_return_t ret = kIOReturnSuccess;
 
-	rootkit = new MacRootKit(kernel);
+	rootkit = new mrk::MacRootKit(kernel);
 
 	if(!rootkit)
 	{

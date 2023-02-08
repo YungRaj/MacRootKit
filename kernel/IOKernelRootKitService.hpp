@@ -17,13 +17,10 @@ namespace mrk
 class IOKernelRootKitService;
 class IOKernelRootKitUserClient;
 
-using namespace xnu;
-using namespace mrk;
+extern kern_return_t mac_rootkit_start(IOKernelRootKitService *service, xnu::Kernel *kernel, xnu::Kext **kext);
+extern kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, xnu::Kernel *kernel, xnu::Kext **kext);
 
-extern kern_return_t mac_rootkit_start(IOKernelRootKitService *service, Kernel *kernel, Kext **kext);
-extern kern_return_t mac_rootkit_stop(IOKernelRootKitService * service, Kernel *kernel, Kext **kext);
-
-extern MacRootKit* mac_rootkit_get_rootkit();
+extern mrk::MacRootKit* mac_rootkit_get_rootkit();
 
 class IOKernelRootKitService : public IOService
 {
@@ -41,11 +38,11 @@ class IOKernelRootKitService : public IOService
 
 		virtual void clientClosed(IOUserClient *client);
 
-		MacRootKit* getRootKit() { return rootkit; }
+		mrk::MacRootKit* getRootKit() { return rootkit; }
 
-		Kernel* getKernel() { return kernel; }
+		xnu::Kernel* getKernel() { return kernel; }
 
-		Kext* getKext() { return rootkitKext; }
+		xnu::Kext* getKext() { return rootkitKext; }
 
 		mach_port_t getKernelTaskPort() { return tfp0; }
 
@@ -62,11 +59,11 @@ class IOKernelRootKitService : public IOService
 		IOReturn detachUserClients();
 
 	private:
-		MacRootKit *rootkit;
+		mrk::MacRootKit *rootkit;
 
-		Kernel *kernel;
+		xnu::Kernel *kernel;
 
-		Kext *rootkitKext;
+		xnu::Kext *rootkitKext;
 
 		mach_port_t tfp0;
 

@@ -1,6 +1,7 @@
 #include "KextMachO.hpp"
 
-using namespace xnu;
+namespace xnu
+{
 
 KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
 {
@@ -261,4 +262,6 @@ void KextMachO::parseHeader()
 void KextMachO::parseMachO()
 {
 	this->parseHeader();
+}
+
 }

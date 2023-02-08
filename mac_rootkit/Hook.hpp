@@ -50,7 +50,7 @@ struct HookPatch
 
 	union FunctionJmp patch;
 
-	Payload *payload;
+	mrk::Payload *payload;
 
 	uint8_t *original;
 	uint8_t *replace;
@@ -72,18 +72,18 @@ namespace mrk
 	class Hook
 	{
 		public:
-			Hook(Patcher *patcher, enum HookType hooktype);
-			Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address_t from);
+			Hook(mrk::Patcher *patcher, enum HookType hooktype);
+			Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, mach_vm_address_t from);
 
-			void initWithHookParams(Task *task, mach_vm_address_t from);
-			void initWithBreakpointParams(Task *task, mach_vm_address_t breakpoint);
+			void initWithHookParams(xnu::Task *task, mach_vm_address_t from);
+			void initWithBreakpointParams(xnu::Task *task, mach_vm_address_t breakpoint);
 
-			static Hook* hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t address);
-			static Hook* breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t address);
+			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+			static Hook* breakpointForAddress(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
 
-			Patcher* getPatcher() { return patcher; }
+			mrk::Patcher* getPatcher() { return patcher; }
 
-			Task* getTask() { return task; }
+			xnu::Task* getTask() { return task; }
 
 			Architecture* getArchitecture() { return architecture; }
 
@@ -117,7 +117,7 @@ namespace mrk
 
 			void setHookType(enum HookType hooktype) { this->hooktype = hooktype; }
 
-			Payload* prepareTrampoline();
+			mrk::Payload* prepareTrampoline();
 
 			void registerHook(struct HookPatch *patch);
 

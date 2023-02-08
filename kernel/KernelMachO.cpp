@@ -18,14 +18,14 @@ KernelMachO::~KernelMachO()
 
 Kext* KernelMachO::kextLoadedAt(Kernel *kernel, mach_vm_address_t address)
 {
-	MacRootKit *rootkit = kernel->getRootKit();
+	mrk::MacRootKit *rootkit = kernel->getRootKit();
 
 	return rootkit->getKextByAddress(address);
 }
 
 Kext* KernelMachO::kextWithIdentifier(Kernel *kernel, char *kextname)
 {
-	MacRootKit *rootkit = kernel->getRootKit();
+	mrk::MacRootKit *rootkit = kernel->getRootKit();
 
 	return rootkit->getKextByIdentifier(kextname);
 }

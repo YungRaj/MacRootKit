@@ -10,6 +10,9 @@
 
 #include "Arch.hpp"
 
+using namespace mrk;
+using namespace xnu;
+
 Hook::Hook(Patcher *patcher, enum HookType hooktype)
 {
 	this->patcher = patcher;

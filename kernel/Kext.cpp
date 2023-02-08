@@ -39,7 +39,7 @@ Kext::~Kext()
 
 Kext* Kext::findKextWithIdentifier(Kernel *kernel, char *name)
 {
-	MacRootKit *rootkit = kernel->getRootKit();
+	mrk::MacRootKit *rootkit = kernel->getRootKit();
 
 	return rootkit->getKextByIdentifier(name);
 }
