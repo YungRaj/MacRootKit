@@ -283,16 +283,19 @@ off_t Kernel::findKernelSlide()
 
 	base = Kernel::findKernelBase();
 
+#ifdef __arm64__
+
 	if((base - 0xfffffe0007004000) > 0xFFFFFFFF)
 		panic("kernel base minus unslid base is overflown!");
-
-#ifdef __arm64__
 
 	return (off_t) (base - 0xfffffe0007004000);
 
 #endif
 
 #ifdef __x86_64__
+
+	if((base - 0xffffff8000200000) > 0xFFFFFFFF)
+		panic("kernel base minus unslid base is overflown!");
 
 	mh = reinterpret_cast<struct mach_header_64*>(base);
 
