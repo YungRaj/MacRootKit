@@ -24,6 +24,8 @@ namespace std
 						return values.get(i);
 					}
 				}
+
+				return NULL;
 			}
 
 			int find(char *key)
@@ -47,7 +49,7 @@ namespace std
 
 				if((index = find(key)) != -1)
 				{
-					values.set(value, i);
+					values.set(value, index);
 
 					return;
 				}

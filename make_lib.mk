@@ -36,6 +36,21 @@ ARM64_CPPOBJECTS := $(patsubst arm64/%.cpp, $(OBJ)/%.o, $(ARM64_CPPSOURCES))
 
 USER_CPPOBJECTS  := $(filter-out user/main.cpp, $(USER_CPPOBJECTS))
 
+ifeq ($(ARCH), x86_64)
+X86_64_ASMSOURCES := $(wildcard x86_64/*.s)
+X86_64_ASMOBJECTS :=  $(patsubst x86_64/%.s, $(OBJ)/%.o, $(X86_64_ASMSOURCES))
+endif
+
+ifeq ($(ARCH), arm64)
+ARM64_ASMSOURCES := $(wildcard arm64/*.s)
+ARM64_ASMOBJECTS :=  $(patsubst arm64/%.s, $(OBJ)/%.o, $(ARM64_ASMSOURCES))
+endif
+
+ifeq ($(ARCH), arm64e)
+ARM64_ASMSOURCES := $(wildcard arm64/*.s)
+ARM64_ASMOBJECTS :=  $(patsubst arm64/%.s, $(OBJ)/%.o, $(ARM64_ASMSOURCES))
+endif
+
 CFLAGS += -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
 LDFLAGS += -framework IOKit -framework CoreFoundation -L/usr/local/lib /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
@@ -64,12 +79,18 @@ $(X86_64_CPPOBJECTS): $(OBJ)/%.o: x86_64/%.cpp
 $(ARM64_CPPOBJECTS): $(OBJ)/%.o: arm64/%.cpp
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -g -c $< -o $@
 
+$(X86_64_ASMOBJECTS): $(OBJ)/%.o: x86_64/*.s
+	$(NASM) $(ASM_FLAGS) $< -o $@
+
+$(ARM64_ASMOBJECTS): $(OBJ)/%.o: arm64/*.s
+	as -arch $(ARCH) $< -o $@
+
 $(OBJ):
 	rm $(OBJ)/*.o
 
-$(BUILD)/$(TARGET):  $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
+$(BUILD)/$(TARGET):  $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
 	# $(CXX)  $(LDFLAGS) -framework CoreFoundation -framework IOKit -o $@ $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
-	libtool -o $(BUILD)/libKTFP0.a -static $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
+	libtool -o $(BUILD)/libKTFP0.a -static $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
 
 clean:
 	rm -rf obj/*

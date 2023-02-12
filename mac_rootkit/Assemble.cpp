@@ -676,7 +676,7 @@ uint32_t assemble_arith(char *ins)
 			else
 				return 0;
 
-			add.imm = get_imm(operands[2], 16);
+			add.imm = static_cast<uint32_t>(get_imm(operands[2], 16));
 			add.sh = 0b0;
 			add.Rn = get_reg(operands[1]);
 			add.Rd = get_reg(operands[0]);
@@ -768,7 +768,7 @@ uint32_t assemble_arith(char *ins)
 			else
 				return 0;
 
-			add.imm = get_imm(operands[2], 16);
+			add.imm = static_cast<uint32_t>(get_imm(operands[2], 16));
 			add.sh = 0b0;
 			add.Rn = get_reg(operands[1]);
 			add.Rd = get_reg(operands[0]);
@@ -888,7 +888,7 @@ uint32_t assemble_arith(char *ins)
 			} else
 				return 0;
 
-			asr.immr = get_imm(operands[2], 10);
+			asr.immr = static_cast<uint32_t>(get_imm(operands[2], 10));
 			asr.Rn = get_reg(operands[1]);
 			asr.Rd = get_reg(operands[0]);
 
@@ -1482,7 +1482,7 @@ uint32_t assemble_logic(char *ins)
 			else
 				return 0;
 
-			lsr.immr = get_imm(operands[2], 10);
+			lsr.immr = static_cast<uint32_t>(get_imm(operands[2], 10));
 			lsr.Rn = get_reg(operands[1]);
 			lsr.Rd = get_reg(operands[0]);
 
@@ -1588,7 +1588,7 @@ uint32_t assemble_memory(char *ins)
 				return 0;
 
 			if(count == 7)
-				ldpsw.imm = get_imm(operands[4], 16);
+				ldpsw.imm = static_cast<uint32_t>(get_imm(operands[4], 16));
 			else if(count == 6)
 				ldpsw.imm = 0;
 			else
@@ -2008,7 +2008,7 @@ uint32_t assemble_memory(char *ins)
 			ldr.op1 = 0b0;
 			ldr.op2 = 0b011000;
 			ldr.Rt = get_reg(operands[0]);
-			ldr.imm = get_imm(operands[1], 16);
+			ldr.imm = static_cast<uint32_t>(get_imm(operands[1], 16));
 
 			memcpy(&assembly, &ldr, sizeof(uint32_t));
 

@@ -14,7 +14,7 @@ global _check_breakpoint_x86_64_end
 global _breakpoint_x86_64
 global _breakpoint_x86_64_end
 
-global _pop_register_x86_64
+global _pop_registers_x86_64
 global _pop_registers_x86_64_end
 
 _push_registers_x86_64:

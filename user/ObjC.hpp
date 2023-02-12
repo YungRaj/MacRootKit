@@ -36,191 +36,191 @@ namespace ObjectiveC
 
 	struct _objc_ivar
 	{
-	    uint64_t offset;
-	    uint64_t name;
-	    uint64_t type;
-	    uint8_t size;
+		uint64_t offset;
+		uint64_t name;
+		uint64_t type;
+		uint8_t size;
 	};
 
 	enum _objc_method_type
 	{
-	    _objc_method_invalid_type = 0,
-	    _objc_method_instance_type,
-	    _objc_method_class_type
+		_objc_method_invalid_type = 0,
+		_objc_method_instance_type,
+		_objc_method_class_type
 	};
 
 	struct _objc_method
 	{
-	    uint32_t name;
-	    uint32_t type;
-	    uint32_t offset;
+		uint32_t name;
+		uint32_t type;
+		uint32_t offset;
 	};
 
 	struct _objc_protocol
 	{
-	    char *name;
-	    uint64_t offset;
-	    struct _objc_method *method;
-	    uint32_t methodCount;
+		char *name;
+		uint64_t offset;
+		struct _objc_method *method;
+		uint32_t methodCount;
 	};
 
 	struct objc_category
 	{
-	    char *category_name;
-	    char *class_name;
+		char *category_name;
+		char *class_name;
 
-	    struct _objc_method *instance_methods;
-	    struct _objc_method *class_methods;
-	    struct _objc_protocol *protocols;
+		struct _objc_method *instance_methods;
+		struct _objc_method *class_methods;
+		struct _objc_protocol *protocols;
 	};
 
 	struct _objc_class
 	{
-	    struct _objc_class *superCls;
-	    char *className;
-	    struct _objc_ivar *ivar;
-	    uint32_t ivarCount;
-	    struct _objc_method *method;
-	    uint32_t methodCount;
-	    struct _objc_protocol *protocol;
-	    uint32_t protocolCount;
+		struct _objc_class *superCls;
+		char *className;
+		struct _objc_ivar *ivar;
+		uint32_t ivarCount;
+		struct _objc_method *method;
+		uint32_t methodCount;
+		struct _objc_protocol *protocol;
+		uint32_t protocolCount;
 	};
 
 	struct _objc_module
 	{
-	    char *impName;
-	    struct _objc_class *symbol;
+		char *impName;
+		struct _objc_class *symbol;
 	};
 
 	struct _objc_module_raw
 	{
-	    uint32_t version;
-	    uint32_t size;
-	    uint32_t name;
-	    uint32_t symtab;
+		uint32_t version;
+		uint32_t size;
+		uint32_t name;
+		uint32_t symtab;
 	};
 
 	enum _objc_2_class_type
 	{
-	    _objc_2_class_invalid_type = 0,
-	    _objc_2_class_class_type,
-	    _objc_2_class_metaclass_type
+		_objc_2_class_invalid_type = 0,
+		_objc_2_class_class_type,
+		_objc_2_class_metaclass_type
 	};
 
-	#define kObjc2SelRef     "__objc_selrefs"
-	#define kObjc2MsgRefs    "__objc_msgrefs"
+	#define kObjc2SelRef	 "__objc_selrefs"
+	#define kObjc2MsgRefs	"__objc_msgrefs"
 	#define kObjc2ClassRefs "__objc_classrefs"
 	#define kObjc2SuperRefs "__objc_superrefs"
 	#define kObjc2ClassList "__objc_classlist"
 	#define kObjc2NlClsList "__objc_nlclslist"
-	#define kObjc2CatList     "__objc_catlist"
+	#define kObjc2CatList	 "__objc_catlist"
 	#define kObjc2NlCatList "__objc_nlcatlist"
 	#define kObjc2ProtoList "__objc_protolist"
 	#define kObjc2ProtoRefs "__objc_protorefs"
 
 	struct _objc_2_class_method_info
 	{
-	    uint32_t entrySize;
-	    uint32_t count;
+		uint32_t entrySize;
+		uint32_t count;
 	};
 
 	struct _objc_2_class_protocol_info
 	{
-	    uint64_t count;
+		uint64_t count;
 	};
 
 	struct _objc_2_class_ivar_info
 	{
-	    uint32_t entrySize;
-	    uint32_t count;
+		uint32_t entrySize;
+		uint32_t count;
 	};
 
 	struct _objc_2_class_property_info
 	{
-	    uint32_t entrySize;
-	    uint32_t count;
+		uint32_t entrySize;
+		uint32_t count;
 	};
 
 	struct _objc_2_class_method
 	{
-	    uint32_t name;
-	    uint32_t type;
-	    int32_t imp;
+		uint32_t name;
+		uint32_t type;
+		int32_t imp;
 	};
 
 	struct _objc_2_method
 	{
-	    uint64_t name;
-	    uint64_t type;
-	    uint64_t imp;
+		uint64_t name;
+		uint64_t type;
+		uint64_t imp;
 	};
 
 	struct _objc_2_class_protocol
 	{
-	    uint64_t isa;
-	    uint64_t name;
-	    uint64_t protocols;
-	    uint64_t instance_methods;
-	    uint64_t class_methods;
-	    uint64_t opt_instance_methods;
-	    uint64_t opt_class_methods;
-	    uint64_t instance_properties;
-	    uint32_t cb;
-	    uint32_t flags;
+		uint64_t isa;
+		uint64_t name;
+		uint64_t protocols;
+		uint64_t instance_methods;
+		uint64_t class_methods;
+		uint64_t opt_instance_methods;
+		uint64_t opt_class_methods;
+		uint64_t instance_properties;
+		uint32_t cb;
+		uint32_t flags;
 	};
 
 	struct _objc_2_category
 	{
-	    uint64_t category_name;
-	    uint64_t class_name;
+		uint64_t category_name;
+		uint64_t class_name;
 
-	    uint64_t instance_methods;
-	    uint64_t class_methods;
-	    uint64_t protocols;
-	    uint64_t properties;
+		uint64_t instance_methods;
+		uint64_t class_methods;
+		uint64_t protocols;
+		uint64_t properties;
 	};
 
 	struct _objc_2_class_ivar
 	{
-	    uint64_t offset;
-	    uint64_t name;
-	    uint64_t type;
-	    uint32_t align;
-	    uint32_t size;
+		uint64_t offset;
+		uint64_t name;
+		uint64_t type;
+		uint32_t align;
+		uint32_t size;
 	};
 
 	struct _objc_2_class_property
 	{
-	    uint64_t name;
-	    uint64_t attributes;
+		uint64_t name;
+		uint64_t attributes;
 	};
 
 	struct _objc_2_class_data
 	{
-	    uint32_t flags;
-	    uint32_t instanceStart;
-	    uint32_t instanceSize;
-	    uint32_t reserved;
-	    uint64_t iVarLayout;
-	    uint64_t name;
-	    //char*
-	    uint64_t methods;
-	    //struct _objc_2_class_method_info*
-	    uint64_t protocols;
-	    //struct _objc_2_class_protocol_info*
-	    uint64_t ivars;
-	    //struct _objc_2_class_ivar_info*
-	    uint64_t weakIVarLayout;
-	    uint64_t properties; //struct _objc_2_class_property_info*
+		uint32_t flags;
+		uint32_t instanceStart;
+		uint32_t instanceSize;
+		uint32_t reserved;
+		uint64_t iVarLayout;
+		uint64_t name;
+		//char*
+		uint64_t methods;
+		//struct _objc_2_class_method_info*
+		uint64_t protocols;
+		//struct _objc_2_class_protocol_info*
+		uint64_t ivars;
+		//struct _objc_2_class_ivar_info*
+		uint64_t weakIVarLayout;
+		uint64_t properties; //struct _objc_2_class_property_info*
 	};
 
 	struct _objc_2_class
 	{
-	    uint64_t isa;
-	    uint64_t superclass;
-	    uint64_t cache;
-	    uint64_t vtable;
-	    struct _objc_2_class_data *data;
+		uint64_t isa;
+		uint64_t superclass;
+		uint64_t cache;
+		uint64_t vtable;
+		struct _objc_2_class_data *data;
 	};
 };
 
@@ -230,34 +230,34 @@ namespace ObjectiveC
 {
 	mach_vm_address_t getClass(const char *name);
 
-	const char*       class_getName(mach_vm_address_t cls);
+	const char*	   class_getName(mach_vm_address_t cls);
 	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls);
 	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls, mach_vm_address_t new_super);
-	bool              class_isMetaClass(mach_vm_address_t cls);
+	bool			  class_isMetaClass(mach_vm_address_t cls);
 	mach_vm_address_t class_getInstanceVariable(mach_vm_address_t cls, const char *name);
 	mach_vm_address_t class_getClassVariable(mach_vm_address_t cls, const char *name);
-	bool              class_addIvar(mach_vm_address_t cls, const char *name, size_t size, uint8_t alignment, const char *types);
+	bool			  class_addIvar(mach_vm_address_t cls, const char *name, size_t size, uint8_t alignment, const char *types);
 	mach_vm_address_t class_getProperty(mach_vm_address_t cls, const char *name);
-	bool              class_addMethod(mach_vm_address_t cls, char *name, mach_vm_address_t mach_vm_address_t, const char *types);
+	bool			  class_addMethod(mach_vm_address_t cls, char *name, mach_vm_address_t mach_vm_address_t, const char *types);
 	mach_vm_address_t class_getInstanceMethod(mach_vm_address_t cls, char *name);
 	mach_vm_address_t class_getClassMethod(mach_vm_address_t cls, char *name);
 	mach_vm_address_t class_getMethodImplementation(mach_vm_address_t cls, char * name);
-	bool              class_addProtocol(mach_vm_address_t cls, mach_vm_address_t protocol);
-	bool              class_addProperty(mach_vm_address_t cls, const char *name, mach_vm_address_t attributes, unsigned int attributeCount);
+	bool			  class_addProtocol(mach_vm_address_t cls, mach_vm_address_t protocol);
+	bool			  class_addProperty(mach_vm_address_t cls, const char *name, mach_vm_address_t attributes, unsigned int attributeCount);
 
 	mach_vm_address_t object_getClass(id obj);
-	void              object_setInstanceVariable(id obj, const char *name, void *value);
+	void			  object_setInstanceVariable(id obj, const char *name, void *value);
 	mach_vm_address_t object_getInstanceVariable(id obj, const char *name);
-	void              object_setIvar(id obj, const char *name, id value);
+	void			  object_setIvar(id obj, const char *name, id value);
 	mach_vm_address_t object_getIvar(id obj, mach_vm_address_t ivar);
-	const char *      object_getClassName(id obj);
+	const char *	  object_getClassName(id obj);
 	mach_vm_address_t object_getClass(id obj);
 	mach_vm_address_t object_setClass(id obj, mach_vm_address_t cls);
 
-	char*             method_getName(mach_vm_address_t m);
+	char*			 method_getName(mach_vm_address_t m);
 	mach_vm_address_t method_getImplementation(mach_vm_address_t m);
 	mach_vm_address_t method_setImplementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
-	void              method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
+	void			  method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
 
 	class ObjC
 	{
@@ -345,7 +345,7 @@ namespace ObjectiveC
 			std::Array<Method*> class_methods;
 			std::Array<Method*> instance_methods;
 
-	    	std::Array<Property*> properties;
+			std::Array<Property*> properties;
 	};
 
 	class Ivar
