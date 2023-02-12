@@ -169,9 +169,9 @@ mach_vm_address_t Kernel::findKernelCollection()
 	if(kernel_collection)
 		return kernel_collection;
 
-	mach_vm_address_t near = *reinterpret_cast<mach_vm_address_t*>(IOLog);
+	mach_vm_address_t near = reinterpret_cast<mach_vm_address_t>(IOLog);
 
-	size_t kaslr_align = 0x100000;
+	size_t kaslr_align = 0x1000;
 
 	near &= ~(kaslr_align - 1);
 
