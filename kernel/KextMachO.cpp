@@ -8,6 +8,7 @@ KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
 	this->kernel = kernel;
 	this->name = name;
 	this->base_offset = 0;
+	this->size = 0;
 	
 #ifdef __arm64__
 	this->kernel_cache = Kernel::findKernelCache();
@@ -28,8 +29,14 @@ KextMachO::KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info)
 	this->kmod_info = kmod_info;
 	this->name = &this->kmod_info->name[0];
 	this->base_offset = 0;
+
+#ifdef __arm64__
+	this->kernel_cache = Kernel::findKernelCache();
+	this->kernel_collection = 0;
+#elif __x86_64__
 	this->kernel_collection = Kernel::findKernelCollection();
 	this->kernel_cache = 0;
+#endif
 
 	this->initWithBase(this->kmod_info->address, 0);
 }
@@ -44,6 +51,8 @@ void KextMachO::parseLinkedit()
 
 }
 
+
+
 bool KextMachO::parseLoadCommands()
 {
 	struct mach_header_64 *mh = this->getMachHeader();
@@ -54,7 +63,9 @@ bool KextMachO::parseLoadCommands()
 
 	MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
 
-	this->size = this->getSize();
+#ifdef __arm64__
+	this->size = MachO::getSize();
+#endif
 
 	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
 

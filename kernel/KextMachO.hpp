@@ -33,7 +33,7 @@ namespace xnu
 
 			mach_vm_address_t getAddress() { return address; }
 
-			size_t getSize() { return kmod_info->size; }
+			virtual size_t getSize() { return kmod_info->size > 0 ? kmod_info->size : MachO::getSize(); }
 
 			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
 			kmod_stop_func_t* getKmodStop() { return kmod_info->stop; }

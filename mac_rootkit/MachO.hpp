@@ -41,7 +41,7 @@ class MachO
 
 		off_t getAslrSlide() { return aslr_slide; }
 
-		size_t getSize();
+		virtual size_t getSize();
 
 		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
 		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
