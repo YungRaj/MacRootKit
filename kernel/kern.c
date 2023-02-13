@@ -186,7 +186,7 @@ bool kernel_vm_write(mach_vm_address_t address, const void *data, size_t size)
 
 		if(ret != KERN_SUCCESS)
 		{
-			return false;
+			return true;
 		}
 
 		address += write_size;

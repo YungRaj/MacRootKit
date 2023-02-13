@@ -6,6 +6,8 @@
 
 #include <IOKit/IOLib.h>
 
+#include <os/log.h>
+
 typedef void* pmap_t;
 
 extern vm_map_t kernel_map_;

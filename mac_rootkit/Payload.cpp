@@ -77,9 +77,9 @@ bool Payload::prepare()
 
 	Task *task = this->getTask();
 
-#if defined(__x86_64__) || (defined(__arm64__) && defined(__USER__))
+#if 0 // defined(__x86_64__) || (defined(__arm64__) && defined(__USER__))
 
-	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_WRITE);
+	trampoline = task->vmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_EXECUTE);
 
 	if(!trampoline)
 		return false;
@@ -109,7 +109,13 @@ void Payload::setExecutable()
 bool Payload::commit()
 {
 
-#ifdef __arm64__
+#if 0 // defined(__x86_64__) || (defined(__arm64__) && defined(__USER__))
+
+	ml_set_interrupts_enabled(false);
+
+	this->setExecutable();
+
+	ml_set_interrupts_enabled(true);
 
 #endif
 

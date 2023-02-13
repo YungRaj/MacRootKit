@@ -265,11 +265,11 @@ Hook* KernelPatcher::installEntitlementHook()
 
 	MAC_RK_LOG("MacRK::__ZN12IOUserClient21copyClientEntitlementEP4taskPKc = %s\n", buffer);
 
-	// hook = Hook::hookForFunction(this->getKernel(), this, orig_copyClientEntitlement);
+	hook = Hook::hookForFunction(this->getKernel(), this, orig_copyClientEntitlement);
 
-	// this->installHook(hook, hooked_copyClientEntitlement);
+	this->installHook(hook, hooked_copyClientEntitlement);
 
-	// this->entitlementHook = hook;
+	this->entitlementHook = hook;
 
 	return hook;
 }

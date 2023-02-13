@@ -73,16 +73,15 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 
 #ifdef __x86_64__
 
-/*	this->getKernelObjects();
+	this->getKernelObjects();
 
-	this->createKernelTaskPort();
+	// this->createKernelTaskPort();
 
 	this->kernelWriteLock = IOSimpleLockAlloc();
 
 	this->base = base;
 
 	set_kernel_map(this->getKernelMap());
-*/
 
 	set_vm_functions(this->getSymbolAddressByName("_vm_read_overwrite"),
 					 this->getSymbolAddressByName("_vm_write"),
@@ -1193,8 +1192,41 @@ uint64_t Kernel::read64(mach_vm_address_t address)
 
 bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 {
-#ifdef __arm64__
-	
+#ifdef __x86_64__
+	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_pmap"));
+
+	uint64_t src_pmapFindPhysArgs[2] = { pmap, (uint64_t) data };
+
+	uint64_t dest_pmapFindPhysArgs[2] = { pmap, address };
+
+	uint64_t src_ppnum;
+	uint64_t src_pa;
+
+	uint64_t dest_ppnum;
+	uint64_t dest_pa;
+
+	src_ppnum = this->call("_pmap_find_phys", src_pmapFindPhysArgs, 2);
+
+	src_pa = ((src_ppnum << 12) | (src_ppnum ? (mach_vm_address_t) data & 0xFFF : 0));
+
+	dest_ppnum = this->call("_pmap_find_phys", dest_pmapFindPhysArgs, 2);
+
+	dest_pa = ((dest_ppnum << 12) | (dest_ppnum ? (mach_vm_address_t) address & 0xFFF : 0));
+
+	if(src_pa && dest_pa)
+	{
+		uint64_t bcopyPhysArgs[3] = { src_pa, dest_pa, size };
+
+		ml_set_interrupts_enabled(false);
+
+		this->call("_bcopy_phys", bcopyPhysArgs, 3);
+
+		ml_set_interrupts_enabled(true);
+
+		return true;
+	}
+
+#elif __arm64__
 	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_pmap"));
 
 	uint64_t src_pmapFindPhysArgs[2] = { pmap, (uint64_t) data };

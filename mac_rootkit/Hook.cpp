@@ -257,6 +257,8 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	this->task->write(from, (void*) &to_hook_function, branch_size);
 
+	payload->commit();
+
 	hook->from = from;
 	hook->to = to;
 
@@ -369,6 +371,8 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
 	this->task->write(from, (void*) replace_opcodes, branch_size);
+
+	payload->commit();
 
 	hook->from = from;
 	hook->to = trampoline;
