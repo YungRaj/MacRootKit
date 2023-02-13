@@ -69,11 +69,12 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 
 	this->macho->initWithBase(base, slide);
 
-	// this->getKernelObjects();
-
 	this->disassembler = new Disassembler(this);
 
-	/*
+#ifdef __x86_64__
+
+/*	this->getKernelObjects();
+
 	this->createKernelTaskPort();
 
 	this->kernelWriteLock = IOSimpleLockAlloc();
@@ -81,6 +82,7 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 	this->base = base;
 
 	set_kernel_map(this->getKernelMap());
+*/
 
 	set_vm_functions(this->getSymbolAddressByName("_vm_read_overwrite"),
 					 this->getSymbolAddressByName("_vm_write"),
@@ -102,7 +104,8 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 					   this->getSymbolAddressByName("_ml_phys_write_half_64"),
 					   this->getSymbolAddressByName("_ml_phys_write_byte_64")
 	);
-	*/
+
+#endif
 }
 
 Kernel::~Kernel()
@@ -257,7 +260,7 @@ mach_vm_address_t Kernel::findKernelBase()
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			if(strncmp(segment_command->segname, "__PRELINK_TEXT", strlen("__PRELINK_TEXT")) == 0)
+			if(strncmp(segment_command->segname, "__TEXT_EXEC", strlen("__TEXT_EXEC")) == 0)
 			{
 				kernel_base = segment_command->vmaddr;
 
@@ -1190,6 +1193,8 @@ uint64_t Kernel::read64(mach_vm_address_t address)
 
 bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 {
+#ifdef __arm64__
+	
 	mach_vm_address_t pmap = *reinterpret_cast<mach_vm_address_t*>(this->getSymbolAddressByName("_kernel_pmap"));
 
 	uint64_t src_pmapFindPhysArgs[2] = { pmap, (uint64_t) data };
@@ -1222,8 +1227,6 @@ bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
 
 		return true;
 	}
-
-#ifdef __arm64__
 
 	#include <arm64/Isa_arm64.hpp>
 

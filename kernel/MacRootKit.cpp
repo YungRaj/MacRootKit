@@ -114,9 +114,9 @@ void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
 {
 	Kext *kext;
 
-	if(kmod_info->size)
+	if(loaded_kext)
 	{
-		// kext = new Kext(this->getKernel(), kext, kmod_info);
+		kext = new Kext(this->getKernel(), loaded_kext, kmod_info);
 	} else
 	{
 		kext = new Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));

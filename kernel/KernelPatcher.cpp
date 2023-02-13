@@ -133,9 +133,13 @@ void* KernelPatcher::OSKextLookupKextWithIdentifier(const char *identifier)
 
 	__ZN6OSKext24lookupKextWithIdentifierEPKc = reinterpret_cast<lookupKextWithIdentifier>(OSKext_lookupWithIdentifier);
 
-	// void *OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(identifier);
+#ifdef _x86_64__
+	void *OSKext = __ZN6OSKext24lookupKextWithIdentifierEPKc(identifier);
 
+	return OSKext;
+#elif __arm64__
 	return 0;
+#endif
 }
 
 OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlement)
@@ -246,7 +250,7 @@ void KernelPatcher::onEntitlementRequest(task_t task, const char *entitlement, v
 
 Hook* KernelPatcher::installEntitlementHook()
 {
-	Hook *hook = NULL;
+	Hook *hook;
 
 	mach_vm_address_t orig_copyClientEntitlement;
 	mach_vm_address_t hooked_copyClientEntitlement;
@@ -255,11 +259,17 @@ Hook* KernelPatcher::installEntitlementHook()
 
 	hooked_copyClientEntitlement = reinterpret_cast<mach_vm_address_t>(KernelPatcher::copyClientEntitlement);
 
-	hook = Hook::hookForFunction(this->getKernel(), this, orig_copyClientEntitlement);
+	char buffer[128];
 
-	this->installHook(hook, hooked_copyClientEntitlement);
+	snprintf(buffer, 128, "0x%llx", orig_copyClientEntitlement);
 
-	this->entitlementHook = hook;
+	MAC_RK_LOG("MacRK::__ZN12IOUserClient21copyClientEntitlementEP4taskPKc = %s\n", buffer);
+
+	// hook = Hook::hookForFunction(this->getKernel(), this, orig_copyClientEntitlement);
+
+	// this->installHook(hook, hooked_copyClientEntitlement);
+
+	// this->entitlementHook = hook;
 
 	return hook;
 }
@@ -330,7 +340,18 @@ void KernelPatcher::processAlreadyLoadedKexts()
 
 	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
-		this->processKext(kmod, true);
+		if(kmod->address && kmod->size)
+		{
+			char buffer1[128];
+			char buffer2[128];
+
+			snprintf(buffer1, 128, "0x%lx", kmod->address);
+			snprintf(buffer2, 128, "0x%x", *(uint32_t*) kmod->address);
+
+			MAC_RK_LOG("MacRK::KernelPatcher::processing Kext %s = %s @ %s\n", (char*) kmod->name, buffer1, buffer2);
+		
+			this->processKext(kmod, true);
+		}
 	}
 	
 #endif
