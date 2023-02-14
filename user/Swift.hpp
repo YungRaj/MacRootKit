@@ -280,7 +280,9 @@ namespace Swift
 			void parseSwift();
 
 			void parseTypes();
-			void parseType(mach_vm_address_t type_address);
+
+			void parseTypeDesciptor(struct TypeDescriptor *type);
+			void parseFieldDescriptor(struct FieldDescriptor *field);
 
 		private:
 			MachO *macho;

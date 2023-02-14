@@ -74,6 +74,8 @@ class MachO
 		Segment* segmentForOffset(off_t offset);
 		Section* sectionForOffset(off_t offset);
 
+		uint8_t* operator[](uint64_t index) { return this->getOffset(index); }
+
 		virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
 
 		virtual void parseLinkedit();

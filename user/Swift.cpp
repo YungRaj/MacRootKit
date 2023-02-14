@@ -55,22 +55,57 @@ void SwiftMetadata::parseTypes()
 
 		type_address += type_offset;
 
-		this->parseType(type_address);
+		uint64_t type_offset = macho->addressToOffset(type_address);
+
+		struct TypeDescriptor *descriptor = reinterpret_cast<struct TypeDescriptor*>(macho->getOffset(type_offset));
+
+		this->parseType(descriptor);
 
 		swift_types_offset += sizeof(int32_t);
 	}
 }
 
-void SwiftMetadata::parseType(mach_vm_address_t type_address)
+void SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 {
 	struct Type *type;
 
-	struct TypeDescriptor descriptor;
+	struct TypeDescriptor *descriptor;
 
-	uint64_t type_offset = macho->addressToOffset(type_address);
+	struct FieldDescriptor field_descriptor;
 
-	memcpy(&descriptor, macho->getOffset(type_offset), sizeof(struct TypeDescriptor));
+	descriptor = type;
 
+	int32_t field_descriptor_offset = reinterpret_cast<int32_t*>(&descriptor->field_descriptor);
+
+	mach_vm_address_t field_descriptor_address = reinterpret_cast<mach_vm_address_t>(&descriptor->field_descriptor) + field_descriptor_offset;
+
+	field_descriptor = reinterpret_cast<struct FieldDescriptor*>(field_descriptor_address);
+
+	switch(field_descriptor->kind)
+	{
+		case FDK_Struct:
+			break;
+		case FDK_Class:
+			break;
+		case FDK_Enum:
+			break;
+		case FDK_MultiPayloadEnum:
+			break;
+		case FDK_Protocol:
+			break;
+		case FDK_ClassProtocol:
+			break;
+		case FDK_ObjCProtocol:
+			break;
+		case FDK_ObjCClass:
+			break;
+		default:
+			break;
+	}
+}
+
+void SwiftMetadata::parseFieldDescriptor(struct FieldDescriptor *field)
+{
 
 }
 
