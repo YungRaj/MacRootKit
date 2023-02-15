@@ -281,9 +281,9 @@ namespace Swift
 
 	struct AssociatedTypeDescriptor
 	{
-		int32_t ConformingTypeName;
-		int32_t ProtocolTypeName
-		uint32_t NumAssociatedTypes
+		int32_t conforming_type_name;
+		int32_t protocol_type_name;
+		uint32_t num_associated_types;
 		uint32_t associated_type_record_size;
 	};
 
@@ -298,7 +298,7 @@ namespace Swift
 
 	struct CaptureTypeRecord
 	{
-		int32_t MangledTypeName
+		int32_t mangled_type_name;
 	};
 
 	struct MetadataSourceRecord
