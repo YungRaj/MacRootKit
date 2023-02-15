@@ -18,17 +18,17 @@ void SwiftMetadata::populateSections()
 	if(!this->text)
 		this->text = macho->getSegment("__TEXT");
 
-	this->typeref = this->macho->getSection("__TEXT", "__swift_typeref");
-	this->entry = this->macho->getSection("__TEXT", "__swift_entry");
-	this->builtin = this->macho->getSection("__TEXT", "__swift_builtin");
-	this->reflstr = this->macho->getSection("__TEXT", "__swift_refstr");
-	this->fieldmd = this->macho->getSection("__TEXT", "__swift_fieldmd");
-	this->assocty = this->macho->getSection("__TEXT", "__swift_assocty");
-	this->proto = this->macho->getSection("__TEXT", "__swift_proto");
-	this->types = this->macho->getSection("__TEXT", "__swift_types");
-	this->protos = this->macho->getSection("__TEXT", "__swift_protos");
-	this->capture = this->macho->getSection("__TEXT", "__swift_capture");
-	this->mpenum = this->macho->getSection("__TEXT", "__swift_mpenum");
+	this->typeref = this->macho->getSection("__TEXT", "__swift5_typeref");
+	this->entry = this->macho->getSection("__TEXT", "__swift5_entry");
+	this->builtin = this->macho->getSection("__TEXT", "__swift5_builtin");
+	this->reflstr = this->macho->getSection("__TEXT", "__swift5_refstr");
+	this->fieldmd = this->macho->getSection("__TEXT", "__swift5_fieldmd");
+	this->assocty = this->macho->getSection("__TEXT", "__swift5_assocty");
+	this->proto = this->macho->getSection("__TEXT", "__swift5_proto");
+	this->types = this->macho->getSection("__TEXT", "__swift5_types");
+	this->protos = this->macho->getSection("__TEXT", "__swift5_protos");
+	this->capture = this->macho->getSection("__TEXT", "__swift5_capture");
+	this->mpenum = this->macho->getSection("__TEXT", "__swift5_mpenum");
 }
 
 void SwiftMetadata::parseSwift()
