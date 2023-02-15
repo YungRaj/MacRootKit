@@ -36,7 +36,7 @@ void SwiftMetadata::parseSwift()
 	this->parseTypes();
 }
 
-void SwiftMetadata::parseTypes()
+void SwiftMetadata::enumerateTypes()
 {
 	Section *types = this->getTypes();
 
@@ -47,6 +47,8 @@ void SwiftMetadata::parseTypes()
 
 	while(swift_types_offset < types->getSize())
 	{
+		struct Type *type;
+
 		mach_vm_address_t type_address;
 
 		int64_t type_offset;
@@ -59,13 +61,13 @@ void SwiftMetadata::parseTypes()
 
 		struct TypeDescriptor *descriptor = reinterpret_cast<struct TypeDescriptor*>(macho->getOffset(type_offset));
 
-		this->parseType(descriptor);
+		type = this->parseType(descriptor);
 
 		swift_types_offset += sizeof(int32_t);
 	}
 }
 
-void SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
+struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 {
 	struct Type *type;
 
@@ -104,7 +106,12 @@ void SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 	}
 }
 
-void SwiftMetadata::parseFieldDescriptor(struct FieldDescriptor *field)
+struct Field* SwiftMetadata::parseFieldDescriptor(struct FieldDescriptor *field)
+{
+
+}
+
+void SwiftMetadata::parseFieldRecord(struct FieldRecord *record)
 {
 
 }

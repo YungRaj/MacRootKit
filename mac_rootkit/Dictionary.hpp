@@ -5,7 +5,7 @@
 
 namespace std
 {
-
+	template<typename T>
 	class Dictionary
 	{
 		public:
@@ -13,7 +13,9 @@ namespace std
 
 			~Dictionary() { }
 
-			void* get(char *key)
+			T operator[](char *key) { return this->get(key); }
+
+			T get(char *key)
 			{
 				for(int i = 0; i < keys.getSize(); i++)
 				{
@@ -60,7 +62,7 @@ namespace std
 
 		private:
 			std::Array<char*> keys;
-			std::Array<void*> values;
+			std::Array<T> values;
 	};
 };
 

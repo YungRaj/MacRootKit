@@ -138,27 +138,32 @@ namespace Swift
 	struct ModuleDescriptor
 	{
 		uint32_t flags;
-		uint32_t parent;
-		uint32_t name;
-	};
-
-	struct Module
-	{
-
+		int32_t parent;
+		int32_t name;
 	};
 
 	struct ProtocolDescriptor
 	{
 		uint32_t flags;
-		uint32_t name;
+		int32_t name;
 		uint32_t num_requirements_in_signature;
 		uint32_t num_requirements;
-		uint32_t associated_type_names;
+		int32_t associated_type_names;
+	};
+
+	struct ProtocolConformanceDescriptor
+	{
+		int32_t protocol_descriptor;
+		int32_t nominal_type_descriptor;
+		int32_t protocol_witness_table;
+		uint32_t conformance_flags;
 	};
 
 	struct Protocol
 	{
-		struct ProtocolDescriptor descriptor;
+		struct ProtocolDescriptor *descriptor;
+
+		char *name;
 	};
 
 	struct Type
@@ -190,6 +195,8 @@ namespace Swift
 
 		uint32_t num_immediate_members;
 		uint32_t num_fields;
+		
+		uint32_t field_offset_vector_offset;
 	};
 
 	struct Class : Type
@@ -244,9 +251,50 @@ namespace Swift
 
 	struct Field
 	{
-		struct FieldDescriptor field_;
+		struct FieldDescriptor *field;
 
 		std::Array<struct FieldRecord*> records;
+	};
+
+	struct AssociatedTypeRecord
+	{
+		int32_t name;
+		int32_t substituted_type_name;
+	};
+
+	struct AssociatedTypeDescriptor
+	{
+		int32_t ConformingTypeName;
+		int32_t ProtocolTypeName
+		uint32_t NumAssociatedTypes
+		uint32_t associated_type_record_size;
+	};
+
+	struct BuiltinTypeDescriptor
+	{
+		int32_t type_name;
+		uint32_t size;
+		uint32_t alignment_and_flags;
+		uint32_t stride;
+		uint32_t num_extra_inhabitants;
+	};
+
+	struct CaptureTypeRecord
+	{
+		int32_t MangledTypeName
+	};
+
+	struct MetadataSourceRecord
+	{
+		int32_t mangled_type_name;
+		int32_t mangled_metadata_source;
+	};
+
+	struct CaptureDescriptor
+	{
+		uint32_t num_capture_types
+		uint32_t num_metadata_sources;
+		uint32_t num_bindings;
 	};
 
 	class SwiftMetadata
@@ -258,6 +306,11 @@ namespace Swift
 			std::Array<Type*>* getAllTypes() { return &all_types; }
 
 			ObjectiveC::ObjCData* getObjCMetaData() { return objc; }
+
+			struct Class* getClass(char *cl);
+			struct Struct* getStruct(char *st);
+			struct Enum* getEnum(char *en);
+			struct Protocol* getProtocol(char *p);
 
 			Segment* getTextSegment() { return text; }
 
@@ -279,10 +332,15 @@ namespace Swift
 
 			void parseSwift();
 
-			void parseTypes();
+			void enumerateTypes();
 
-			void parseTypeDesciptor(struct TypeDescriptor *type);
-			void parseFieldDescriptor(struct FieldDescriptor *field);
+			struct Type* parseTypeDesciptor(struct TypeDescriptor *type);
+			
+			struct Field* parseFieldDescriptor(struct FieldDescriptor *field);
+			
+			void parseFieldRecord(struct FieldRecord *record);
+
+			struct Protocol* parseProtocolDescriptor(struct ProtocolDescriptor *descriptor);
 
 		private:
 			MachO *macho;
@@ -291,7 +349,12 @@ namespace Swift
 
 			Segment *text;
 
-			std::Array<Type*> all_types;
+			std::Array<struct Type*> types;
+
+			std::Array<struct Class*> classes;
+			std::Array<struct Struct*> structs;
+			std::Array<struct Enum*> enums;
+			std::Array<struct Protocol*> protocols;
 
 			Section *typeref;
 			Section *entry;

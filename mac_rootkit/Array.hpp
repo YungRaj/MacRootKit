@@ -42,6 +42,8 @@ namespace std
 
 			size_t getSize() { return size; }
 
+			T operator[](int index) { return this->get(index); }
+
 			void add(T t)
 			{
 				Node<T> *node = new Node<T>;
