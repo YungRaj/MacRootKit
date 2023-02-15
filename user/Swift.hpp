@@ -195,8 +195,23 @@ namespace Swift
 
 		uint32_t num_immediate_members;
 		uint32_t num_fields;
-		
+
 		uint32_t field_offset_vector_offset;
+	};
+
+	struct MethodDescriptor
+	{
+		uint32_t flags;
+		int32_t impl;
+	};
+
+	struct Method
+	{
+		struct MethodDescriptor *descriptor;
+
+		mach_vm_address_t impl;
+
+		char *name;
 	};
 
 	struct Class : Type
@@ -204,6 +219,8 @@ namespace Swift
 		struct ClassDescriptor descriptor;
 
 		ObjectiveC::ObjCClass *isa;
+
+		Array<Method*> methods;
 	};
 
 	struct StructDescriptor
