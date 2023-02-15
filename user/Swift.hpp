@@ -34,39 +34,18 @@ namespace Swift
 	/// their associated data structures.
 	const unsigned MetadataKindIsRuntimePrivate = 0x100;
 
-	/// Kinds of context descriptor.
 	enum class ContextDescriptorKind : uint8_t
 	{
-	  /// This context descriptor represents a module.
-	  Module = 0,
-	  
-	  /// This context descriptor represents an extension.
-	  Extension = 1,
-	  
-	  /// This context descriptor represents an anonymous possibly-generic context
-	  /// such as a function body.
-	  Anonymous = 2,
-
-	  /// This context descriptor represents a protocol context.
-	  Protocol = 3,
-	  
-	  /// This context descriptor represents an opaque type alias.
-	  OpaqueType = 4,
-
-	  /// First kind that represents a type of any sort.
-	  Type_First = 16,
-	  
-	  /// This context descriptor represents a class.
-	  Class = Type_First,
-	  
-	  /// This context descriptor represents a struct.
-	  Struct = Type_First + 1,
-	  
-	  /// This context descriptor represents an enum.
-	  Enum = Type_First + 2,
-	  
-	  /// Last kind that represents a type of any sort.
-	  Type_Last = 31,
+		Module 					= 0,
+		Extension 				= 1,
+		Anonymous 				= 2,
+		Protocol 				= 3,
+		OpaqueType 				= 4,
+		Type_First 				= 16,
+		Class 					= Type_First,
+		Struct 					= Type_First + 1,
+		Enum 					= Type_First + 2,
+		Type_Last 				= 31,
 	};
 
 	enum MetadataKind : uint16_t
