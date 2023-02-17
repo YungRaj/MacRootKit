@@ -18,7 +18,7 @@ namespace dyld
 
 			~Library();
 
-			xnu::UserMachO* getMachO() { return macho; }
+			mrk::UserMachO* getMachO() { return macho; }
 
 			dyld::Dyld* getDyld() { return dyld; }
 
@@ -27,7 +27,7 @@ namespace dyld
 			static Library* injectLibrary(Task *task, const char *path);
 
 		private:
-			xnu::UserMachO *macho;
+			mrk::UserMachO *macho;
 
 			dyld::Dyld *dyld;
 

@@ -86,6 +86,12 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 	switch(field_descriptor->kind)
 	{
 		case FDK_Struct:
+			struct Struct *structure = new Struct;
+
+			
+
+			type = dynamic_cast<struct Type*>(structure);
+
 			break;
 		case FDK_Class:
 			break;
@@ -104,6 +110,8 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 		default:
 			break;
 	}
+
+	return type;
 }
 
 struct Field* SwiftMetadata::parseFieldDescriptor(struct FieldDescriptor *field)
