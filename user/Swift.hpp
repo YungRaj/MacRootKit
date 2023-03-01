@@ -13,6 +13,10 @@ class Section;
 
 namespace Swift
 {
+	class SwiftMetadata;
+
+	SwiftMetadata* parseSwift(mrk::UserMachO *macho);
+
 	// Swift Runtime functions
 	// https://github.com/apple/swift/blob/main/docs/Runtime.md
 
@@ -84,6 +88,8 @@ namespace Swift
 		FDK_ObjCClass			 = 7,
 	};
 
+	#pragma pack(1)
+
 	struct ValueMetadata
 	{
 		uint64_t kind;
@@ -140,7 +146,7 @@ namespace Swift
 
 	struct Protocol
 	{
-		struct ProtocolDescriptor *descriptor;
+		struct ProtocolDescriptor descriptor;
 
 		char *name;
 	};
@@ -152,6 +158,8 @@ namespace Swift
 		enum MetadataKind kind;
 
 		char *name;
+
+		struct Field field;
 	};
 
 	struct TypeDescriptor
@@ -191,6 +199,24 @@ namespace Swift
 		mach_vm_address_t impl;
 
 		char *name;
+	};
+
+	struct ClassMetadata
+	{
+		mach_vm_address_t destructor;
+		mach_vm_address_t value_witness_table;
+
+		struct ObjectiveC::__objc_2_class objc;
+
+		uint32_t flags;
+		uint32_t instance_address_point;
+		uint32_t instance_size;
+		uint16_t instance_alignment_mask;
+		uint16_t reserved;
+		uint32_t class_object_size;
+		uint32_t class_address_point;
+		
+		mach_vm_address_t type_descriptor;
 	};
 
 	struct Class : Type
@@ -242,14 +268,23 @@ namespace Swift
 		uint32_t flags;
 		uint32_t mangled_type_name;
 		uint32_t field_name;
-		uint32_t field_record;
 	};
 
 	struct Field
 	{
-		struct FieldDescriptor *field;
+		struct FieldRecord record;
 
-		std::Array<struct FieldRecord*> records;
+		char *name;
+
+		char *mangled_name;
+		char *demangled_name;
+	}
+
+	struct Fields
+	{
+		struct FieldDescriptor *descriptor;
+
+		std::Array<struct Field*> records;
 	};
 
 	struct AssociatedTypeRecord
@@ -293,6 +328,8 @@ namespace Swift
 		uint32_t num_bindings;
 	};
 
+	#pragma options align=reset
+
 	class SwiftMetadata
 	{
 		public:
@@ -327,16 +364,17 @@ namespace Swift
 			void populateSections();
 
 			void parseSwift();
+			void parseSwiftObjectiveC();
 
 			void enumerateTypes();
 
-			struct Type* parseTypeDesciptor(struct TypeDescriptor *type);
-			
-			struct Field* parseFieldDescriptor(struct FieldDescriptor *field);
-			
-			void parseFieldRecord(struct FieldRecord *record);
+			struct Type* parseTypeDesciptor(struct TypeDescriptor *typeDescriptor);
 
-			struct Protocol* parseProtocolDescriptor(struct ProtocolDescriptor *descriptor);
+			mach_vm_address_t getTypeMetadata(struct TypeDescriptor *typeDescriptor);
+
+			void parseFieldDescriptor(struct Type *type, struct FieldDescriptor *fieldDescriptor);
+
+			struct Protocol* parseProtocolDescriptor(struct ProtocolDescriptor *protocolDescriptor);
 
 		private:
 			MachO *macho;

@@ -11,7 +11,7 @@
 
 #include <Arch.hpp>
 
-namespace mrk
+namespace xnu
 {
 	class Thread
 	{

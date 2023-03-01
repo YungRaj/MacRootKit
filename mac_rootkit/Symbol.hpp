@@ -1,8 +1,6 @@
 #ifndef __SYMBOL_HPP_
 #define __SYMBOL_HPP_
 
-#include <cxxabi.h>
-
 #include "MachO.hpp"
 
 #include "Segment.hpp"
@@ -13,13 +11,15 @@ class MachO;
 class Segment;
 class Section;
 
-#ifdef 0
+#ifdef __USER__
 
-char* cxx_demangle(char *name)
+#include <cxxabi.h>
+
+char* cxx_demangle(char *mangled)
 {
 	int status;
 
-	char *ret = abi::__cxa_demangle(abiName, 0, 0, &status);  
+	char *ret = abi::__cxa_demangle(mangled, 0, 0, &status);  
 
 	std::shared_ptr<char> retval;
 
@@ -28,9 +28,9 @@ char* cxx_demangle(char *name)
 	return retval;
 }
 
-typedef char* (*_swift_demangle) (uint32_t length, uint8_t *output_buffer, uint32_t output_buffer_size, uint32_t flags);
+typedef char* (*_swift_demangle) (char *mangled, uint32_t length, uint8_t *output_buffer, uint32_t output_buffer_size, uint32_t flags);
 
-char* swift_demangle(char *name)
+char* swift_demangle(char *mangled)
 {
 	void *RTLD_DEFAULT = dlopen(NULL, RTLD_NOW);
 
@@ -51,6 +51,11 @@ char* swift_demangle(char *name)
 	return NULL;
 }
 
+#else
+
+char* cxx_demangle(char *mangled) { return NULL; }
+char* swift_demangle(char *mangled) { return NULL; }
+
 #endif
 
 class Symbol
@@ -63,11 +68,15 @@ class Symbol
 			this->macho = macho;
 			this->type = type;
 			this->name = name;
+			this->demangled_name = this->getDemangledName();
 			this->address = address;
 			this->offset = offset;
 			this->segment = segment;
 			this->section = section;
 		}
+
+		bool is_cxx() { return cxx_demangle(this->getName()) != NULL; }
+		bool is_swift() { return cxx_demangle(this->getName()) != NULL; }
 
 		MachO* getMachO() { return macho; }
 
@@ -77,7 +86,13 @@ class Symbol
 
 		char* getName() { return name; }
 
-		char *getDemangledName() { return NULL; }
+		char* getDemangledName()
+		{
+			char *swift_demangle = swift_demangle(this->getName());
+			char *cxx_demangle = cxx_demangle(this->getName());
+
+			return swift_demangle ? swift_demangle : cxx_demangle;
+		}
 
 		mach_vm_address_t getAddress() { return address; }
 
@@ -92,6 +107,7 @@ class Symbol
 		Section *section;
 
 		char *name;
+		char *demangled_name;
 
 		uint32_t type;
 

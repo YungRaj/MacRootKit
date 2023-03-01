@@ -710,6 +710,7 @@ Method::Method(ObjC *object, struct _objc_2_method *method)
 
 namespace ObjectiveC
 {
+	
 mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 {
 	mach_vm_address_t selectors;

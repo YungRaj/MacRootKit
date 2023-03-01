@@ -12,7 +12,7 @@ class MachO;
 class SymbolTable
 {
 	public:
-		SymbolTable();
+		explicit SymbolTable();
 
 		SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
 

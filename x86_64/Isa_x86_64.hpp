@@ -7,6 +7,8 @@ namespace Arch
 {
 	namespace x86_64
 	{
+		static constexpr uint8_t MaxInstructionSize = 15;
+
 		struct x86_64_register_state
 		{
 			uint64_t rsp;
@@ -116,6 +118,7 @@ namespace Arch
 
 			uint64_t value;
 		};
+
 	};
 };
 

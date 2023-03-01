@@ -2,48 +2,75 @@
 #define __CRAWLER_HPP_
 
 #include <UIKit/UIKit.h>
+#include <Foundation/Foundation.h>
 
 #include "ObjC.hpp"
 #include "Swift.hpp"
 
-class Crawler
+/* iOS App Crawler for macOS */
+/*****************************/
+/* Crawler will use depth first search* /
+/* Store previously crawled UI elements */
+
+/* NSDictionary
+ * {
+ *      "viewController" -> NSString
+ * 		"className" -> NSString
+ *      "frame" -> NSDictionary
+ *			"x" -> NSNumber
+ *			"y" -> NSNumber
+ * 			"width" -> NSNumber
+ * 			"height" -> NSNumber
+ *		"userInteractionEnabled" -> Bool
+ * } 
+ */
+
+namespace mrk
 {
-	public:
-		explicit Crawler(UIApplication *application, UIApplicationDelegate *delegate);
+	namespace appcrawler
+	{
+		class CrawlerManager
+		{
+			public:
+				explicit CrawlerManager(UIApplication *application, UIApplicationDelegate *delegate);
 
-		~Crawler();
+				~CrawlerManager();
 
-		UIApplication* getApplication() { return application; }
+				UIApplication* getApplication() { return application; }
 
-		UIApplicationDelegate* getAppDelegate() { return applicationDelegate; }
+				UIApplicationDelegate* getAppDelegate() { return applicationDelegate; }
 
-		UIViewController* getCurrentViewController() { return currentViewController; }
+				UIViewController* getCurrentViewController() { return currentViewController; }
 
-		NSArray* getViews() { return [currentViewController.view subviews]; }
+				NSArray* getViews() { return [currentViewController.view subviews]; }
 
-		void setCurrentViewController(UIViewController *viewController) { this->currentViewController = currentViewController; }
+				void setCurrentViewController(UIViewController *viewController) { this->currentViewController = currentViewController; }
 
-		NSArray* getEligibleViewsForUserInteraction();
-		
-		NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
+				NSArray* getEligibleViewsForUserInteraction();
+				
+				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
-	private:
-		UIApplication *application;
+			private:
+				UIApplication *application;
 
-		UIApplicationDelegate *delegate;
+				UIApplicationDelegate *delegate;
 
-		UIViewController *currentViewController;
+				UIViewController *currentViewController;
 
-		NSArray *viewControllers;
-		NSArray *views;
+				NSDictionary *crawlData;
 
-		MachO *macho;
+				NSArray *viewControllers;
+				NSArray *views;
 
-		Dyld *dyld;
+				MachO *macho;
 
-		ObjCData *objc;
+				Dyld *dyld;
 
-		Swift *swift;
-};
+				ObjCData *objc;
+
+				Swift *swift;
+		};
+	}
+}
 
 #endif

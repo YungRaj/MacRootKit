@@ -13,6 +13,11 @@
 namespace Swift
 {
 
+SwiftMetadata* parseSwift(mrk::UserMachO *macho)
+{
+	return new SwiftMetadata(macho);
+}
+
 void SwiftMetadata::populateSections()
 {
 	if(!this->text)
@@ -67,39 +72,67 @@ void SwiftMetadata::enumerateTypes()
 	}
 }
 
-struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
+struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescriptor)
 {
 	struct Type *type;
 
 	struct TypeDescriptor *descriptor;
 
-	struct FieldDescriptor field_descriptor;
+	struct FieldDescriptor *fieldDescriptor;
 
 	descriptor = type;
 
-	int32_t field_descriptor_offset = reinterpret_cast<int32_t*>(&descriptor->field_descriptor);
+	int32_t field_descriptor_offset = reinterpret_cast<int32_t*>(&typeDescriptor->field_descriptor);
 
-	mach_vm_address_t field_descriptor_address = reinterpret_cast<mach_vm_address_t>(&descriptor->field_descriptor) + field_descriptor_offset;
+	mach_vm_address_t field_descriptor_address = reinterpret_cast<mach_vm_address_t>(&typeDescriptor->field_descriptor) + field_descriptor_offset;
 
-	field_descriptor = reinterpret_cast<struct FieldDescriptor*>(field_descriptor_address);
+	fieldDescriptor = reinterpret_cast<struct FieldDescriptor*>(field_descriptor_address);
+
+	type = NULL;
 
 	switch(field_descriptor->kind)
 	{
 		case FDK_Struct:
 			struct Struct *structure = new Struct;
 
-			
+			memcpy(&structure->descriptor, &type, sizeof(structure->descriptor));
+
+			struct TypeDescriptor *descriptor = &structure->descriptor.type;
 
 			type = dynamic_cast<struct Type*>(structure);
 
 			break;
 		case FDK_Class:
+			struct Class *cls = new Class;
+
+			memcpy(&cls->descriptor, &type, sizeof(cls->descriptor));
+
+			struct TypeDescriptor *descriptor = &cls->descriptor.type;
+
+			type = dynamic_cast<struct Type*>(cls);
+
 			break;
 		case FDK_Enum:
+			struct Enum *enumeration = new Enum;
+
+			memcpy(&enumeration->descriptor, &type, sizeof(enumeration->descriptor));
+
+			struct TypeDescriptor *descriptor = &enumeration->descriptor.type;
+
+			type = dynamic_cast<struct Type*>(enumeration);
+
 			break;
 		case FDK_MultiPayloadEnum:
 			break;
 		case FDK_Protocol:
+			struct Protocol *protocol = new Protocol;
+
+			memcpy(&protocol->descriptor, &type, sizeof(protocol->descriptor));
+
+			struct TypeDescriptor *descriptor = &protocol->descriptor.type;
+
+			type = dynamic_cast<struct Type*>(protocol);
+
 			break;
 		case FDK_ClassProtocol:
 			break;
@@ -111,17 +144,40 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *type)
 			break;
 	}
 
+	if(type)
+		this->parseFieldDescriptor(type, field);
+
 	return type;
 }
 
-struct Field* SwiftMetadata::parseFieldDescriptor(struct FieldDescriptor *field)
+mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDescriptor)
 {
-
+	
+	
+	return 0;
 }
 
-void SwiftMetadata::parseFieldRecord(struct FieldRecord *record)
+void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescriptor *fieldDescriptor)
 {
+	struct Fields *fields = new Fields;
 
+	mach_vm_address_t field_start = reinterpret_cast<mach_vm_address_t>(fieldDescriptor) + sizeof(struct FieldDescriptor);
+
+	field->descriptor = fieldDescriptor;
+
+	for(int i = 0; i < fieldDescriptor->num_fields; i++)
+	{
+		struct Field *field = new Field;
+
+		memcpy(&field->record, field_start + i * sizeof(struct FieldRecord), sizeof(struct FieldRecord));
+
+		field->name = "";
+		field->mangled_name = "";
+		field->demangled_name = "";
+
+		fields->records.add(field);
+	}
 }
+
 
 }

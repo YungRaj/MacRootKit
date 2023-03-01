@@ -4,7 +4,9 @@
 #include "MachO.hpp"
 #include "Array.hpp"
 #include "SymbolTable.hpp"
+
 #include "ObjC.hpp"
+#include "Swift.hpp"
 
 #include "mach-o.h"
 
@@ -88,7 +90,12 @@ namespace mrk
 			
 			void parseObjC()
 			{
-				ObjectiveC::parseObjectiveC(this);
+				this->objc = ObjectiveC::parseObjectiveC(this);
+			}
+
+			void parseSwift()
+			{
+				this->swift = Swift::parseSwift(this);
 			}
 
 		private:
@@ -104,6 +111,7 @@ namespace mrk
 			mrk::CodeSignature *codeSignature;
 
 			ObjectiveC::ObjCData *objc;
+			Swift::SwiftMetadata *swift;
 
 			bool is_dyldCache;
 			bool is_libobjc;
