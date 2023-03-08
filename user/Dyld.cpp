@@ -71,6 +71,8 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 			if(hdr.magic == MH_MAGIC_64)
 			{
+				this->main_image_path = image_file;
+				
 				this->main_image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
 				memcpy(this->main_image_info, &image_info, sizeof(image_info));
@@ -83,9 +85,10 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 				found_main_image = true;
 			}
+		} else
+		{
+			free(image_file);
 		}
-
-		free(image_file);
 	}
 
 	assert(found_main_image);

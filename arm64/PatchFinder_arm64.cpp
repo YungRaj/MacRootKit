@@ -474,6 +474,60 @@ namespace Arch
 							return current_insn;
 						}
 					}
+
+					/*
+					if(is_stp_soff((stp_t*) &op) || is_stp_post((stp_t*) &op) || is_stp_pre((stp_t*) &op))
+					{
+						// STP <Xt1>, <Xt2>, [<Xn|SP>], #<imm>
+						stp_t *stp = (stp_t*) &prev_op;
+
+						if(stp->Rn == SP)
+						{
+							// STP x, y, [SP,#-imm]!
+							// prev_op & 0x3BC003E0 == 0x298003E0 post index
+							prev_op = *(uint32_t*) macho->getOffset(prev - ARM64e_INS_SZ);
+
+							uint64_t sub_ins = step64_back(macho, prev, ((delta >> 4) + 1) * 4, IS_INS(sub_imm), SP, SP);
+
+							if(sub_ins)
+							{
+								prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, sub_ins - ARM64e_INS_SZ);
+								prev = sub_ins;
+							}
+
+							if(is_pacsys((pacsys_t*) &prev_op))
+							{
+								pacsys_t *pac = (pacsys_t*) &prev_op;
+
+								if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1)
+									prev -= ARM64e_INS_SZ;
+							}
+
+							return prev;
+						}
+					} else if(is_sub_imm((sub_imm_t*) &prev_op))
+					{
+						// SUB <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
+						sub_imm_t *sub = (sub_imm_t*) &prev_op;
+
+						// SUB SP, SP, #imm
+						// prev_op & 0x7F8003FF == 0x510003FF
+						if(sub->Rn == SP && sub->Rd == SP)
+						{
+							prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, prev - ARM64e_INS_SZ);
+
+							if(is_pacsys((pacsys_t*) &prev_op))
+							{
+								pacsys_t *pac = (pacsys_t*) &prev_op;
+
+								if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1)
+									prev -= ARM64e_INS_SZ;
+							}
+
+							return prev;
+						}
+					}
+					*/
 				}
 
 				return 0;

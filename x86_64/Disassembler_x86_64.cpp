@@ -13,8 +13,6 @@ namespace Arch
 	{
 		namespace Disassembler
 		{
-		#ifdef __KERNEL__
-
 			bool initialized = false;
 
 			size_t handle_x86_64;
@@ -95,7 +93,7 @@ namespace Arch
 			{
 				cs_insn *result = nullptr;
 
-				size_t insns = disassemble(address, min + MaxInstruction, &result);
+				size_t insns = Arch::x86_64::Disassembler::disassemble(address, min + MaxInstruction, &result);
 
 				if(result)
 				{
@@ -147,11 +145,16 @@ namespace Arch
 				return insns;
 			}
 
+			bool registerAccess(cs_insn *insn, cs_regs regs_read, uint8_t *nread, cs_regs regs_write, uint8_t *nwrite)
+			{
+				return cs_regs_access(handle_x86_64, insn, regs_read, nread, regs_write, nwrite) == 0;
+    		}
+
 			mach_vm_address_t disassembleNthCall(mach_vm_address_t address, size_t num, size_t lookup_size)
 			{
 				cs_insn *result = nullptr;
 
-				size_t disasm_size = disassemble(address, lookup_size, &result);
+				size_t disasm_size = Arch::x86_64::Disassembler::disassemble(address, lookup_size, &result);
 
 				if(disasm_size > 0)
 				{
@@ -197,7 +200,7 @@ namespace Arch
 			{
 				cs_insn *result = nullptr;
 
-				size_t disasm_size = disassemble(address, lookup_size, &result);
+				size_t disasm_size = Arch::x86_64::Disassembler::disassemble(address, lookup_size, &result);
 
 				if(disasm_size > 0)
 				{
@@ -243,7 +246,7 @@ namespace Arch
 			{
 				cs_insn *result = nullptr;
 
-				size_t disasm_size = disassemble(address, lookup_size, &result);
+				size_t disasm_size = Arch::x86_64::Disassembler::disassemble(address, lookup_size, &result);
 
 				if(disasm_size > 0)
 				{
@@ -281,8 +284,6 @@ namespace Arch
 			{
 				return 0;
 			}
-
-			#endif
 		}
 	}
 }

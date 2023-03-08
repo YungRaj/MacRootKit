@@ -114,6 +114,26 @@ namespace Swift
 		uint64_t extra_inhabitant_count;
 	};
 
+	struct Type
+	{
+		struct ModuleDescriptor *module;
+
+		enum MetadataKind kind;
+
+		char *name;
+
+		struct Field *field;
+	};
+
+	struct TypeDescriptor
+	{
+		uint32_t flags;
+		int32_t parent;
+		int32_t name;
+		int32_t access_function;
+		uint32_t field_descriptor;
+	};
+
 	struct AnonymousContextDescriptor
 	{
 		uint32_t flags;
@@ -144,31 +164,11 @@ namespace Swift
 		uint32_t conformance_flags;
 	};
 
-	struct Protocol
+	struct Protocol : Type
 	{
 		struct ProtocolDescriptor descriptor;
 
 		char *name;
-	};
-
-	struct Type
-	{
-		struct ModuleDescriptor *module;
-
-		enum MetadataKind kind;
-
-		char *name;
-
-		struct Field field;
-	};
-
-	struct TypeDescriptor
-	{
-		uint32_t flags;
-		int32_t parent;
-		int32_t name;
-		int32_t access_function;
-		uint32_t field_descriptor;
 	};
 
 	struct ClassDescriptor
@@ -206,7 +206,7 @@ namespace Swift
 		mach_vm_address_t destructor;
 		mach_vm_address_t value_witness_table;
 
-		struct ObjectiveC::__objc_2_class objc;
+		struct ObjectiveC::_objc_2_class objc;
 
 		uint32_t flags;
 		uint32_t instance_address_point;
@@ -225,7 +225,7 @@ namespace Swift
 
 		ObjectiveC::ObjCClass *isa;
 
-		Array<Method*> methods;
+		std::Array<Method*> methods;
 	};
 
 	struct StructDescriptor
@@ -278,7 +278,7 @@ namespace Swift
 
 		char *mangled_name;
 		char *demangled_name;
-	}
+	};
 
 	struct Fields
 	{
@@ -323,7 +323,7 @@ namespace Swift
 
 	struct CaptureDescriptor
 	{
-		uint32_t num_capture_types
+		uint32_t num_capture_types;
 		uint32_t num_metadata_sources;
 		uint32_t num_bindings;
 	};
@@ -336,7 +336,7 @@ namespace Swift
 			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc) { this->macho = macho; this->objc = objc; this->populateSections(); this->parseSwift(); }
 			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : SwiftMetadata(macho, objc) { this->text = text; this->populateSections(); this->parseSwift(); }
 
-			std::Array<Type*>* getAllTypes() { return &all_types; }
+			std::Array<Type*>* getAllTypes() { return &swift_types; }
 
 			ObjectiveC::ObjCData* getObjCMetaData() { return objc; }
 
@@ -368,7 +368,7 @@ namespace Swift
 
 			void enumerateTypes();
 
-			struct Type* parseTypeDesciptor(struct TypeDescriptor *typeDescriptor);
+			struct Type* parseTypeDescriptor(struct TypeDescriptor *typeDescriptor);
 
 			mach_vm_address_t getTypeMetadata(struct TypeDescriptor *typeDescriptor);
 
@@ -383,7 +383,7 @@ namespace Swift
 
 			Segment *text;
 
-			std::Array<struct Type*> types;
+			std::Array<struct Type*> swift_types;
 
 			std::Array<struct Class*> classes;
 			std::Array<struct Struct*> structs;

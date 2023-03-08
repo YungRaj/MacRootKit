@@ -307,6 +307,7 @@ void parsePropertyList(ObjCData *metadata, ObjC *object, std::Array<Property*> *
 
 namespace ObjectiveC
 {
+
 ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass)
 {
 	this->metadata = metadata;
@@ -705,8 +706,17 @@ Method::Method(ObjC *object, struct _objc_2_method *method)
 }
 }
 
+#ifdef __arm64__
+
 #include <arm64/PatchFinder_arm64.hpp>
 #include <arm64/Isa_arm64.hpp>
+
+#elif
+
+#include <x86_64/PatchFinder_x86_64.hpp>
+#include <x86_64/Isa_x86_64.hpp>
+
+#endif
 
 namespace ObjectiveC
 {
@@ -744,6 +754,8 @@ mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 
 	mach_vm_address_t start = libobjc->getBufferAddress(method_getName);
 
+#ifdef __arm64__
+
 	using namespace Arch::arm64;
 
 	mach_vm_address_t add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,(bool (*)(uint32_t*))is_add_reg, -1, -1);
@@ -757,6 +769,24 @@ mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 	selectors = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) + (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
 
 	return (selectors - start) + method_getName;
+
+#elif __x86_64__
+
+	using namespace Arch::x86_64;
+
+	cs_insn insn;
+
+	mach_vm_address_t add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
+
+	mach_vm_address_t mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
+
+	Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
+
+	mach_vm_address_t selectors = insn.detail.x86->operands[1].mem.disp + mov;
+
+	return selectors;
+
+#endif
 }
 
 Protocol* ObjCClass::getProtocol(char *protocolname)

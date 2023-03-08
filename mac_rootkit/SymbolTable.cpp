@@ -1,5 +1,66 @@
 #include "SymbolTable.hpp"
 
+#include <cxxabi.h>
+#include <dlfcn.h>
+
+#include <memory>
+
+extern "C"
+{
+#ifdef __USER__
+
+	char* cxx_demangle(char *mangled)
+	{
+		int status;
+
+		char *ret = abi::__cxa_demangle(mangled, 0, 0, &status);  
+
+		std::shared_ptr<char> retval;
+
+		retval.reset( (char *)ret, [](char *mem) { if (mem) free((void*)mem); } );
+
+		return static_cast<char*>(retval.get());
+	}
+
+	typedef char* (*_swift_demangle) (char *mangled, uint32_t length, uint8_t *output_buffer, uint32_t output_buffer_size, uint32_t flags);
+
+	char* swift_demangle(char *mangled)
+	{
+		void *runtime_loader_default = dlopen(NULL, RTLD_NOW);
+
+		if(runtime_loader_default)
+		{
+			void *sym = dlsym(runtime_loader_default, "swift_demangle");
+
+			if(sym)
+			{
+				_swift_demangle f = reinterpret_cast<_swift_demangle>(sym);
+
+				char *cString = f(mangled, strlen(mangled), NULL, 0, 0);
+				
+				if(cString)
+				{
+					dlclose(runtime_loader_default);
+
+					return cString;
+				}
+			}
+
+			dlclose(runtime_loader_default);
+		}
+
+		return NULL;
+	}
+
+#else
+
+	char* cxx_demangle(char *mangled) { return NULL; }
+	char* swift_demangle(char *mangled) { return NULL; }
+
+#endif
+
+}
+
 SymbolTable::SymbolTable()
 {
 

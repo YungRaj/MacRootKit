@@ -36,6 +36,8 @@ namespace mrk
 
 				~CrawlerManager();
 
+				NSTimer* getCrawlingTimer() { return crawlingTimer; }
+
 				UIApplication* getApplication() { return application; }
 
 				UIApplicationDelegate* getAppDelegate() { return applicationDelegate; }
@@ -51,6 +53,8 @@ namespace mrk
 				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
 			private:
+				NSTimer *crawlingTimer;
+
 				UIApplication *application;
 
 				UIApplicationDelegate *delegate;

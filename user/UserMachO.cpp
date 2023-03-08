@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "UserMachO.hpp"
-#include "CodeSignature.hpp"
 #include "ObjC.hpp"
 
 #include "Task.hpp"
@@ -13,6 +12,7 @@ using namespace mrk;
 UserMachO::UserMachO(const char *path)
 {
 	this->objc = NULL;
+	this->file_path = strdup(path);
 
 	this->initWithFilePath(path);
 }
@@ -20,9 +20,10 @@ UserMachO::UserMachO(const char *path)
 void UserMachO::initWithTask(Task *task)
 {
 	this->task = task;
-	this->dyld = task->getDyld();
+	this->dyld = task->getDyld(); 
 	this->dyld_base = this->dyld->getDyld();
 	this->dyld_shared_cache = this->dyld->getDyldSharedCache();
+	this->file_path = dyld->getMainImagePath();
 	this->symbolTable = new SymbolTable();
 }
 
@@ -772,9 +773,7 @@ bool UserMachO::parseLoadCommands()
 
 				// printf("LC_CODE_SIGNATURE\n");
 
-				CodeSignature *signature = CodeSignature::codeSignatureWithLinkedit(this, linkedit);
-
-				this->parseCodeSignature(signature);
+				this->parseCodeSignature(linkedit);
 
 				break;
 			}
@@ -803,14 +802,6 @@ bool UserMachO::parseLoadCommands()
 	}
 
 	return true;
-}
-
-void UserMachO::parseCodeSignature(CodeSignature *signature)
-{
-	bool ok = signature->parseCodeSignature();
-
-	if(ok)
-		this->codeSignature = signature;
 }
 
 void UserMachO::parseFatHeader()

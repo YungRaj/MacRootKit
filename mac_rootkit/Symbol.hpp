@@ -11,52 +11,11 @@ class MachO;
 class Segment;
 class Section;
 
-#ifdef __USER__
-
-#include <cxxabi.h>
-
-char* cxx_demangle(char *mangled)
+extern "C"
 {
-	int status;
-
-	char *ret = abi::__cxa_demangle(mangled, 0, 0, &status);  
-
-	std::shared_ptr<char> retval;
-
-	retval.reset( (char *)ret, [](char *mem) { if (mem) free((void*)mem); } );
-
-	return retval;
+	extern char* cxx_demangle(char *mangled);
+	extern char* swift_demangle(char *mangled);
 }
-
-typedef char* (*_swift_demangle) (char *mangled, uint32_t length, uint8_t *output_buffer, uint32_t output_buffer_size, uint32_t flags);
-
-char* swift_demangle(char *mangled)
-{
-	void *RTLD_DEFAULT = dlopen(NULL, RTLD_NOW);
-
-	mach_vm_address_t sym = dlsym(RTLD_DEFAULT, "swift_demangle");
-
-	if(sym)
-	{
-		_swift_demangle f = reinterpret_cast<_swift_demangle>(sym);
-
-		char *cString = f(mangled, strlen(mangled), NULL, NULL, 0);
-		
-		if(cString)
-		{
-			return cString;
-		}
-	}
-
-	return NULL;
-}
-
-#else
-
-char* cxx_demangle(char *mangled) { return NULL; }
-char* swift_demangle(char *mangled) { return NULL; }
-
-#endif
 
 class Symbol
 {
@@ -68,7 +27,7 @@ class Symbol
 			this->macho = macho;
 			this->type = type;
 			this->name = name;
-			this->demangled_name = this->getDemangledName();
+			this->demangled_name = NULL; // this->getDemangledName();
 			this->address = address;
 			this->offset = offset;
 			this->segment = segment;
@@ -88,10 +47,10 @@ class Symbol
 
 		char* getDemangledName()
 		{
-			char *swift_demangle = swift_demangle(this->getName());
-			char *cxx_demangle = cxx_demangle(this->getName());
+			char *_swift_demangle = swift_demangle(this->getName());
+			char *_cxx_demangle = cxx_demangle(this->getName());
 
-			return swift_demangle ? swift_demangle : cxx_demangle;
+			return _swift_demangle ? _swift_demangle : (_cxx_demangle ? _cxx_demangle : strdup(""));
 		}
 
 		mach_vm_address_t getAddress() { return address; }

@@ -23,6 +23,8 @@ namespace Arch
 
 			size_t disassemble(mach_vm_address_t address, size_t size, cs_insn **result);
 
+			bool registerAccess(cs_insn *insn, cs_regs *regs_read, uint8_t *nread, cs_regs *regs_write, uint8_t *nwrite);
+
 			mach_vm_address_t disassembleNthBranchLink(mach_vm_address_t address, size_t num, size_t lookup_size);
 
 			mach_vm_address_t disassembleNthBranch(mach_vm_address_t address, size_t num, size_t lookup_size);

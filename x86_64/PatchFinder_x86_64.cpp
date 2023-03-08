@@ -1,4 +1,6 @@
 #include "PatchFinder_x86_64.hpp"
+#include "Isa_x86_64.hpp"
+#include "Disassembler_x86_64.hpp"
 
 namespace Arch
 {
@@ -74,19 +76,19 @@ namespace Arch
 
 					if(offset)
 					{
-						size_t size = Arch::x86_64::Disassembler::disassemble(macho->getOffset(offset), 0x1000, &insns);
+						size_t size = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset)), 0x1000, &insns);
 
 						for(uint32_t j = 0; j < size; j++)
 						{
 							mach_vm_address_t xref;
 
-							cs_insn *insn = insns[j];
+							cs_insn *insn = &insns[j];
 
-							if(strcmp(insn->mnemonic, 'lea') == 0)
+							if(strcmp(insn->mnemonic, "lea") == 0)
 							{
-								if(result[i].detail->x86.operands[1].type == X86_OP_MEM && result[i].detail->x86.operands[1].base == X86_REG_RIP)
+								if(insns[i].detail->x86.operands[1].type == X86_OP_MEM && insns[i].detail->x86.operands[1].reg == X86_REG_RIP)
 								{
-									xref = address + result[i].detail->x86.operands[1].mem.disp;
+									xref = address + insns[i].detail->x86.operands[1].mem.disp;
 
 									if(xref == what)
 									{
@@ -96,9 +98,9 @@ namespace Arch
 
 							} else if(strcmp(insn->mnemonic, "call") == 0)
 							{
-								if(result[i].detail->x86.operands[0].type == X86_OP_IMM)
+								if(insns[i].detail->x86.operands[0].type == X86_OP_IMM)
 								{
-									xref = address + result[i].detail->x86.operands[0].imm;
+									xref = address + insns[i].detail->x86.operands[0].imm;
 
 									if(xref == what)
 									{
@@ -126,9 +128,9 @@ namespace Arch
 									  strcmp(insn->mnemonic, "jbe")  == 0 ||
 									  strcmp(insn->mnemonic, "jna")  == 0)
 							{
-								if(result[i].detail->x86.operands[0].type == X86_OP_IMM)
+								if(insns[i].detail->x86.operands[0].type == X86_OP_IMM)
 								{
-									xref = address + result[i].detail->x86.operands[0].imm;
+									xref = address + insns[i].detail->x86.operands[0].imm;
 
 									if(xref == what)
 									{
@@ -138,13 +140,55 @@ namespace Arch
 
 							} else if(strcmp(insn->mnemonic, "mov") == 0)
 							{
-								if(result[i].detail->x86.operands[1].type == X86_OP_MEM && result[i].detail->x86.operands[1].base == X86_REG_RIP)
+								if(insns[i].detail->x86.operands[1].type == X86_OP_MEM && insns[i].detail->x86.operands[1].reg == X86_REG_RIP)
 								{
-									xref = address + result[i].detail->x86.operands[1].mem.disp;
+									xref = address + insns[i].detail->x86.operands[1].mem.disp;
 
 									if(xref == what)
 									{
 										return address;
+									}
+								}
+
+								cs_regs read, write;
+
+								uint8_t nread, nwrite;
+
+								if(Arch::x86_64::Disassembler::registerAccess(insn, read, &nread, write, &nwrite))
+								{
+									if(nread)
+									{
+										x86_reg reg = static_cast<x86_reg>(read[0]);
+
+										if(reg == X86_REG_CS)
+										{
+
+										}
+
+										if(reg == X86_REG_DS)
+										{
+
+										}
+
+										if(reg == X86_REG_ES)
+										{
+
+										}
+									   	
+									   	if(reg == X86_REG_FS)
+									   	{
+
+									   	}
+									   
+									 	if(reg == X86_REG_GS)
+									 	{
+
+									 	}
+									   
+									   	if(reg == X86_REG_SS)
+									   	{
+
+									   	}
 									}
 								}
 							}
@@ -170,7 +214,7 @@ namespace Arch
 
 				uint64_t offset = macho->addressToOffset(start);
 
-				Arch::x86_64::Disassembler::disassemble(stream, MaxInstruction, &insn);
+				Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(stream), Arch::x86_64::MaxInstructionSize, &insn);
 
 				size_t size = insn->size;
 
@@ -180,7 +224,7 @@ namespace Arch
 
 					while(j < length)
 					{
-						if(memcmp(macho->getOffset(offset + j), stream) == 0)
+						if(memcmp(macho->getOffset(offset + j), stream, size) == 0)
 						{
 							return start + j;
 						}
@@ -199,22 +243,27 @@ namespace Arch
 				size_t count;
 
 				uint64_t offset = macho->addressToOffset(start);
-
-				Arch::x86_64::Disassembler::disassemble(stream, MaxInstruction, &insn);
+				
+				Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(stream), Arch::x86_64::MaxInstructionSize, &insn);
 
 				size_t size = insn->size;
 
-				if(offset)
+				while(offset)
 				{
 					size_t n = 0;
 
-					while(n != 1)
-						n = Arch::x86_64::Disassembler::disassemble(macho->getOffset(offset - ++j), MaxInstruction, &insn);
+					uint32_t j = 0;
+
+					do
+					{
+						n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset - ++j)), Arch::x86_64::MaxInstructionSize, &insn);
+					
+					} while(insn->size + (offset - j) != offset && n != 1);
 
 					if(insn->size + (offset - j) != offset)
 						return 0;
 
-					if(strcmp(insn->mnemonic, mnemonic) == 0 && strcmp(insn->op_string, op_string) == 0)
+					if(memcmp(macho->getOffset(offset - j), stream, size) == 0)
 					{
 						return start - j;
 					}
@@ -251,19 +300,23 @@ namespace Arch
 
 				uint64_t offset = macho->addressToOffset(start);
 
-				Arch::x86_64::Disassembler::disassemble(stream, MaxInstruction, &insn);
-
-				size_t size = insn->size;
-
 				if(offset)
 				{
 					uint32_t j = 0;
 
 					while(j < length)
 					{
-						if(strcmp(insn->mnemonic, mnemonic) == 0 && strcmp(insn->op_string, op_string) == 0)
+						Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset + j)), Arch::x86_64::MaxInstructionSize, &insn);
+
+						if(strcmp(insn->mnemonic, mnemonic) == 0)
 						{
-							return start + j;
+							if(op_string && strcmp(insn->op_str, op_string) == 0)
+							{
+								return start + j;
+							} else
+							{
+								return start + j;
+							}
 						}
 
 						j += insn->size;
@@ -281,10 +334,6 @@ namespace Arch
 
 				uint64_t offset = macho->addressToOffset(start);
 
-				Arch::x86_64::Disassembler::disassemble(stream, MaxInstruction, &insn);
-
-				size_t size = insn->size;
-
 				if(offset)
 				{
 					uint32_t j = 0;
@@ -294,14 +343,20 @@ namespace Arch
 						size_t n = 0;
 
 						while(n != 1)
-							n = Arch::x86_64::Disassembler::disassemble(macho->getOffset(offset - ++j), MaxInstruction, &insn);
+							n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset - ++j)), Arch::x86_64::MaxInstructionSize, &insn);
 
 						if(insn->size + (offset - j) != offset)
 							return 0;
 
-						if(strcmp(insn->mnemonic, mnemonic) == 0 && strcmp(insn->op_string, op_string) == 0)
+						if(strcmp(insn->mnemonic, mnemonic) == 0)
 						{
-							return start - j;
+							if(op_string && strcmp(insn->op_str, op_string) == 0)
+							{
+								return start + j;
+							} else
+							{
+								return start + j;
+							}
 						}
 
 						offset -= insn->size;
@@ -313,7 +368,7 @@ namespace Arch
 
 			mach_vm_address_t findFunctionBegin(MachO *macho, mach_vm_address_t start, mach_vm_address_t where)
 			{
-				return stepBack64(macho, start, length, "push", "rsp");
+				return stepBack64(macho, start, 0x400, "push", "rsp");
 			}
 
 			mach_vm_address_t findReference(MachO *macho, mach_vm_address_t to, int n, enum text which_text)
@@ -622,7 +677,7 @@ namespace Arch
 
 			void printInstruction64(MachO *macho, mach_vm_address_t start, uint32_t length, char *mnemonic, char *op_string)
 			{
-				return 0;
+				
 			}
 
 		}

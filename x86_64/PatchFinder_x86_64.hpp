@@ -1,13 +1,11 @@
 #ifndef __PATCHFINDER_X86_64_HPP_
 #define __PATCHFINDER_X86_64_HPP_
 
-#include "PatchFinder.hpp"
+#include <capstone/capstone.h>
 
 #include "MachO.hpp"
 
 class MachO;
-
-using namespace PatchFinder;
 
 namespace Arch
 {
@@ -15,6 +13,38 @@ namespace Arch
 	{
 		namespace PatchFinder
 		{
+			enum text : int
+			{
+				__UNKNOWN_TEXT = -1,
+				__NO_TEXT = 0,
+				__TEXT_XNU_BASE,
+				__TEXT_PRELINK_BASE,
+				__TEXT_PPL_BASE,
+				__TEXT_KLD_BASE,
+			};
+
+			enum data : int
+			{
+				__UNKNOWN_DATA = -1,
+				__DATA_CONST = 0, 
+				__PPLDATA_CONST,
+				__PPLDATA,
+				__DATA,
+				__BOOTDATA,
+				__PRELINK_DATA,
+				 __PLK_DATA_CONST,
+			};
+
+			enum string : int
+			{
+				__unknown_ = -1,
+				__no_string_ = 0,
+				__cstring_,
+				__pstring_,
+				__oslstring_,
+				__data_,
+				__const_,
+			};
 			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,
 													  const unsigned char* needle,   size_t nlen);
 

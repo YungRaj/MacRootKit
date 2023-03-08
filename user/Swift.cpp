@@ -15,7 +15,7 @@ namespace Swift
 
 SwiftMetadata* parseSwift(mrk::UserMachO *macho)
 {
-	return new SwiftMetadata(macho);
+	return macho->getObjCMetadata() ? new SwiftMetadata(macho, macho->getObjCMetadata()) : NULL;
 }
 
 void SwiftMetadata::populateSections()
@@ -38,7 +38,7 @@ void SwiftMetadata::populateSections()
 
 void SwiftMetadata::parseSwift()
 {
-	this->parseTypes();
+	this->enumerateTypes();
 }
 
 void SwiftMetadata::enumerateTypes()
@@ -62,11 +62,9 @@ void SwiftMetadata::enumerateTypes()
 
 		type_address += type_offset;
 
-		uint64_t type_offset = macho->addressToOffset(type_address);
-
 		struct TypeDescriptor *descriptor = reinterpret_cast<struct TypeDescriptor*>(macho->getOffset(type_offset));
 
-		type = this->parseType(descriptor);
+		type = this->parseTypeDescriptor(descriptor);
 
 		swift_types_offset += sizeof(int32_t);
 	}
@@ -80,9 +78,9 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 	struct FieldDescriptor *fieldDescriptor;
 
-	descriptor = type;
+	descriptor = typeDescriptor;
 
-	int32_t field_descriptor_offset = reinterpret_cast<int32_t*>(&typeDescriptor->field_descriptor);
+	int32_t field_descriptor_offset = *reinterpret_cast<int32_t*>(&typeDescriptor->field_descriptor);
 
 	mach_vm_address_t field_descriptor_address = reinterpret_cast<mach_vm_address_t>(&typeDescriptor->field_descriptor) + field_descriptor_offset;
 
@@ -90,48 +88,48 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 	type = NULL;
 
-	switch(field_descriptor->kind)
+	switch(fieldDescriptor->kind)
 	{
 		case FDK_Struct:
-			struct Struct *structure = new Struct;
+			{
+				struct Struct *structure = new Struct;
 
-			memcpy(&structure->descriptor, &type, sizeof(structure->descriptor));
+				memcpy(&structure->descriptor, typeDescriptor, sizeof(structure->descriptor));
 
-			struct TypeDescriptor *descriptor = &structure->descriptor.type;
-
-			type = dynamic_cast<struct Type*>(structure);
+				type = dynamic_cast<struct Type*>(structure);
+			}
 
 			break;
 		case FDK_Class:
-			struct Class *cls = new Class;
+			{
+				struct Class *cls = new Class;
 
-			memcpy(&cls->descriptor, &type, sizeof(cls->descriptor));
+				memcpy(&cls, typeDescriptor, sizeof(struct Class));
 
-			struct TypeDescriptor *descriptor = &cls->descriptor.type;
-
-			type = dynamic_cast<struct Type*>(cls);
+				type = dynamic_cast<struct Type*>(cls);
+			}
 
 			break;
 		case FDK_Enum:
-			struct Enum *enumeration = new Enum;
+			{
+				struct Enum *enumeration = new Enum;
 
-			memcpy(&enumeration->descriptor, &type, sizeof(enumeration->descriptor));
+				memcpy(&enumeration->descriptor, typeDescriptor, sizeof(struct Enum));
 
-			struct TypeDescriptor *descriptor = &enumeration->descriptor.type;
-
-			type = dynamic_cast<struct Type*>(enumeration);
+				type = dynamic_cast<struct Type*>(enumeration);
+			}
 
 			break;
 		case FDK_MultiPayloadEnum:
 			break;
 		case FDK_Protocol:
-			struct Protocol *protocol = new Protocol;
+			{
+				struct Protocol *protocol = new Protocol;
 
-			memcpy(&protocol->descriptor, &type, sizeof(protocol->descriptor));
+				memcpy(&protocol->descriptor, typeDescriptor, sizeof(struct Protocol));
 
-			struct TypeDescriptor *descriptor = &protocol->descriptor.type;
-
-			type = dynamic_cast<struct Type*>(protocol);
+				type = dynamic_cast<struct Type*>(protocol);
+			}
 
 			break;
 		case FDK_ClassProtocol:
@@ -145,7 +143,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 	}
 
 	if(type)
-		this->parseFieldDescriptor(type, field);
+		this->parseFieldDescriptor(type, fieldDescriptor);
 
 	return type;
 }
@@ -163,19 +161,21 @@ void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescript
 
 	mach_vm_address_t field_start = reinterpret_cast<mach_vm_address_t>(fieldDescriptor) + sizeof(struct FieldDescriptor);
 
-	field->descriptor = fieldDescriptor;
+	fields->descriptor = fieldDescriptor;
 
 	for(int i = 0; i < fieldDescriptor->num_fields; i++)
 	{
 		struct Field *field = new Field;
 
-		memcpy(&field->record, field_start + i * sizeof(struct FieldRecord), sizeof(struct FieldRecord));
+		memcpy(&field->record, reinterpret_cast<struct FieldRecord*>(field_start) + i, sizeof(struct FieldRecord));
 
 		field->name = "";
 		field->mangled_name = "";
 		field->demangled_name = "";
 
 		fields->records.add(field);
+
+		type->field = field;
 	}
 }
 

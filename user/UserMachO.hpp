@@ -8,6 +8,8 @@
 #include "ObjC.hpp"
 #include "Swift.hpp"
 
+#include "Dyld.hpp"
+
 #include "mach-o.h"
 
 class Segment;
@@ -31,12 +33,47 @@ namespace xnu
 
 namespace mrk
 {
-	class CodeSignature;
+	class CodeSignature
+	{
+		public:
+			explicit CodeSignature(UserMachO *macho, struct linkedit_data_command *cmd) { this->macho = macho; this->cmd = cmd; this->parseCodeSignature(); }
+
+			static CodeSignature* codeSignatureWithLinkedit(UserMachO *macho, struct linkedit_data_command *cmd);
+
+			UserMachO* getMachO() { return macho; }
+
+			struct linkedit_data_command* getLoadCommand() { return cmd; }
+
+			SuperBlob* getSuperBlob() { return superBlob; }
+
+			code_directory_t getCodeDirectory() { return codeDirectory; }
+
+			char* getEntitlements() { return entitlements; }
+
+			bool verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char *signature, size_t sigsize);
+
+			bool compareHash(uint8_t *hash1, uint8_t *hash2, size_t hashSize);
+
+			uint8_t* computeHash(bool sha256, uint8_t *blob, size_t size);
+
+			bool parseCodeSignature();
+
+		private:
+			UserMachO *macho;
+
+			struct linkedit_data_command *cmd;
+
+			SuperBlob *superBlob;
+
+			code_directory_t codeDirectory;
+
+			char *entitlements;
+	};
 
 	class UserMachO : public MachO
 	{
 		public:
-			UserMachO() { }
+			UserMachO() { this-> task = NULL; this->file_path = NULL; }
 			UserMachO(const char *path);
 
 			~UserMachO() { }
@@ -51,11 +88,15 @@ namespace mrk
 			
 			virtual void initWithBuffer(mrk::UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
 
+			char* getFilePath() { return this->dyld ? this->dyld->getMainImagePath() : this->file_path; }
+
 			bool isDyldCache() { return is_dyldCache; }
 
 			void setIsDyldCache(bool isDyldCache) { this->is_dyldCache = isDyldCache; }
 
 			UserMachO* getObjectiveCLibrary() { return libobjc; }
+
+			ObjectiveC::ObjCData* getObjCMetadata() { return objc; }
 
 			bool isObjectiveCLibrary() { return is_libobjc; }
 
@@ -86,7 +127,7 @@ namespace mrk
 
 			virtual bool parseLoadCommands() override;
 
-			void parseCodeSignature(mrk::CodeSignature *signature);
+			void parseCodeSignature(struct linkedit_data_command *cmd) { codeSignature = CodeSignature::codeSignatureWithLinkedit(this, cmd); }
 			
 			void parseObjC()
 			{
@@ -112,6 +153,8 @@ namespace mrk
 
 			ObjectiveC::ObjCData *objc;
 			Swift::SwiftMetadata *swift;
+
+			char *file_path;
 
 			bool is_dyldCache;
 			bool is_libobjc;

@@ -30,6 +30,8 @@ namespace dyld
 
 			~Dyld();
 
+			char* getMainImagePath() { return main_image_path; }
+
 			mach_vm_address_t getMainImageLoadBase() { return main_image_load_base; }
 			mach_vm_address_t getAllImageInfoAddr() { return all_image_info_addr; }
 
@@ -68,6 +70,8 @@ namespace dyld
 			MachO* cacheDumpImageToFile(char *image, char *path);
 
 		private:
+			char *main_image_path;
+
 			xnu::Kernel *kernel;
 
 			xnu::Task *task;
