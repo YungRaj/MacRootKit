@@ -124,7 +124,9 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 					if(objc_class)
 					{
-						
+						cls->isa = objc_class;
+
+						this->parseClassMetadata(cls);
 					}
 				}
 			}
@@ -229,5 +231,9 @@ void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescript
 	}
 }
 
+void SwiftMetadata::parseClassMetadata(Class *cls)
+{
+
+}
 
 }

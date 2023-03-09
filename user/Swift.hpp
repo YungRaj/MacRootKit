@@ -370,13 +370,15 @@ namespace Swift
 
 			void enumerateTypes();
 
+			mach_vm_address_t getTypeMetadata(struct TypeDescriptor *typeDescriptor);
+
 			struct Type* parseTypeDescriptor(struct TypeDescriptor *typeDescriptor);
 
-			mach_vm_address_t getTypeMetadata(struct TypeDescriptor *typeDescriptor);
+			struct Protocol* parseProtocolDescriptor(struct ProtocolDescriptor *protocolDescriptor);
 
 			void parseFieldDescriptor(struct Type *type, struct FieldDescriptor *fieldDescriptor);
 
-			struct Protocol* parseProtocolDescriptor(struct ProtocolDescriptor *protocolDescriptor);
+			void parseClassMetadata(Class *cls);
 
 		private:
 			MachO *macho;
