@@ -7,6 +7,14 @@
 
 #include "Swift.hpp"
 
+#ifdef __arm64__
+#include <arm64/PatchFinder_arm64.hpp>
+#include <arm64/Isa_arm64.hpp>
+#elif
+#include <x86_64/PatchFinder_x86_64.hpp>
+#include <x86_64/Isa_x86_64.hpp>
+#endif
+
 #include <assert.h>
 #include <string.h>
 
@@ -94,7 +102,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 			{
 				struct Struct *structure = new Struct;
 
-				memcpy(&structure->descriptor, typeDescriptor, sizeof(structure->descriptor));
+				memcpy(&structure->descriptor, typeDescriptor, sizeof(struct TypeDescriptor));
 
 				type = dynamic_cast<struct Type*>(structure);
 			}
@@ -104,7 +112,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 			{
 				struct Class *cls = new Class;
 
-				memcpy(&cls, typeDescriptor, sizeof(struct Class));
+				memcpy(&cls->descriptor, typeDescriptor, sizeof(struct TypeDescriptor));
 
 				type = dynamic_cast<struct Type*>(cls);
 			}
@@ -114,7 +122,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 			{
 				struct Enum *enumeration = new Enum;
 
-				memcpy(&enumeration->descriptor, typeDescriptor, sizeof(struct Enum));
+				memcpy(&enumeration->descriptor, typeDescriptor, sizeof(struct TypeDescriptor));
 
 				type = dynamic_cast<struct Type*>(enumeration);
 			}
@@ -126,7 +134,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 			{
 				struct Protocol *protocol = new Protocol;
 
-				memcpy(&protocol->descriptor, typeDescriptor, sizeof(struct Protocol));
+				memcpy(&protocol->descriptor, typeDescriptor, sizeof(struct TypeDescriptor));
 
 				type = dynamic_cast<struct Type*>(protocol);
 			}
@@ -150,22 +158,23 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDescriptor)
 {
-/*
+	mach_vm_address_t typeMetadata;
+
+	mach_vm_address_t accessFunction = typeDescriptor->access_function;
+
 #ifdef __arm64__
 
 	using namespace Arch::arm64;
 
-	mach_vm_address_t add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,(bool (*)(uint32_t*))is_add_reg, -1, -1);
-
-	mach_vm_address_t xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,(bool (*)(uint32_t*))is_adrp, -1, -1);
+	mach_vm_address_t xref = Arch::arm64::PatchFinder::step64(macho, accessFunction, 0x100,(bool (*)(uint32_t*))is_adrp, -1, -1);
 
 	adr_t adrp = *reinterpret_cast<adr_t*>(xref);
 
 	add_imm_t add_imm = *reinterpret_cast<add_imm_t*>(xref + 0x4);
 
-	selectors = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) + (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
+	typeMetadata = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) + (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
 
-	return (selectors - start) + method_getName;
+	return typeMetadata;
 
 #elif __x86_64__
 
@@ -173,18 +182,15 @@ mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDesc
 
 	cs_insn insn;
 
-	mach_vm_address_t add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
-
-	mach_vm_address_t mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
+	mach_vm_address_t mov = Arch::x86_64::PatchFinder::step64(macho, accessFunction, add, 0x100, "mov", NULL);
 
 	Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
 
-	mach_vm_address_t selectors = insn.detail.x86->operands[1].mem.disp + mov;
+	typeMetadata = insn.detail.x86->operands[1].mem.disp + mov;
 
-	return selectors;
+	return typeMetadata;
 
 #endif
-*/
 }
 
 void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescriptor *fieldDescriptor)
