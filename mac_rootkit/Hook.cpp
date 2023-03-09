@@ -31,9 +31,9 @@ Hook::Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address
 	this->from = from;
 
 	if(this->hooktype == kHookTypeInstrumentFunction)
-		this->initWithHookParams(task, from);
+		this->withHookParams(task, from);
 	if(this->hooktype == kHookTypeBreakpoint)
-		this->initWithBreakpointParams(task, from);
+		this->withBreakpointParams(task, from);
 
 	this->disassembler = this->task->getDisassembler();
 	this->architecture = Arch::initArchitecture();
@@ -57,7 +57,7 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 
 	hook = new Hook(patcher, kHookTypeInstrumentFunction);
 
-	hook->initWithHookParams(task, address);
+	hook->withHookParams(task, address);
 
 	return hook;
 }
@@ -80,19 +80,19 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 
 	hook = new Hook(patcher, kHookTypeBreakpoint);
 
-	hook->initWithBreakpointParams(task, address);
+	hook->withBreakpointParams(task, address);
 
 	return hook;
 }
 
-void Hook::initWithHookParams(Task *task, mach_vm_address_t from)
+void Hook::withHookParams(Task *task, mach_vm_address_t from)
 {
 	this->setTask(task);
 	this->setFrom(from);
 	this->setDisassembler(task->getDisassembler());
 }
 
-void Hook::initWithBreakpointParams(Task *task, mach_vm_address_t breakpoint)
+void Hook::withBreakpointParams(Task *task, mach_vm_address_t breakpoint)
 {
 	this->setHookType(kHookTypeBreakpoint);
 	this->setTask(task);

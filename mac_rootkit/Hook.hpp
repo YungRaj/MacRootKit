@@ -75,8 +75,8 @@ namespace mrk
 			Hook(mrk::Patcher *patcher, enum HookType hooktype);
 			Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, mach_vm_address_t from);
 
-			void initWithHookParams(xnu::Task *task, mach_vm_address_t from);
-			void initWithBreakpointParams(xnu::Task *task, mach_vm_address_t breakpoint);
+			void withHookParams(xnu::Task *task, mach_vm_address_t from);
+			void withBreakpointParams(xnu::Task *task, mach_vm_address_t breakpoint);
 
 			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
 			static Hook* breakpointForAddress(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
