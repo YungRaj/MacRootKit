@@ -76,7 +76,7 @@ namespace Arch
 
 					if(offset)
 					{
-						size_t size = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset)), 0x1000, &insns);
+						size_t size = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>((*macho)[offset]), 0x1000, &insns);
 
 						for(uint32_t j = 0; j < size; j++)
 						{
@@ -224,7 +224,7 @@ namespace Arch
 
 					while(j < length)
 					{
-						if(memcmp(macho->getOffset(offset + j), stream, size) == 0)
+						if(memcmp((*macho)[offset + j], stream, size) == 0)
 						{
 							return start + j;
 						}
@@ -256,14 +256,14 @@ namespace Arch
 
 					do
 					{
-						n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset - ++j)), Arch::x86_64::MaxInstructionSize, &insn);
+						n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>((*macho)[offset - ++j]), Arch::x86_64::MaxInstructionSize, &insn);
 					
 					} while(insn->size + (offset - j) != offset && n != 1);
 
 					if(insn->size + (offset - j) != offset)
 						return 0;
 
-					if(memcmp(macho->getOffset(offset - j), stream, size) == 0)
+					if(memcmp((*macho)[offset - j], stream, size) == 0)
 					{
 						return start - j;
 					}
@@ -306,7 +306,7 @@ namespace Arch
 
 					while(j < length)
 					{
-						Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset + j)), Arch::x86_64::MaxInstructionSize, &insn);
+						Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>((*macho)[offset + j]), Arch::x86_64::MaxInstructionSize, &insn);
 
 						if(strcmp(insn->mnemonic, mnemonic) == 0)
 						{
@@ -343,7 +343,7 @@ namespace Arch
 						size_t n = 0;
 
 						while(n != 1)
-							n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>(macho->getOffset(offset - ++j)), Arch::x86_64::MaxInstructionSize, &insn);
+							n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>((*macho)[offset - ++j]), Arch::x86_64::MaxInstructionSize, &insn);
 
 						if(insn->size + (offset - j) != offset)
 							return 0;

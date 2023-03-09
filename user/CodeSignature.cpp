@@ -89,7 +89,7 @@ bool CodeSignature::parseCodeSignature()
         uint32_t bloboffset = swap32(index.offset);
         uint32_t begin = offset + bloboffset;
         
-        Blob *blob = (Blob*) macho->getOffset(begin);
+        Blob *blob = (Blob*) (*macho)[begin];
         
         uint32_t magic = swap32(blob->magic);
         uint32_t length = swap32(blob->length);
@@ -98,7 +98,7 @@ bool CodeSignature::parseCodeSignature()
         {
             case CSMAGIC_CODEDIRECTORY:
                 {
-	                code_directory_t directory = (code_directory_t) macho->getOffset(begin);
+	                code_directory_t directory = (code_directory_t) (*macho)[begin];
 	                
 	                uint32_t hashOffset = swap32(directory->hashOffset);
 	                uint32_t identOffset = swap32(directory->identOffset);
@@ -110,7 +110,7 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                bool sha256 = false;
 	                
-	                char *ident = reinterpret_cast<char*>(macho->getOffset(begin + identOffset));
+	                char *ident = reinterpret_cast<char*>((*macho)[begin + identOffset]);
 	                
 	                MAC_RK_LOG("\tIdentifier: %s\n",ident);
 	                MAC_RK_LOG("\tPage size: %u bytes\n",1 << pageSize);
@@ -135,12 +135,12 @@ bool CodeSignature::parseCodeSignature()
 	                    if(pages)
 	                        MAC_RK_LOG("\t\tPage %2u ",i);
 	                    
-	                    uint8_t *hash = (uint8_t*) macho->getOffset(begin + hashOffset + i * hashSize);
+	                    uint8_t *hash = (uint8_t*) (*macho)[begin + hashOffset + i * hashSize];
 	                    
 	                    for(int j = 0; j < hashSize; j++)
 	                        MAC_RK_LOG("%.2x",hash[j]);
 
-	                    uint8_t *blob = (uint8_t*) macho->getOffset(i * (1 << pageSize));
+	                    uint8_t *blob = (uint8_t*) (*macho)[i * (1 << pageSize)];
 	                    
 	                    if(i + 1 != nCodeSlots)
 	                    {
@@ -167,7 +167,7 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                for(int i = 0; i < nSpecialSlots; i++)
 	                {
-	                    uint8_t *hash = (uint8_t*) macho->getOffset(begin + hashOffset + i * hashSize);
+	                    uint8_t *hash = (uint8_t*) (*macho)[begin + hashOffset + i * hashSize];
 
 	                    if(i < 5)
 	                        MAC_RK_LOG("\t\t%s ", special_slots[i].name);
@@ -308,9 +308,9 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                entitlements = new char[length - sizeof(struct Blob)];
 	                
-	                memcpy(entitlements, macho->getOffset(begin + sizeof(struct Blob)), length - sizeof(struct Blob));
+	                memcpy(entitlements, (*macho)[begin + sizeof(struct Blob)], length - sizeof(struct Blob));
 	                
-	                blob_raw = (uint8_t*) macho->getOffset(begin);
+	                blob_raw = (uint8_t*) (*macho)[begin];
 	                blob_hash = this->computeHash(special_slots[ENTITLEMENTS].sha256, blob_raw, length);
 	                
 	                MAC_RK_LOG("\nEntitlements ");

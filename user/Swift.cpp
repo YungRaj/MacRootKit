@@ -45,8 +45,8 @@ void SwiftMetadata::enumerateTypes()
 {
 	Section *types = this->getTypes();
 
-	uint8_t *swift_types_begin = macho->getOffset(types->getOffset());
-	uint8_t *swift_types_end = macho->getOffset(types->getOffset() + types->getSize());
+	uint8_t *swift_types_begin = (*macho)[types->getOffset()];
+	uint8_t *swift_types_end = (*macho)[types->getOffset() + types->getSize()];
 
 	uint32_t swift_types_offset = 0;
 
@@ -58,11 +58,11 @@ void SwiftMetadata::enumerateTypes()
 
 		int64_t type_offset;
 
-		type_offset = *reinterpret_cast<int32_t*>(macho->getOffset(swift_types_offset));
+		type_offset = *reinterpret_cast<int32_t*>((*macho)[swift_types_offset]);
 
 		type_address += type_offset;
 
-		struct TypeDescriptor *descriptor = reinterpret_cast<struct TypeDescriptor*>(macho->getOffset(type_offset));
+		struct TypeDescriptor *descriptor = reinterpret_cast<struct TypeDescriptor*>((*macho)[type_offset]);
 
 		type = this->parseTypeDescriptor(descriptor);
 
@@ -150,9 +150,41 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDescriptor)
 {
-	
-	
-	return 0;
+/*
+#ifdef __arm64__
+
+	using namespace Arch::arm64;
+
+	mach_vm_address_t add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,(bool (*)(uint32_t*))is_add_reg, -1, -1);
+
+	mach_vm_address_t xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,(bool (*)(uint32_t*))is_adrp, -1, -1);
+
+	adr_t adrp = *reinterpret_cast<adr_t*>(xref);
+
+	add_imm_t add_imm = *reinterpret_cast<add_imm_t*>(xref + 0x4);
+
+	selectors = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) + (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
+
+	return (selectors - start) + method_getName;
+
+#elif __x86_64__
+
+	using namespace Arch::x86_64;
+
+	cs_insn insn;
+
+	mach_vm_address_t add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
+
+	mach_vm_address_t mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
+
+	Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
+
+	mach_vm_address_t selectors = insn.detail.x86->operands[1].mem.disp + mov;
+
+	return selectors;
+
+#endif
+*/
 }
 
 void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescriptor *fieldDescriptor)

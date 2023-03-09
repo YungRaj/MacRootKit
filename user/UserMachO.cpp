@@ -14,10 +14,10 @@ UserMachO::UserMachO(const char *path)
 	this->objc = NULL;
 	this->file_path = strdup(path);
 
-	this->initWithFilePath(path);
+	this->withFilePath(path);
 }
 
-void UserMachO::initWithTask(Task *task)
+void UserMachO::withTask(Task *task)
 {
 	this->task = task;
 	this->dyld = task->getDyld(); 
@@ -27,7 +27,7 @@ void UserMachO::initWithTask(Task *task)
 	this->symbolTable = new SymbolTable();
 }
 
-void UserMachO::initWithFilePath(const char *path)
+void UserMachO::withFilePath(const char *path)
 {
 	FILE *file;
 
@@ -58,7 +58,7 @@ void UserMachO::initWithFilePath(const char *path)
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(char *buf)
+void UserMachO::withBuffer(char *buf)
 {
 	buffer = buf;
 
@@ -69,7 +69,7 @@ void UserMachO::initWithBuffer(char *buf)
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(char *buf, off_t slide)
+void UserMachO::withBuffer(char *buf, off_t slide)
 {
 	buffer = buf;
 
@@ -81,7 +81,7 @@ void UserMachO::initWithBuffer(char *buf, off_t slide)
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide)
+void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide)
 {
 	buffer = buf;
 	base = base_;
@@ -96,7 +96,7 @@ void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide)
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide, bool is_dyld_cache)
+void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide, bool is_dyld_cache)
 {
 	buffer = buf;
 	base = base_;
@@ -111,7 +111,7 @@ void UserMachO::initWithBuffer(mach_vm_address_t base_, char *buf, off_t slide, 
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(UserMachO *libobjc, mach_vm_address_t base_, char *buf, off_t slide)
+void UserMachO::withBuffer(UserMachO *libobjc, mach_vm_address_t base_, char *buf, off_t slide)
 {
 	buffer = buf;
 	base = base_;
@@ -127,7 +127,7 @@ void UserMachO::initWithBuffer(UserMachO *libobjc, mach_vm_address_t base_, char
 	this->parseMachO();
 }
 
-void UserMachO::initWithBuffer(char *buffer, uint64_t size)
+void UserMachO::withBuffer(char *buffer, uint64_t size)
 {
 
 }
@@ -474,7 +474,7 @@ bool UserMachO::parseLoadCommands()
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
-		struct load_command *load_cmd = (struct load_command*) this->getOffset(current_offset);
+		struct load_command *load_cmd = (struct load_command*) (*this)[current_offset];
 
 		uint32_t cmdtype = load_cmd->cmd;
 		uint32_t cmdsize = load_cmd->cmdsize;
@@ -493,7 +493,7 @@ bool UserMachO::parseLoadCommands()
 				off_t dylib_name_offset = current_offset  + reinterpret_cast<off_t>(dylib.name);
 				size_t dylib_name_len = cmdsize - sizeof(dylib_command);
 
-				char *name = (char*) this->getOffset(dylib_name_offset);
+				char *name = (char*) (*this)[dylib_name_offset];
 
 				// printf("LC_LOAD_DYLIB - %s\n",name);
 				// printf("\tVers - %u Timestamp - %u\n", dylib.current_version,dylib.timestamp);
@@ -525,7 +525,7 @@ bool UserMachO::parseLoadCommands()
 
 				for(j = 0; j < nsects; j++)
 				{
-					struct section_64 *section = (struct section_64*) this->getOffset(sect_offset);
+					struct section_64 *section = (struct section_64*) (*this)[sect_offset];
 
 					printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
 					                            section->addr,
@@ -557,10 +557,10 @@ bool UserMachO::parseLoadCommands()
 				// printf("\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
 				// printf("\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
 
-				struct nlist_64 *symtab = (struct nlist_64*) this->getOffset(symtab_command->symoff);
+				struct nlist_64 *symtab = (struct nlist_64*) (*this)[symtab_command->symoff];
 				uint32_t nsyms = symtab_command->nsyms;
 
-				char *strtab = (char*) this->getOffset(symtab_command->stroff);
+				char *strtab = (char*) (*this)[symtab_command->stroff];
 				uint32_t strsize = symtab_command->strsize;
 
 				if(nsyms > 0)

@@ -59,7 +59,7 @@ bool KextMachO::parseLoadCommands()
 
 	char buffer[128];
 
-	snprintf(buffer, 128, "0x%llx", (uint64_t) this->getOffset(sizeof(struct mach_header_64)));
+	snprintf(buffer, 128, "0x%llx", (uint64_t) (*this)[sizeof(struct mach_header_64)]);
 
 	MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
 
@@ -75,7 +75,7 @@ bool KextMachO::parseLoadCommands()
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
-		struct load_command *load_command = reinterpret_cast<struct load_command*>(this->getOffset(current_offset));
+		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
 		uint32_t cmdtype = load_command->cmd;
 		uint32_t cmdsize = load_command->cmdsize;
@@ -126,7 +126,7 @@ bool KextMachO::parseLoadCommands()
 
 				for(j = 0; j < nsects; j++)
 				{
-					struct section_64 *section = reinterpret_cast<struct section_64*>(this->getOffset(sect_offset));
+					struct section_64 *section = reinterpret_cast<struct section_64*>((*this)[sect_offset]);
 
 					char buffer1[128];
 					char buffer2[128];

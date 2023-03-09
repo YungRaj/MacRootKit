@@ -72,7 +72,7 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 			if(hdr.magic == MH_MAGIC_64)
 			{
 				this->main_image_path = image_file;
-				
+
 				this->main_image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
 				memcpy(this->main_image_info, &image_info, sizeof(image_info));
@@ -1336,15 +1336,15 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	if(objc)
 	{
-		macho->initWithBuffer(objc, address, image_dump, aslr_slide);
+		macho->withBuffer(objc, address, image_dump, aslr_slide);
 	} else
 	{
 		if(strstr(image, "libobjc.A.dylib"))
 		{
-			macho->initWithBuffer(macho, address, image_dump, aslr_slide);
+			macho->withBuffer(macho, address, image_dump, aslr_slide);
 		} else
 		{
-			macho->initWithBuffer(address, image_dump, aslr_slide, true);
+			macho->withBuffer(address, image_dump, aslr_slide, true);
 		}
 	}
 

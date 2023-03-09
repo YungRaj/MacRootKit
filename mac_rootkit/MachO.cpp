@@ -87,7 +87,7 @@ off_t MachO::addressToOffset(mach_vm_address_t address)
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
-		struct load_command *load_command = reinterpret_cast<struct load_command*>(this->getOffset(current_offset));
+		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
 		uint32_t cmdtype = load_command->cmd;
 		uint32_t cmdsize = load_command->cmdsize;
@@ -106,7 +106,7 @@ off_t MachO::addressToOffset(mach_vm_address_t address)
 
 			for(int j = 0; j < segment_command->nsects; j++)
 			{
-				struct section_64 *section = reinterpret_cast<struct section_64*>(this->getOffset(sect_offset));
+				struct section_64 *section = reinterpret_cast<struct section_64*>((*this)[sect_offset]);
 
 				uint64_t sectaddr = section->addr;
 				uint64_t sectsize = section->size;
@@ -136,7 +136,7 @@ mach_vm_address_t MachO::offsetToAddress(off_t offset)
 
 	for(uint32_t i = 0; i < mh->ncmds; i++)
 	{
-		struct load_command *load_command = reinterpret_cast<struct load_command*>(this->getOffset(current_offset));
+		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
 		uint32_t cmdtype = load_command->cmd;
 		uint32_t cmdsize = load_command->cmdsize;

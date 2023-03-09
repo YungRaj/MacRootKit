@@ -226,6 +226,8 @@ namespace Swift
 		ObjectiveC::ObjCClass *isa;
 
 		std::Array<Method*> methods;
+
+		ObjectiveC::ObjCClass* getObjCClass() { return isa; }
 	};
 
 	struct StructDescriptor

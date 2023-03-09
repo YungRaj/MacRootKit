@@ -78,15 +78,17 @@ namespace mrk
 
 			~UserMachO() { }
 
-			virtual void initWithTask(xnu::Task *task);
-			virtual void initWithFilePath(const char *path);
-			virtual void initWithBuffer(char *buffer);
-			virtual void initWithBuffer(char *buffer, off_t slide);
+			virtual void withTask(xnu::Task *task);
+			virtual void withFilePath(const char *path);
 
-			virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide);
-			virtual void initWithBuffer(mach_vm_address_t base, char *buffer, off_t slide, bool is_dyld_cache);
+			virtual void withBuffer(char *buffer);
+			virtual void withBuffer(char *buffer, off_t slide);
+			virtual void withBuffer(char *buffer, uint64_t size);
 			
-			virtual void initWithBuffer(mrk::UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
+			virtual void withBuffer(mach_vm_address_t base, char *buffer, off_t slide);
+			virtual void withBuffer(mach_vm_address_t base, char *buffer, off_t slide, bool is_dyld_cache);
+			
+			virtual void withBuffer(mrk::UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
 
 			char* getFilePath() { return this->dyld ? this->dyld->getMainImagePath() : this->file_path; }
 
@@ -103,8 +105,6 @@ namespace mrk
 			void setIsObjectiveCLibrary(bool is_libobjc) { this->is_libobjc = is_libobjc; }
 
 			void setObjectiveCLibrary(UserMachO* libobjc) { this->libobjc = libobjc; }
-
-			virtual void initWithBuffer(char *buffer, uint64_t size);
 
 			static MachO* taskAt(mach_port_t task);
 			static MachO* libraryLoadedAt(mach_port_t task, char *library);
@@ -138,6 +138,8 @@ namespace mrk
 			{
 				this->swift = Swift::parseSwift(this);
 			}
+
+			uint8_t* operator[](uint64_t index) { return this->getOffset(index); }
 
 		private:
 			xnu::Task *task;

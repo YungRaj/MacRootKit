@@ -765,11 +765,11 @@ void Dwarf::parseDebugAbbrev()
 	Section *debug_abbrev = this->__debug_abbrev;
 	Section *debug_str = this->__debug_str;
 
-	uint8_t *debug_abbrev_begin = macho->getOffset(debug_abbrev->getOffset());
-	uint8_t *debug_abbrev_end = macho->getOffset(debug_abbrev->getOffset() + debug_abbrev->getSize());
+	uint8_t *debug_abbrev_begin = (*macho)[debug_abbrev->getOffset()];
+	uint8_t *debug_abbrev_end = (*macho)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = macho->getOffset(debug_str->getOffset());
-	uint8_t *debug_str_end = macho->getOffset(debug_str->getOffset() + debug_str->getSize());
+	uint8_t *debug_str_begin = (*macho)[debug_str->getOffset()];
+	uint8_t *debug_str_end = (*macho)[debug_str->getOffset() + debug_str->getSize()];
 
 	size_t debug_abbrev_size = debug_abbrev->getSize();
 
@@ -899,14 +899,14 @@ void Dwarf::parseDebugInfo()
 	Section *debug_abbrev = this->__debug_abbrev;
 	Section *debug_str = this->__debug_str;
 
-	uint8_t *debug_info_begin = macho->getOffset(debug_info->getOffset());
-	uint8_t *debug_info_end = macho->getOffset(debug_info->getOffset() + debug_info->getSize());
+	uint8_t *debug_info_begin = (*macho)[debug_info->getOffset()];
+	uint8_t *debug_info_end = (*macho)[debug_info->getOffset() + debug_info->getSize()];
 
-	uint8_t *debug_abbrev_begin = macho->getOffset(debug_abbrev->getOffset());
-	uint8_t *debug_abbrev_end = macho->getOffset(debug_abbrev->getOffset() + debug_abbrev->getSize());
+	uint8_t *debug_abbrev_begin = (*macho)[debug_abbrev->getOffset()];
+	uint8_t *debug_abbrev_end = (*macho)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = macho->getOffset(debug_str->getOffset());
-	uint8_t *debug_str_end = macho->getOffset(debug_str->getOffset() + debug_str->getSize());
+	uint8_t *debug_str_begin = (*macho)[debug_str->getOffset()];
+	uint8_t *debug_str_end = (*macho)[debug_str->getOffset() + debug_str->getSize()];
 
 	size_t debug_info_size = debug_info->getSize();
 	size_t debug_abbrev_size = debug_abbrev->getSize();
@@ -1124,8 +1124,8 @@ void Dwarf::parseDebugLines()
 
 	Section *debug_line = this->__debug_line;
 
-	uint8_t *debug_line_begin = macho->getOffset(debug_line->getOffset());
-	uint8_t *debug_line_end = macho->getOffset(debug_line->getOffset() + debug_line->getSize());
+	uint8_t *debug_line_begin = (*macho)[debug_line->getOffset()];
+	uint8_t *debug_line_end = (*macho)[debug_line->getOffset() + debug_line->getSize()];
 
 	uint32_t debug_line_offset = 0;
 	
@@ -1492,8 +1492,8 @@ void Dwarf::parseDebugLocations()
 
 	Section *debug_loc = this->__debug_loc;
 
-	uint8_t *debug_loc_begin = macho->getOffset(debug_loc->getOffset());
-	uint8_t *debug_loc_end = macho->getOffset(debug_loc->getOffset() + debug_loc->getSize());
+	uint8_t *debug_loc_begin = (*macho)[debug_loc->getOffset()];
+	uint8_t *debug_loc_end = (*macho)[debug_loc->getOffset() + debug_loc->getSize()];
 
 	uint32_t debug_loc_offset = 0;
 
@@ -1564,8 +1564,8 @@ void Dwarf::parseDebugRanges()
 
 	Section *debug_ranges = this->__debug_ranges;
 
-	uint8_t *debug_ranges_begin = macho->getOffset(debug_ranges->getOffset());
-	uint8_t *debug_ranges_end = macho->getOffset(debug_ranges->getOffset() + debug_ranges->getSize());
+	uint8_t *debug_ranges_begin = (*macho)[debug_ranges->getOffset()];
+	uint8_t *debug_ranges_end = (*macho)[debug_ranges->getOffset() + debug_ranges->getSize()];
 
 	uint32_t debug_ranges_offset = 0;
 
@@ -1613,8 +1613,8 @@ void Dwarf::parseDebugAddressRanges()
 
 	Section *debug_aranges = this->__debug_aranges;
 
-	uint8_t *debug_aranges_begin = macho->getOffset(debug_aranges->getOffset());
-	uint8_t *debug_aranges_end = macho->getOffset(debug_aranges->getOffset() + debug_aranges->getSize());
+	uint8_t *debug_aranges_begin = (*macho)[debug_aranges->getOffset()];
+	uint8_t *debug_aranges_end = (*macho)[debug_aranges->getOffset() + debug_aranges->getSize()];
 
 	uint32_t debug_aranges_offset = 0;
 
