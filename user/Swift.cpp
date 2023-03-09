@@ -115,6 +115,18 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 				memcpy(&cls->descriptor, typeDescriptor, sizeof(struct TypeDescriptor));
 
 				type = dynamic_cast<struct Type*>(cls);
+
+				mach_vm_address_t typeMetadata = this->getTypeMetadata(typeDescriptor);
+
+				if(typeMetadata)
+				{
+					ObjectiveC::ObjCClass *objc_class = this->objc->getClassByIsa(typeMetadata);
+
+					if(objc_class)
+					{
+						
+					}
+				}
 			}
 
 			break;
