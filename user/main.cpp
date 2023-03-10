@@ -92,7 +92,7 @@ char injectedCode_x86_64[] =
 	"\x58"										// 		pop rax
 	"\x48\x89\xe5"								//		mov rbp, rsp
 	"\x5d"										// 		pop rbp
-	"\xc3" 										// 		ret
+	"\xc3";										// 		ret
 
 Kernel *kernel;
 
