@@ -29,6 +29,28 @@ namespace NSDarwin
 {
 	namespace AppCrawler
 	{
+		class CrawlManager;
+	}
+}
+
+using namespace NSDarwin::AppCrawler;
+
+@interface NSDarwinAppCrawler : NSObject
+
+@property CrawlManager *crawlManager;
+
+@property (assign, nonatomic) NSDictionary *crawlData;
+
+-(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
+
+-(void)crawlingTimerDidFire:(NSTimer*)timer;
+
+@end
+
+namespace NSDarwin
+{
+	namespace AppCrawler
+	{
 		class CrawlManager
 		{
 			public:
@@ -36,7 +58,11 @@ namespace NSDarwin
 
 				~CrawlManager();
 
+				NSDarwinAppCrawler* getCrawler() { return crawler; }
+
 				NSTimer* getCrawlingTimer() { return crawlingTimer; }
+
+				NSString* getBundleID() { return bundleIdentifier; }
 
 				UIApplication* getApplication() { return application; }
 
@@ -46,17 +72,30 @@ namespace NSDarwin
 
 				NSArray* getViews() { return [currentViewController.view subviews]; }
 
-				void setupAppCrawler();
-
 				void setCurrentViewController(UIViewController *viewController) { this->currentViewController = currentViewController; }
 
-				NSArray* getEligibleViewsForUserInteraction();
+				void setupAppCrawler();
+
+				void setupCrawlingTimer() { [NSTimer scheduledTimerWithTimeInterval:1.5f
+							                                                  target:this->crawler
+							                                                selector:@selector(crawlingTimerDidFire:)
+							                                                userInfo:nil
+							                                                 repeats:YES]; }
+
+				void invalidateCrawlingTimer() { if([crawlingTimer isValid]) [crawlingTimer invalidate]; }
+
+				NSArray* getViewsForUserInteraction();
+				NSArray* getViewsForUserInteractionFromRootView(UIView *view);
 				
 				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
 				void onViewControllerViewDidLoad();
 
 			private:
+				NSDarwinAppCrawler *crawler;
+
+				NSString *bundleIdentifier;
+
 				NSTimer *crawlingTimer;
 
 				UIApplication *application;
@@ -64,8 +103,6 @@ namespace NSDarwin
 				UIApplicationDelegate *delegate;
 
 				UIViewController *currentViewController;
-
-				NSDictionary *crawlData;
 
 				NSArray *viewControllers;
 				NSArray *views;
