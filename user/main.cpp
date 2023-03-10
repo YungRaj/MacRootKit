@@ -72,7 +72,27 @@ char injectedCode[] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
 
 char injectedCode_x86_64[] =
-	"";
+	"\x55"										// 		push rbp
+	"\x48\x89\xec"								// 		mov rsp, rbp
+	"\x50"										// 		push rax
+	"\x57"										//		push rdi
+	"\x56"										//		push rsi
+	"\x52"										// 		push rdx
+	"\x51"										// 		push rcx
+	"\x48\x8d\x3d\x40\x00\x00\x00"				// 		lea rdi, [rip + 0x40]
+	"\x48\xc7\xc6\x02\x01\x00\x00"				//  	mov rsi, 0x102
+	"\x48\xbb\xff\xff\xff\xff\xff\xff\xff\xff"  //      mov rax, 0xffffffffffffffff
+	"\xff\xd0"									//		call rax
+	"\x48\xbb\xff\xff\xff\xff\xff\xff\xff\xff"	// 		mov, rax 0xffffffffffffffff
+	"\xff\xd0"									// 		call rax
+	"\x59"										// 		pop rcx
+	"\x5a"										// 		pop rdx
+	"\x5e"										//		pop rsi
+	"\x5f"										// 		pop rdi
+	"\x58"										// 		pop rax
+	"\x48\x89\xe5"								//		mov rbp, rsp
+	"\x5d"										// 		pop rbp
+	"\xc3" 										// 		ret
 
 Kernel *kernel;
 
