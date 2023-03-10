@@ -1,9 +1,13 @@
 #include "SymbolTable.hpp"
 
+#ifdef __USER__
+
 #include <cxxabi.h>
 #include <dlfcn.h>
 
 #include <memory>
+
+#endif
 
 extern "C"
 {

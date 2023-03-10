@@ -1,5 +1,7 @@
 #include "KernelMachO.hpp"
 
+#include "Kernel.hpp"
+
 KernelMachO::KernelMachO(Kernel *kernel)
 {
 	this->kernel = kernel;

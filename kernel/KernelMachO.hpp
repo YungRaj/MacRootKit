@@ -2,7 +2,6 @@
 #define __KERNEL_MACHO_HPP_
 
 #include "Kernel.hpp"
-#include "Kext.hpp"
 #include "MachO.hpp"
 
 class MachO;
@@ -10,6 +9,7 @@ class MachO;
 namespace xnu
 {
 	class Kernel;
+	class Kext;
 
 	class KernelMachO : public MachO 
 	{

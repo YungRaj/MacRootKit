@@ -45,6 +45,7 @@ namespace Arch
 				__data_,
 				__const_,
 			};
+			
 			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,
 													  const unsigned char* needle,   size_t nlen);
 

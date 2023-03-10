@@ -23,6 +23,7 @@ enum kIOKernelRootKitOperation
 	kIOKernelRootKitGetKaslrSlide,
 	kIOKernelRootKitGetKernelBase,
 	kIOKernelRootKitGetKernelSymbol,
+	kIOKernelRootKitGetKextSymbol,
 	kIOKernelRootKitKernelRead,
 	kIOKernelRootKitKernelReadUnsafe,
 	kIOKernelRootKitKernelWrite,

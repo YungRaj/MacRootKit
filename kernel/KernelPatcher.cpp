@@ -14,6 +14,20 @@
 
 #include "Disassembler.hpp"
 
+#ifdef __arm64__
+
+#include <arm64/PatchFinder_arm64.hpp>
+
+using namespace Arch::arm64::PatchFinder;
+
+#elif __x86_64__
+
+#include <x86_64/PatchFinder_x86_64.hpp>
+
+using namespace Arch::x86_64::PatchFinder;
+
+#endif
+
 using namespace Arch;
 using namespace mrk;
 

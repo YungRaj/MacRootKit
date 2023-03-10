@@ -1,5 +1,7 @@
 #include "KextMachO.hpp"
 
+#include "Kernel.hpp"
+
 namespace xnu
 {
 

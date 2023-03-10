@@ -50,7 +50,16 @@ class Symbol
 			char *_swift_demangle = swift_demangle(this->getName());
 			char *_cxx_demangle = cxx_demangle(this->getName());
 
-			return _swift_demangle ? _swift_demangle : (_cxx_demangle ? _cxx_demangle : strdup(""));
+			if(_swift_demangle)
+				return _swift_demangle;
+			if(_cxx_demangle)
+				return _cxx_demangle;
+
+			char *empty = new char[1];
+
+			*empty = '\0';
+
+			return empty;
 		}
 
 		mach_vm_address_t getAddress() { return address; }

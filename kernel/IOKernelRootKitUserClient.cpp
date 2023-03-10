@@ -334,6 +334,56 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			}
 
 			break;
+
+		case kIOKernelRootKitGetKextSymbol:
+			;
+
+			if(arguments)
+			{
+				if(arguments->scalarInputCount == 4)
+				{
+					IOMemoryDescriptor *descriptor;
+
+					IOMemoryMap *map;
+
+					Symbol *symbol;
+
+					mach_vm_address_t symaddr;
+
+					uint8_t *buf1 = this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map);
+
+					uint8_t *buf2= this->mapBufferFromClientTask(arguments->scalarInput[2], arguments->scalarInput[3], kIODirectionOutIn, &descriptor, &map);
+
+					char *kextidentifier= reinterpret_cast<char*>(buf1);
+
+					xnu::Kext *kext = this->getRootKitService()->getRootKit()->getKextByIdentifier(kextidentifier);
+
+					if(kext)
+					{
+						char *kextsymname = reinterpret_cast<char*>(buf2);
+
+						symaddr = kext->getSymbolAddressByName(kextsymname);
+
+						arguments->scalarOutput[0] = symaddr;
+
+						if(!symaddr)
+						{
+							result = kIOReturnBadArgument;
+						}
+					} else
+					{
+						result = kIOReturnBadArgument;
+					}
+
+					if(map)
+						map->release();
+
+					if(descriptor)
+						descriptor->release();
+				}
+			}
+
+			break;
 		case kIOKernelRootKitKernelRead:
 			;
 

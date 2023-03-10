@@ -7,12 +7,13 @@
 #include <mach/kmod.h>
 #include <mach/mach_types.h>
 
+#include "KextMachO.hpp"
+
 namespace xnu {}
 
 namespace xnu
 {
 	class Kernel;
-	class KextMachO;
 
 	class Kext
 	{
@@ -44,6 +45,11 @@ namespace xnu
 
 			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
 			kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
+
+			Symbol* getSymbolByName(char *symname) { return macho->getSymbolByName(symname); }
+			Symbol* getSymbolByAddress(mach_vm_address_t address) { return macho->getSymbolByAddress(address); }
+
+			mach_vm_address_t getSymbolAddressByName(char *symbolname) { return macho->getSymbolAddressByName(symbolname); }
 
 		private:
 			xnu::Kernel *kernel;

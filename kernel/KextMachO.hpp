@@ -9,12 +9,10 @@
 #include "Array.hpp"
 #include "SymbolTable.hpp"
 
-#include "Kernel.hpp"
-#include "Kext.hpp"
-
 namespace xnu
 {
 	class Kernel;
+	class Kext;
 }
 
 namespace xnu
