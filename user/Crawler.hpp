@@ -46,13 +46,15 @@ namespace NSDarwin
 
 				NSArray* getViews() { return [currentViewController.view subviews]; }
 
+				void setupAppCrawler();
+
 				void setCurrentViewController(UIViewController *viewController) { this->currentViewController = currentViewController; }
 
 				NSArray* getEligibleViewsForUserInteraction();
 				
 				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
-				void onViewControllerViewDidLoad(UIViewController *viewController);
+				void onViewControllerViewDidLoad();
 
 			private:
 				NSTimer *crawlingTimer;
