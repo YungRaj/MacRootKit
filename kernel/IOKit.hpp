@@ -2,8 +2,13 @@
 #define __IOKIT_HPP_
 
 #include <IOKit/IOLib.h>
-#include <IOKit/IORegistryEntry.h>
+
 #include <IOKit/IOService.h>
+#include <IOKit/IOUserClient.h>
+#include <IOKit/IORegistryEntry.h>
+#include <IOKit/IODeviceTreeSupport.h>
+
+#include <libkern/c++/OSSerialize.h>
 
 #include <mach/mach_types.h>
 
@@ -27,7 +32,7 @@ namespace IOKit
 		kIOPCIConfigBaseAddress3 			= 0x1C,
 		kIOPCIConfigBaseAddress4 			= 0x20,
 		kIOPCIConfigBaseAddress5 			= 0x24,
-		kIOPCIConfigCardBusCISPPtr 			= 0x28,
+		kIOPCIConfigCardBusCISPtr 			= 0x28,
 		kIOPCIConfigSubSystemVendorID 		= 0x2C,
 		kIOPCIConfigSubSystemID 			= 0x2E,
 		kIOPCIConfigExpansionROMBase 		= 0x30,
