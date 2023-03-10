@@ -1,22 +1,27 @@
 #include "Crawler.hpp"
 
-namespace mrk
+namespace NSDarwin
 {
 
-namespace crawler
+namespace AppCrawler
 {
 
-CrawlerManager::CrawlerManager(UIApplication *application, UIApplicationDelegate *delegate)
+CrawlManager::CrawlManager(UIApplication *application, UIApplicationDelegate *delegate)
 {
-
+	this->crawlingTimer = [[NSTimer alloc] init];
 }
 
-NSArray* CrawlerManager::getEligibleViewsForUserInteraction()
+NSArray* CrawlManager::getEligibleViewsForUserInteraction()
 {
 
 }
 				
-NSArray* CrawlerManager::getViewsWithClassName(NSArray *views, const char *class_name)
+NSArray* CrawlManager::getViewsWithClassName(NSArray *views, const char *class_name)
+{
+
+}
+
+void CrawlManager::onViewControllerViewDidLoad(UIViewController *viewController)
 {
 
 }

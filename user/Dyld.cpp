@@ -869,7 +869,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		memset(image_dump, 0x0, size);
 
-		printf("Dumping image at 0x%llx with size 0x%zx\n", (uint64_t) image, size);
+		// printf("Dumping image at 0x%llx with size 0x%zx\n", (uint64_t) image, size);
 
 		this->task->read(address, image_dump, sizeof(struct mach_header_64));
 
@@ -877,7 +877,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		dylibInSharedCache = hdr->flags & MH_DYLIB_IN_CACHE;
 
-		printf("dylib in cache? %s %d\n", dylibInSharedCache ? "YES" : "NO", hdr->filetype);
+		// printf("dylib in cache? %s %d\n", dylibInSharedCache ? "YES" : "NO", hdr->filetype);
 
 		if(!dylibInSharedCache)
 			aslr_slide = 0;
@@ -930,8 +930,6 @@ MachO* Dyld::cacheDumpImage(char *image)
 					segment->fileoff = current_offset;
 					segment->filesize = filesize;
 
-					printf("current_offset = 0x%llx\n", current_offset);
-
 					printf("Dumping %s at 0x%llx with size 0x%llx at 0x%llx\n", segment->segname, vmaddr + aslr_slide, filesize, (uint64_t) (image_dump + current_offset));
 
 					if(dylibInSharedCache && !this->task->read(vmaddr + aslr_slide, image_dump + current_offset, filesize))
@@ -961,8 +959,6 @@ MachO* Dyld::cacheDumpImage(char *image)
 						if(section->offset)
 						{
 							section->offset = current_offset + (section->offset - fileoffset); 
-
-							printf("section->offset = 0x%llx\n", section->offset);
 						}
 					}
 
@@ -1326,11 +1322,13 @@ MachO* Dyld::cacheDumpImage(char *image)
 		objc->setIsObjectiveCLibrary(true);
 	}
 
+	/*
 	fp = fopen("file.bin", "w");
 
 	fwrite(image_dump, image_size, 1, fp);
 
 	fclose(fp);
+	*/
 
 	macho = new UserMachO();
 

@@ -25,16 +25,16 @@
  * } 
  */
 
-namespace mrk
+namespace NSDarwin
 {
-	namespace appcrawler
+	namespace AppCrawler
 	{
-		class CrawlerManager
+		class CrawlManager
 		{
 			public:
-				explicit CrawlerManager(UIApplication *application, UIApplicationDelegate *delegate);
+				explicit CrawlManager(UIApplication *application, UIApplicationDelegate *delegate);
 
-				~CrawlerManager();
+				~CrawlManager();
 
 				NSTimer* getCrawlingTimer() { return crawlingTimer; }
 
@@ -52,6 +52,8 @@ namespace mrk
 				
 				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
+				void onViewControllerViewDidLoad(UIViewController *viewController);
+
 			private:
 				NSTimer *crawlingTimer;
 
@@ -65,14 +67,6 @@ namespace mrk
 
 				NSArray *viewControllers;
 				NSArray *views;
-
-				MachO *macho;
-
-				Dyld *dyld;
-
-				ObjCData *objc;
-
-				Swift *swift;
 		};
 	}
 }
