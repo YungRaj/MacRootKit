@@ -39,9 +39,11 @@ using namespace NSDarwin::AppCrawler;
 
 @property CrawlManager *crawlManager;
 
-@property (assign, nonatomic) NSDictionary *crawlData;
+@property (assign, nonatomic) NSMutableDictionary *crawlData;
 
 -(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
+
+-(NSMutableDictionary*)crawlData;
 
 -(void)crawlingTimerDidFire:(NSTimer*)timer;
 

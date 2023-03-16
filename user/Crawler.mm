@@ -2,7 +2,7 @@
 
 static CrawlManager *crawler = NULL;
 
-static bool NSDarwinAppCrawlerContainsAdsPrefix(NSString *className)
+static bool NSDarwinAppCrawlerClassContainsAdsPrefix(NSString *className)
 {
 	return [className hasPrefix:@"GAD"] ||
 		   [className hasPrefix:@"GAM"];
@@ -20,6 +20,8 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 @interface NSDarwinAppCrawler ()
 {
     CrawlManager *_crawlManager;
+    
+    NSMutableDictionary *_crawlData;
 }
 
 @end
@@ -41,7 +43,7 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 
 -(void)setCrawlingManager:(CrawlManager*)crawlManager
 {
-    if(self)
+    if(self.crawlManager)
     {
         delete _crawlManager;
     }
@@ -54,13 +56,21 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
     return _crawlManager;
 }
 
+-(NSMutableDictionary*)crawlData
+{
+	if(!_crawlData)
+		_crawlData = [[NSMutableDictionary alloc] init];
+
+	return _crawlData;
+}
+
 -(void)crawlingTimerDidFire:(NSTimer*)timer
 {
 	UIViewController *viewController = self.crawlManager->getCurrentViewController();
 
-	NSDictionary *crawlData = [self.crawlManager->getCrawlData() objectForKey:[NSStringFromClass([viewController class])]];
+	NSDictionary *crawlData = [self.crawlData objectForKey:NSStringFromClass([viewController class])];
 
-	NSArray *crawledViews = [crawlData objectForKey:@"crawledViews"];
+	NSMutableArray *crawledViews = crawlData ? [crawlData objectForKey:@"crawledViews"] : [[NSMutableArray alloc] init];
 
 	NSArray *eligbleViews = self.crawlManager->getViewsForUserInteraction();
 
@@ -72,26 +82,76 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 
 			if(closeButton)
 			{
-				[closeButton sendActionsForControlEvents:64];
+				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+				this->invalidateCrawlingTimer();
+				this->setupCrawlingTimer();
+
+				return;
 			}
 		}
 	}
 
+	bool didUserInteraction = false;
+
 	for(UIView *view in eligbleViews)
 	{
 		NSString *viewID = [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
-																						view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
+																				  view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
 
 		if(![crawledViews containsObject:viewID])
 		{
 			if(view.userInteractionEnabled)
 			{
-				
+				this->invalidateCrawlingTimer();
+				this->setupCrawlingTimer();
+
+				[crawledViews addObject:viewID];
+
+
+				didUserInteraction = true;
+
+				goto done;
+
 			} else
 			{
 				assert(userInteractionEnabled);
 			}
 		}
+	}
+
+	if(!didUserInteraction)
+	{
+		for(UIView *view in eligbleViews)
+		{
+			NSString *viewID = [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
+																					  view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
+
+			if(view.userInteractionEnabled)
+			{
+				this->invalidateCrawlingTimer();
+				this->setupCrawlingTimer();
+
+				[crawledViews addObject:viewID];
+
+
+				didUserInteraction = true;
+
+				goto done;
+			} else
+			{
+				assert(userInteractionEnabled);
+			}
+		}
+
+		// either exit(0) or destroy crawl data because somehow all paths have been traversed
+	}
+
+done:
+
+	if(!crawlData)
+	{
+		[self.crawlData setObject:crawledViews forKey:NSStringFromClass([viewController class])];
 	}
 }
 
@@ -155,12 +215,13 @@ NSArray* getViewsForUserInteractionFromRootView(UIView *view)
 	{
 		NSString *className = NSStringFromClass([subview class]);
 
-		if(NSDarwinAppCrawlerContainsAdsPrefix(className))
+		if(NSDarwinAppCrawlerClassContainsAdsPrefix(className))
 			continue;
 
 
 		if([view isKindOfClass:objc_getClass("UIScrollView")])
 		{
+			// A user interaction is best made inside of a UIScrollView
 			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
 		} 
 		else if(subview.userInteractionEnabled)
