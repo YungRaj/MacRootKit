@@ -2,7 +2,13 @@
 
 static CrawlManager *crawler = NULL;
 
-static NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
+static bool NSDarwinAppCrawlerContainsAdsPrefix(NSString *className)
+{
+	return [className hasPrefix:@"GAD"] ||
+		   [className hasPrefix:@"GAM"];
+}
+
+static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 {
 	objc_msgSend((id) self_, @selector(swizzled_viewDidLoad));
 
@@ -58,14 +64,33 @@ static NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 
 	NSArray *eligbleViews = self.crawlManager->getViewsForUserInteraction();
 
+	if([viewController isKindOfClass:objc_getClass("GADFullScreenAdViewController")])
+	{
+		if([viewController respondsToSelector:@selector(closeButton)])
+		{
+			UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+			if(closeButton)
+			{
+				[closeButton sendActionsForControlEvents:64];
+			}
+		}
+	}
+
 	for(UIView *view in eligbleViews)
 	{
-		NSString *viewID= [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
+		NSString *viewID = [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
 																						view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
 
 		if(![crawledViews containsObject:viewID])
 		{
-			// ALAppLovinVideoViewController
+			if(view.userInteractionEnabled)
+			{
+				
+			} else
+			{
+				assert(userInteractionEnabled);
+			}
 		}
 	}
 }
@@ -81,6 +106,11 @@ namespace AppCrawler
 CrawlManager::CrawlManager(UIApplication *application, UIApplicationDelegate *delegate)
 {
 	this->setupAppCrawler();
+}
+
+CrawlManager::~CrawlManager()
+{
+	[this->crawler release];
 }
 
 void CrawlManager::setupAppCrawler()
@@ -123,13 +153,19 @@ NSArray* getViewsForUserInteractionFromRootView(UIView *view)
 
 	for(UIView *subview in [view subviews])
 	{
-		if([subview isKindOfClass:[UIScrollView class]])
-		{
-			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)]
+		NSString *className = NSStringFromClass([subview class]);
 
-		} else if(subview.userInteractionEnabled)
+		if(NSDarwinAppCrawlerContainsAdsPrefix(className))
+			continue;
+
+
+		if([view isKindOfClass:objc_getClass("UIScrollView")])
 		{
-			[views addObject:subview]
+			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
+		} 
+		else if(subview.userInteractionEnabled)
+		{
+			[views addObject:subview];
 		} else
 		{
 			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
@@ -141,7 +177,17 @@ NSArray* getViewsForUserInteractionFromRootView(UIView *view)
 
 NSArray* CrawlManager::getViewsWithClassName(NSArray *views, const char *class_name)
 {
+	NSMutableArray *views_ = [[NSMutableArray alloc] init];
 
+	for(UIView *view in views)
+	{
+		if([view isKindOfClass:objc_getClass(class_name)])
+		{
+			[views_ addObject:view];
+		}
+	}
+
+	return views_;
 }
 
 void CrawlManager::onViewControllerViewDidLoad(UIViewController *viewController)
