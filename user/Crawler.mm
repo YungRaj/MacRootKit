@@ -175,8 +175,6 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 	UIViewController *viewController = (UIViewController*) userInfo[@"viewController"];
 
-	self.crawlManager->invalidateIdleTimer();
-
 	if([viewController.view window] == NULL || [viewController isKindOfClass:[UINavigationController class]])
 		return;
 
@@ -274,6 +272,8 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 				[self simulateTouchEventAtPoint:touchPoint];
 
+				didUserInteraction = true;
+
 				goto done;
 
 			}
@@ -283,7 +283,12 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 done:
 	[timer invalidate];
 
-	self.crawlManager->setupIdleTimer();
+	if(didUserInteraction)
+	{
+		self.crawlManager->invalidateIdleTimer();
+
+		self.crawlManager->setupIdleTimer();
+	}
 }
 
 -(UIViewController*)topViewController
