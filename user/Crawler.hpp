@@ -1,27 +1,22 @@
-#ifdef __CRAWLER_HPP_
+#ifndef __CRAWLER_HPP_
 #define __CRAWLER_HPP_
+
+#include <objc/objc.h>
+#include <objc/runtime.h>
+#include <objc/message.h>
 
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
 
-#include "ObjC.hpp"
-#include "Swift.hpp"
-
 /* iOS App Crawler for macOS */
 /*****************************/
-/* Crawler will use depth first search* /
+/* Crawler will use depth first search */
 /* Store previously crawled UI elements */
 
 /* NSDictionary
  * {
- *      "viewController" -> NSString
- * 		"className" -> NSString
- *      "frame" -> NSDictionary
- *			"x" -> NSNumber
- *			"y" -> NSNumber
- * 			"width" -> NSNumber
- * 			"height" -> NSNumber
- *		"userInteractionEnabled" -> Bool
+ *      "viewController" -> NSArray
+ * 			"UIView-300-200-50-20" -> NSString
  * } 
  */
 
@@ -35,17 +30,34 @@ namespace NSDarwin
 
 using namespace NSDarwin::AppCrawler;
 
+@interface NSViewCrawlData : NSObject
+	@property (strong, nonatomic) NSString *name;
+
+	@property (strong, nonatomic) NSString *parent;
+
+	@property (assign, nonatomic) CGRect frame;
+	@property (assign, nonatomic) CGPoint center;
+
+	@property (assign, nonatomic) CGPoint anchorPoint;
+@end
+
 @interface NSDarwinAppCrawler : NSObject
 
-@property CrawlManager *crawlManager;
+@property (nonatomic) CrawlManager *crawlManager;
 
-@property (assign, nonatomic) NSMutableDictionary *crawlData;
+@property (strong, nonatomic) NSMutableDictionary *crawlData;
 
 -(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
 
 -(NSMutableDictionary*)crawlData;
 
+-(NSViewCrawlData*)setupCrawlDataForView:(UIView*)view;
+
+-(BOOL)hasViewBeenCrawled:(UIView*)view;
+
 -(void)crawlingTimerDidFire:(NSTimer*)timer;
+
+-(void)simulateTouchEventAtPoint:(CGPoint)point;
 
 @end
 
@@ -56,7 +68,7 @@ namespace NSDarwin
 		class CrawlManager
 		{
 			public:
-				explicit CrawlManager(UIApplication *application, UIApplicationDelegate *delegate);
+				explicit CrawlManager(UIApplication *application, id<UIApplicationDelegate> delegate);
 
 				~CrawlManager();
 
@@ -68,13 +80,13 @@ namespace NSDarwin
 
 				UIApplication* getApplication() { return application; }
 
-				UIApplicationDelegate* getAppDelegate() { return applicationDelegate; }
+				id<UIApplicationDelegate> getAppDelegate() { return delegate; }
 
 				UIViewController* getCurrentViewController() { return currentViewController; }
 
 				NSArray* getViews() { return [currentViewController.view subviews]; }
 
-				void setCurrentViewController(UIViewController *viewController) { this->currentViewController = currentViewController; }
+				void setCurrentViewController(UIViewController *viewController) { this->currentViewController = viewController; }
 
 				void setupAppCrawler();
 
@@ -91,10 +103,12 @@ namespace NSDarwin
 				
 				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
 
-				void onViewControllerViewDidLoad();
+				void onViewControllerViewDidLoad(UIViewController *viewController);
 
 			private:
 				NSDarwinAppCrawler *crawler;
+
+				NSDictionary *crawlData;
 
 				NSString *bundleIdentifier;
 
@@ -102,7 +116,7 @@ namespace NSDarwin
 
 				UIApplication *application;
 
-				UIApplicationDelegate *delegate;
+				id<UIApplicationDelegate> delegate;
 
 				UIViewController *currentViewController;
 

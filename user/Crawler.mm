@@ -1,5 +1,13 @@
 #include "Crawler.hpp"
 
+#include "FakeTouch/UIApplication-KIFAdditions.h"
+#include "FakeTouch/UIEvent+KIFAdditions.h"
+#include "FakeTouch/UITouch-KIFAdditions.h"
+
+#include <assert.h>
+
+using namespace NSDarwin::AppCrawler;
+
 static CrawlManager *crawler = NULL;
 
 static bool NSDarwinAppCrawlerClassContainsAdsPrefix(NSString *className)
@@ -14,8 +22,18 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 
 	crawler->setCurrentViewController((UIViewController*) self_);
 	
-	crawler->onViewControllerViewDidLoad();
+	crawler->onViewControllerViewDidLoad((UIViewController*) self_);
 }
+
+@interface NSViewCrawlData()
+{
+}
+
+@end
+
+@implementation NSViewCrawlData
+
+@end
 
 @interface NSDarwinAppCrawler ()
 {
@@ -36,18 +54,13 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
     	return NULL;
 
     [self setCrawlingManager:crawlManager];
-    [self setCrawlData:[NSDictionary dictionary]];
+    [self setCrawlData:[[NSMutableDictionary alloc] init]];
 
     return self;
 }
 
 -(void)setCrawlingManager:(CrawlManager*)crawlManager
 {
-    if(self.crawlManager)
-    {
-        delete _crawlManager;
-    }
-
     _crawlManager = crawlManager;
 }
 
@@ -64,13 +77,58 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 	return _crawlData;
 }
 
+-(NSViewCrawlData*)setupCrawlDataForView:(UIView*)view
+{
+	NSViewCrawlData *crawlData = [[NSViewCrawlData alloc] init];
+
+	crawlData.name = NSStringFromClass([view class]);
+	crawlData.parent = NSStringFromClass([[view superview] class]);
+
+	crawlData.frame = view.frame;
+	crawlData.center = view.center;
+	crawlData.anchorPoint = view.layer.anchorPoint;
+
+	return crawlData;
+}
+
+
+-(BOOL)hasViewBeenCrawled:(UIView*)view
+{
+	UIViewController *viewController = self.crawlManager->getCurrentViewController();
+
+	NSDictionary *crawlData = [self.crawlData objectForKey:NSStringFromClass([viewController class])];
+
+	NSMutableDictionary *crawledViews = crawlData ? [crawlData objectForKey:@"crawledViews"] : [[NSMutableDictionary alloc] init];
+
+	if(!crawledViews)
+		return false;
+
+	NSMutableArray *viewCrawlData = [crawledViews objectForKey:NSStringFromClass([view class])];
+
+	if(!viewCrawlData)
+		return false;
+
+	for(NSUInteger i = 0; i < [viewCrawlData count]; i++)
+	{
+		NSViewCrawlData *crawlData = [viewCrawlData objectAtIndex:i];
+
+		if([crawlData.name isEqual:NSStringFromClass([view class])] &&
+			CGPointEqualToPoint(crawlData.frame.origin, view.frame.origin))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 -(void)crawlingTimerDidFire:(NSTimer*)timer
 {
 	UIViewController *viewController = self.crawlManager->getCurrentViewController();
 
 	NSDictionary *crawlData = [self.crawlData objectForKey:NSStringFromClass([viewController class])];
 
-	NSMutableArray *crawledViews = crawlData ? [crawlData objectForKey:@"crawledViews"] : [[NSMutableArray alloc] init];
+	NSMutableDictionary *crawledViews = crawlData ? [crawlData objectForKey:@"crawledViews"] : [[NSMutableDictionary alloc] init];
 
 	NSArray *eligbleViews = self.crawlManager->getViewsForUserInteraction();
 
@@ -84,8 +142,8 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 			{
 				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
 
-				this->invalidateCrawlingTimer();
-				this->setupCrawlingTimer();
+				self.crawlManager->invalidateCrawlingTimer();
+				self.crawlManager->setupCrawlingTimer();
 
 				return;
 			}
@@ -96,55 +154,39 @@ static void NSDarwinAppCrawler_viewDidLoad(void *self_, SEL cmd_)
 
 	for(UIView *view in eligbleViews)
 	{
-		NSString *viewID = [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
-																				  view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
+		NSString *viewClassName = NSStringFromClass([view class]);
 
-		if(![crawledViews containsObject:viewID])
+		BOOL crawled = [self hasViewBeenCrawled:view];
+
+		if(crawled)
+			continue;
+
+		NSMutableArray *viewCrawlData = [crawledViews objectForKey:viewClassName];
+
+		if(!viewCrawlData)
 		{
-			if(view.userInteractionEnabled)
-			{
-				this->invalidateCrawlingTimer();
-				this->setupCrawlingTimer();
+			viewCrawlData = [[NSMutableArray alloc] init];
 
-				[crawledViews addObject:viewID];
-
-
-				didUserInteraction = true;
-
-				goto done;
-
-			} else
-			{
-				assert(userInteractionEnabled);
-			}
-		}
-	}
-
-	if(!didUserInteraction)
-	{
-		for(UIView *view in eligbleViews)
-		{
-			NSString *viewID = [NSString stringWithFormat:@"%@-%llu-%llu-%llu-%llu", NSStringFromClass([view class]),
-																					  view.frame.origin.x, view.frame.origin.y, view.frame.size.width, view.frame.size.height];
-
-			if(view.userInteractionEnabled)
-			{
-				this->invalidateCrawlingTimer();
-				this->setupCrawlingTimer();
-
-				[crawledViews addObject:viewID];
-
-
-				didUserInteraction = true;
-
-				goto done;
-			} else
-			{
-				assert(userInteractionEnabled);
-			}
+			[crawledViews setObject:viewCrawlData forKey:viewClassName];
 		}
 
-		// either exit(0) or destroy crawl data because somehow all paths have been traversed
+		if(view.userInteractionEnabled)
+		{
+			if([viewClassName isEqual:@"SKView"])
+			{
+
+			}
+			
+			self.crawlManager->invalidateCrawlingTimer();
+			self.crawlManager->setupCrawlingTimer();
+
+			[viewCrawlData addObject:[self setupCrawlDataForView:view]];
+
+			didUserInteraction = true;
+
+			goto done;
+
+		}
 	}
 
 done:
@@ -155,6 +197,50 @@ done:
 	}
 }
 
+-(void)simulateTouchEventAtPoint:(CGPoint)point
+{
+	NSMutableArray *touches = [[NSMutableArray alloc] init];
+
+	// Initiating the touch
+
+	UITouch *touch = [[UITouch alloc] initAtPoint:point inWindow:[UIApplication sharedApplication].keyWindow];
+    
+    [touch setLocationInWindow:point];
+
+    [touches addObject:touch];
+    
+    UIEvent *event = [[UIApplication sharedApplication] _touchesEvent];
+
+    [event _clearTouches];
+    [event kif_setEventWithTouches:touches];
+    
+    for(UITouch *touch in touches)
+    	[event _addTouch:touch forDelayedDelivery:NO];
+
+    [[UIApplication sharedApplication] sendEvent:event];
+
+    [touch setPhaseAndUpdateTimestamp:UITouchPhaseStationary];
+
+    // Ending the touch
+
+    touch = [[UITouch alloc] initTouch];
+
+    [touch setLocationInWindow:point];
+    [touch setPhaseAndUpdateTimestamp:UITouchPhaseEnded];
+
+    [touches addObject:touch];
+
+    event = [[UIApplication sharedApplication] _touchesEvent];
+
+    [event _clearTouches];
+    [event kif_setEventWithTouches:touches];
+    
+    for(UITouch *touch in touches)
+    	[event _addTouch:touch forDelayedDelivery:NO];
+
+    [[UIApplication sharedApplication] sendEvent:event];
+}
+
 @end
 
 namespace NSDarwin
@@ -163,8 +249,11 @@ namespace NSDarwin
 namespace AppCrawler
 {
 
-CrawlManager::CrawlManager(UIApplication *application, UIApplicationDelegate *delegate)
+CrawlManager::CrawlManager(UIApplication *application, id<UIApplicationDelegate> delegate)
 {
+	this->application = application;
+	this->delegate = delegate;
+
 	this->setupAppCrawler();
 }
 
@@ -177,7 +266,7 @@ void CrawlManager::setupAppCrawler()
 {
 	this->crawler = [[NSDarwinAppCrawler alloc] initWithCrawlingManager:this];
 
-	this->crawlData = [[NSDictionary alloc] init];
+	this->crawlData = this->crawler.crawlData;
 
 	this->bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
 
@@ -207,7 +296,7 @@ NSArray* CrawlManager::getViewsForUserInteraction()
 	return this->getViewsForUserInteractionFromRootView([this->currentViewController view]);
 }
 
-NSArray* getViewsForUserInteractionFromRootView(UIView *view)
+NSArray* CrawlManager::getViewsForUserInteractionFromRootView(UIView *view)
 {
 	NSMutableArray *views = [[NSMutableArray alloc] init];
 
@@ -224,7 +313,10 @@ NSArray* getViewsForUserInteractionFromRootView(UIView *view)
 			// A user interaction is best made inside of a UIScrollView
 			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
 		} 
-		else if(subview.userInteractionEnabled)
+		else if(subview.userInteractionEnabled && [subview window] &&
+			   ([subview isKindOfClass:[UIControl class]] ||
+			   	[subview isKindOfClass:[UITableViewCell class]] ||
+			   	[subview isKindOfClass:[UICollectionViewCell class]]))
 		{
 			[views addObject:subview];
 		} else
@@ -261,21 +353,16 @@ void CrawlManager::onViewControllerViewDidLoad(UIViewController *viewController)
 
 }
 
-extern "C"
+__attribute__((constructor))
+static void initializer()
 {
-	__attribute__((constructor))
-	static void initializer()
-	{
-		printf("[%s] initializer()\n", __FILE__);
+	printf("[%s] initializer()\n", __FILE__);
 
-		crawler = new Crawler([UIApplication sharedApplication], [[UIApplication sharedApplication] delegate]);
-	}
+	crawler = new CrawlManager([UIApplication sharedApplication], [[UIApplication sharedApplication] delegate]);
+}
 
-	__attribute__ ((destructor))
-	static void finalizer()
-	{
-		printf("[%s] finalizer()\n", __FILE__);
-
-		delete crawler;
-	}
+__attribute__ ((destructor))
+static void finalizer()
+{
+	printf("[%s] finalizer()\n", __FILE__);;
 }

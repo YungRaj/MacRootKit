@@ -1,12 +1,12 @@
-ARCH = arm64e
+ARCH = arm64
 
 BUILD = build
 OBJ = obj
 
 SDK = iphoneos
 
-SYSROOT := $(THEOS)/sdks/iPhoneOS13.7.sdk
-SYSROOT := $(THEOS)/sdks/iPhoneOS13.7.sdk
+SYSROOT := /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
+SYSROOT := /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
 
 CLANG := $(shell xcrun --sdk $(SDK) --find clang)
 CLANGPP := $(shell xcrun --sdk $(SDK) --find clang++)
@@ -18,12 +18,12 @@ NONE = NONE
 
 TARGET = libiOSAppCrawler.dylib
 
-COMMON_SOURCES := user/Crawler.mm
+COMMON_SOURCES := user/Crawler.mm $(wildcard user/FakeTouch/*.mm)
 COMMON_OBJECTS := $(patsubst user/%.mm, $(OBJ)/%.o, $(COMMON_SOURCES))
 
-CFLAGS += -g -I$(shell pwd)/mac_rootkit -arch arm64 -target arm64-apple-ios
+CFLAGS += -g -I$(shell pwd)/mac_rootkit -I$(shell pwd)/user/FakeTouch -arch arm64 -target arm64-apple-ios
 
-LDFLAGS += -g -shared -L/usr/local/lib -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation
+LDFLAGS += -g -shared -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation -framework IOKit -framework CoreGraphics -framework QuartzCore
 
 CXXFLAGS += -g  -I$(shell pwd)/mac_rootkit -arch arm64 -target arm64-apple-macos
 
