@@ -51,23 +51,21 @@ typedef struct {
     
     [self setView:hitTestView];
     [self setPhase:UITouchPhaseBegan];
-    NSOperatingSystemVersion iOS14 = {14, 0, 0};
-    if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)] && [[NSProcessInfo new] isOperatingSystemAtLeastVersion:iOS14]) {
-        [self _setIsTapToClick:NO];
-    } else {
-        [self _setIsFirstTouchForView:YES];
-        [self setIsTap:NO];
-    }
+    // NSOperatingSystemVersion iOS14 = {14, 0, 0};
+    // if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)] && [[NSProcessInfo new] isOperatingSystemAtLeastVersion:iOS14]) {
+    //    [self _setIsTapToClick:NO];
+    // } else {
+    
+    [self _setIsFirstTouchForView:YES];
+    [self setIsTap:NO];
+    // }
     [self setTimestamp:[[NSProcessInfo processInfo] systemUptime]];
     if ([self respondsToSelector:@selector(setGestureView:)]) {
         [self setGestureView:hitTestView];
     }
     
     // Starting with iOS 9, internal IOHIDEvent must be set for UITouch object
-    NSOperatingSystemVersion iOS9 = {9, 0, 0};
-    if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)] && [[NSProcessInfo new] isOperatingSystemAtLeastVersion:iOS9]) {
-        [self kif_setHidEvent];
-    }
+    [self kif_setHidEvent];
     
     return self;
 }
