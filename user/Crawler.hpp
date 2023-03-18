@@ -92,13 +92,15 @@ namespace NSDarwin
 							                                                userInfo:userInfo
 							                                                 repeats:NO]; }
 
-				void setupIdleTimer() { this->idleTimer = [NSTimer scheduledTimerWithTimeInterval:10.0f
+				void setupIdleTimer() { this->idleTimer = [NSTimer scheduledTimerWithTimeInterval:6.0f
 							                                                  target:this->crawler
 							                                                selector:@selector(idlingTimerDidFire:)
 							                                                userInfo:nil
 							                                                 repeats:YES]; }
 
 				void invalidateCrawlingTimer() { if(this->crawlingTimer && [this->crawlingTimer isValid]) { [this->crawlingTimer invalidate]; this->crawlingTimer = NULL; } }
+
+				void invalidateIdleTimer() { if(this->idleTimer && [this->idleTimer isValid]) { [this->idleTimer invalidate]; this->idleTimer = NULL; } }
 
 				NSMutableArray* getViewsForUserInteraction(UIViewController *viewController);
 				NSMutableArray* getViewsForUserInteractionFromRootView(UIView *view);

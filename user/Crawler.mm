@@ -175,6 +175,8 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 	UIViewController *viewController = (UIViewController*) userInfo[@"viewController"];
 
+	self.crawlManager->invalidateIdleTimer();
+
 	if([viewController.view window] == NULL || [viewController isKindOfClass:[UINavigationController class]])
 		return;
 
@@ -268,15 +270,6 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 					continue;
 				}
 
-				NSMutableArray *viewCrawlData = [crawledViews objectForKey:viewClassName];
-
-				if(!viewCrawlData)
-				{
-					viewCrawlData = [[NSMutableArray alloc] init];
-
-					[crawledViews setObject:viewCrawlData forKey:viewClassName];
-				}
-
 				CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
 
 				[self simulateTouchEventAtPoint:touchPoint];
@@ -289,11 +282,81 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 done:
 	[timer invalidate];
+
+	self.crawlManager->setupIdleTimer();
+}
+
+-(UIViewController*)topViewController
+{
+    return [self topViewControllerWithRootViewController:
+            [UIApplication sharedApplication].keyWindow.rootViewController];
+}
+
+-(UIViewController*)topViewControllerWithRootViewController:(UIViewController*)rootViewController
+{
+    if([rootViewController isKindOfClass:[UINavigationController class]])
+    {
+        UINavigationController* navigationController = (UINavigationController*)rootViewController;
+        
+        return [self topViewControllerWithRootViewController:
+                navigationController.visibleViewController];
+    } else if (rootViewController.presentedViewController)
+    {
+        UIViewController* presentedViewController = rootViewController.presentedViewController;
+       
+        return [self topViewControllerWithRootViewController:
+                presentedViewController];
+    }else if([rootViewController.childViewControllers count] > 0)
+    {
+        return [rootViewController.childViewControllers objectAtIndex:[rootViewController.childViewControllers count] - 1];
+    } else
+    {
+        return rootViewController;
+    }
 }
 
 -(void)idlingTimerDidFire:(NSTimer*)timer
 {
+	UIViewController *viewController = [self topViewController];
 
+	NSMutableArray *eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController);
+
+	[eligibleViews shuffle];
+
+	if([viewController isKindOfClass:objc_getClass("GADFullScreenAdViewController")])
+	{
+		if([viewController respondsToSelector:@selector(closeButton)])
+		{
+			UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+			if(closeButton)
+			{
+				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+				return;
+			}
+		}
+	}
+
+	for(UIView *view in eligibleViews)
+	{
+		NSString *viewClassName = NSStringFromClass([view class]);
+
+		if(view.userInteractionEnabled)
+		{
+			if([viewClassName isEqual:@"SKView"])
+			{
+				continue;
+			}
+
+			CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
+
+			[self simulateTouchEventAtPoint:touchPoint];
+
+			break;
+
+		}
+	}
 }
 
 -(void)simulateTouchEventAtPoint:(CGPoint)point
