@@ -510,7 +510,7 @@ NSArray* CrawlManager::getViewsWithClassName(NSArray *views, const char *class_n
 	return views_;
 }
 
-void CrawlManager::onViewControllerViewDidLoad(UIViewController *viewController)
+void CrawlManager::onViewControllerViewDidAppear(UIViewController *viewController)
 {
 	this->setupCrawlingTimer(@{@"viewController" : viewController});
 }

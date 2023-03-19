@@ -109,7 +109,7 @@ namespace NSDarwin
 
 
 
-				void onViewControllerViewDidLoad(UIViewController *viewController);
+				void onViewControllerViewDidAppear(UIViewController *viewController);
 
 			private:
 				NSDarwinAppCrawler *crawler;
