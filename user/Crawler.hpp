@@ -42,6 +42,8 @@ using namespace NSDarwin::AppCrawler;
 
 @property (strong, atomic) NSMutableDictionary *crawlData;
 
+@property (assign, atomic) BOOL spriteKitCrawlCondition;
+
 -(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
 
 -(NSMutableDictionary*)crawlData;
@@ -54,6 +56,7 @@ using namespace NSDarwin::AppCrawler;
 -(void)idlingTimerDidFire:(NSTimer*) timer;
 
 -(void)simulateTouchEventAtPoint:(CGPoint)point;
+-(void)simulateTouchesOnSpriteKitView:(SKView*)view;
 
 @end
 
@@ -92,7 +95,7 @@ namespace NSDarwin
 							                                                userInfo:userInfo
 							                                                 repeats:NO]; }
 
-				void setupIdleTimer() { this->idleTimer = [NSTimer scheduledTimerWithTimeInterval:6.0f
+				void setupIdleTimer() { this->idleTimer = [NSTimer scheduledTimerWithTimeInterval:4.5f
 							                                                  target:this->crawler
 							                                                selector:@selector(idlingTimerDidFire:)
 							                                                userInfo:nil

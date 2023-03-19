@@ -20,9 +20,11 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 {
 	objc_msgSend((id) self_, @selector(swizzled_viewDidAppear:), animated);
 
+	[crawler->getCrawler() setSpriteKitCrawlCondition:NO];
+
 	crawler->setCurrentViewController((UIViewController*) self_);
 	
-	crawler->onViewControllerViewDidLoad((UIViewController*) self_);
+	crawler->onViewControllerViewDidAppear((UIViewController*) self_);
 }
 
 @interface NSMutableArray (Shuffling)
@@ -81,6 +83,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
     [self setCrawlManager:crawlManager];
     [self setCrawlData:[[NSMutableDictionary alloc] init]];
+    [self setSpriteKitCrawlCondition:NO];
 
     return self;
 }
@@ -215,7 +218,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 		}
 	}
 
-	bool didUserInteraction = false;
+	BOOL didUserInteraction = NO;
 
 	for(UIView *view in eligibleViews)
 	{
@@ -228,30 +231,41 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 		if(view.userInteractionEnabled)
 		{
-			if([viewClassName isEqual:@"SKView"])
+			if([view isKindOfClass:[SKView class]])
 			{
-				continue;
-			}
+				self.spriteKitCrawlCondition = YES;
 
-			NSMutableArray *viewCrawlData = [crawledViews objectForKey:viewClassName];
+				[self simulateTouchesOnSpriteKitView:(SKView*)view];
 
-			if(!viewCrawlData)
+				if(!self.spriteKitCrawlCondition)
+				{
+					didUserInteraction = YES;
+
+					break;
+				}
+
+				self.spriteKitCrawlCondition = NO;
+			} else
 			{
-				viewCrawlData = [[NSMutableArray alloc] init];
+				NSMutableArray *viewCrawlData = [crawledViews objectForKey:viewClassName];
 
-				[crawledViews setObject:viewCrawlData forKey:viewClassName];
+				if(!viewCrawlData)
+				{
+					viewCrawlData = [[NSMutableArray alloc] init];
+
+					[crawledViews setObject:viewCrawlData forKey:viewClassName];
+				}
+
+				CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
+
+				[viewCrawlData addObject:[self setupCrawlDataForView:view]];
+
+				[self simulateTouchEventAtPoint:touchPoint];
+
+				didUserInteraction = YES;
+
+				goto done;
 			}
-
-			CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
-
-			[viewCrawlData addObject:[self setupCrawlDataForView:view]];
-
-			[self simulateTouchEventAtPoint:touchPoint];
-
-			didUserInteraction = true;
-
-			goto done;
-
 		}
 	}
 
@@ -263,19 +277,30 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 			if(view.userInteractionEnabled)
 			{
-				if([viewClassName isEqual:@"SKView"])
+				if([view isKindOfClass:[SKView class]])
 				{
-					continue;
+					self.spriteKitCrawlCondition = YES;
+
+					[self simulateTouchesOnSpriteKitView:(SKView*)view];
+
+					if(!self.spriteKitCrawlCondition)
+					{
+						didUserInteraction = YES;
+
+						break;
+					}
+
+					self.spriteKitCrawlCondition = NO;
+				} else
+				{
+					CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
+
+					[self simulateTouchEventAtPoint:touchPoint];
+
+					didUserInteraction = YES;
+
+					goto done;
 				}
-
-				CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
-
-				[self simulateTouchEventAtPoint:touchPoint];
-
-				didUserInteraction = true;
-
-				goto done;
-
 			}
 		}
 	}
@@ -349,17 +374,26 @@ done:
 
 		if(view.userInteractionEnabled)
 		{
-			if([viewClassName isEqual:@"SKView"])
+			if([view isKindOfClass:[SKView class]])
 			{
-				continue;
+				self.spriteKitCrawlCondition = YES;
+
+				[self simulateTouchesOnSpriteKitView:(SKView*)view];
+
+				if(!self.spriteKitCrawlCondition)
+				{
+					break;
+				}
+
+				self.spriteKitCrawlCondition = NO;
+			} else
+			{
+				CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
+
+				[self simulateTouchEventAtPoint:touchPoint];
+
+				break;
 			}
-
-			CGPoint touchPoint = [[view superview] convertPoint:view.frame.origin toView:view.window];
-
-			[self simulateTouchEventAtPoint:touchPoint];
-
-			break;
-
 		}
 	}
 }
@@ -404,6 +438,35 @@ done:
     	[event _addTouch:touch forDelayedDelivery:NO];
 
     [[UIApplication sharedApplication] sendEvent:event];
+}
+
+-(void)simulateTouchesOnSpriteKitNodes:(SKNode*)node inScene:(SKScene*)scene inView:(SKView*)view
+{
+	if(!self.spriteKitCrawlCondition)
+		return;
+
+	for(SKNode *child in [node children])
+	{
+		CGPoint sceneCoordinates = [child convertPoint:child.frame.origin toNode:scene];
+		CGPoint viewCoordinates = [scene convertPointToView:sceneCoordinates];
+
+		CGPoint touchPoint = [[view superview] convertPoint:viewCoordinates toView:view.window];
+
+		if(!self.spriteKitCrawlCondition)
+			return;
+
+		[self simulateTouchEventAtPoint:touchPoint];
+
+		[self simulateTouchesOnSpriteKitNodes:child inScene:scene inView:view];
+	}
+
+}
+
+-(void)simulateTouchesOnSpriteKitView:(SKView*)view
+{
+	SKScene *scene = [view scene];
+
+	[self simulateTouchesOnSpriteKitNodes:scene inScene:scene inView:view];
 }
 
 @end
@@ -481,7 +544,8 @@ NSMutableArray* CrawlManager::getViewsForUserInteractionFromRootView(UIView *vie
 		else if(subview.userInteractionEnabled && [subview window] &&
 			   ([subview isKindOfClass:[UIButton class]] ||
 			   	[subview isKindOfClass:[UITableViewCell class]] ||
-			   	[subview isKindOfClass:[UICollectionViewCell class]]))
+			   	[subview isKindOfClass:[UICollectionViewCell class]] ||
+			   	[subview isKindOfClass:[SKView class]]))
 		{
 			[views addObject:subview];
 
