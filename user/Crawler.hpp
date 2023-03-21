@@ -42,6 +42,8 @@ using namespace NSDarwin::AppCrawler;
 
 @property (strong, atomic) NSMutableDictionary *crawlData;
 
+@property (strong, atomic) NSMutableArray *viewControllerStack;
+
 @property (assign, atomic) BOOL spriteKitCrawlCondition;
 
 -(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
@@ -57,6 +59,10 @@ using namespace NSDarwin::AppCrawler;
 
 -(void)simulateTouchEventAtPoint:(CGPoint)point;
 -(void)simulateTouchesOnSpriteKitView:(SKView*)view;
+
+-(void)pushViewControllerToStack:(UIViewController*)vc;
+
+-(BOOL)simulatedTouchesHasHadNoEffect;
 
 @end
 
@@ -89,7 +95,7 @@ namespace NSDarwin
 
 				void setupAppCrawler();
 
-				void setupCrawlingTimer(NSDictionary *userInfo) { this->crawlingTimer = [NSTimer scheduledTimerWithTimeInterval:1.5f
+				void setupCrawlingTimer(NSDictionary *userInfo) { this->crawlingTimer = [NSTimer scheduledTimerWithTimeInterval:1.25f
 							                                                  target:this->crawler
 							                                                selector:@selector(crawlingTimerDidFire:)
 							                                                userInfo:userInfo
@@ -108,9 +114,7 @@ namespace NSDarwin
 				NSMutableArray* getViewsForUserInteraction(UIViewController *viewController);
 				NSMutableArray* getViewsForUserInteractionFromRootView(UIView *view);
 				
-				NSArray* getViewsWithClassName(NSArray *views, const char *class_name);
-
-
+				NSMutableArray* getViewsWithKindOfClass(NSMutableArray *views, Class cls);
 
 				void onViewControllerViewDidAppear(UIViewController *viewController);
 
