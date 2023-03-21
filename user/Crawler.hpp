@@ -14,6 +14,8 @@
 /* Crawler will use depth first search */
 /* Store previously crawled UI elements */
 
+extern NSString *kNSDarwinAppCrawlerCrawledViews;
+
 namespace NSDarwin
 {
 	namespace AppCrawler

@@ -8,6 +8,8 @@
 
 using namespace NSDarwin::AppCrawler;
 
+NSString *kNSDarwinAppCrawlerCrawledViews = @"NSDarwinCrawledViews";
+
 static CrawlManager *crawler = NULL;
 
 static bool NSDarwinAppCrawlerClassContainsAdsPrefix(NSString *className)
@@ -173,7 +175,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 	NSDictionary *crawlData = [self.crawlData objectForKey:NSStringFromClass([viewController class])];
 
-	NSMutableDictionary *crawledViews = crawlData ? [crawlData objectForKey:@"crawledViews"] : NULL;
+	NSMutableDictionary *crawledViews = crawlData ? [crawlData objectForKey:kNSDarwinAppCrawlerCrawledViews] : NULL;
 
 	if(!crawledViews)
 		return false;
@@ -215,7 +217,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 	NSMutableDictionary *crawledViews;
 
 	if(crawlData)
-		crawledViews = [crawlData objectForKey:@"crawledViews"];
+		crawledViews = [crawlData objectForKey:kNSDarwinAppCrawlerCrawledViews];
 	else
 	{
 		crawlData = [[NSMutableDictionary alloc] init];
@@ -223,7 +225,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 
 		[self.crawlData setObject:crawlData forKey:vcClassName];
 
-		[crawlData setObject:crawledViews forKey:@"crawledViews"];
+		[crawlData setObject:crawledViews forKey:kNSDarwinAppCrawlerCrawledViews];
 	}
 
 	NSMutableArray *eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController);
@@ -386,7 +388,7 @@ done:
 	NSMutableDictionary *crawledViews;
 
 	if(crawlData)
-		crawledViews = [crawlData objectForKey:@"crawledViews"];
+		crawledViews = [crawlData objectForKey:kNSDarwinAppCrawlerCrawledViews];
 	else
 	{
 		crawlData = [[NSMutableDictionary alloc] init];
@@ -394,7 +396,7 @@ done:
 
 		[self.crawlData setObject:crawlData forKey:vcClassName];
 
-		[crawlData setObject:crawledViews forKey:@"crawledViews"];
+		[crawlData setObject:crawledViews forKey:kNSDarwinAppCrawlerCrawledViews];
 	}
 
 	NSMutableArray *eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController);
