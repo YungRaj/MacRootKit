@@ -34,7 +34,7 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 -(NSUInteger)depth;
 
 @end
-
+	
 @implementation UIView (Depth)
 
 -(NSUInteger)depth
@@ -636,6 +636,11 @@ done:
 		[self.viewControllerStack addObject:NSStringFromClass([vc class])];
 	} else
 	{
+		for(NSUInteger i = 0; i < 6; i++)
+		{
+			[self.viewControllerStack exchangeObjectAtIndex:i withObjectAtIndex:i + 1];
+		}
+
 		[self.viewControllerStack replaceObjectAtIndex:6 withObject:NSStringFromClass([vc class])];
 	}
 }
