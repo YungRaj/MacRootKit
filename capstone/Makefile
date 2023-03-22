@@ -294,7 +294,7 @@ LDFLAGS += $(foreach arch,$(LIBARCHS),-arch $(arch))
 endif
 EXT = dylib
 VERSION_EXT = $(API_MAJOR).$(EXT)
-$(LIBNAME)_LDFLAGS += -dynamiclib -install_name lib$(LIBNAME).$(VERSION_EXT) -current_version $(PKG_MAJOR).$(PKG_MINOR).$(PKG_EXTRA) -compatibility_version $(PKG_MAJOR).$(PKG_MINOR)
+$(LIBNAME)_LDFLAGS += -arch $(LIBARCHS) -dynamiclib -install_name lib$(LIBNAME).$(VERSION_EXT) -current_version $(PKG_MAJOR).$(PKG_MINOR).$(PKG_EXTRA) -compatibility_version $(PKG_MAJOR).$(PKG_MINOR)
 AR_EXT = a
 # Homebrew wants to make sure its formula does not disable FORTIFY_SOURCE
 # However, this is not really necessary because 'CAPSTONE_USE_SYS_DYN_MEM=yes' by default

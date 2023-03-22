@@ -40,7 +40,7 @@ Task::Task(Kernel *kernel, int pid)
 	this->name = this->getTaskName();
 	this->dyld = new dyld::Dyld(kernel, this);
 	this->macho = new mrk::UserMachO();
-	// this->macho->initWithTask(this);
+	// this->macho->withTask(this);
 }
 
 Task::Task(Kernel *kernel, char *name)
@@ -585,9 +585,9 @@ char* Task::readString(mach_vm_address_t address)
 
 	assert(size > 0);
 
-	string = (char*) malloc(size);
+	string = (char*) malloc(size + 1);
 
-	this->read(address, string, size);
+	this->read(address, string, size + 1);
 
 	return string;
 }

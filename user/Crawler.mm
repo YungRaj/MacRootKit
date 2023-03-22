@@ -242,7 +242,27 @@ static void NSDarwinAppCrawler_viewDidAppear(void *self_, SEL cmd_, BOOL animate
 			{
 				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
 
-				return;
+				goto done;
+			}
+		}
+	}
+
+	if([viewController isKindOfClass:objc_getClass("OGAFullScreenViewController")])
+	{
+		if([viewController respondsToSelector:@selector(displayer)])
+		{
+			id displayer = [viewController performSelector:@selector(displayer)];
+
+			if([displayer respondsToSelector:@selector(closeButton)])
+			{
+				UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+				if(closeButton)
+				{
+					[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+					goto done;
+				}
 			}
 		}
 	}
@@ -411,7 +431,27 @@ done:
 			{
 				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
 
-				return;
+				goto done;
+			}
+		}
+	}
+
+	if([viewController isKindOfClass:objc_getClass("OGAFullScreenViewController")])
+	{
+		if([viewController respondsToSelector:@selector(displayer)])
+		{
+			id displayer = [viewController performSelector:@selector(displayer)];
+
+			if([displayer respondsToSelector:@selector(closeButton)])
+			{
+				UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+				if(closeButton)
+				{
+					[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+					goto done;
+				}
 			}
 		}
 	}

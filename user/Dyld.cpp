@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <mach/mach.h>
 
@@ -22,6 +23,11 @@ static int EndsWith(const char *str, const char *suffix)
 	if (lensuffix >  lenstr)
 		return 0;
 	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+static char* Contains(char *str, const char *substr)
+{
+	return strstr(str, substr);
 }
 
 Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
@@ -45,6 +51,8 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 	memcpy(this->all_image_infos, &all_images, sizeof(struct dyld_all_image_infos));
 
+	char *task_name = task->getName();
+
 	for(uint32_t i = 0; i < all_image_infos->infoArrayCount; i++)
 	{
 		struct dyld_image_info image_info;
@@ -65,7 +73,7 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 		image_file = task->readString(image_file_path);
 
-		if(!found_main_image && EndsWith(image_file, task->getName()))
+		if(!found_main_image && (EndsWith(image_file, task_name) || (i == 0 && Contains(image_file, task_name))))
 		{
 			task->read(image_load_addr, &hdr, sizeof(hdr));
 
