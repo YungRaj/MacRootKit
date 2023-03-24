@@ -45,6 +45,8 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 
 -(NSUInteger)depth;
 
+-(BOOL)hasTapGestureRecognizer;
+
 @end
 	
 @implementation UIView (Depth)
@@ -63,6 +65,19 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 	}
 
 	return depth;
+}
+
+-(BOOL)hasTapGestureRecognizer
+{
+	NSArray *gestureRecognizers = self.gestureRecognizers;
+
+	for(UIGestureRecognizer* recognizer in gestureRecognizers)
+	{
+		if([recognizer isKindOfClass:[UITapGestureRecognizer class]])
+			return YES;
+	}
+
+	return NO;
 }
 
 @end
@@ -196,12 +211,12 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 	NSMutableDictionary *crawledViews = crawlData ? [crawlData objectForKey:kNSDarwinAppCrawlerCrawledViews] : NULL;
 
 	if(!crawledViews)
-		return false;
+		return NO;
 
 	NSMutableArray *viewCrawlData = [crawledViews objectForKey:NSStringFromClass([view class])];
 
 	if(!viewCrawlData)
-		return false;
+		return NO;
 
 	CGPoint pointInWindow = [[view superview] convertPoint:view.frame.origin toView:view.window];
 
@@ -212,11 +227,11 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 		if([crawlData.name isEqual:NSStringFromClass([view class])] &&
 			CGPointEqualToPoint(crawlData.position, pointInWindow))
 		{
-			return true;
+			return YES;
 		}
 	}
 
-	return false;
+	return NO;
 }
 
 -(void)crawlingTimerDidFire:(NSTimer*)timer
@@ -856,14 +871,22 @@ NSMutableArray* CrawlManager::getViewsForUserInteractionFromRootView(UIView *vie
 		if(NSDarwinAppCrawlerClassContainsAdsPrefix(className))
 			continue;
 
+		UIWindow *window = [subview window];
+
 
 		if([subview isKindOfClass:[UIScrollView class]])
 		{
 			// A user interaction is best made inside of a UIScrollView
 			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
 		} 
-		else if(subview.userInteractionEnabled && [subview window] &&
-			   ([subview isKindOfClass:[UIButton class]] ||
+		else if(subview.window &&
+			   !subview.hidden &&
+				subview.userInteractionEnabled &&
+				CGRectContainsPoint(subview.window.frame, [[subview superview] convertPoint:subview.frame.origin toView:subview.window]) &&
+			   (([subview isKindOfClass:[UIControl class]] && [className containsString:@"Button"]) ||
+			   	[subview isKindOfClass:[UIButton class]] ||
+			   	[subview isKindOfClass:[UILabel class]] ||
+			   	[subview isKindOfClass:[UIImageView class]] ||
 			   	[subview isKindOfClass:[UITableViewCell class]] ||
 			   	[subview isKindOfClass:[UICollectionViewCell class]] ||
 			   	[subview isKindOfClass:[SKView class]]))
@@ -871,12 +894,13 @@ NSMutableArray* CrawlManager::getViewsForUserInteractionFromRootView(UIView *vie
 			NSMutableArray *subEligibleViews = this->getViewsForUserInteractionFromRootView(subview);
 
 			if([subEligibleViews count])
-				[views addObjectsFromArray:subEligibleViews];
-			else
 			{
-				if(![views containsObject:subview])
-					[views addObject:subview];
-			}
+				[views addObjectsFromArray:subEligibleViews];
+			} 
+
+			if(![views containsObject:subview])
+				[views addObject:subview];
+
 		} else
 		{
 			[views addObjectsFromArray:this->getViewsForUserInteractionFromRootView(subview)];
