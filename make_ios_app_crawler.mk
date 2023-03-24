@@ -23,7 +23,7 @@ COMMON_OBJECTS := $(patsubst user/%.mm, $(OBJ)/%.o, $(COMMON_SOURCES))
 
 CFLAGS += -g -I$(shell pwd)/mac_rootkit -I$(shell pwd)/user/FakeTouch -arch arm64 -target arm64-apple-ios
 
-LDFLAGS += -g -shared -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation -framework IOKit -framework CoreGraphics -framework QuartzCore -framework SpriteKit
+LDFLAGS += -g -shared -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation -framework CoreFoundation -framework IOKit -framework CoreGraphics -framework QuartzCore -framework SpriteKit
 
 CXXFLAGS += -g  -I$(shell pwd)/mac_rootkit -arch arm64 -target arm64-apple-macos
 

@@ -7,6 +7,7 @@
 
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <SpriteKit/SpriteKit.h>
 
 /* iOS App Crawler for macOS */
@@ -42,11 +43,17 @@ using namespace NSDarwin::AppCrawler;
 
 @property (atomic) CrawlManager *crawlManager;
 
+@property (strong, atomic) NSTimer *crawlingTimer;
+@property (strong, atomic) NSTimer *idleTimer;
+
 @property (strong, atomic) NSMutableDictionary *crawlData;
 
 @property (strong, atomic) NSMutableArray *viewControllerStack;
 
+@property (assign, atomic) CFAbsoluteTime timeSinceLastUserInteraction;
+
 @property (assign, atomic) BOOL spriteKitCrawlCondition;
+@property (assign, atomic) BOOL crawlerTimerDidFire;
 
 -(instancetype)initWithCrawlingManager:(CrawlManager*)crawlManager;
 
@@ -81,7 +88,9 @@ namespace NSDarwin
 
 				NSDarwinAppCrawler* getCrawler() { return crawler; }
 
-				NSTimer* getCrawlingTimer() { return crawlingTimer; }
+				NSTimer* getCrawlingTimer() { return this->crawler.crawlingTimer; }
+
+				NSTimer* getIdleTimer() { return this->crawler.idleTimer; }
 
 				NSString* getBundleID() { return bundleIdentifier; }
 
@@ -97,21 +106,32 @@ namespace NSDarwin
 
 				void setupAppCrawler();
 
-				void setupCrawlingTimer(NSDictionary *userInfo) { this->crawlingTimer = [NSTimer scheduledTimerWithTimeInterval:1.25f
-							                                                  target:this->crawler
-							                                                selector:@selector(crawlingTimerDidFire:)
-							                                                userInfo:userInfo
-							                                                 repeats:NO]; }
+				void setupCrawlingTimer()
+				{
+					this->invalidateCrawlingTimer();
 
-				void setupIdleTimer() { this->idleTimer = [NSTimer scheduledTimerWithTimeInterval:4.5f
+					this->crawler.crawlingTimer = [NSTimer scheduledTimerWithTimeInterval:1.25f
+				                                                  target:this->crawler
+				                                                selector:@selector(crawlingTimerDidFire:)
+				                                                userInfo:nil
+				                                                 repeats:NO];
+
+				}
+
+				void setupIdleTimer()
+				{
+					this->invalidateIdleTimer();
+
+					this->crawler.idleTimer = [NSTimer scheduledTimerWithTimeInterval:3.5f
 							                                                  target:this->crawler
 							                                                selector:@selector(idlingTimerDidFire:)
 							                                                userInfo:nil
-							                                                 repeats:YES]; }
+							                                                 repeats:NO];
+				}
 
-				void invalidateCrawlingTimer() { if(this->crawlingTimer && [this->crawlingTimer isValid]) { [this->crawlingTimer invalidate]; this->crawlingTimer = NULL; } }
+				void invalidateCrawlingTimer() { if(this->crawler.crawlingTimer && [this->crawler.crawlingTimer isValid]) { [this->crawler.crawlingTimer invalidate]; this->crawler.crawlingTimer = NULL; } }
 
-				void invalidateIdleTimer() { if(this->idleTimer && [this->idleTimer isValid]) { [this->idleTimer invalidate]; this->idleTimer = NULL; } }
+				void invalidateIdleTimer() { if(this->crawler.idleTimer && [this->crawler.idleTimer isValid]) { [this->crawler.idleTimer invalidate]; this->crawler.idleTimer = NULL; } }
 
 				NSMutableArray* getViewsForUserInteraction(UIViewController *viewController);
 				NSMutableArray* getViewsForUserInteractionFromRootView(UIView *view);
@@ -127,17 +147,11 @@ namespace NSDarwin
 
 				NSString *bundleIdentifier;
 
-				NSTimer *crawlingTimer;
-				NSTimer *idleTimer;
-
 				UIApplication *application;
 
 				id<UIApplicationDelegate> delegate;
 
 				UIViewController *currentViewController;
-
-				NSArray *viewControllers;
-				NSArray *views;
 		};
 	}
 }
