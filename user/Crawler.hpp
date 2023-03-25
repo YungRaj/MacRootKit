@@ -61,6 +61,9 @@ using namespace NSDarwin::AppCrawler;
 
 -(NSViewCrawlData*)setupCrawlDataForView:(UIView*)view;
 
+-(UIViewController*)topViewController;
+-(UIViewController*)topViewControllerWithRootViewController:(UIViewController*)rootViewController;
+
 -(BOOL)hasViewBeenCrawled:(UIView*)view inViewController:(UIViewController*)vc;
 
 -(void)crawlingTimerDidFire:(NSTimer*)timer;

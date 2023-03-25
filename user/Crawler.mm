@@ -22,13 +22,22 @@ static void NSDarwinAppCrawler_viewDidAppear(id self_, SEL cmd_, BOOL animated)
 {
 	NSDarwinAppCrawler *darwinCrawler = crawler->getCrawler();
 
+	UIViewController *vc = (UIViewController*) self_;
+
 	objc_msgSend(self_, @selector(swizzled_viewDidAppear:), animated);
+
+	vc = [darwinCrawler topViewController];
+
+	if(vc.navigationController)
+	{
+		vc = [vc.navigationController visibleViewController];
+	}
 
 	crawler->onViewControllerViewDidAppear((UIViewController*) self_);
 
 	[darwinCrawler setSpriteKitCrawlCondition:NO];
 
-	crawler->setCurrentViewController((UIViewController*) self_);
+	crawler->setCurrentViewController((UIViewController*) vc);
 }
 
 static void NSDarwinAppCrawler_viewWillDisappear(id self_, SEL cmd_, BOOL animated)
