@@ -105,6 +105,54 @@ namespace xnu
 			off_t slide;
 
 	};
+
+	class KDKKernel
+	{
+		public:
+			static KDKKernel* KDKKernelFromFilePath(xnu::Kernel *kernel, const char *path);
+
+			explicit KDKKernel(xnu::Kernel *kernel, const char *path);
+
+			char* getPath();
+
+			xnu::Kernel* getKernel();
+
+			Debug::Dwarf* getDwarf();
+
+			MachO* getKernelDebugKitKernel();
+
+			mach_vm_address_t getBase();
+
+			mach_vm_address_t findSymbolByName(xnu::Kernel *kernel, const char *sym);
+
+			Symbol* getKDKSymbolByName(char *symname);
+			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
+
+			Symbol* matchSymbolWithKDK(Symbol *s);
+			Symbol* matchSymbolWithKDK(mach_vm_address_t address);
+
+			mach_vm_address_t matchAddressWithKDK(mach_vm_address_t addr);
+
+			char* findString(char *s);
+
+			std::Array<mach_vm_address_t> getExternalReferences(mach_vm_address_t addr);
+
+			std::Array<mach_vm_address_t> getStringReferences(mach_vm_address_t addr);
+			std::Array<mach_vm_address_t> getStringReferences(const char *s);
+
+			void parseDebugInformation();
+
+		private:
+			const char *path;
+
+			xnu::Kernel *kernel;
+
+			MachO *kdk;
+
+			Debug::Dwarf *dwarf;
+
+			mach_vm_address_t base;
+	};
 };
 
 #endif
