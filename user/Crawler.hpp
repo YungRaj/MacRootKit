@@ -28,15 +28,17 @@ namespace NSDarwin
 using namespace NSDarwin::AppCrawler;
 
 @interface NSViewCrawlData : NSObject
-	@property (strong, nonatomic) NSString *name;
 
-	@property (strong, nonatomic) NSString *parent;
+@property (strong, nonatomic) NSString *name;
 
-	@property (assign, nonatomic) CGRect frame;
-	@property (assign, nonatomic) CGPoint position; // position in window
-	@property (assign, nonatomic) CGPoint center;
+@property (strong, nonatomic) NSString *parent;
 
-	@property (assign, nonatomic) CGPoint anchorPoint;
+@property (assign, nonatomic) CGRect frame;
+@property (assign, nonatomic) CGPoint position; // position in window
+@property (assign, nonatomic) CGPoint center;
+
+@property (assign, nonatomic) CGPoint anchorPoint;
+
 @end
 
 @interface NSDarwinAppCrawler : NSObject
@@ -71,6 +73,8 @@ using namespace NSDarwin::AppCrawler;
 
 -(void)simulateTouchEventAtPoint:(CGPoint)point;
 -(void)simulateTouchesOnSpriteKitView:(SKView*)view;
+
+-(bool)bypassInterstitialAds:(UIViewController*)vc;
 
 -(void)pushViewControllerToStack:(UIViewController*)vc;
 

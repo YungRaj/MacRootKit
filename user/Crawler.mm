@@ -243,6 +243,46 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 	return NO;
 }
 
+-(BOOL)bypassInterstitialAds:(UIViewController*)viewController
+{
+	if([viewController isKindOfClass:objc_getClass("GADFullScreenAdViewController")])
+	{
+		if([viewController respondsToSelector:@selector(closeButton)])
+		{
+			UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+			if(closeButton)
+			{
+				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+				return YES;
+			}
+		}
+	}
+
+	if([viewController isKindOfClass:objc_getClass("OGAFullScreenViewController")])
+	{
+		if([viewController respondsToSelector:@selector(displayer)])
+		{
+			id displayer = [viewController performSelector:@selector(displayer)];
+
+			if([displayer respondsToSelector:@selector(closeButton)])
+			{
+				UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+
+				if(closeButton)
+				{
+					[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+
+					return YES;
+				}
+			}
+		}
+	}
+
+	return NO;
+}
+
 -(void)crawlingTimerDidFire:(NSTimer*)timer
 {
 	NSMutableArray *userInfo = [timer userInfo];
@@ -251,6 +291,23 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 
 	if(viewController.navigationController)
 	{
+		if([[viewController.navigationController viewControllers] count] > (arc4random() % 5 + 5))
+		{
+			UINavigationController *navigationController = viewController.navigationController;
+
+			[navigationController popViewControllerAnimated:YES];
+
+			[timer invalidate];
+			
+			self.timeSinceLastUserInteraction = CFAbsoluteTimeGetCurrent();
+
+			self.crawlManager->setupIdleTimer();
+
+			self.crawlerTimerDidFire = YES;
+
+			return;
+		}
+
 		viewController = [viewController.navigationController visibleViewController];
 	}
 
@@ -280,43 +337,13 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 
 	[eligibleViews shuffle];
 
-	if([viewController isKindOfClass:objc_getClass("GADFullScreenAdViewController")])
+	BOOL didBypassInterstitialAds = [self bypassInterstitialAds:viewController];
+
+	if(didBypassInterstitialAds)
 	{
-		if([viewController respondsToSelector:@selector(closeButton)])
-		{
-			UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
+		didUserInteraction = YES;
 
-			if(closeButton)
-			{
-				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-
-				didUserInteraction = YES;
-
-				goto done;
-			}
-		}
-	}
-
-	if([viewController isKindOfClass:objc_getClass("OGAFullScreenViewController")])
-	{
-		if([viewController respondsToSelector:@selector(displayer)])
-		{
-			id displayer = [viewController performSelector:@selector(displayer)];
-
-			if([displayer respondsToSelector:@selector(closeButton)])
-			{
-				UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
-
-				if(closeButton)
-				{
-					[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-
-					didUserInteraction = YES;
-
-					goto done;
-				}
-			}
-		}
+		goto done;
 	}
 
 	if((arc4random() % 10) + 1 <= 7)
@@ -457,6 +484,23 @@ done:
 
 	if(viewController.navigationController)
 	{
+		if([[viewController.navigationController viewControllers] count] > (arc4random() % 5 + 5))
+		{
+			UINavigationController *navigationController = viewController.navigationController;
+
+			[navigationController popViewControllerAnimated:YES];
+
+			[timer invalidate];
+			
+			self.timeSinceLastUserInteraction = CFAbsoluteTimeGetCurrent();
+
+			self.crawlManager->setupIdleTimer();
+
+			self.crawlerTimerDidFire = YES;
+
+			return;
+		}
+
 		viewController = [viewController.navigationController visibleViewController];
 	}
 
@@ -484,42 +528,16 @@ done:
 
 	NSMutableArray *eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController); // [eligibleViewsInViewController objectForKey:NSStringFromClass([viewController class])];
 
-	if([viewController isKindOfClass:objc_getClass("GADFullScreenAdViewController")])
-	{
-		if([viewController respondsToSelector:@selector(closeButton)])
-		{
-			UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
-
-			if(closeButton)
-			{
-				[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-
-				goto done;
-			}
-		}
-	}
-
-	if([viewController isKindOfClass:objc_getClass("OGAFullScreenViewController")])
-	{
-		if([viewController respondsToSelector:@selector(displayer)])
-		{
-			id displayer = [viewController performSelector:@selector(displayer)];
-
-			if([displayer respondsToSelector:@selector(closeButton)])
-			{
-				UIButton *closeButton = [viewController performSelector:@selector(closeButton)];
-
-				if(closeButton)
-				{
-					[closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-
-					goto done;
-				}
-			}
-		}
-	}
-
 	[self pushViewControllerToStack:viewController];
+
+	BOOL didBypassInterstitialAds = [self bypassInterstitialAds:viewController];
+
+	if(didBypassInterstitialAds)
+	{
+		didUserInteraction = YES;
+
+		goto done;
+	}
 
 	if([self simulatedTouchesHasHadNoEffect])
 	{
