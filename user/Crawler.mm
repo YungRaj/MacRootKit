@@ -291,7 +291,7 @@ static void NSDarwinAppCrawler_didMoveToParentViewController(id self_, SEL cmd_,
 
 	if(viewController.navigationController)
 	{
-		if([[viewController.navigationController viewControllers] count] > (arc4random() % 5 + 5))
+		if([[viewController.navigationController viewControllers] count] > (arc4random() % 10 + 1))
 		{
 			UINavigationController *navigationController = viewController.navigationController;
 
@@ -484,7 +484,7 @@ done:
 
 	if(viewController.navigationController)
 	{
-		if([[viewController.navigationController viewControllers] count] > (arc4random() % 5 + 5))
+		if([[viewController.navigationController viewControllers] count] > (arc4random() % 10 + 1))
 		{
 			UINavigationController *navigationController = viewController.navigationController;
 
@@ -543,6 +543,23 @@ done:
 	{
 		if(viewController.navigationController)
 		{
+			if([[viewController.navigationController viewControllers] count] > (arc4random() % 10 + 1))
+			{
+				UINavigationController *navigationController = viewController.navigationController;
+
+				[navigationController popViewControllerAnimated:YES];
+
+				[timer invalidate];
+				
+				self.timeSinceLastUserInteraction = CFAbsoluteTimeGetCurrent();
+
+				self.crawlManager->setupIdleTimer();
+
+				self.crawlerTimerDidFire = YES;
+
+				return;
+			}
+		
 			viewController = viewController.navigationController;
 
 			eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController);

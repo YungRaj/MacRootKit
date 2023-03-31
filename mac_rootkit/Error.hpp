@@ -2,18 +2,16 @@
 
 namespace Error
 {
-	enum
+	enum Error : int32_t
 	{
 		kErrorUnknown          = -1,
-		kErrorNone             = 0,
+		kErrorNone,
 		kErrorInvalidArgument,
 		kErrorOutOfMemory,
 		kErrorNotSupported,
 		kErrorNotAvailable,
 		kErrorCompatibilityFailure,
 	};
-
-	typedef Error int32_t;
 }
 
 #endif
