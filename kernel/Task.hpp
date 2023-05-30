@@ -40,6 +40,8 @@ namespace xnu
 			static task_t findTaskByPid(Kernel *kernel, int pid);
 			static task_t findTaskByName(Kernel *kernel, char *name);
 
+			char* getName() { return name; }
+
 			task_t getTask() { return task; }
 
 			vm_map_t getMap() { return map; }
@@ -107,6 +109,8 @@ namespace xnu
 
 		protected:
 			Kernel *kernel;
+
+			char *name;
 
 			Disassembler *disassembler;
 

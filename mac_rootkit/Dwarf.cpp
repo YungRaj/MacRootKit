@@ -747,12 +747,12 @@ DIE* getDebugInfoEntryByCode(uint64_t code)
 
 void Dwarf::populateDebugSymbols()
 {
-	// this->parseDebugAbbrev();
-	// this->parseDebugInfo();
-	// this->parseDebugLines();
-	// this->parseDebugLocations();
+	this->parseDebugAbbrev();
+	this->parseDebugInfo();
+	this->parseDebugLines();
+	this->parseDebugLocations();
 	this->parseDebugRanges();
-	// this->parseDebugAddressRanges();
+	this->parseDebugAddressRanges();
 }
 
 void Dwarf::parseDebugAbbrev()

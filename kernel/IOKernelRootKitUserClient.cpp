@@ -813,7 +813,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 4)
 				{
-					/*
+				#ifdef __x86_64__
 					kern_return_t kr;
 
 					IOMemoryDescriptor *descriptor;
@@ -884,7 +884,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					if(descriptor)
 						descriptor->release();
-					*/
+				#endif
 				}
 			}
 
@@ -896,7 +896,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 4)
 				{
-					/*
+				#ifdef __x86_64__
 					kern_return_t kr;
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
@@ -981,7 +981,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						result = kIOReturnBadArgument;
 					}
-					*/
+				#endif
 				}
 			}
 			
@@ -995,7 +995,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 2)
 				{
-					/*
+				#ifdef __x86_64__
 					kern_return_t kr;
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
@@ -1039,7 +1039,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						result = kIOReturnNoMemory;
 					}
-					*/
+				#endif
 				}
 			}
 		case kIOKernelRootKitMachVmProtect:
@@ -1049,7 +1049,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 4)
 				{
-					/*
+				#ifdef __x86_64__
 					kern_return_t kr;
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
@@ -1105,7 +1105,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						result = kIOReturnBadArgument;
 					}
-					*/
+				#endif
 				}
 			}
 

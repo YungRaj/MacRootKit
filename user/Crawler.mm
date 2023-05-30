@@ -559,7 +559,7 @@ done:
 
 				return;
 			}
-		
+
 			viewController = viewController.navigationController;
 
 			eligibleViews = self.crawlManager->getViewsForUserInteraction(viewController);
@@ -571,7 +571,7 @@ done:
 			UIView *view2 = (UIView*) obj2;
 
 			NSUInteger depth1 = [view1 depth];
-			NSUInteger depth2 = [view2 depth];
+			NSUInteger depth2 = [view2 depth];1
 
 			if(depth1 > depth2)
 			{

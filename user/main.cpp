@@ -14,7 +14,28 @@
 #include <pthread.h>
 #include <ptrauth.h>
 
+#include <algorithm>
+#include <array>
+#include <bsm/libbsm.h>
+
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <dispatch/dispatch.h>
+#include <functional>
+#include <iostream>
+#include <regex>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <sys/ptrace.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
+#include <vector>
+
 #include <IOKit/IOKitLib.h>
+
+#include <EndpointSecurity/EndpointSecurity.h>
 
 #include "Kernel.hpp"
 #include "Dwarf.hpp"
@@ -512,11 +533,12 @@ int injectLibrary(char *dylib)
 static struct option long_options[] =
 {
 	{"pid", required_argument, 0, 'p'},
+	{"wait_for_process", required_argument, 0, 'w'}
 };
 
 void print_usage()
 {
-	printf("mrk_inject -p <pid> libs\n");
+	printf("mrk_inject -p <pid> -w <process_name>libs\n");
 
 	exit(-1);
 }
@@ -524,6 +546,8 @@ void print_usage()
 int main(int argc, char **argv)
 {
 	int err;
+
+	char *wait_for_process_name = NULL;
 
 	char *process_name;
 
@@ -564,7 +588,7 @@ int main(int argc, char **argv)
 	{
 		int option_index = 0;
 
-		c = getopt_long (argc, argv, "p:", long_options, &option_index);
+		c = getopt_long (argc, argv, "p:w:", long_options, &option_index);
 
 		if (c == -1)
 			break; 
@@ -575,6 +599,11 @@ int main(int argc, char **argv)
 				pid = atoi(optarg);
 
 				break;
+			case 'w':
+				wait_for_process_name = optarg;
+
+				break;
+
 			default:
 				break;
 		}
@@ -607,14 +636,61 @@ int main(int argc, char **argv)
 	
 		if(!libraryLoadedAt)
 		{
-			err = injectLibrary(library);
-
-			if(err != 0)
+			if(wait_for_process_name)
 			{
-				return err;
-			}
+				es_client_t *client = NULL;
 
-			libraryLoadedAt = task->getDyld()->getImageLoadedAt(library, NULL);
+				ensure(es_new_client(&client, ^(es_client_t *client, const es_message_t *message)
+				{
+					switch (message->event_type)
+					{
+						case ES_EVENT_TYPE_AUTH_EXEC:
+						{
+							const char *name = message->event.exec.target->executable->path.data;
+
+							for (const auto &process : processes)
+							{
+								pid_t pid = audit_token_to_pid(message->process->audit_token);
+								
+								if (std::regex_search(name, process) && is_translated(getpid()) == is_translated(pid))
+								{
+									if (is_cs_enforced(pid)) {
+										ensure(!ptrace(PT_ATTACHEXC, pid, nullptr, 0));
+										// Work around FB9786809
+										dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1'000'000'000), dispatch_get_main_queue(), ^{
+											ensure(!ptrace(PT_DETACH, pid, nullptr, 0));
+										});
+									}
+
+									task = new Task(kernel, pid);
+
+									inject(library);
+								}
+							}
+							es_respond_auth_result(client, message, ES_AUTH_RESULT_ALLOW, false);
+							break;
+						}
+						default:
+							ensure(false && "Unexpected event type!");
+					}
+				}) == ES_NEW_CLIENT_RESULT_SUCCESS);
+				
+				es_event_type_t events[] = {ES_EVENT_TYPE_AUTH_EXEC};
+				
+				ensure(es_subscribe(client, events, sizeof(events) / sizeof(*events)) == ES_RETURN_SUCCESS);
+				
+				dispatch_main();
+			} else
+			{
+				err = injectLibrary(library);
+
+				if(err != 0)
+				{
+					return err;
+				}
+
+				libraryLoadedAt = task->getDyld()->getImageLoadedAt(library, NULL);
+			}
 		}
 
 		printf("%s loaded at 0x%llx\n", library, libraryLoadedAt);

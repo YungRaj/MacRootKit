@@ -231,7 +231,7 @@ void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescript
 	}
 }
 
-void SwiftMetadata::parseClassMetadata(Class *cls)
+void SwiftMetadata::parseClassMetadata(Class cls)
 {
 
 }

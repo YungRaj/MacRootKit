@@ -50,11 +50,13 @@ KernelPatcher::KernelPatcher(xnu::Kernel *kernel)
 
 	this->installEntitlementHook();
 
-	// binary load hook does not work in Monterey because symbol to hook does not exist
-	// this->installBinaryLoadHook();
+#ifdef __x86_64__
+	// binary load hook does not work on arm64 because symbol to hook does not exist
+	this->installBinaryLoadHook();
 
-	// kext load hook does not work in Monterey because symbol to hook does not exist
-	// this->installKextLoadHook();
+	// kext load hook does not work on arm64 because symbol to hook does not exist
+	this->installKextLoadHook();
+#endif
 
 	// this->installDummyBreakpoint();
 }
@@ -178,6 +180,16 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 	if(strcmp(entitlement, "com.apple.security.app-sandbox") == 0)
 	{
 		original = OSBoolean::withBoolean(false);
+	}
+
+	if(strcmp(entitlement, "com.apple.private.FairPlayIOKitUserClient.access") == 0)
+	{
+		original = OSBoolean::withBoolean(true);
+	}
+
+	if(strcmp(entitlement, "com.apple.private.ProvInfoIOKitUserClient.access") == 0)
+	{
+		original = OSBoolean::withBoolean(true);
 	}
 
 	if(that)
