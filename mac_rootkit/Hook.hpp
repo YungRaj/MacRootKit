@@ -79,7 +79,12 @@ namespace mrk
 			void withBreakpointParams(xnu::Task *task, mach_vm_address_t breakpoint);
 
 			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+			static Hook* hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+
 			static Hook* breakpointForAddress(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+			static Hook* breakpointForAddress(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+
+			void* getTarget() { return target; }
 
 			mrk::Patcher* getPatcher() { return patcher; }
 
@@ -104,6 +109,8 @@ namespace mrk
 			enum HookType getHookType() { return hooktype; }
 
 			enum HookType getHookTypeForCallback(mach_vm_address_t callback);
+
+			void setTarget(void *target) { this->target = target; }
 
 			void setPatcher(Patcher *patcher) { this->patcher = patcher; }
 
@@ -132,6 +139,8 @@ namespace mrk
 			void removeBreakpoint();
 
 		private:
+			void *target;
+
 			mrk::Patcher *patcher;
 
 			xnu::Task *task;

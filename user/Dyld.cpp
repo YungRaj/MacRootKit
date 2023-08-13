@@ -1,4 +1,5 @@
 #include "Dyld.hpp"
+#include "Library.hpp"
 #include "Kernel.hpp"
 #include "MachO.hpp"
 #include "Task.hpp"
@@ -55,7 +56,7 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 	for(uint32_t i = 0; i < all_image_infos->infoArrayCount; i++)
 	{
-		struct dyld_image_info image_info;
+		struct dyld_image_info *image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
 		mach_vm_address_t image_info_addr;
 
@@ -66,12 +67,14 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 		image_info_addr = (mach_vm_address_t) (all_images.infoArray + i);
 
-		task->read(image_info_addr, &image_info, sizeof(image_info));
+		task->read(image_info_addr, image_info, sizeof(image_info));
 
-		image_load_addr = (mach_vm_address_t) image_info.imageLoadAddress;
-		image_file_path = (mach_vm_address_t) image_info.imageFilePath;
+		image_load_addr = (mach_vm_address_t) image_info->imageLoadAddress;
+		image_file_path = (mach_vm_address_t) image_info->imageFilePath;
 
 		image_file = task->readString(image_file_path);
+
+		Library *library = new Library(this->getTask(), this, image_info);
 
 		if(!found_main_image && (EndsWith(image_file, task_name) || (i == 0 && Contains(image_file, task_name))))
 		{
@@ -83,7 +86,7 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 				this->main_image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
-				memcpy(this->main_image_info, &image_info, sizeof(image_info));
+				memcpy(this->main_image_info, image_info, sizeof(image_info));
 
 				this->dyld_shared_cache = this->all_image_infos->sharedCacheBaseAddress;
 
@@ -97,6 +100,8 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 		{
 			free(image_file);
 		}
+
+		this->libraries.add(library);
 	}
 
 	assert(found_main_image);

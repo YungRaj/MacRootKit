@@ -58,6 +58,21 @@ namespace mrk
 
 			mrk::KernelPatcher* getKernelPatcher() { return kernelPatcher; }
 
+			mrk::Plugin* getPlugin(const char *pluginName)
+			{
+				for(size_t i = 0; i < plugins.getSize(); i++)
+				{
+					Plugin *plugin = plugins.get(i);
+
+					if(strcmp(plugin->getProduct(), pluginName) == 0)
+						return plugin;
+				}
+
+				return NULL;
+			}
+
+			void installPlugin(mrk::Plugin *plugin) { this->plugins.add(plugin); }
+
 			StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
 
 			StoredArray<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
@@ -96,6 +111,8 @@ namespace mrk
 			std::Array<xnu::Kext*> kexts;
 
 			kmod_info_t **kextKmods;
+
+			Array<mrk::Plugin*> plugins;
 
 			StoredArray<entitlement_callback_t> entitlementCallbacks;
 

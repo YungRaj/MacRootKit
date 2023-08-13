@@ -1,0 +1,34 @@
+target create -s /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple.dSYM /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple
+
+command script import "/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple.dSYM/Contents/Resources/Python/kernel_release.py"
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/apfs.kext/Contents/MacOS/apfs
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/IOSurface.kext/Contents/MacOS/IOSurface
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/AppleMobileFileIntegrity.kext/Contents/MacOS/AppleMobileFileIntegrity
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/Sandbox.kext/Contents/MacOS/Sandbox
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/IOTextEncryptionFamily.kext/Contents/MacOS/IOTextEncryptionFamily
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/FairPlayIOKit.kext/Contents/MacOS/FairPlayIOKit
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/IODARTFamily.kext/Contents/MacOS/IODARTFamily
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/AppleImage4.kext/Contents/MacOS/AppleImage4
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/HFS.kext/Contents/MacOS/HFS
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/AppleA7IOP.kext/Contents/MacOS/AppleA7IOP
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/CoreTrust.kext/Contents/MacOS/CoreTrust
+
+image add /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/AppleVirtIOStorage.kext/Contents/MacOS/AppleVirtIOStorage
+
+settings set target.process.optimization-warnings false
+
+settings set target.process.experimental.os-plugin-reports-all-threads false
+
+settings set target.process.run-all-threads true
+

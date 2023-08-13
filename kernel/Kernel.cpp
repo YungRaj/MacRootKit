@@ -28,6 +28,40 @@ using namespace Arch::x86_64::PatchFinder;
 
 using namespace xnu;
 
+const char* getKernelVersion()
+{
+	char *kernelBuildVersion = new char[256];
+
+	struct utsname kernelInfo;
+
+	uname(&kernelInfo);
+
+	strlcpy(kernelBuildVersion, kernelInfo.version, 256);
+
+	return kernelBuildVersion;
+}
+
+const char* getOSBuildVersion()
+{
+	int mib[2];
+
+	size_t len = 256;
+	char *buildVersion = new char[len];
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSVERSION;
+
+	if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0)
+	{
+		MAC_RK_LOG("MacRK::macOS build version = %s\n", buildVersion);
+	} else
+	{
+		return NULL;
+	}
+
+	return buildVersion;
+}
+
 off_t Kernel::tempExecutableMemoryOffset = 0;
 
 uint8_t Kernel::tempExecutableMemory[tempExecutableMemorySize] __attribute__((section("__TEXT,__text")));

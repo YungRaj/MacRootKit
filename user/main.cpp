@@ -132,7 +132,6 @@ Task *task;
 
 MachO *libDyld;
 MachO *libSystemPthread;
-MachO *libCycript;
 
 mach_vm_address_t dlopen;
 mach_vm_address_t dlerror;
@@ -654,10 +653,12 @@ int main(int argc, char **argv)
 								
 								if (std::regex_search(name, process) && is_translated(getpid()) == is_translated(pid))
 								{
-									if (is_cs_enforced(pid)) {
+									if (is_cs_enforced(pid))
+									{
 										ensure(!ptrace(PT_ATTACHEXC, pid, nullptr, 0));
 										// Work around FB9786809
-										dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1'000'000'000), dispatch_get_main_queue(), ^{
+										dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1'000'000'000), dispatch_get_main_queue(), ^
+										{
 											ensure(!ptrace(PT_DETACH, pid, nullptr, 0));
 										});
 									}

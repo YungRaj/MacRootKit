@@ -14,24 +14,30 @@ namespace dyld
 	class Library
 	{
 		public:
-			Library();
+			Library(xnu::Task *task, dyld::Dyld *dyld, struct dyld_image_info *image_info)
+			{
+				this->task = task;
+				this->dyld = dyld;
+				this->image_info = image_info;
+				this->path = this->task->readString(image_file_path);
+			}
 
-			~Library();
+			~Library() { free(this->path); }
 
-			mrk::UserMachO* getMachO() { return macho; }
+			char* getPath() { return path; }
 
 			dyld::Dyld* getDyld() { return dyld; }
 
 			xnu::Task* getTask() { return task; }
 
-			static Library* injectLibrary(Task *task, const char *path);
-
 		private:
-			mrk::UserMachO *macho;
+			char *path;
+
+			xnu::Task *task;
 
 			dyld::Dyld *dyld;
 
-			xnu::Task *task;
+			struct dyld_image_info *image_info;
 	};
 
 };

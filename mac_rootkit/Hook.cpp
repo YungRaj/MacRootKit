@@ -62,6 +62,15 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 	return hook;
 }
 
+Hook* Hook::hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address)
+{
+	Hook *hook = Hook::hookForFunction(task, patcher, address);
+
+	hook->setTarget(target);
+
+	return hook;
+}
+
 Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t address)
 {
 	Hook *hook;
@@ -81,6 +90,15 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 	hook = new Hook(patcher, kHookTypeBreakpoint);
 
 	hook->withBreakpointParams(task, address);
+
+	return hook;
+}
+
+Hook* Hook::breakpointForAddress(void *target, Task *task, Patcher *patcher, mach_vm_address_t address)
+{
+	Hook *hook = Hook::breakpointForAddress(target, task, patcher, address);
+
+	hook->setTarget(target);
 
 	return hook;
 }

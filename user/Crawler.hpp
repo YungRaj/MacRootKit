@@ -113,7 +113,7 @@ namespace NSDarwin
 
 				void setupAppCrawler();
 
-				void setupCrawlingTimer()
+				inline void setupCrawlingTimer()
 				{
 					this->invalidateCrawlingTimer();
 
@@ -125,7 +125,7 @@ namespace NSDarwin
 
 				}
 
-				void setupIdleTimer()
+				inline void setupIdleTimer()
 				{
 					this->invalidateIdleTimer();
 

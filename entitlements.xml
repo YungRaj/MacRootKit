@@ -6,5 +6,11 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<key>com.apple.private.thread-set-state</key>
+    <true/>
+    <key>com.apple.private.cs.debugger</key>
+    <true/>
+    <key>com.apple.security.cs.debugger</key>
+    <true/>
 </dict>
 </plist>

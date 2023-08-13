@@ -3,8 +3,13 @@
 
 #include <IOKit/IOLib.h>
 
+#include <libkern/libkern.h>
+
 #include <kern/host.h>
 #include <mach/mach_types.h>
+
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include "MacRootKit.hpp"
 
@@ -32,6 +37,10 @@ namespace mrk
 
 namespace xnu
 {
+	static const char* getKernelVersion();
+
+	static const char* getOSBuildVersion();
+
 	class Kernel : public xnu::Task
 	{
 		static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
@@ -171,12 +180,15 @@ namespace xnu
 			void createKernelTaskPort();
 	};
 
-	class KDKKernel
+	class KDK
 	{
 		public:
-			static KDKKernel* KDKKernelFromFilePath(xnu::Kernel *kernel, const char *path);
+			static KDK* KDKFromFilePath(xnu::Kernel *kernel, const char *path);
+			static KDK* KDKFromOSBuildVersion(xnu::Kernel *kernel, const char *buildVersion);
 
-			explicit KDKKernel(xnu::Kernel *kernel, const char *path);
+			static const char* getKDKPathFromOSBuildVersion(const char *buildVersion);
+
+			explicit KDK(xnu::Kernel *kernel, const char *path);
 
 			char* getPath();
 
@@ -188,7 +200,7 @@ namespace xnu
 
 			mach_vm_address_t getBase();
 
-			mach_vm_address_t findSymbolByName(xnu::Kernel *kernel, const char *sym);
+			mach_vm_address_t findKDKSymbolAddressByName(const char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
@@ -207,12 +219,16 @@ namespace xnu
 
 			void parseDebugInformation();
 
+			bool verify();
+
 		private:
+			bool valid;
+
 			const char *path;
 
 			xnu::Kernel *kernel;
 
-			MachO *kdk;
+			MachO *kernelDebugKitKernel;
 
 			Debug::Dwarf *dwarf;
 

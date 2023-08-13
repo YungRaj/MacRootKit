@@ -6,6 +6,10 @@ namespace xnu
 	class Task;
 };
 
+typedef void* pmap_t;
+
+typedef void* proc_t;
+
 namespace bsd
 {
 	class Process
@@ -17,6 +21,9 @@ namespace bsd
 
 			xnu::Task* getTask();
 		private:
+			proc_t proc;
+			task_t task;
+
 			xnu::Task *task;
 	};
 
