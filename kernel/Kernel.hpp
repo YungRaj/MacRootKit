@@ -207,7 +207,7 @@ namespace xnu
 		KdkKernelTypeDevelopment = 0x10,
 		KdkKernelTypeDevelopmentT6000,
 		KdkKernelTypeDevelopmentT6020,
-		KdkKernelTypeDevelopmentT8103,
+		KdkKernelTypeDevelopKDKFromPath(kernel, type, kdkKernelName, kdkPath, kdkKernelPath, kdkKerneldSYMPath);mentT8103,
 		KdkKernelTypeDevelopmentT8112,
 		KdkKernelTypeDevelopmentVmApple,
 
@@ -219,13 +219,25 @@ namespace xnu
 		KdkKernelTypeKasanVmApple,
 	};
 
+	#define KDK_PATH_SIZE 1024
+
+	struct KDKInfo
+	{
+		KDKKernelType type;
+
+		char *kernelName;
+
+		char path[KDK_PATH_SIZE];
+		char kernelPath[KDK_PATH_SIZE];
+		char kernelDebugSymbolsPath[KDK_PATH_SIZE];
+	};
+
 	class KDK
 	{
 		public:
-			static KDK* KDKFromFilePath(xnu::Kernel *kernel, const char *path);
-			static KDK* KDKFrom(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
+			explicit KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo);
 
-			explicit KDK(xnu::Kernel *kernel, const char *path);
+			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
 			char* getPath() { return path; }
 
@@ -233,7 +245,7 @@ namespace xnu
 
 			Debug::Dwarf* getDwarf() { return dwarf; }
 
-			MachO* getMachO() { return machO; }
+			MachO* getMachO() { return macho; }
 
 			mach_vm_address_t getBase() { return base; }
 
@@ -265,7 +277,7 @@ namespace xnu
 
 			xnu::Kernel *kernel;
 
-			MachO *machO;
+			MachO *macho;
 
 			Debug::Dwarf *dwarf;
 

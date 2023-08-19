@@ -44,7 +44,7 @@ const char* getKernelVersion()
 
 	strlcpy(kernelBuildVersion, kernelInfo.version, 256);
 
-	MAC_RK_LOG("MacRK::macOS build version = %s\n", kernelInfo.version);
+	MAC_RK_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
 
 	return kernelBuildVersion;
 }
@@ -113,7 +113,7 @@ Kernel::Kernel(mach_port_t kernel_task_port)
 Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 {
 	this->version = xnu::getKernelVersion();
-	
+
 	this->osBuildVersion = xnu::getOSBuildVersion();
 
 	this->kernelDebugKit = xnu::KDK::KDKFromOSBuildVersion(this, this->osBuildVersion);
