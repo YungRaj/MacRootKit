@@ -52,6 +52,14 @@ namespace xnu
 		static xnu::Kernel *kernel;
 
 		public:
+			Kernel(mach_port_t kernel_task_port);
+
+			Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+
+			Kernel(mach_vm_address_t base, off_t slide);
+
+			~Kernel();
+
 			static xnu::Kernel* create(mach_port_t kernel_task_port);
 
 			static xnu::Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
@@ -76,7 +84,9 @@ namespace xnu
 
 			static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
 
-			~Kernel();
+			const char* getVersion() { return buildVersion; }
+
+			const char* getOSBuildVersion() { return osBuildVersion; }
 
 			MachO* getMachO() { return macho; }
 
@@ -160,6 +170,8 @@ namespace xnu
 			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 		protected:
+			KDK *kernelDebugKit;
+
 			MachO *macho;
 
 			IOKernelRootKitService *rootkitService;
@@ -169,6 +181,9 @@ namespace xnu
 			mach_port_t kernel_task_port;
 
 		private:
+			const char *version;
+			const char *osBuildVersion;
+
 			IOSimpleLock *kernelWriteLock;
 
 			Kernel(mach_port_t kernel_task_port);
@@ -180,25 +195,47 @@ namespace xnu
 			void createKernelTaskPort();
 	};
 
+	enum KDKKernelType
+	{
+		KdkKernelTypeRelease = 0,
+		KdkKernelTypeReleaseT6000,
+		KdkKernelTypeReleaseT6020,
+		KdkKernelTypeReleaseT8103,
+		KdkKernelTypeReleaseT8112,
+		KdkKernelTypeReleaseVmApple,
+
+		KdkKernelTypeDevelopment = 0x10,
+		KdkKernelTypeDevelopmentT6000,
+		KdkKernelTypeDevelopmentT6020,
+		KdkKernelTypeDevelopmentT8103,
+		KdkKernelTypeDevelopmentT8112,
+		KdkKernelTypeDevelopmentVmApple,
+
+		KdkKernelTypeKasan = 0x20,
+		KdkKernelTypeKasanT6000,
+		KdkKernelTypeKasanT6020,
+		KdkKernelTypeKasanT8103,
+		KdkKernelTypeKasanT8112,
+		KdkKernelTypeKasanVmApple,
+	};
+
 	class KDK
 	{
 		public:
 			static KDK* KDKFromFilePath(xnu::Kernel *kernel, const char *path);
-			static KDK* KDKFromOSBuildVersion(xnu::Kernel *kernel, const char *buildVersion);
-
-			static const char* getKDKPathFromOSBuildVersion(const char *buildVersion);
+			static KDK* KDKFrom(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
 			explicit KDK(xnu::Kernel *kernel, const char *path);
 
-			char* getPath();
+			char* getPath() { return path; }
 
-			xnu::Kernel* getKernel();
+			xnu::Kernel* getKernel() { return kernel; }
 
-			Debug::Dwarf* getDwarf();
+			Debug::Dwarf* getDwarf() { return dwarf; }
 
-			MachO* getKernelDebugKitKernel();
+			MachO* getMachO() { return machO; }
 
-			mach_vm_address_t getBase();
+			mach_vm_address_t getBase() { return base; }
 
 			mach_vm_address_t findKDKSymbolAddressByName(const char *sym);
 
@@ -219,16 +256,16 @@ namespace xnu
 
 			void parseDebugInformation();
 
-			bool verify();
-
 		private:
 			bool valid;
 
 			const char *path;
 
+			KDKKernelType type;
+
 			xnu::Kernel *kernel;
 
-			MachO *kernelDebugKitKernel;
+			MachO *machO;
 
 			Debug::Dwarf *dwarf;
 

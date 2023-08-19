@@ -10,6 +10,12 @@
 extern "C"
 {
 	#include "kern.h"
+
+	#include <sys/param.h>
+	#include <sys/mount.h>
+	#include <sys/vnode.h>
+	#include <sys/namei.h>
+	#include <vfs/vfs_support.h>
 }
 
 #ifdef __arm64__
@@ -38,6 +44,8 @@ const char* getKernelVersion()
 
 	strlcpy(kernelBuildVersion, kernelInfo.version, 256);
 
+	MAC_RK_LOG("MacRK::macOS build version = %s\n", kernelInfo.version);
+
 	return kernelBuildVersion;
 }
 
@@ -53,7 +61,7 @@ const char* getOSBuildVersion()
 
 	if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0)
 	{
-		MAC_RK_LOG("MacRK::macOS build version = %s\n", buildVersion);
+		MAC_RK_LOG("MacRK::macOS OS build version = %s\n", buildVersion);
 	} else
 	{
 		return NULL;
@@ -94,6 +102,8 @@ Kernel* Kernel::create(mach_vm_address_t base, off_t slide)
 
 Kernel::Kernel(mach_port_t kernel_task_port)
 {
+	this->version = xnu::getKernelVersion();
+	this->osBuildVersion = xnu::getOSBuildVersion();
 	this->kernel_task_port = kernel_task_port;
 	this->base = Kernel::findKernelBase();
 	this->disassembler = new Disassembler(this);
@@ -102,6 +112,12 @@ Kernel::Kernel(mach_port_t kernel_task_port)
 
 Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 {
+	this->version = xnu::getKernelVersion();
+	
+	this->osBuildVersion = xnu::getOSBuildVersion();
+
+	this->kernelDebugKit = xnu::KDK::KDKFromOSBuildVersion(this, this->osBuildVersion);
+
 	this->macho = new KernelMachO(this);
 
 	this->macho->initWithBase(base, slide);
@@ -113,6 +129,9 @@ Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 
 Kernel::Kernel(mach_vm_address_t base, off_t slide)
 {
+	this->version = xnu::getKernelVersion();
+	this->osBuildVersion = xnu::getOSBuildVersion();
+
 	this->macho = new KernelMachO(this);
 
 	this->macho->initWithBase(base, slide);

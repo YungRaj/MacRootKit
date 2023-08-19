@@ -132,8 +132,6 @@ namespace Heap
 	class Zone
 	{
 		public:
-			Zone() { }
-
 			Zone(Kernel *kernel, mach_vm_address_t zone);
 			Zone(Kernel *kernel, zone_id_t zone_id);
 			Zone(Kernel *kernel, char *zone_name);
