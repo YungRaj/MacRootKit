@@ -108,6 +108,7 @@ Kernel::Kernel(mach_port_t kernel_task_port)
 	this->base = Kernel::findKernelBase();
 	this->disassembler = new Disassembler(this);
 	this->kernelWriteLock = IOSimpleLockAlloc();
+	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
 }
 
 Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
@@ -116,8 +117,6 @@ Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 
 	this->osBuildVersion = xnu::getOSBuildVersion();
 
-	this->kernelDebugKit = xnu::KDK::KDKFromOSBuildVersion(this, this->osBuildVersion);
-
 	this->macho = new KernelMachO(this);
 
 	this->macho->initWithBase(base, slide);
@@ -125,6 +124,8 @@ Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 	// this->getKernelObjects();
 
 	this->disassembler = new Disassembler(this);
+
+	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
 }
 
 Kernel::Kernel(mach_vm_address_t base, off_t slide)
@@ -172,6 +173,8 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 	);
 
 #endif
+
+	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
 }
 
 Kernel::~Kernel()

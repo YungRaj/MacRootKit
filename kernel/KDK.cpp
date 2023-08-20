@@ -61,15 +61,6 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
     }
 }
 
-void KDK::getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
-{
-	char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
-
-	strlcpy(outPath, KDK, KDK_PATH_SIZE);
-
-	delete KDK;
-}
-
 char* getKDKKernelNameFromType(KDKKernelType type)
 {
 	switch(type)
@@ -113,6 +104,15 @@ char* getKDKKernelNameFromType(KDKKernelType type)
 	}
 
 	return NULL;
+}
+
+void KDK::getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
+{
+	char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
+
+	strlcpy(outPath, KDK, KDK_PATH_SIZE);
+
+	delete KDK;
 }
 
 void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath)
@@ -195,7 +195,20 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 
 KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
 {
-	struct KDKInfo *kdkInfo = new KDKIinfo;
+	struct KDKInfo *kdkInfo;
+
+	if(!buildVersion || !kernelVersion)
+	{
+		if(!buildVersion)
+			MAC_RK_LOG("MacRK::macOS Build Version not found!");
+
+		if(!kernelVersion)
+			MAC_RK_LOG("MacRK::macOS Kernel Version not found!");
+
+		return NULL;
+	}
+
+	kdkInfo = new KDKIinfo;
 
 	KDK::getKDKPathFromBuildInfo(buildVersion, &kdkInfo->path);
 	KDK::getKDKKernelFromPath(kdkPath, kernelVersion, &kdkInfo->type, &kdkInfo->kernelPath);

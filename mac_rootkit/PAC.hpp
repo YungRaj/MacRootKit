@@ -14,7 +14,7 @@ namespace PAC
 	uint64_t signPointerWithBKey(uint64_t pointer);
 
 	void stripPointerAuthenticationCode(uint64_t pointer);
-}
+};
 
 #define PACSignPointerWithAKey(ptr) PAC::signPointerWithAKey(ptr)
 #define PACSignPointerWithBKey(ptr) PAC::signPointerWithBKey(ptr);
