@@ -208,7 +208,7 @@ namespace xnu
 		KdkKernelTypeDevelopment = 0x10,
 		KdkKernelTypeDevelopmentT6000,
 		KdkKernelTypeDevelopmentT6020,
-		KdkKernelTypeDevelopKDKFromPath(kernel, type, kdkKernelName, kdkPath, kdkKernelPath, kdkKerneldSYMPath);mentT8103,
+		KdkKernelTypeDevelopmentT8103,
 		KdkKernelTypeDevelopmentT8112,
 		KdkKernelTypeDevelopmentVmApple,
 
