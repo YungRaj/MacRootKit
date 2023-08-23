@@ -250,15 +250,10 @@ namespace xnu
 
 			mach_vm_address_t getBase() { return base; }
 
-			mach_vm_address_t findKDKSymbolAddressByName(const char *sym);
+			mach_vm_address_t getKDKSymbolAddressByName(const char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
-
-			Symbol* matchSymbolWithKDK(Symbol *s);
-			Symbol* matchSymbolWithKDK(mach_vm_address_t address);
-
-			mach_vm_address_t matchAddressWithKDK(mach_vm_address_t addr);
 
 			char* findString(char *s);
 

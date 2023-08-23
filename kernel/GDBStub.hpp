@@ -76,8 +76,6 @@ namespace Debug
 
 			xnu::KernelMachO *macho;
 
-			Array<Kext*>& kexts;
-
 			mrk::MacRootKit *mrk;
 
 	};

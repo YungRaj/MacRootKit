@@ -238,6 +238,8 @@ KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const 
 	{
 		delete kdkInfo;
 
+		MAC_RK_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s", buildVersion, kernelVersion);
+
 		return NULL;
 	}
 
@@ -256,7 +258,7 @@ KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
 	this->path = &kdkInfo->path;
 }
 
-mach_vm_address_t KDK::findKDKSymbolAddressByName(const char *sym)
+mach_vm_address_t KDK::getKDKSymbolAddressByName(const char *sym)
 {
 
 }
@@ -267,21 +269,6 @@ Symbol* KDK::getKDKSymbolByName(char *symname)
 }
 
 Symbol* KDK::getKDKSymbolByAddress(mach_vm_address_t address)
-{
-
-}
-
-Symbol* KDK::matchSymbolWithKDK(Symbol *s)
-{
-
-}
-
-Symbol* KDK::matchSymbolWithKDK(mach_vm_address_t address)
-{
-
-}
-
-mach_vm_address_t KDK::matchAddressWithKDK(mach_vm_address_t addr)
 {
 
 }

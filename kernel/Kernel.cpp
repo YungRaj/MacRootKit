@@ -1451,21 +1451,51 @@ char* Kernel::readString(mach_vm_address_t address)
 
 Symbol* Kernel::getSymbolByName(char *symbolname)
 {
-	MachO *macho = this->macho;
+	Symbol *symbol = NULL;
 
-	return macho->getSymbolByName(symbolname);
+	symbol = this->macho->getSymbolByName(symbolname);
+
+	if(this->kernelDebugKit)
+	{
+		if(!symbol)
+		{
+			symbol = this->kernelDebugKit->getKDKSymbolByName(symbolname);
+		}
+	}
+
+	return symbol;
 }
 
 Symbol* Kernel::getSymbolByAddress(mach_vm_address_t address)
 {
-	MachO *macho = this->macho;
+	Symbol *symbol = NULL;
 
-	return macho->getSymbolByAddress(address);
+	symbol = this->macho->getSymbolByAddress(address);
+
+	if(this->kernelDebugKit)
+	{
+		if(!symbol)
+		{
+			symbol = this->kernelDebugKit->getKDKSymbolByAddress(address);
+		}
+	}
+
+	return symbol;
 }
 
 mach_vm_address_t Kernel::getSymbolAddressByName(char *symbolname)
 {
-	MachO *macho = this->macho;
+	mach_vm_address_t symbolAddress = 0;
 
-	return macho->getSymbolAddressByName(symbolname);
+	symbolAddress = this->macho->getSymbolAddressByName(symbolname);
+
+	if(this->kernelDebugKit)
+	{
+		if(!symbolAddress)
+		{
+			symbolAddress = this->kernelDebugKit->getKDKSymbolAddressByName(symbolname);
+		}
+	}
+
+	return symbolAddress;
 }
