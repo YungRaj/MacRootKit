@@ -54,6 +54,9 @@ struct KernelPatch
 		off_t offset;
 };
 
+extern KernelPatch kernelPatches[];
+extern KextPatch kextPatches[];
+
 namespace mrk
 {
 	class Hook;

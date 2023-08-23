@@ -15,6 +15,7 @@ namespace xnu
 	{
 		public:
 			KernelMachO(xnu::Kernel *kernel);
+			KernelMachO(const char *path);
 
 			~KernelMachO();
 

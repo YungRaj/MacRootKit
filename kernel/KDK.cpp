@@ -59,6 +59,8 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
         vnode_put(vnode);
     }
+
+    return NULL;
 }
 
 char* getKDKKernelNameFromType(KDKKernelType type)
@@ -110,14 +112,23 @@ void KDK::getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
 {
 	char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
 
-	strlcpy(outPath, KDK, KDK_PATH_SIZE);
+	if(outPath)
+	{
+		if(KDK)
+		{
+			strlcpy(outPath, KDK, KDK_PATH_SIZE);
 
-	delete KDK;
+			delete KDK;
+		} else
+		{
+			*outPath = '\0';
+		}
+	}
 }
 
 void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath)
 {
-	KDKKernelType type = 0;
+	KDKKernelType type = KdkKernelTypeNone;
 
 	if(strstr(kernelVersion, "RELEASE"))
 	{
@@ -188,9 +199,17 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 		}
 	}
 
-	snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/", path, getKDKKernelNameFromType(type));
+	if(type == KdkKernelTypeNone)
+	{
+		*outType = '\0';
+		*outKernelPath = '\0';
 
-	*outType = type;
+	} else
+	{
+		*outType = type;
+
+		snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/", path, getKDKKernelNameFromType(type));
+	}
 }
 
 KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
@@ -208,10 +227,19 @@ KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const 
 		return NULL;
 	}
 
-	kdkInfo = new KDKIinfo;
+	kdkInfo = new KDKInfo;
 
 	KDK::getKDKPathFromBuildInfo(buildVersion, &kdkInfo->path);
 	KDK::getKDKKernelFromPath(kdkPath, kernelVersion, &kdkInfo->type, &kdkInfo->kernelPath);
+
+	if(kdkInfo->path[0] == '\0' ||
+	   kdkInfo->type[0] == '\0' ||
+	   kdkInfo->kernelPath[0] == '\0')
+	{
+		delete kdkInfo;
+
+		return NULL;
+	}
 
 	kdkInfo->kernelName = getKDKKernelNameFromType(kdkInfo->type);
 

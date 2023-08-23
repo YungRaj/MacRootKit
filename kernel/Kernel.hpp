@@ -197,6 +197,7 @@ namespace xnu
 
 	enum KDKKernelType
 	{
+		KdkKernelTypeNone = -1,
 		KdkKernelTypeRelease = 0,
 		KdkKernelTypeReleaseT6000,
 		KdkKernelTypeReleaseT6020,
@@ -277,7 +278,7 @@ namespace xnu
 
 			xnu::Kernel *kernel;
 
-			MachO *macho;
+			xnu::KernelMachO *kernelWithDebugSymbols;
 
 			Debug::Dwarf *dwarf;
 

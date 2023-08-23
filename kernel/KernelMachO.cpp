@@ -14,6 +14,11 @@ KernelMachO::KernelMachO(Kernel *kernel)
 #endif
 }
 
+KernelMachO::KernelMachO(const char *path)
+{
+	
+}
+
 KernelMachO::~KernelMachO()
 {
 }

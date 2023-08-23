@@ -1,3 +1,5 @@
+# command source -e false ~/path/to/MacRootKit/fuzzers/target.lldb
+
 target create -s /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple.dSYM /Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple
 
 command script import "/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.vmapple.dSYM/Contents/Resources/Python/kernel_release.py"
