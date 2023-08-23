@@ -15,7 +15,6 @@ namespace xnu
 	{
 		public:
 			KernelMachO(xnu::Kernel *kernel);
-			KernelMachO(const char *path);
 
 			~KernelMachO();
 
@@ -36,7 +35,7 @@ namespace xnu
 
 			virtual void parseMachO();
 
-		private:
+		protected:
 			xnu::Kernel *kernel;
 
 			mach_vm_address_t kernel_cache;

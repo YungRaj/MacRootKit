@@ -1,16 +1,116 @@
 #include "Kernel.hpp"
 #include "Dwarf.hpp"
 #include "MachO.hpp"
+#include "KernelMachO.hpp"
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/errno.h>
+#include <sys/fcntl.h>
+#include <sys/file.h>
 
 #include <libkern/libkern.h>
 
 using namespace xnu;
+
+char* findKDKWithBuildVersion(const char *basePath, const char *substring);
+
+kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer);
+
+class KDKKernelMachO : KernelMachO
+{
+	public:
+		KDKKernelMachO(xnu::Kernel *kernel, const char *path)
+		{
+			this->kernel = kernel;
+			this->path = path;
+			this->aslr_slide = kernel->getSlide();
+
+			readKDKKernelFromPath(path, &this->buffer);
+
+			if(!this->buffer)
+				panic("MacRK::KDK could not be read from disk at path %s\n", path);
+
+			this->header = reinterpret_cast<struct mach_header_64*>(buffer);
+			this->symbolTable = new SymbolTable();
+
+			this->base = this->getBase();
+			
+			this->parseMachO();
+		}
+
+		mach_vm_address_t getBase()
+		{
+			struct mach_header_64 *hdr = this->header;
+
+			uint8_t *cmds = reinterpret_cast<uint8_t*>(hdr)+ sizeof(struct mach_header_64);
+
+			uint8_t *q = cmds;
+
+			mach_vm_address_t base = UINT64_MAX;
+
+			for(int i = 0; i < hdr->ncmds; i++)
+			{
+				struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+
+				uint32_t cmdtype = load_cmd->cmd;
+				uint32_t cmdsize = load_cmd->cmdsize;
+
+				if(load_cmd->cmd == LC_SEGMENT_64)
+				{
+					struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
+
+					uint64_t vmaddr = segment->vmaddr;
+					uint64_t vmsize = segment->vmsize;
+
+					uint64_t fileoffset = segment->fileoff;
+					uint64_t filesize = segment->filesize;
+
+					if(vmaddr < base)
+						base = vmaddr;
+					
+				}
+
+				q = q + load_cmd->cmdsize;
+			}
+
+			if(base == UINT64_MAX)
+				return 0;
+
+			return base;
+		}
+
+		void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+		{
+			for(int i = 0; i < nsyms; i++)
+			{
+				Symbol *symbol;
+
+				struct nlist_64 *nl = &symtab[i];
+
+				char *name;
+
+				mach_vm_address_t address;
+
+				name = &strtab[nl->n_strx];
+
+				address = nl->n_value + this->kernel->getSlide();
+				// add the kernel slide so that the address is correct
+
+				symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
+
+				this->symbolTable->addSymbol(symbol);
+			}
+
+			MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+		}
+	private:
+		const char *path;
+
+};
 
 char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 {
@@ -61,6 +161,80 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
     }
 
     return NULL;
+}
+
+kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
+{
+    errno_t error = 0;
+
+    int fileDescriptor = -1;
+    
+    error = vnode_open(path, O_RDONLY, 0, 0, &fileDescriptor, vfs_context_current());
+    
+    if(error != 0)
+    {
+        MAC_RK_LOG("Error opening file: %d\n", error);
+
+        *out_buffer = NULL;
+
+        return KERN_FAILURE;
+    }
+    
+    struct vnode_attr vattr;
+
+    VATTR_INIT(&vattr);
+    VATTR_WANTED(&vattr, va_data_size);
+
+    error = vnode_getattr(fileDescriptor, &vattr, vfs_context_current());
+    
+    if(error != 0)
+    {
+        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+
+        *out_buffer = NULL;
+        
+        MAC_RK_LOG("MacRK:: KDK error getting file size: %d\n", error);
+
+        return KERN_FAILURE;
+    }
+
+    off_t fileSize = vattr.va_data_size;
+    
+    char *buffer = (char *)kalloc((size_t)fileSize);
+
+    if(buffer == NULL)
+    {
+        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+
+        *out_buffer = NULL;
+        
+        MAC_RK_LOG("MacRK:: KDK Memory allocation failed\n");
+        
+        return KERN_FAILURE;
+    }
+    
+    size_t bytesRead = 0;
+
+    error = vn_rdwr(UIO_READ, fileDescriptor, buffer, (int)fileSize, 0, UIO_SYSSPACE, 0, vfs_context_current(), &bytesRead, 0, 0);
+    
+    if(error != 0)
+    {
+        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+
+         *out_buffer = NULL;
+
+         MAC_RK_LOG("MacRK:: KDK Error reading file: %d\n", error);
+        
+        kfree(buffer, (size_t)fileSize);
+        
+        return KERN_FAILURE;
+    }
+    
+    vnode_close(fileDescriptor, FREAD, vfs_context_current());
+    
+    *out_buffer = buffer;
+    
+    return KERN_SUCCESS;
 }
 
 char* getKDKKernelNameFromType(KDKKernelType type)
@@ -256,21 +430,22 @@ KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
 	this->kdkInfo = kdkInfo;
 	this->type = kdkInfo->type;
 	this->path = &kdkInfo->path;
+	this->kernelWithDebugSymbols = new KDKKernelMachO(kernel, &kdkInfo->kernelDebugSymbolsPath);
 }
 
 mach_vm_address_t KDK::getKDKSymbolAddressByName(const char *sym)
 {
-
+	return this->kernelWithDebugSymbols->getSymbolAddressByName(sym);
 }
 
 Symbol* KDK::getKDKSymbolByName(char *symname)
 {
-
+	return this->kernelWithDebugSymbols->getSymbolByName(symname);
 }
 
 Symbol* KDK::getKDKSymbolByAddress(mach_vm_address_t address)
 {
-
+	return this->kernelWithDebugSymbols->getSymbolByAddress(symname);
 }
 
 char* KDK::findString(char *s)

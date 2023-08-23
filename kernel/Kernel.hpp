@@ -246,7 +246,7 @@ namespace xnu
 
 			Debug::Dwarf* getDwarf() { return dwarf; }
 
-			MachO* getMachO() { return macho; }
+			MachO* getMachO() { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
 
 			mach_vm_address_t getBase() { return base; }
 
