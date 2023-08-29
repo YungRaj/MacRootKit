@@ -106,32 +106,65 @@ namespace xnu
 
 	};
 
-	class KDKKernel
+	enum KDKKernelType
+	{
+		KdkKernelTypeNone = -1,
+		KdkKernelTypeRelease = 0,
+		KdkKernelTypeReleaseT6000,
+		KdkKernelTypeReleaseT6020,
+		KdkKernelTypeReleaseT8103,
+		KdkKernelTypeReleaseT8112,
+		KdkKernelTypeReleaseVmApple,
+
+		KdkKernelTypeDevelopment = 0x10,
+		KdkKernelTypeDevelopmentT6000,
+		KdkKernelTypeDevelopmentT6020,
+		KdkKernelTypeDevelopmentT8103,
+		KdkKernelTypeDevelopmentT8112,
+		KdkKernelTypeDevelopmentVmApple,
+
+		KdkKernelTypeKasan = 0x20,
+		KdkKernelTypeKasanT6000,
+		KdkKernelTypeKasanT6020,
+		KdkKernelTypeKasanT8103,
+		KdkKernelTypeKasanT8112,
+		KdkKernelTypeKasanVmApple,
+	};
+
+	#define KDK_PATH_SIZE 1024
+
+	struct KDKInfo
+	{
+		KDKKernelType type;
+
+		char *kernelName;
+
+		char path[KDK_PATH_SIZE];
+		char kernelPath[KDK_PATH_SIZE];
+		char kernelDebugSymbolsPath[KDK_PATH_SIZE];
+	};
+
+	class KDK
 	{
 		public:
-			static KDKKernel* KDKKernelFromFilePath(xnu::Kernel *kernel, const char *path);
+			explicit KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo);
 
-			explicit KDKKernel(xnu::Kernel *kernel, const char *path);
+			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
-			char* getPath();
+			char* getPath() { return path; }
 
-			xnu::Kernel* getKernel();
+			xnu::Kernel* getKernel() { return kernel; }
 
-			Debug::Dwarf* getDwarf();
+			Debug::Dwarf* getDwarf() { return dwarf; }
 
-			MachO* getKernelDebugKitKernel();
+			MachO* getMachO() { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
 
-			mach_vm_address_t getBase();
+			mach_vm_address_t getBase() { return base; }
 
-			mach_vm_address_t findSymbolByName(xnu::Kernel *kernel, const char *sym);
+			mach_vm_address_t getKDKSymbolAddressByName(const char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
-
-			Symbol* matchSymbolWithKDK(Symbol *s);
-			Symbol* matchSymbolWithKDK(mach_vm_address_t address);
-
-			mach_vm_address_t matchAddressWithKDK(mach_vm_address_t addr);
 
 			char* findString(char *s);
 
@@ -143,11 +176,15 @@ namespace xnu
 			void parseDebugInformation();
 
 		private:
+			bool valid;
+
 			const char *path;
+
+			KDKKernelType type;
 
 			xnu::Kernel *kernel;
 
-			MachO *kdk;
+			xnu::KernelMachO *kernelWithDebugSymbols;
 
 			Debug::Dwarf *dwarf;
 

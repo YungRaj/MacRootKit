@@ -105,7 +105,7 @@ class KDKKernelMachO : KernelMachO
 				this->symbolTable->addSymbol(symbol);
 			}
 
-			MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+			MAC_RK_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
 		}
 	private:
 		const char *path;

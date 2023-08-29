@@ -17,6 +17,8 @@ class Segment
 		Segment(struct segment_command_64 *segment_command)
 		{
 			this->segment = segment_command;
+			this->initprot = segment_command->initprot;
+			this->maxprot = segment_command->maxprot;
 			this->address = segment_command->vmaddr;
 			this->size = segment_command->vmsize;
 			this->fileoffset = segment_command->fileoff;
@@ -106,6 +108,9 @@ class Segment
 		off_t fileoffset;
 
 		size_t filesize;
+
+		vm_prot_t	maxprot;
+		vm_prot_t	initprot;
 };
 
 #endif

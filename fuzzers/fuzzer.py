@@ -44,7 +44,7 @@ def set_intermittent_breakpoints(target, process, function_name, delay, suppress
     while process.IsValid() and not process.GetState() == lldb.eStateStopped:
         pass
 
-    # Set up a breakpoint at the beginning of the add_numbers function
+    # Set up a breakpoint at the beginning of the  function
     breakpoint = target.BreakpointCreateByName(function_name)
 
     process.Continue()
@@ -78,7 +78,7 @@ def __lldb_init_module(debugger, internal_dict):
     target = debugger.GetSelectedTarget()
 
     process = target.process
-
+                                                                              
     breakpoint = target.BreakpointCreateByName("btree_node_get")
 
     # Fuzzing loop
