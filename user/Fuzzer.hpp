@@ -9,11 +9,19 @@ namespace Fuzzer
 	{
 		struct SegmentRaw
 		{
-			uint64_t base;
+			uint64_t address;
 
 			size_t size;
 
 			int prot;
+
+			public:
+				
+				uint64_t getAddress() { return address; }
+
+				size_t getSize() { return size; }
+
+				int getProt() { return prot; }
 		};
 
 		struct SymbolRaw
@@ -23,6 +31,14 @@ namespace Fuzzer
 			uint64_t address;
 
 			int type;
+
+			public:
+
+				const char* getName() { return name; }
+
+				uint64_t getAddress() { return address; }
+
+				int getType() { return type; }
 		};
 
 		Array<SymbolRaw*> symbols;

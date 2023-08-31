@@ -27,16 +27,24 @@ namespace Fuzzer
 
 			off_t getSlide() { return slide; }
 
-			template<typename T>
-			T getSymbol(const char *symname);
+			template<typename Sym>
+		    Sym getSymbol(const char *symname) requires requires(Sym sym) {
+		        { sym.getName() };
+		        { sym.getAddress() };
+		    };
 
-			void load();
+		    void load();
 
-			template<typename T>
-			void mapSegment(T segment);
+		    template<typename Seg>
+		    void mapSegment(Seg segment) requires requires(Seg seg) {
+		        { seg.getAddress() };
+		    }
 
-			template<typename T>
-			void mapSection(T section);
+		    template<typename Sect>
+		    void mapSection(Sect section) requires requires(Sect sect) {
+		        { sect.getAddress() };
+		        { sect.getSize() };
+		    }
 
 		private:
 			const char *path;

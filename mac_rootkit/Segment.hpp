@@ -45,6 +45,8 @@ class Segment
 
 		struct segment_command_64* getSegmentCommand() { return segment; }
 
+		vm_prot_t getProt() { return maxprot; }
+
 		char* getSegmentName() { return name; }
 
 		mach_vm_address_t getAddress() { return address; }
