@@ -1,6 +1,11 @@
 #ifndef __LOADER_HPP_
 #define __LOADER_HPP_
 
+#include <type_traits>
+
+#include "Fuzzer.hpp"
+#include "Array.hpp"
+
 class MachO;
 class Symbol;
 
@@ -21,19 +26,35 @@ namespace Fuzzer
 
 			const char* getPath() { return path; }
 
-			struct FuzzBinary* getBinary() { return binary; }
+			struct FuzzBinary* getMainBinary() { return mainBinary; }
+
+			struct FuzzBinary* getModuleBinary() { return moduleBinary; }
+
+			template<typename T>
+			T getBinary() {
+			    static_assert(std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>,
+			                  "Unsupported type for Module::getBinary()");
+
+			    if constexpr (std::is_same_v<T, MachO*>) {
+			        return this->fuzzBinary->binary.macho;
+			    } else {
+			        return this->fuzzBinary->binary.raw;
+			    }
+			}
+
+			uintptr_t getBase() { return base; }
 
 			size_t getSize() { return size; }
 
 			off_t getSlide() { return slide; }
 
-			template<typename Sym>
+		    void load();
+
+		    template<typename Sym>
 		    Sym getSymbol(const char *symname) requires requires(Sym sym) {
 		        { sym.getName() };
 		        { sym.getAddress() };
 		    };
-
-		    void load();
 
 		    template<typename Seg>
 		    void mapSegment(Seg segment) requires requires(Seg seg) {
@@ -49,7 +70,8 @@ namespace Fuzzer
 		private:
 			const char *path;
 
-			struct FuzzBinary *binary;
+			struct FuzzBinary *mainBinary;
+			struct FuzzBinary *moduleBinary;
 
 			uintptr_t base;
 
@@ -73,6 +95,8 @@ namespace Fuzzer
 			void stubFunction(Module *module, Symbol *symbol, uintptr_t stub);
 
 		private:
+			Architecture *arch;
+
 			struct FuzzBinary *binary;
 
 			Array<Module*> modules;
