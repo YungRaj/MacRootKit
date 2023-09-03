@@ -1,5 +1,43 @@
 #include "Kernel.hpp"
 
+using namespace xnu;
+
+const char* getKernelVersion()
+{
+	char *kernelBuildVersion = new char[256];
+
+	struct utsname kernelInfo;
+
+	uname(&kernelInfo);
+
+	strlcpy(kernelBuildVersion, kernelInfo.version, 256);
+
+	MAC_RK_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
+
+	return kernelBuildVersion;
+}
+
+const char* getOSBuildVersion()
+{
+	int mib[2];
+
+	size_t len = 256;
+	char *buildVersion = new char[len];
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSVERSION;
+
+	if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0)
+	{
+		MAC_RK_LOG("MacRK::macOS OS build version = %s\n", buildVersion);
+	} else
+	{
+		return NULL;
+	}
+
+	return buildVersion;
+}
+
 Kernel::Kernel()
 {
 	this->kernel = this;

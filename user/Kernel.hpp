@@ -15,12 +15,19 @@ extern "C"
 
 #include <mach/mach_types.h>
 
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/utsname.h>
+
 class MachO;
 class Symbol;
 
 namespace xnu
 {
 	class Task;
+
+	const char* getKernelVersion();
+	const char* getOSBuildVersion();
 	
 	class Kernel : public xnu::Task
 	{

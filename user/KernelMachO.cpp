@@ -1,5 +1,38 @@
 #include "KernelMachO.hpp"
 
+KernelMachO::KernelMachO(const char *path, off_t slide)
+{
+	FILE *file;
+
+	size_t size;
+
+	file = fopen(path, "r");
+
+	if(!file) return;
+
+	fseek(file, 0, SEEK_END);
+	
+	size = ftell(file);
+
+	fseek(file, 0, SEEK_SET);
+
+	this->buffer = (char*) malloc(size);
+
+	fseek(file, 0, SEEK_SET);
+	fread(this->buffer, 1, size, file);
+
+	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+
+	fclose(file);
+
+	this->symbolTable = new SymbolTable();
+
+	this->slide = slide;
+
+	this->parseMachO();
+}
+
 KernelMachO::KernelMachO(const char *path)
 {
 	FILE *file;
@@ -27,6 +60,8 @@ KernelMachO::KernelMachO(const char *path)
 	fclose(file);
 
 	this->symbolTable = new SymbolTable();
+
+	this->slide = 0;
 
 	this->parseMachO();
 }

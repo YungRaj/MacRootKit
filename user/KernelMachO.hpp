@@ -13,6 +13,7 @@ namespace xnu
 	class KernelMachO : public MachO 
 	{
 		public:
+			KernelMachO(const char *path, off_t slide);
 			KernelMachO(const char *path);
 
 			~KernelMachO();

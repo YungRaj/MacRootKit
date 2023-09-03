@@ -18,6 +18,12 @@ class SymbolTable
 
 		std::Array<Symbol*> getAllSymbols() { return symbolTable; }
 
+		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
+
+		bool containsSymbolWithAddress(mach_vm_address_t address) { return this->getSymbolByAddress(address) != NULL; }
+
+		bool containsSymbolWithOffset(off_t offset) { return this->getSymbolByOffset(offset) != NULL; }
+
 		Symbol* getSymbolByName(char *name);
 
 		Symbol* getSymbolByAddress(mach_vm_address_t address);

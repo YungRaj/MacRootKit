@@ -3,6 +3,11 @@
 
 #include <type_traits>
 
+extern "C"
+{
+#include <stdio.h>
+};
+
 class MachO;
 
 namespace Fuzzer
@@ -12,86 +17,92 @@ namespace Fuzzer
 
 	struct RawBinary
 	{
-		struct SegmentRaw
-		{
-			public:
-				SegmentRaw(uintptr_t address, size_t size, int prot)
+		public:
+			struct SegmentRaw
+			{
+				public:
+					SegmentRaw(uintptr_t address, size_t size, int prot)
+					{
+						this->address = address;
+						this->size = size;
+						this->prot = prot;
+					}
+
+					uintptr_t getAddress() { return address; }
+
+					size_t getSize() { return size; }
+
+					int getProt() { return prot; }
+				private:
+					uintptr_t address;
+
+					size_t size;
+
+					int prot;
+
+			};
+
+			struct SymbolRaw
+			{
+				public:
+					SymbolRaw(const char *name, uintptr_t address, int type)
+					{
+						this->name = name;
+						this->address = address;
+						this->type = type;
+					}
+
+					const char* getName() { return name; }
+
+					uintptr_t getAddress() { return address; }
+
+					int getType() { return type; }
+
+				private:
+					const char *name;
+
+					uintptr_t address;
+
+					int type;
+			};
+
+			uintptr_t getBase() { return base; }
+
+			char* getSymbolsFile() { return symbolsFile; }
+
+			SymbolRaw* getSymbol(const char *name)
+			{
+				for(int i = 0; i < symbols.getSize(); i++)
 				{
-					this->address = address;
-					this->size = size;
-					this->prot = prot;
+					SymbolRaw *sym = symbols.get(i);
+
+					if(strcmp(name, symbol->getName()) == 0)
+						return sym;
 				}
 
-				uintptr_t getAddress() { return address; }
+				return NULL;
+			}
 
-				size_t getSize() { return size; }
-
-				int getProt() { return prot; }
-			private:
-				uintptr_t address;
-
-				size_t size;
-
-				int prot;
-
-		};
-
-		struct SymbolRaw
-		{
-			public:
-				SymbolRaw(const char *name, uintptr_t address, int type)
+			SegmentRaw* getSegment(const char *name)
+			{
+				for(int i = 0; i < segments.getSize(); i++)
 				{
-					this->name = name;
-					this->address = address;
-					this->type = type;
+					SegmentRaw *seg = segments.get(i);
+
+					if(strcmp(name, symbol->getName()) == 0)
+						return seg;
 				}
 
-				const char* getName() { return name; }
-
-				uintptr_t getAddress() { return address; }
-
-				int getType() { return type; }
-
-			private:
-				const char *name;
-
-				uintptr_t address;
-
-				int type;
-		};
-
-		char* getSymbolsFile() { return symbolsFile; }
-
-		SymbolRaw* getSymbol(const char *name)
-		{
-			for(int i = 0; i < symbols.getSize(); i++)
-			{
-				SymbolRaw *sym = symbols.get(i);
-
-				if(strcmp(name, symbol->getName()) == 0)
-					return sym;
+				return NULL;
 			}
 
-			return NULL;
-		}
+		private:
+			uintptr_t base;
 
-		SegmentRaw* getSegment(const char *name)
-		{
-			for(int i = 0; i < segments.getSize(); i++)
-			{
-				SegmentRaw *seg = segments.get(i);
+			char *symbolsFile;
 
-				if(strcmp(name, symbol->getName()) == 0)
-					return seg;
-			}
-
-			return NULL;
-		}
-
-		char *symbolsFile;
-
-		Array<SymbolRaw*> symbols;
-		Array<SegmentRaw*> segments;
+			Array<SymbolRaw*> symbols;
+			Array<SegmentRaw*> segments;
 	};
 
 	struct FuzzBinary
@@ -119,22 +130,36 @@ namespace Fuzzer
 		struct FuzzBinary* getFuzzBinary() { return fuzzBinary; }
 
 		template<typename T>
-		T getBinary() {
+		T getBinary()
+		{
 		    static_assert(std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>,
-		                  "Unsupported type for Harness::getBinary()");
+		                  "Unsupported type for Module::getBinary()");
 
-		    if constexpr (std::is_same_v<T, MachO*>) {
+		    if constexpr (std::is_base_of<MachO, T>::value)
+		    {
+		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
+		    }
+
+		    if constexpr (std::is_same_v<T, MachO*>)
+		    {
 		        return this->fuzzBinary->binary.macho;
-		    } else {
+		    }
+
+		    if constexpr (std::is_same_v<T, RawBinary*>)
+		    {
 		        return this->fuzzBinary->binary.raw;
 		    }
+
+		    return NULL;
 		}
 
 		Loader* getLoader() { return loader; }
 
+		uintptr_t loadAddressFromKernelMachO(const char *path);
+
 		void loadBinary(const char *path, const char *symbolsFile);
-		void loadKernel(const char *path, uintptr_t base, off_t slide);
-		void loadMachO(const char *path);
+		void loadKernel(const char *path, off_t slide);
+		void loadKernelExtension(const char *path);
 
 		void populateSymbols(const char *symbolsFile);
 

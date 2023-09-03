@@ -198,7 +198,7 @@ DeviceTreeNode* DeviceTree::findNode(char *nodename, uint32_t *depth)
 
 	*depth = 0;
 
-	dt_property_callback_t prop_cb =  ^bool (uint32_t ndepth, void *property, uint32_t size
+	dt_property_callback_t prop_cb =  ^bool (uint32_t ndepth, void *property, uint32_t size)
 	{
 		DeviceTreeProperty *prop = (DeviceTreeProperty*) property;
 

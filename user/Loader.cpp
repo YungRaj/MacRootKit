@@ -42,22 +42,6 @@ Loader::Loader(struct FuzzBinary *binary)
 
 }
 
-void* Loader::allocateSegmentMemory(uintptr_t addr, size_t sz, int prot)
-{
-    size_t size = sz;
-
-    void* segmentAddress = reinterpret_cast<void*>(addr); // Specify the desired address
-
-    void* segmentMappedMemory = mmap(segmentAddress, size, prot, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0);
-
-    if (segmentMappedMemory == MAP_FAILED)
-    {
-        MAC_RK_LOG("Fuzzer::Loader::allocateSegmentMemory() mmap(0x%llx, 0x%x, %d) failed!", address, sz, prot);
-
-        return false;
-    }
-}
-
 void Loader::linkSymbols(Module *module)
 {
 
@@ -71,4 +55,20 @@ void Loader::linkSymbol(Module *module, Symbol *symbol)
 void Loader::stubFunction(Module *module, Symbol *symbol, uintptr_t stub)
 {
 
+}
+
+void* Loader::allocateSegmentMemory(uintptr_t addr, size_t sz, int prot)
+{
+    size_t size = sz;
+
+    void* segmentAddress = reinterpret_cast<void*>(addr); // Specify the desired address
+
+    void* segmentMappedMemory = mmap(segmentAddress, size, prot, MAP_PRIVATE | MAP_ANON, -1, 0);
+
+    if (segmentMappedMemory == MAP_FAILED)
+    {
+        MAC_RK_LOG("Fuzzer::Loader::allocateSegmentMemory() mmap(0x%llx, 0x%x, %d) failed!", addr, sz, prot);
+
+        return false;
+    }
 }
