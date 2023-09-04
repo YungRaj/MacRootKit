@@ -66,6 +66,10 @@ namespace Fuzzer
 					int type;
 			};
 
+			explicit RawBinary(const char *path, const char *symbolsFile);
+
+			static RawBinary* rawBinaryFromSymbolsFile(const char *path, const char *symbolsFile);
+
 			uintptr_t getBase() { return base; }
 
 			char* getSymbolsFile() { return symbolsFile; }
@@ -120,6 +124,13 @@ namespace Fuzzer
 
 			RawBinary *raw;
 		} binary;
+	};
+
+	template <typename T>
+	struct FuzzableType
+	{
+	    static constexpr bool value =
+	        std::is_class_v<T> || std::is_fundamental_v<T> || std::is_pod_v<T>;
 	};
 
 	class Harness
@@ -179,6 +190,9 @@ namespace Fuzzer
 		void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
 		void populateSymbolsFromSymbolsFile(const char *symbolsFile);
+
+		template <typename T>
+		void mutate(T data) requires FuzzableType<T>;
 
 		private:
 			struct FuzzBinary *fuzzBinary;
