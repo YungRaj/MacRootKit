@@ -130,6 +130,12 @@ namespace Fuzzer
 
 		struct FuzzBinary* getFuzzBinary() { return fuzzBinary; }
 
+		template<typename Sym>
+		Array<Sym>* getSymbols() requires requires (Sym sym) {
+			{ sym->getName() };
+			{ sym->getAddress() };
+		}
+
 		template<typename T>
 		T getBinary()
 		{

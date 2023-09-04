@@ -28,6 +28,24 @@ namespace Fuzzer
 
 			const char* getPath() { return path; }
 
+			template<typename Sym>
+			Array<Sym>* getSymbols() requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+			}
+
+			template<typename Sym>
+			Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+			}
+
+			template<typename Sym>
+			Array<Sym>* getExternalSymbols() requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+			}
+
 			struct FuzzBinary* getMainBinary() { return mainBinary; }
 
 			struct FuzzBinary* getModuleBinary() { return moduleBinary; }
@@ -66,13 +84,24 @@ namespace Fuzzer
 
 		    template<typename Seg>
 		    void mapSegment(Seg segment) requires requires(Seg seg) {
-		        { seg.getAddress() };
+		        { seg->getAddress() };
 		    }
 
 		    template<typename Sect>
 		    void mapSection(Sect section) requires requires(Sect sect) {
-		        { sect.getAddress() };
-		        { sect.getSize() };
+		        { sect->getAddress() };
+		        { sect->getSize() };
+		    }
+
+		    template<typename Seg>
+		    void modifySegment(Seg segment) requires requires(Seg seg) {
+		        { seg->getAddress() };
+		    }
+
+		    template<typename Sect>
+		    void modifySection(Sect section) requires requires(Sect sect) {
+		        { sect->getAddress() };
+		        { sect->getSize() };
 		    }
 
 		private:
