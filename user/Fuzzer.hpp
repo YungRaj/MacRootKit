@@ -58,6 +58,10 @@ namespace Fuzzer
 
 					int getType() { return type; }
 
+					bool isUndefined() { return false; }
+
+					bool isExternal() { return false; }
+
 				private:
 					const char *name;
 

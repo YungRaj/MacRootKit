@@ -40,12 +40,14 @@ namespace Fuzzer
 			Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
+				{ sym->isUndefined() };
 			}
 
 			template<typename Sym>
 			Array<Sym>* getExternalSymbols() requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
+				{ sym->isExternal(); }
 			}
 
 			struct FuzzBinary* getMainBinary() { return mainBinary; }
