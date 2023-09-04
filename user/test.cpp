@@ -12,12 +12,51 @@
 
 #include <mach/mach_types.h>
 
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
+
 extern "C"
 {
     #include "../mac_rootkit/mach-o.h"
 }
 
 #define swap32(x) OSSwapInt32(x)
+
+const char* getKernelVersion()
+{
+    char *kernelBuildVersion = new char[256];
+
+    struct utsname kernelInfo;
+
+    uname(&kernelInfo);
+
+    strlcpy(kernelBuildVersion, kernelInfo.version, 256);
+
+    printf("MacRK::macOS kernel version = %s\n", kernelInfo.version);
+
+    return kernelBuildVersion;
+}
+
+const char* getOSBuildVersion()
+{
+    int mib[2];
+
+    size_t len = 256;
+    char *buildVersion = new char[len];
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_OSVERSION;
+
+    if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0)
+    {
+        printf("MacRK::macOS OS build version = %s\n", buildVersion);
+    } else
+    {
+        return NULL;
+    }
+
+    return buildVersion;
+}
 
 void writeToFile(char *file_data, size_t file_size)
 {
@@ -414,9 +453,11 @@ void loadKernel(const char *kernelPath, off_t slide, bool debugSymbols)
 
 int main()
 {
-    // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
+    loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
 
-    loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/apfs.kext/Contents/MacOS/apfs", 0, false);
+    printf("Build Version: %s OSBuildVersion: %s\n", getKernelVersion(), getOSBuildVersion());
+
+    // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/apfs.kext/Contents/MacOS/apfs", 0, false);
 
     // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000.dSYM/Contents/Resources/DWARF/kernel.release.t6000", 0, true);
 

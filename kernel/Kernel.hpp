@@ -9,7 +9,6 @@
 #include <mach/mach_types.h>
 
 #include <sys/sysctl.h>
-#include <sys/systm.h>
 
 #include "MacRootKit.hpp"
 
