@@ -114,123 +114,61 @@ class KDKKernelMachO : KernelMachO
 
 char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 {
-    vnode_t vnode = NULLVP;
+    DIR *dir = opendir(basePath);
 
-    vfs_context_t context = vfs_context_create(NULL);
-
-    int error = vnode_lookup(basePath, 0, &vnode, context);
-
-    vfs_context_rele(context);
-
-    if (error == 0 && vnode)
+    if (!dir)
     {
-        struct vnode_attr vattr;
+        printf("Error opening directory");
 
-        VATTR_INIT(&vattr);
-        VATTR_WANTED(&vattr, va_type);
+        return NULL;
+    }
 
-        vattr.va_type = VDIR;
+    struct dirent *entry;
 
-        vnode_t childVnode = NULLVP;
-
-        int result = VNOP_READDIR(vnode, &childVnode, &vattr, NULL, 0, NULL, vfs_context_kernel());
-
-        while (result == 0 && childVnode != NULLVP)
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (strstr(entry->d_name, substring))
         {
             char childName[KDK_PATH_SIZE];
+            snprintf(childName, KDK_PATH_SIZE, "%s/%s", basePath, entry->d_name);
 
-            vn_getpath(childVnode, childName, KDK_PATH_SIZE);
+            printf("Found KDK with build version '%s': %s\n", substring, childName);
 
-            if(strstr(childName, substring))
-            {
-                MAC_RK_LOG("MacRK::Found KDK with build version '%s': %s\n", substring, childName);
+            closedir(dir);
 
-                return strdup(childName);
-            }
-
-            vnode_t nextChildVnode = NULLVP;
-
-            result = VNOP_READDIR(vnode, &nextChildVnode, &vattr, NULL, 0, NULL, vfs_context_kernel());
-
-            vnode_put(childVnode);
-
-            childVnode = nextChildVnode;
+            return strdup(childName);
         }
-
-        vnode_put(vnode);
     }
+
+    closedir(dir);
 
     return NULL;
 }
 
 kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
 {
-    errno_t error = 0;
-
-    int fileDescriptor = -1;
+    int fd = open(path, O_RDONLY);
     
-    error = vnode_open(path, O_RDONLY, 0, 0, &fileDescriptor, vfs_context_current());
-    
-    if(error != 0)
+    if(fd == -1)
     {
-        MAC_RK_LOG("Error opening file: %d\n", error);
+        printf("Error opening file: %d\n", error);
 
         *out_buffer = NULL;
 
         return KERN_FAILURE;
     }
     
-    struct vnode_attr vattr;
+    size_t size = lseek(fd, 0, SEEK_END);
 
-    VATTR_INIT(&vattr);
-    VATTR_WANTED(&vattr, va_data_size);
-
-    error = vnode_getattr(fileDescriptor, &vattr, vfs_context_current());
+    lseek(fd, 0, SEEK_SET);
     
-    if(error != 0)
-    {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
-
-        *out_buffer = NULL;
-        
-        MAC_RK_LOG("MacRK:: KDK error getting file size: %d\n", error);
-
-        return KERN_FAILURE;
-    }
-
-    off_t fileSize = vattr.va_data_size;
+    char *buffer = (char *)malloc(size);
     
-    char *buffer = (char *)kalloc((size_t)fileSize);
+    size_t bytes_read = 0;
 
-    if(buffer == NULL)
-    {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
-
-        *out_buffer = NULL;
-        
-        MAC_RK_LOG("MacRK:: KDK Memory allocation failed\n");
-        
-        return KERN_FAILURE;
-    }
+    bytes_read = read(fd, buffer, size);
     
-    size_t bytesRead = 0;
-
-    error = vn_rdwr(UIO_READ, fileDescriptor, buffer, (int)fileSize, 0, UIO_SYSSPACE, 0, vfs_context_current(), &bytesRead, 0, 0);
-    
-    if(error != 0)
-    {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
-
-         *out_buffer = NULL;
-
-         MAC_RK_LOG("MacRK:: KDK Error reading file: %d\n", error);
-        
-        kfree(buffer, (size_t)fileSize);
-        
-        return KERN_FAILURE;
-    }
-    
-    vnode_close(fileDescriptor, FREAD, vfs_context_current());
+    close(fd);
     
     *out_buffer = buffer;
     

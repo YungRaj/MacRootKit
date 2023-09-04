@@ -28,6 +28,8 @@ namespace Fuzzer
 
 			const char* getPath() { return path; }
 
+			uintptr_t getEntryPoint();
+
 			template<typename Sym>
 			Array<Sym>* getSymbols() requires requires (Sym sym) {
 				{ sym->getName() };

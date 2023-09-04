@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <errno.h> 
 #include <string.h> 
+#include <dirent.h>
 
 #include <assert.h>
 
@@ -21,6 +22,296 @@ extern "C"
 }
 
 #define swap32(x) OSSwapInt32(x)
+
+enum KDKKernelType
+{
+    KdkKernelTypeNone = -1,
+    KdkKernelTypeRelease = 0,
+    KdkKernelTypeReleaseT6000,
+    KdkKernelTypeReleaseT6020,
+    KdkKernelTypeReleaseT8103,
+    KdkKernelTypeReleaseT8112,
+    KdkKernelTypeReleaseVmApple,
+
+    KdkKernelTypeDevelopment = 0x10,
+    KdkKernelTypeDevelopmentT6000,
+    KdkKernelTypeDevelopmentT6020,
+    KdkKernelTypeDevelopmentT8103,
+    KdkKernelTypeDevelopmentT8112,
+    KdkKernelTypeDevelopmentVmApple,
+
+    KdkKernelTypeKasan = 0x20,
+    KdkKernelTypeKasanT6000,
+    KdkKernelTypeKasanT6020,
+    KdkKernelTypeKasanT8103,
+    KdkKernelTypeKasanT8112,
+    KdkKernelTypeKasanVmApple,
+};
+
+#define KDK_PATH_SIZE 1024
+
+struct KDKInfo
+{
+    KDKKernelType type;
+
+    char *kernelName;
+
+    char path[KDK_PATH_SIZE];
+    char kernelPath[KDK_PATH_SIZE];
+    char kernelDebugSymbolsPath[KDK_PATH_SIZE];
+};
+
+char* findKDKWithBuildVersion(const char *basePath, const char *substring)
+{
+    DIR *dir = opendir(basePath);
+
+    if (!dir)
+    {
+        printf("Error opening directory");
+
+        return NULL;
+    }
+
+    struct dirent *entry;
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (strstr(entry->d_name, substring))
+        {
+            char childName[KDK_PATH_SIZE];
+            snprintf(childName, KDK_PATH_SIZE, "%s/%s", basePath, entry->d_name);
+
+            printf("Found KDK with build version '%s': %s\n", substring, childName);
+
+            closedir(dir);
+
+            return strdup(childName);
+        }
+    }
+
+    closedir(dir);
+
+    return NULL;
+}
+
+kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
+{
+    int fd = open(path, O_RDONLY);
+    
+    if(fd == -1)
+    {
+        printf("Error opening file: %d\n", error);
+
+        *out_buffer = NULL;
+
+        return KERN_FAILURE;
+    }
+    
+    size_t size = lseek(fd, 0, SEEK_END);
+
+    lseek(fd, 0, SEEK_SET);
+    
+    char *buffer = (char *)malloc(size);
+    
+    size_t bytes_read = 0;
+
+    bytes_read = read(fd, buffer, size);
+    
+    close(fd);
+    
+    *out_buffer = buffer;
+    
+    return KERN_SUCCESS;
+}
+
+char* getKDKKernelNameFromType(KDKKernelType type)
+{
+    switch(type)
+    {
+        case KdkKernelTypeRelease:
+            return "kernel";
+        case KdkKernelTypeReleaseT6000:
+            return "kernel.release.t6000";
+        case KdkKernelTypeReleaseT6020:
+            return "kernel.release.t6020";
+        case KdkKernelTypeReleaseT8103:
+            return "kernel.release.t8103";
+        case KdkKernelTypeReleaseT8112:
+            return "kernel.release.t8112";
+        case KdkKernelTypeReleaseVmApple:
+            return "kernel.release.vmapple";
+        case KdkKernelTypeDevelopment:
+            return "kernel.development";
+        case KdkKernelTypeDevelopmentT6000:
+            return "kernel.development.t6000";
+        case KdkKernelTypeDevelopmentT6020:
+            return "kernel.development.t6020";
+        case KdkKernelTypeDevelopmentT8103:
+            return "kernel.development.t8103";
+        case KdkKernelTypeDevelopmentT8112:
+            return "kernel.development.t8112";
+        case KdkKernelTypeDevelopmentVmApple:
+            return "kernel.development.vmapple";
+        case KdkKernelTypeKasan:
+            return "kernel.kasan";
+        case KdkKernelTypeKasanT6000:
+            return "kernel.kasan.t6000";
+        case KdkKernelTypeKasanT6020:
+            return "kernel.kasan.t6020";
+        case KdkKernelTypeKasanT8103:
+            return "kernel.kasan.t8103";
+        case KdkKernelTypeKasanT8112:
+            return "kernel.kasan.t8112";
+        case KdkKernelTypeKasanVmApple:
+            return "kernel.kasan.vmapple";
+        default:
+            return "";
+    }
+
+    return NULL;
+}
+
+void getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
+{
+    char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
+
+    if(outPath)
+    {
+        if(KDK)
+        {
+            strlcpy(outPath, KDK, KDK_PATH_SIZE);
+
+            delete KDK;
+        } else
+        {
+            *outPath = '\0';
+        }
+    }
+}
+
+void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath)
+{
+    KDKKernelType type = KdkKernelTypeNone;
+
+    if(strstr(kernelVersion, "RELEASE"))
+    {
+        if(strstr(kernelVersion, "T6000"))
+        {
+            type = KdkKernelTypeReleaseT6000;
+        } else if(strstr(kernelVersion, "T6020"))
+        {
+            type = KdkKernelTypeReleaseT6020;
+        } else if(strstr(kernelVersion, "T8103"))
+        {
+            type = KdkKernelTypeReleaseT8103;
+        } else if(strstr(kernelVersion, "T8112"))
+        {
+            type = KdkKernelTypeReleaseT8112;
+        } else if(strstr(kernelVersion, "VMAPPLE"))
+        {
+            type = KdkKernelTypeReleaseVmApple;
+        } else
+        {
+            type = KdkKernelTypeRelease;
+        }
+    }
+
+    if(strstr(kernelVersion, "DEVELOPMENT"))
+    {
+        if(strstr(kernelVersion, "T6000"))
+        {
+            type = KdkKernelTypeDevelopmentT6000;
+        } else if(strstr(kernelVersion, "T6020"))
+        {
+            type = KdkKernelTypeDevelopmentT6020;
+        } else if(strstr(kernelVersion, "T8103"))
+        {
+            type = KdkKernelTypeDevelopmentT8103;
+        } else if(strstr(kernelVersion, "T8112"))
+        {
+            type = KdkKernelTypeDevelopmentT8112;
+        } else if(strstr(kernelVersion, "VMAPPLE"))
+        {
+            type = KdkKernelTypeDevelopmentVmApple;
+        } else
+        {
+            type = KdkKernelTypeDevelopment;
+        }
+    }
+    
+    if(strstr(kernelVersion, "KASAN"))
+    {
+        if(strstr(kernelVersion, "T6000"))
+        {
+            type = KdkKernelTypeKasanT6000;
+        } else if(strstr(kernelVersion, "T6020"))
+        {
+            type = KdkKernelTypeKasanT6020;
+        } else if(strstr(kernelVersion, "T8103"))
+        {
+            type = KdkKernelTypeKasanT8103;
+        } else if(strstr(kernelVersion, "T8112"))
+        {
+            type = KdkKernelTypeKasanT8112;
+        } else if(strstr(kernelVersion, "VMAPPLE"))
+        {
+            type = KdkKernelTypeKasanVmApple;
+        } else
+        {
+            type = KdkKernelTypeKasan;
+        }
+    }
+
+    if(type == KdkKernelTypeNone)
+    {
+        *outType = KdkKernelTypeNone;
+        *outKernelPath = '\0';
+
+    } else
+    {
+        *outType = type;
+
+        snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/", path, getKDKKernelNameFromType(type));
+    }
+}
+
+void KDKFromBuildInfo(const char *buildVersion, const char *kernelVersion)
+{
+    struct KDKInfo *kdkInfo;
+
+    if(!buildVersion || !kernelVersion)
+    {
+        if(!buildVersion)
+            printf("MacRK::macOS Build Version not found!");
+
+        if(!kernelVersion)
+            printf("MacRK::macOS Kernel Version not found!");
+
+        return;
+    }
+
+    kdkInfo = new KDKInfo;
+
+    getKDKPathFromBuildInfo(buildVersion, kdkInfo->path);
+    getKDKKernelFromPath(kdkInfo->path, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
+
+    if(kdkInfo->path[0] == '\0' ||
+       kdkInfo->type == KdkKernelTypeNone ||
+       kdkInfo->kernelPath[0] == '\0')
+    {
+        delete kdkInfo;
+
+        printf("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s", buildVersion, kernelVersion);
+
+        return;
+    }
+
+    kdkInfo->kernelName = getKDKKernelNameFromType(kdkInfo->type);
+
+    snprintf(kdkInfo->kernelDebugSymbolsPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s.dSYM/Contents/Resources/DWARF/%s", kdkInfo->path, kdkInfo->kernelName, kdkInfo->kernelName);
+
+    printf("kernel:%s debug symbols:%s", kdkInfo->kernelPath, kdkInfo->kernelDebugSymbolsPath);
+}
 
 const char* getKernelVersion()
 {
@@ -453,9 +744,11 @@ void loadKernel(const char *kernelPath, off_t slide, bool debugSymbols)
 
 int main()
 {
-    loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
+    // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
 
-    printf("Build Version: %s OSBuildVersion: %s\n", getKernelVersion(), getOSBuildVersion());
+    // printf("Build Version: %s OSBuildVersion: %s\n", getKernelVersion(), getOSBuildVersion());
+
+    KDKFromBuildInfo(getOSBuildVersion(), getKernelVersion());
 
     // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/apfs.kext/Contents/MacOS/apfs", 0, false);
 

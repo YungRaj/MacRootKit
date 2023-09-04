@@ -467,7 +467,7 @@ fail:
 
 void Harness::loadBinary(const char *path, const char *symbolsFile)
 {
-
+	
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)
