@@ -34,8 +34,11 @@ class Symbol
 			this->section = section;
 		}
 
+		bool isUndefined() { return type == N_UNDF; }
+		bool isExternal() { return type & N_EXT; }
+
 		bool is_cxx() { return cxx_demangle(this->getName()) != NULL; }
-		bool is_swift() { return cxx_demangle(this->getName()) != NULL; }
+		bool is_swift() { return /* swift */ cxx_demangle(this->getName()) != NULL; }
 
 		MachO* getMachO() { return macho; }
 

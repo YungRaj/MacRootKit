@@ -24,6 +24,8 @@ namespace Fuzzer
 
 			~Module();
 
+			const char* getName() { return name; }
+
 			const char* getPath() { return path; }
 
 			struct FuzzBinary* getMainBinary() { return mainBinary; }
@@ -74,6 +76,7 @@ namespace Fuzzer
 		    }
 
 		private:
+			const char *name;
 			const char *path;
 
 			struct FuzzBinary *mainBinary;
@@ -92,6 +95,23 @@ namespace Fuzzer
 			explicit Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary);
 
 			~Loader();
+
+			Architecture* getArchitecture() { return arch; }
+
+			Fuzzer::Module* getModule(char *name)
+			{
+				for(int i = 0; i < modules.getSize(); i++)
+				{
+					Fuzzer::Module *module = module.get(i);
+
+					if(strcmp(module->getName(), name) == 0)
+					{
+						return module;
+					}
+				}
+
+				return NULL;
+			}
 
 			void loadModuleFromKext(const char *kextPath);
 
