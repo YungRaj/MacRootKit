@@ -22,9 +22,13 @@ namespace mrk
 	class Payload
 	{
 	#ifdef __arm64__
-		static constexpr uint32_t expectedSize = 1 << 14;
+		#define ARM64_PAGE_SHIFT 14
+
+		static constexpr uint32_t expectedSize = 1 << ARM64_PAGE_SHIFT;
 	#elif  __x86_64__
-		static constexpr uint32_t expectedSize = 1 << 12;
+		#define X86_64_PAGE_SHIFT
+
+		static constexpr uint32_t expectedSize = 1 << X86_64_PAGE_SHIFT;
 	#endif
 
 		public:
