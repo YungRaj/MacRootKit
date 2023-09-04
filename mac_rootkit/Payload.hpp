@@ -26,7 +26,7 @@ namespace mrk
 
 		static constexpr uint32_t expectedSize = 1 << ARM64_PAGE_SHIFT;
 	#elif  __x86_64__
-		#define X86_64_PAGE_SHIFT
+		#define X86_64_PAGE_SHIFT 12
 
 		static constexpr uint32_t expectedSize = 1 << X86_64_PAGE_SHIFT;
 	#endif
