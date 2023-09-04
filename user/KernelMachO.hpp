@@ -13,6 +13,9 @@ namespace xnu
 	class KernelMachO : public MachO 
 	{
 		public:
+			KernelMachO(uintptr_t base);
+			KernelMachO(uintptr_t base, off_t slide);
+
 			KernelMachO(const char *path, off_t slide);
 			KernelMachO(const char *path);
 

@@ -5,7 +5,7 @@
 
 extern "C"
 {
-#include <stdio.h>
+	#include <stdio.h>
 };
 
 class MachO;
@@ -110,6 +110,7 @@ namespace Fuzzer
 		const char *path;
 
 		void *base;
+		void *originalBase;
 
 		size_t size;
 
@@ -155,13 +156,23 @@ namespace Fuzzer
 
 		Loader* getLoader() { return loader; }
 
-		uintptr_t loadAddressFromKernelMachO(const char *path);
+		char* getMachOFromFatHeader(char *file_data);
+
+		bool mapSegmentsFromRawBinary(char *file_data, char *symbolsFile);
+		bool mapSegmentsFromMachO(char *file_data);
+
+		void getMappingInfoForMachO(char *file_data, size_t *size, uintptr_t *load_addr);
+
+		void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
+		void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
 		void loadBinary(const char *path, const char *symbolsFile);
 		void loadKernel(const char *path, off_t slide);
 		void loadKernelExtension(const char *path);
 
-		void populateSymbols(const char *symbolsFile);
+		void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
+
+		void populateSymbolsFromSymbolsFile(const char *symbolsFile);
 
 		private:
 			struct FuzzBinary *fuzzBinary;

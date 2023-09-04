@@ -29,33 +29,27 @@ void UserMachO::withTask(Task *task)
 
 void UserMachO::withFilePath(const char *path)
 {
-	FILE *file;
+	int fd = open(kextPath, O_RDONLY);
 
-	size_t size;
+	size_t size = lseek(fd, 0, SEEK_END);
 
-	file = fopen(path, "r");
+	lseek(fd, 0, SEEK_SET);
 
-	if(!file) return;
+	this->buffer = reinterpret_cast<char*>(malloc(size));
 
-	fseek(file, 0, SEEK_END);
-	
-	size = ftell(file);
+	ssize_t bytes_read;
 
-	fseek(file, 0, SEEK_SET);
+	bytes_read = read(fd, this->buffer, size);
 
-	this->buffer = (char*) malloc(size);
-
-	fseek(file, 0, SEEK_SET);
-	fread(this->buffer, 1, size, file);
-
+	this->buffer = reinterpret_cast<char*>(malloc(size));
 	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
-
-	fclose(file);
 
 	this->symbolTable = new SymbolTable();
 
 	this->parseMachO();
+
+	close(fd);
 }
 
 void UserMachO::withBuffer(char *buf)

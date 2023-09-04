@@ -34,6 +34,8 @@ class SymbolTable
 
 		void removeSymbol(Symbol *symbol) { symbolTable.remove(symbol); }
 
+		void replaceSymbol(Symbol *symbol);
+
 	private:
 		std::Array<Symbol*> symbolTable;
 

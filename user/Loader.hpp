@@ -89,18 +89,24 @@ namespace Fuzzer
 	class Loader
 	{
 		public:
-			explicit Loader(struct FuzzBinary *binary);
+			explicit Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary);
 
 			~Loader();
+
+			void loadModuleFromKext(const char *kextPath);
+
+			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
 			void linkSymbols(Module *module);
 			void linkSymbol(Module *module, Symbol *symbol);
 
 			void stubFunction(Module *module, Symbol *symbol, uintptr_t stub);
 
-			void* allocateSegmentMemory(uintptr_t addr, size_t sz, int prot);
+			void* allocateModuleMemory(uintptr_t addr, size_t sz, int prot);
 
 		private:
+			Fuzzer::Harness *harness;
+
 			Architecture *arch;
 
 			struct FuzzBinary *binary;

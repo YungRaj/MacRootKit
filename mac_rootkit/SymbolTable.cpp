@@ -122,3 +122,18 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 
 	return NULL;
 }
+
+void replaceSymbol(Symbol *symbol)
+{
+	for(int i = symbolTable.getSize() - 1; i >= 0; i--)
+	{
+		Symbol *sym = symbolTable.get(i);
+
+		if(strcmp(sym->getName(), symbol->getName()) == 0)
+		{
+			symbolTable->remove(sym);
+		}
+	}
+
+	symbolTable->add(symbol);
+}

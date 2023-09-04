@@ -1,69 +1,77 @@
 #include "KernelMachO.hpp"
 
-KernelMachO::KernelMachO(const char *path, off_t slide)
+KernelMachO::KernelMachO(uintptr_t base)
 {
-	FILE *file;
-
-	size_t size;
-
-	file = fopen(path, "r");
-
-	if(!file) return;
-
-	fseek(file, 0, SEEK_END);
-	
-	size = ftell(file);
-
-	fseek(file, 0, SEEK_SET);
-
-	this->buffer = (char*) malloc(size);
-
-	fseek(file, 0, SEEK_SET);
-	fread(this->buffer, 1, size, file);
-
+	this->buffer = reinterpret_cast<char*>(base);
 	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+	this->symbolTable = new SymbolTable();
+	this->slide = 0;
+	this->parseMachO();
+}
 
-	fclose(file);
+KernelMachO::KernelMachO(uintptr_t base, off_t slide)
+{
+	this->buffer = reinterpret_cast<char*>(base);
+	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+	this->symbolTable = new SymbolTable();
+	this->slide = slide;
+	this->parseMachO();
+}
+
+KernelMachO::KernelMachO(const char *path, off_t slide)
+{
+	int fd = open(kextPath, O_RDONLY);
+
+	size_t size = lseek(fd, 0, SEEK_END);
+
+	lseek(fd, 0, SEEK_SET);
+
+	this->buffer = reinterpret_cast<char*>(malloc(size));
+
+	ssize_t bytes_read;
+
+	bytes_read = read(fd, this->buffer, size);
+
+	this->buffer = reinterpret_cast<char*>(malloc(size));
+	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
 
 	this->symbolTable = new SymbolTable();
 
 	this->slide = slide;
 
 	this->parseMachO();
+
+	close(fd);
 }
 
 KernelMachO::KernelMachO(const char *path)
 {
-	FILE *file;
+	int fd = open(kextPath, O_RDONLY);
 
-	size_t size;
+	size_t size = lseek(fd, 0, SEEK_END);
 
-	file = fopen(path, "r");
+	lseek(fd, 0, SEEK_SET);
 
-	if(!file) return;
+	this->buffer = reinterpret_cast<char*>(malloc(size));
 
-	fseek(file, 0, SEEK_END);
-	
-	size = ftell(file);
+	ssize_t bytes_read;
 
-	fseek(file, 0, SEEK_SET);
+	bytes_read = read(fd, this->buffer, size);
 
-	this->buffer = (char*) malloc(size);
-
-	fseek(file, 0, SEEK_SET);
-	fread(this->buffer, 1, size, file);
-
+	this->buffer = reinterpret_cast<char*>(malloc(size));
 	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
-
-	fclose(file);
 
 	this->symbolTable = new SymbolTable();
 
 	this->slide = 0;
 
 	this->parseMachO();
+
+	close(fd);
 }
 
 KernelMachO::~KernelMachO()

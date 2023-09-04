@@ -371,7 +371,7 @@ void MachO::parseHeader()
 
 	if(magic == FAT_CIGAM)
 	{
-
+		
 	} else if(magic == MH_MAGIC_64)
 	{
 		getAslrSlide();
