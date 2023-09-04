@@ -135,7 +135,7 @@ namespace Fuzzer
 
 	class Harness
 	{
-		explicit Harness();
+		explicit Harness(xnu::Kernel *kernel);
 
 		~Harness();
 
@@ -195,6 +195,10 @@ namespace Fuzzer
 		void mutate(T data) requires FuzzableType<T>;
 
 		private:
+			xnu::Kernel *kernel;
+
+			xnu::KDKInfo *kdk;
+
 			struct FuzzBinary *fuzzBinary;
 
 			Loader *loader;

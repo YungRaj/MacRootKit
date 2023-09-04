@@ -328,6 +328,11 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 
 KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
 {
+	return new KDK(kernel, KDK::KDKInfoFromBuildInfo(kernel, buildVersion, kernelVersion));
+}
+
+KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
+{
 	struct KDKInfo *kdkInfo;
 
 	if(!buildVersion || !kernelVersion)
@@ -361,7 +366,7 @@ KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const 
 
 	snprintf(kdkInfo->kernelDebugSymbolsPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s.dSYM/Contents/Resources/DWARF/%s", kdkInfo->path, kdkInfo->kernelName, kdkInfo->kernelName);
 
-	return new KDK(kernel, kdkInfo);
+	return kdkInfo;
 }
 
 KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)

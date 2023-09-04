@@ -1,4 +1,5 @@
 #include "Fuzzer.hpp"
+#include "Kernel.hpp"
 #include "Log.hpp"
 
 extern "C"
@@ -8,12 +9,14 @@ extern "C"
 
 using namespace Fuzzer;
 
-Harness::Harness()
+Harness::Harness(xnu::Kernel *kernel)
 {
 	this->fuzzBinary = new FuzzBinary;
 
-	this->loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0);
-	this->addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), "/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000.dSYM/Contents/Resources/DWARF/kernel.release.t6000");
+	this->kdkInfo = KDK::KDKInfoFromBuildInfo(kernel, xnu::getOSBuildVersion(), xnu::getKernelVersion());
+
+	this->loadKernel(kdkInfo->kernelPath, 0);
+	this->addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), kdkInfo->kernelDebugSymbolsPath);
 
 	this->loader = new Loader(this->fuzzBinary);
 }
@@ -467,7 +470,7 @@ fail:
 
 void Harness::loadBinary(const char *path, const char *symbolsFile)
 {
-	
+
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)

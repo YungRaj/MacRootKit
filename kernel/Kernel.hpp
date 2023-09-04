@@ -238,6 +238,7 @@ namespace xnu
 			explicit KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo);
 
 			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
+			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
 			char* getPath() { return path; }
 
