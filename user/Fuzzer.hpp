@@ -128,6 +128,32 @@ namespace Fuzzer
 
 			RawBinary *raw;
 		} binary;
+
+		template<typename Sym, typename Binary>
+		Sym getSymbol(char *symbolname) requires requires (Sym sym) {
+			{ sym->getSymbol(); }
+		}
+		{
+			static_assert(std::is_same_v<Binary, MachO*> || std::is_same_v<T, RawBinary*>,
+		                  "Unsupported type for FuzzBinary:getSymbol()");
+
+		    if constexpr (std::is_base_of<MachO, Binary>::value)
+		    {
+		        return dynamic_cast<T>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
+		    }
+
+		    if constexpr (std::is_same_v<Binary, MachO*>)
+		    {
+		        return this->fuzzBinary->binary.macho->getSymbol(symbolname);
+		    }
+
+		    if constexpr (std::is_same_v<Binary, RawBinary*>)
+		    {
+		        return this->fuzzBinary->binary.raw->getSymbol(symbolname);
+		    }
+
+		    return NULL;
+		}
 	};
 
 	template <typename T>

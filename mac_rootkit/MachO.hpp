@@ -52,6 +52,8 @@ class MachO
 
 		SymbolTable* getSymbolTable() { return symbolTable; }
 
+		Symbol* getSymbol(char *symbolname) { return this->getSymbolByName(symbolname); }
+
 		Symbol* getSymbolByName(char *symbolname);
 		Symbol* getSymbolByAddress(mach_vm_address_t address);
 
