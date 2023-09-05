@@ -56,11 +56,11 @@ KERNEL_HEADERS = -I$(KFWK)/Headers -I$(IOKIT_FWK)/Headers
 
 CPATH := /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
 
-CFLAGS += -g -I/usr/include -I/usr/local/include $(KERNEL_HEADERS) -Wno-nullability-completeness -Wno-implicit-int-conversion -Wno-shadow -Wno-visibility -Wno-unused-variable -O2 -g -fno-builtin -fno-common -mkernel -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -I./include -nostdinc -nostdlib
+CFLAGS += -std=c++20 -g -I/usr/include -I/usr/local/include $(KERNEL_HEADERS) -Wno-nullability-completeness -Wno-implicit-int-conversion -Wno-shadow -Wno-visibility -Wno-unused-variable -O2 -g -fno-builtin -fno-common -mkernel -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -I./include -nostdinc -nostdlib
 
-LDFLAGS += -g -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -std=c++11 -Wc++11-extensions -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit-I./ -Iinclude -Wl,-kext -lkmod -lkmodc++ -lcc_kext
+LDFLAGS += -std=c++20 -g -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -std=c++11 -Wc++11-extensions -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit-I./ -Iinclude -Wl,-kext -lkmod -lkmodc++ -lcc_kext
 
-CXXFLAGS += -g $(KERNEL_HEADERS) -fno-builtin -fno-common  -std=c++11  -Wc++11-extensions -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
+CXXFLAGS += -std=c++20 -g $(KERNEL_HEADERS) -fno-builtin -fno-common  -std=c++11  -Wc++11-extensions -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -std=c++11 -Wc++11-extensions -Wno-sign-conversion -Wno-writable-strings
 
 ASM_FLAGS = -f macho64
 

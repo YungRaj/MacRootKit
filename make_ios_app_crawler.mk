@@ -21,11 +21,11 @@ TARGET = libiOSAppCrawler.dylib
 COMMON_SOURCES := user/Crawler.mm $(wildcard user/FakeTouch/*.mm)
 COMMON_OBJECTS := $(patsubst user/%.mm, $(OBJ)/%.o, $(COMMON_SOURCES))
 
-CFLAGS += -g -I$(shell pwd)/mac_rootkit -I$(shell pwd)/user/FakeTouch -arch arm64 -target arm64-apple-ios
+CFLAGS += -g -std=c++20 -I$(shell pwd)/mac_rootkit -I$(shell pwd)/user/FakeTouch -arch arm64 -target arm64-apple-ios
 
-LDFLAGS += -g -shared -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation -framework CoreFoundation -framework IOKit -framework CoreGraphics -framework QuartzCore -framework SpriteKit
+LDFLAGS += -g -std=c++20 -shared -arch arm64 -target arm64-apple-ios -framework UIKit -framework Foundation -framework CoreFoundation -framework IOKit -framework CoreGraphics -framework QuartzCore -framework SpriteKit
 
-CXXFLAGS += -g  -I$(shell pwd)/mac_rootkit -arch arm64 -target arm64-apple-macos
+CXXFLAGS += -g -std=c++20 -I$(shell pwd)/mac_rootkit -arch arm64 -target arm64-apple-macos
 
 .PHONY: all clean
 
