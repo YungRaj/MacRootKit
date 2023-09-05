@@ -625,12 +625,13 @@ DIE::DIE(Dwarf *dwarf,
 		 char *name,
 		 enum DW_TAG tag,
 		 enum DW_CHILDREN has_children)
+	: dwarf(dwarf),
+	  code(code),
+	  name(name),
+	  tag(tag),
+	  has_children(has_children)
 {
-	this->dwarf = dwarf;
-	this->code = code;
-	this->name = name;
-	this->tag = tag;
-	this->has_children = has_children;
+	
 }
 
 struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
