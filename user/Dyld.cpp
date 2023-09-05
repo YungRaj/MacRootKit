@@ -31,16 +31,23 @@ static char* Contains(char *str, const char *substr)
 	return strstr(str, substr);
 }
 
-Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
+Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task) : 	kernel(kernel), task(task)
+{
+	this->iterateAllImages();
+}
+
+Dyld::~Dyld()
+{
+	
+}
+
+void Dyld::iterateAllImages()
 {
 	bool found_main_image = false;
 
 	struct mach_header_64 hdr;
 
 	struct dyld_all_image_infos all_images;
-
-	this->kernel = kernel;
-	this->task = task;
 
 	this->getImageInfos();
 
@@ -113,11 +120,6 @@ Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task)
 
 	assert(this->dyld);
 	assert(this->dyld_shared_cache);
-}
-
-Dyld::~Dyld()
-{
-	
 }
 
 void Dyld::getImageInfos()

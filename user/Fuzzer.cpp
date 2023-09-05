@@ -10,15 +10,15 @@ extern "C"
 using namespace Fuzzer;
 
 Harness::Harness(xnu::Kernel *kernel)
+    : fuzzBinary(new FuzzBinary),
+      kdkInfo(KDK::KDKInfoFromBuildInfo(kernel,
+      									xnu::getOSBuildVersion(),
+      									xnu::getKernelVersion()))
 {
-	this->fuzzBinary = new FuzzBinary;
+    loadKernel(kdkInfo->kernelPath, 0);
+    addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), kdkInfo->kernelDebugSymbolsPath);
 
-	this->kdkInfo = KDK::KDKInfoFromBuildInfo(kernel, xnu::getOSBuildVersion(), xnu::getKernelVersion());
-
-	this->loadKernel(kdkInfo->kernelPath, 0);
-	this->addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), kdkInfo->kernelDebugSymbolsPath);
-
-	this->loader = new Loader(this->fuzzBinary);
+    this->loader = new Loader(this->fuzzBinary);
 }
 
 char* Harness::getMachOFromFatHeader(char *file_data)

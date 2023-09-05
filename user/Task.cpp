@@ -25,41 +25,37 @@ static int EndsWith(const char *str, const char *suffix)
 }
 
 
-Task::Task()
-{
-	this->disassembler = new Disassembler(this);
-}
+Task::Task() : disassembler(new Disassembler(this)) { }
 
 Task::Task(Kernel *kernel, int pid)
+    : kernel(kernel),
+      pid(pid),
+      task_port(Task::getTaskForPid(pid)),
+      proc(Task::findProcByPid(kernel, pid)),
+      task(Task::getTaskFromProc(kernel, this->proc)),
+      name(this->getTaskName()),
+      dyld(new dyld::Dyld(kernel, this)),
+      macho(new mrk::UserMachO())
 {
-	this->kernel = kernel;
-	this->pid = pid;
-	this->task_port = Task::getTaskForPid(pid);
-	this->proc = Task::findProcByPid(kernel, pid);
-	this->task = Task::getTaskFromProc(kernel, this->proc);
-	this->name = this->getTaskName();
-	this->dyld = new dyld::Dyld(kernel, this);
-	this->macho = new mrk::UserMachO();
-	// this->macho->withTask(this);
+
 }
 
 Task::Task(Kernel *kernel, char *name)
+    : kernel(kernel),
+      name(name),
+      proc(Task::findProcByName(kernel, name)),
+      task(Task::getTaskFromProc(kernel, this->proc)),
+      pid(this->findPid()),
+      task_port(Task::getTaskForPid(pid)),
+      dyld(new dyld::Dyld(kernel, this)),
+      macho(new mrk::UserMachO())
 {
-	this->kernel = kernel;
-	this->name = name;
-	this->proc = Task::findProcByName(kernel, name);
-	this->task = Task::getTaskFromProc(kernel, this->proc);
-	this->pid = this->findPid();
-	this->task_port = Task::getTaskForPid(pid);
-	this->dyld = new dyld::Dyld(kernel, this);
-	this->macho = new mrk::UserMachO();
 
 }
 		
-Task::Task(Kernel *kernel, mach_port_t task_port)
+Task::Task(Kernel *kernel, mach_port_t task_port) : kernel(kernel), task_port(task_port)
 {
-	this->kernel = kernel;
-	this->task_port = task_port;
+
 }
 
 Task::~Task()

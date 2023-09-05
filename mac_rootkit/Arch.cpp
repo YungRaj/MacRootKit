@@ -26,9 +26,9 @@ namespace Arch
 		return current_architecture;
 	}
 
-	Architecture::Architecture()
+	Architecture::Architecture() : arch(Arch::getCurrentArchitecture())
 	{
-		this->arch = Arch::getCurrentArchitecture();
+		
 	}
 
 	Architecture::~Architecture()

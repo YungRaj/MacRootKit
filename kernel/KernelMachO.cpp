@@ -3,15 +3,23 @@
 #include "Kernel.hpp"
 
 KernelMachO::KernelMachO(Kernel *kernel)
-{
-	this->kernel = kernel;
+    : kernel(kernel),
+      kernel_collection(
 #ifdef __x86_64__
-	this->kernel_collection = Kernel::findKernelCollection();
-	this->kernel_cache = 0;
-#elif __arm64__
-	this->kernel_cache = Kernel::findKernelCache();
-	this->kernel_collection = 0;
+          Kernel::findKernelCollection()
+#else
+          0
 #endif
+      ),
+      kernel_cache(
+#ifdef __arm64__
+          Kernel::findKernelCache()
+#else
+          0
+#endif
+      )
+{
+	
 }
 
 KernelMachO::~KernelMachO()

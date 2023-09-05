@@ -9,11 +9,8 @@
 
 using namespace mrk;
 
-UserMachO::UserMachO(const char *path)
+UserMachO::UserMachO(const char *path) : objc(NULL), file_path(strdup(path))
 {
-	this->objc = NULL;
-	this->file_path = strdup(path);
-
 	this->withFilePath(path);
 }
 
@@ -56,7 +53,7 @@ void UserMachO::withBuffer(char *buf)
 {
 	buffer = buf;
 
-	header = (struct mach_header_64*) buffer;
+	header = reinterpret_cast<struct mach_header_64*>(buffer);
 
 	this->symbolTable = new SymbolTable();
 
@@ -67,7 +64,7 @@ void UserMachO::withBuffer(char *buf, off_t slide)
 {
 	buffer = buf;
 
-	header = (struct mach_header_64*) buffer;
+	header = reinterpret_cast<struct mach_header_64*>(buffer);
 
 	this->symbolTable = new SymbolTable();
 	this->aslr_slide = slide;

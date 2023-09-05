@@ -14,29 +14,27 @@ using namespace mrk;
 using namespace xnu;
 
 Hook::Hook(Patcher *patcher, enum HookType hooktype)
+    : patcher(patcher),
+      hooktype(hooktype),
+      payload(nullptr),
+      architecture(Arch::initArchitecture())
 {
-	this->patcher = patcher;
-	this->hooktype = hooktype;
-	this->payload = NULL;
-	this->architecture = Arch::initArchitecture();
+	
 }
 
 Hook::Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address_t from)
+    : patcher(patcher),
+      hooktype(hooktype),
+      payload(nullptr),
+      task(task),
+      from(from),
+      disassembler(task->getDisassembler()),
+      architecture(Arch::initArchitecture())
 {
-	this->patcher = patcher;
-	this->hooktype = hooktype;
-	this->payload = NULL;
-
-	this->task = task;
-	this->from = from;
-
-	if(this->hooktype == kHookTypeInstrumentFunction)
-		this->withHookParams(task, from);
-	if(this->hooktype == kHookTypeBreakpoint)
-		this->withBreakpointParams(task, from);
-
-	this->disassembler = this->task->getDisassembler();
-	this->architecture = Arch::initArchitecture();
+    if (this->hooktype == kHookTypeInstrumentFunction)
+        this->withHookParams(task, from);
+    if (this->hooktype == kHookTypeBreakpoint)
+        this->withBreakpointParams(task, from);
 }
 
 Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t address)

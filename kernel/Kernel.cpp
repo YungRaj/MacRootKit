@@ -101,53 +101,42 @@ Kernel* Kernel::create(mach_vm_address_t base, off_t slide)
 }
 
 Kernel::Kernel(mach_port_t kernel_task_port)
+	: version(xnu::getKernelVersion()),
+	  osBuildVersion(xnu::getOSBuildVersion()),
+	  kernel_task_port(kernel_task_port),
+	  base(Kernel::fidnKernelBase()),
+	  disassembler(new Disassembler(this)),
+	  kernelWriteLock(IOSimpleLockAlloc),
+	  kernelDebugKit(xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion))
 {
-	this->version = xnu::getKernelVersion();
-	this->osBuildVersion = xnu::getOSBuildVersion();
-	this->kernel_task_port = kernel_task_port;
-	this->base = Kernel::findKernelBase();
-	this->disassembler = new Disassembler(this);
-	this->kernelWriteLock = IOSimpleLockAlloc();
-	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
+
 }
 
 Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
+	: version(xnu::getKernelVersion()),
+	  osBuildVersion(xnu::getOSBuildVersion()),
+	  macho(new KernelMachO(this)),
+	  disassembler(this)
 {
-	this->version = xnu::getKernelVersion();
-
-	this->osBuildVersion = xnu::getOSBuildVersion();
-
-	this->macho = new KernelMachO(this);
-
-	this->macho->initWithBase(base, slide);
-
-	// this->getKernelObjects();
-
-	this->disassembler = new Disassembler(this);
-
-	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
+	macho->initWithBase(base, slide);
+	
+	kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::Kernel(mach_vm_address_t base, off_t slide)
+	: version(xnu::getKernelVersion()),
+	  osBuildVersion(xnu::getOSBuildVersion()),
+	  macho(new KernelMachO(this)),
+	  disassembler(this),
+	  kernelWriteLock(IOSimpleLockAlloc()),
 {
-	this->version = xnu::getKernelVersion();
-	this->osBuildVersion = xnu::getOSBuildVersion();
-
-	this->macho = new KernelMachO(this);
-
-	this->macho->initWithBase(base, slide);
-
-	this->disassembler = new Disassembler(this);
+	macho->initWithBase(base, slide);
 
 #ifdef __x86_64__
 
 	this->getKernelObjects();
 
 	// this->createKernelTaskPort();
-
-	this->kernelWriteLock = IOSimpleLockAlloc();
-
-	this->base = base;
 
 	set_kernel_map(this->getKernelMap());
 
@@ -174,7 +163,7 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 
 #endif
 
-	this->kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, this->version, this->osBuildVersion);
+	kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::~Kernel()

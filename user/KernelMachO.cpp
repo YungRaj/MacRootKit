@@ -1,22 +1,22 @@
 #include "KernelMachO.hpp"
 
 KernelMachO::KernelMachO(uintptr_t base)
+    : buffer(reinterpret_cast<char*>(base)),
+      header(reinterpret_cast<struct mach_header_64*>(this->buffer)),
+      base(reinterpret_cast<mach_vm_address_t>(this->buffer)),
+      symbolTable(new SymbolTable()),
+      slide(0)
 {
-	this->buffer = reinterpret_cast<char*>(base);
-	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
-	this->symbolTable = new SymbolTable();
-	this->slide = 0;
-	this->parseMachO();
+    this->parseMachO();
 }
 
 KernelMachO::KernelMachO(uintptr_t base, off_t slide)
+	: buffer(reinterpret_cast<char*>(base)),
+      header(reinterpret_cast<struct mach_header_64*>(this->buffer)),
+      base(reinterpret_cast<mach_vm_address_t>(this->buffer)),
+      symbolTable(new SymbolTable()),
+      slide(slide)
 {
-	this->buffer = reinterpret_cast<char*>(base);
-	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
-	this->symbolTable = new SymbolTable();
-	this->slide = slide;
 	this->parseMachO();
 }
 

@@ -30,7 +30,7 @@ namespace dyld
 	class Dyld
 	{
 		public:
-			Dyld(xnu::Kernel *kernel, xnu::Task *task);
+			explicit Dyld(xnu::Kernel *kernel, xnu::Task *task);
 
 			~Dyld();
 
@@ -49,6 +49,8 @@ namespace dyld
 			off_t getSlide() { return slide; }
 
 			void getImageInfos();
+
+			void iterateAllImages();
 
 			struct dyld_cache_header* cacheGetHeader();
 

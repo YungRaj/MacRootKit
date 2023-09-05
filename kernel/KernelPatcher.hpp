@@ -78,6 +78,8 @@ namespace mrk
 			mrk::Hook* getBinaryLoadHook() { return binaryLoadHook; }
 			mrk::Hook* getKextLoadHook() { return kextLoadHook; }
 
+			void initialize();
+
 			static bool dummyBreakpoint(union Arch::RegisterState *state);
 
 			static void onOSKextSaveLoadedKextPanicList();

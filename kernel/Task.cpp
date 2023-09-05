@@ -31,46 +31,30 @@ Task::Task()
 }
 
 Task::Task(Kernel *kernel, mach_port_t task_port)
+	: kernel(kernel),
+	  task_port(task_port)
 {
-	this->task_port = task_port;
-	this->kernel = kernel;
-
 	typedef vm_offset_t ipc_kobject_t;
 
 	ipc_port_t port = reinterpret_cast<ipc_port_t>(task_port);
 
 	uint8_t *port_buf = reinterpret_cast<uint8_t*>(port);
 
-	this->task = (task_t) *(uint64_t*) (port_buf + 0x68);
+	task = (task_t) *(uint64_t*) (port_buf + 0x68);
 
-	typedef proc_t (*get_bsdtask_info) (task_t task);
-	proc_t (*_get_bsdtask_info) (task_t task);
-
-	_get_bsdtask_info = reinterpret_cast<get_bsdtask_info> (kernel->getSymbolAddressByName("_get_bsdtask_info"));
-
-	this->proc = _get_bsdtask_info(this->task);
-
-	typedef vm_map_t (*get_task_map) (task_t task);
-	vm_map_t (*_get_task_map)(task_t);
-
-	_get_task_map = reinterpret_cast<get_task_map> (kernel->getSymbolAddressByName("_get_task_map"));
-
-	this->map = _get_task_map(this->task);
-
-	typedef pmap_t (*get_task_pmap) (task_t task);
-	pmap_t (*_get_task_pmap)(task_t);
-
-	_get_task_pmap = reinterpret_cast<get_task_pmap> (kernel->getSymbolAddressByName("_get_task_pmap"));
-
-	this->pmap = _get_task_pmap(this->task);
-
-	this->disassembler = new Disassembler(this);
+	this->initialize();
 }
 
 Task::Task(Kernel *kernel, task_t task)
+	: kernel(kernel),
+	  task(task),
+	  disassembler(new Dissasembler(this))
 {
-	this->task = task;
+	this->initialize();
+}
 
+void Task::initialize()
+{
 	typedef proc_t (*get_bsdtask_info) (task_t task);
 	proc_t (*_get_bsdtask_info) (task_t task);
 
@@ -91,8 +75,6 @@ Task::Task(Kernel *kernel, task_t task)
 	_get_task_pmap = reinterpret_cast<get_task_pmap> (kernel->getSymbolAddressByName("_get_task_pmap"));
 
 	this->pmap = _get_task_pmap(this->task);
-
-	this->disassembler = new Disassembler(this);
 }
 
 mach_port_t Task::getTaskPort(Kernel *kernel, int pid)

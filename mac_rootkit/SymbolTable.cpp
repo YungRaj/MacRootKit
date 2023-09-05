@@ -71,11 +71,12 @@ SymbolTable::SymbolTable()
 }
 
 SymbolTable::SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+    : symtab(symtab),
+      nsyms(nsyms),
+      strtab(strtab),
+      strsize(strsize)
 {
-	this->symtab = symtab;
-	this->nsyms = nsyms;
-	this->strtab = strtab;
-	this->strsize = strsize;
+	
 }
 
 Symbol* SymbolTable::getSymbolByName(char *symname)

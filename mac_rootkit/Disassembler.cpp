@@ -11,10 +11,10 @@
 using namespace Arch;
 
 Disassembler::Disassembler(xnu::Task *task)
+	: task(task),
+	  architecture(Arch::getCurrentArchitecture()),
+	  disassembler(getDisassemblerFromArch()), 
 {
-	this->task = task;
-	this->architecture = Arch::getCurrentArchitecture();
-	this->disassembler = this->getDisassemblerFromArch();
 	this->initDisassembler();
 }
 

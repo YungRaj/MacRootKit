@@ -14,14 +14,12 @@ class Section
 {
 	public:
 		Section(struct section_64 *section)
+			: section(section),
+			  address(section->addr),
+			  offset(section->offset),
+			  size(section->size),
+			  name(new char[strlen(section->sectname) + 1])
 		{
-			this->section = section;
-			this->address = section->addr;
-			this->offset = section->offset;
-			this->size = section->size;
-
-			this->name = new char[strlen(section->sectname) + 1];
-
 			strlcpy(this->name, section->sectname, strlen(section->sectname) + 1);
 		}
 

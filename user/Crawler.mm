@@ -827,11 +827,8 @@ namespace NSDarwin
 namespace AppCrawler
 {
 
-CrawlManager::CrawlManager(UIApplication *application, id<UIApplicationDelegate> delegate)
+CrawlManager::CrawlManager(UIApplication *application, id<UIApplicationDelegate> delegate) : application(application), delegate(delegate)
 {
-	this->application = application;
-	this->delegate = delegate;
-
 	this->setupAppCrawler();
 }
 

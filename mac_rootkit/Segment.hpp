@@ -15,17 +15,15 @@ class Segment
 {
 	public:
 		Segment(struct segment_command_64 *segment_command)
+			: segment(segment_command),
+			  initprot(segment_command->initprot),
+			  maxprot(segment_command->maxprot),
+			  address(segment_command->vmaddr),
+			  size(segment_command->vmsize),
+			  fileoffset(segment_command->fileoff),
+			  filesize(segment_command->filesize),
+			  name(new char[strlen(segment_command->segname) + 1])
 		{
-			this->segment = segment_command;
-			this->initprot = segment_command->initprot;
-			this->maxprot = segment_command->maxprot;
-			this->address = segment_command->vmaddr;
-			this->size = segment_command->vmsize;
-			this->fileoffset = segment_command->fileoff;
-			this->filesize = segment_command->filesize;
-
-			this->name = new char[strlen(segment_command->segname) + 1];
-
 			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
 
 			this->populateSections();

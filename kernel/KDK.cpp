@@ -432,12 +432,13 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion
 }
 
 KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
+	: kernel(kernel),
+	  kdkInfo(kdkInfo),
+	  type(kdkInfo->type),
+	  path(kdkInfo->path),
+	  kernelWithDebugSymbols(new KernelMachO(kernel, kdkInfo->kernelDebugSymbolsPath))
 {
-	this->kernel = kernel;
-	this->kdkInfo = kdkInfo;
-	this->type = kdkInfo->type;
-	this->path = &kdkInfo->path;
-	this->kernelWithDebugSymbols = new KDKKernelMachO(kernel, &kdkInfo->kernelDebugSymbolsPath);
+	
 }
 
 mach_vm_address_t KDK::getKDKSymbolAddressByName(const char *sym)

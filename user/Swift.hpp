@@ -13,123 +13,14 @@ class Section;
 
 namespace Swift
 {
-	/* Swift Runtime
-
-	Memory Allocation
-
-	swift_allocBox
-	swift_allocEmptyBox
-	swift_allocObject
-	swift_bufferAllocate
-	swift_bufferHeaderSize
-	swift_deallocBox
-	swift_deallocClassInstance
-	swift_deallocObject
-	swift_deallocUninitializedObject
-	swift_deallocPartialClassInstance
-	swift_rootObjCDealloc
-	swift_slowAlloc
-	swift_slowDealloc
-	swift_projectBox
-	swift_initStackObject
-	
-	Reference Counting
-
-	swift_bridgeObjectRelease
-	swift_bridgeObjectRelease_n
-	swift_bridgeObjectRetain
-	swift_bridgeObjectRetain_n
-	swift_release
-	swift_release_n
-	swift_retain
-	swift_retain_n
-	swift_tryRetain
-
-	swift_dynamicCast
-	swift_dynamicCastClass
-	swift_dynamicCastClassUnconditional
-	swift_dynamicCastForeignClass
-	swift_dynamicCastForeignClassMetatype
-	swift_dynamicCastForeignClassMetatypeUnconditional
-	swift_dynamicCastForeignClassUnconditional
-	swift_dynamicCastMetatype
-	swift_dynamicCastMetatypeToObjectConditional
-	swift_dynamicCastMetatypeToObjectUnconditional
-	swift_dynamicCastMetatypeUnconditional
-	swift_dynamicCastObjCClass
-	swift_dynamicCastObjCClassMetatype
-	swift_dynamicCastObjCClassMetatypeUnconditional
-	swift_dynamicCastObjCClassUnconditional
-	swift_dynamicCastObjCProtocolConditional
-	swift_dynamicCastObjCProtocolUnconditional
-	swift_dynamicCastTypeToObjCProtocolConditional
-	swift_dynamicCastTypeToObjCProtocolUnconditional
-	swift_dynamicCastUnknownClass
-	swift_dynamicCastUnknownClassUnconditional
-
-	Bridging
-
-	swift_bridgeNonVerbatimFromObjectiveCConditional
-	swift_bridgeNonVerbatimToObjectiveC
-	swift_getBridgedNonVerbatimObjectiveCType
-	swift_isBridgedNonVerbatimToObjectiveC
-
-	Type Metadata Lookup
-
-	swift_getExistentialMetatypeMetadata
-	swift_getExistentialTypeMetadata
-	swift_getForeignTypeMetadata
-	swift_getFunctionTypeMetadata
-	swift_getFunctionTypeMetadata1
-	swift_getFunctionTypeMetadata2
-	swift_getFunctionTypeMetadata3
-	swift_getGenericMetadata
-	swift_getMetatypeMetadata
-	swift_getObjCClassMetadata
-	swift_getResilientMetadata
-	swift_getTupleTypeMetadata
-	swift_getTupleTypeMetadata2
-	swift_getTupleTypeMetadata3
-	swift_getInitializedObjCClass
-
-	Metatypes
-
-	swift_getDynamicType
-	swift_getObjectType
-	swift_getTypeName
-	swift_isClassType
-	swift_isClassOrObjCExistentialType
-	swift_isOptionalType
-	swift_objc_class_usesNativeSwiftReferenceCounting
-	swift_objc_class_unknownGetInstanceExtents
-	swift_class_getInstanceExtents
-	swift_class_getSuperclass
-	
-	*/
-
 	class SwiftMetadata;
 
 	SwiftMetadata* parseSwift(mrk::UserMachO *macho);
-
-	// Swift Runtime functions
-	// https://github.com/apple/swift/blob/main/docs/Runtime.md
-
-	// Swift Type Metadata
-	// https://github.com/apple/swift/blob/main/docs/ABI/TypeMetadata.rst
-
-	/// Non-type metadata kinds have this bit set.
+	
 	const unsigned MetadataKindIsNonType = 0x400;
 
-	/// Non-heap metadata kinds have this bit set.
 	const unsigned MetadataKindIsNonHeap = 0x200;
 
-	// The above two flags are negative because the "class" kind has to be zero,
-	// and class metadata is both type and heap metadata.
-
-	/// Runtime-private metadata has this bit set. The compiler must not statically
-	/// generate metadata objects with these kinds, and external tools should not
-	/// rely on the stability of these values or the precise binary layout of
-	/// their associated data structures.
 	const unsigned MetadataKindIsRuntimePrivate = 0x100;
 
 	enum class ContextDescriptorKind : uint8_t

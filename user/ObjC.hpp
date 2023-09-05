@@ -18,20 +18,6 @@ namespace mrk
 
 namespace ObjectiveC
 {
-	// Two bits of entsize are used for fixup markers.
-	// Reserve the top half of entsize for more flags. We never
-	// need entry sizes anywhere close to 64kB.
-	//
-	// Currently there is one flag defined: the small method list flag,
-	// method_t::smallMethodListFlag. Other flags are currently ignored.
-	// (NOTE: these bits are only ignored on runtimes that support small
-	// method lists. Older runtimes will treat them as part of the entry
-	// size!)
-
-
-	// This flag is ORed into method list pointers to indicate that the list is
-	// a big list with signed pointers. Use a bit in TBI so we don't have to
-	// mask it out to use the pointer.
 	#ifdef __arm64e__
 
 	static const uintptr_t bigSignedMethodListFlag = 0x8000000000000000;
@@ -44,131 +30,67 @@ namespace ObjectiveC
 
 	static const uint32_t smallMethodListFlag = 0x80000000;
 
-	// We don't use this currently, but the shared cache builder sets it, so be
-	// mindful we don't collide.
 	static const uint32_t relativeMethodSelectorsAreDirectFlag = 0x40000000;
 
-	// class_data_bits_t is the class_t->data field (class_rw_t pointer plus flags)
-	// The extra bits are optimized for the retain/release and alloc/dealloc paths.
-
-	// Values for class_ro_t->flags
-	// These are emitted by the compiler and are part of the ABI.
-	// Note: See CGObjCNonFragileABIMac::BuildClassRoTInitializer in clang
-	// class is a metaclass
 	#define RO_META               (1<<0)
-	// class is a root class
 	#define RO_ROOT               (1<<1)
-	// class has .cxx_construct/destruct implementations
 	#define RO_HAS_CXX_STRUCTORS  (1<<2)
-	// class has +load implementation
-	// #define RO_HAS_LOAD_METHOD    (1<<3)
-	// class has visibility=hidden set
+
 	#define RO_HIDDEN             (1<<4)
-	// class has attribute(objc_exception): OBJC_EHTYPE_$_ThisClass is non-weak
 	#define RO_EXCEPTION          (1<<5)
-	// class has ro field for Swift metadata initializer callback
 	#define RO_HAS_SWIFT_INITIALIZER (1<<6)
-	// class compiled with ARC
 	#define RO_IS_ARC             (1<<7)
-	// class has .cxx_destruct but no .cxx_construct (with RO_HAS_CXX_STRUCTORS)
 	#define RO_HAS_CXX_DTOR_ONLY  (1<<8)
-	// class is not ARC but has ARC-style weak ivar layout
 	#define RO_HAS_WEAK_WITHOUT_ARC (1<<9)
-	// class does not allow associated objects on instances
 	#define RO_FORBIDS_ASSOCIATED_OBJECTS (1<<10)
 
-	// class is in an unloadable bundle - must never be set by compiler
 	#define RO_FROM_BUNDLE        (1<<29)
-	// class is unrealized future class - must never be set by compiler
 	#define RO_FUTURE             (1<<30)
-	// class is realized - must never be set by compiler
 	#define RO_REALIZED           (1<<31)
 
-	// Values for class_rw_t->flags
-	// These are not emitted by the compiler and are never used in class_ro_t.
-	// Their presence should be considered in future ABI versions.
-	// class_t->data is class_rw_t, not class_ro_t
 	#define RW_REALIZED           (1<<31)
-	// class is unresolved future class
 	#define RW_FUTURE             (1<<30)
-	// class is initialized
 	#define RW_INITIALIZED        (1<<29)
-	// class is initializing
 	#define RW_INITIALIZING       (1<<28)
-	// class_rw_t->ro is heap copy of class_ro_t
 	#define RW_COPIED_RO          (1<<27)
-	// class allocated but not yet registered
 	#define RW_CONSTRUCTING       (1<<26)
-	// class allocated and registered
 	#define RW_CONSTRUCTED        (1<<25)
-	// available for use; was RW_FINALIZE_ON_MAIN_THREAD
-	// #define RW_24 (1<<24)
-	// class +load has been called
+
 	#define RW_LOADED             (1<<23)
 	#if !SUPPORT_NONPOINTER_ISA
-	// class instances may have associative references
 	#define RW_INSTANCES_HAVE_ASSOCIATED_OBJECTS (1<<22)
 	#endif
-	// class has instance-specific GC layout
+
 	#define RW_HAS_INSTANCE_SPECIFIC_LAYOUT (1 << 21)
-	// class does not allow associated objects on its instances
 	#define RW_FORBIDS_ASSOCIATED_OBJECTS       (1<<20)
-	// class has started realizing but not yet completed it
 	#define RW_REALIZING          (1<<19)
 
 	#if CONFIG_USE_PREOPT_CACHES
-	// this class and its descendants can't have preopt caches with inlined sels
 	#define RW_NOPREOPT_SELS      (1<<2)
-	// this class and its descendants can't have preopt caches
 	#define RW_NOPREOPT_CACHE     (1<<1)
 	#endif
 
-	// class is a metaclass (copied from ro)
 	#define RW_META               RO_META // (1<<0)
 
-	// NOTE: MORE RW_ FLAGS DEFINED BELOW
-
-	// Values for class_rw_t->flags (RW_*), cache_t->_flags (FAST_CACHE_*),
-	// or class_t->bits (FAST_*).
-	//
-	// FAST_* and FAST_CACHE_* are stored on the class, reducing pointer indirection.
-
-	// class is a Swift class from the pre-stable Swift ABI
 	#define FAST_IS_SWIFT_LEGACY    (1UL<<0)
-	// class is a Swift class from the stable Swift ABI
 	#define FAST_IS_SWIFT_STABLE    (1UL<<1)
-	// class or superclass has default retain/release/autorelease/retainCount/
-	//   _tryRetain/_isDeallocating/retainWeakReference/allowsWeakReference
 	#define FAST_HAS_DEFAULT_RR     (1UL<<2)
-	// data pointer
 	#define FAST_DATA_MASK          0x00007ffffffffff8UL
 
-	// just the flags
 	#define FAST_FLAGS_MASK         0x0000000000000007UL
-	// this bit tells us *quickly* that it's a pointer to an rw, not an ro
 	#define FAST_IS_RW_POINTER      0x8000000000000000UL
 
-	// class or superclass has .cxx_construct implementation
 	#define RW_HAS_CXX_CTOR       (1<<18)
-	// class or superclass has .cxx_destruct implementation
 	#define RW_HAS_CXX_DTOR       (1<<17)
-	// class or superclass has default alloc/allocWithZone: implementation
-	// Note this is is stored in the metaclass.
 	#define RW_HAS_DEFAULT_AWZ    (1<<16)
-	// class's instances requires raw isa
 
 	#define RW_REQUIRES_RAW_ISA   (1<<15)
-	// class or superclass has default retain/release/autorelease/retainCount/
-	//   _tryRetain/_isDeallocating/retainWeakReference/allowsWeakReference
 	#define RW_HAS_DEFAULT_RR     (1<<14)
-	// class or superclass has default new/self/class/respondsToSelector/isKindOfClass
 	#define RW_HAS_DEFAULT_CORE   (1<<13)
 
-	// class is a Swift class from the pre-stable Swift ABI
 	#define FAST_IS_SWIFT_LEGACY  (1UL<<0)
-	// class is a Swift class from the stable Swift ABI
 	#define FAST_IS_SWIFT_STABLE  (1UL<<1)
-	
+
 	class Ivar;
 	class Property;
 

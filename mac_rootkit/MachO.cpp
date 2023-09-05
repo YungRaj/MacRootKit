@@ -12,13 +12,12 @@ MachO::~MachO()
 }
 
 void MachO::initWithBase(mach_vm_address_t base, off_t slide)
+	: base(base),
+	  aslr_slide(slide),
+	  buffer(reinterpret_cast<char*>(base)),
+	  header(reinterpret_cast<struct mach_header_64*>(buffer)),
+	  symbolTable(new SymbolTable())
 {
-	this->base = base;
-	this->aslr_slide = slide;
-	this->buffer = reinterpret_cast<char*>(base);
-	this->header = reinterpret_cast<struct mach_header_64*>(buffer);
-	this->symbolTable = new SymbolTable();
-	
 	this->parseMachO();
 }
 
@@ -371,7 +370,7 @@ void MachO::parseHeader()
 
 	if(magic == FAT_CIGAM)
 	{
-		
+
 	} else if(magic == MH_MAGIC_64)
 	{
 		getAslrSlide();

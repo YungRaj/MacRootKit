@@ -44,11 +44,11 @@ namespace xnu
 		public:
 			Task();
 
-			Task(xnu::Kernel *kernel, int pid);
+			explicit Task(xnu::Kernel *kernel, int pid);
 
-			Task(xnu::Kernel *kernel, char *name);
+			explicit Task(xnu::Kernel *kernel, char *name);
 			
-			Task(xnu::Kernel *kernel, mach_port_t task_port);
+			explicit Task(xnu::Kernel *kernel, mach_port_t task_port);
 
 			~Task();
 

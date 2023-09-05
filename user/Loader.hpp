@@ -18,9 +18,9 @@ namespace Fuzzer
 	class Module
 	{
 		public:
-			explicit Module(const char *path);
+			explicit Module(const char *path) : path(path) { }
 
-			explicit Module(const char *path, uintptr_t base, off_t slide);
+			explicit Module(const char *path, uintptr_t base, off_t slide) : path(path), base(base), slide(slide) { }
 
 			~Module();
 

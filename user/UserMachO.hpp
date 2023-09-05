@@ -36,7 +36,7 @@ namespace mrk
 	class CodeSignature
 	{
 		public:
-			explicit CodeSignature(UserMachO *macho, struct linkedit_data_command *cmd) { this->macho = macho; this->cmd = cmd; this->parseCodeSignature(); }
+			explicit CodeSignature(UserMachO *macho, struct linkedit_data_command *cmd) : macho(macho), cmd(cmd) { this->parseCodeSignature(); }
 
 			static CodeSignature* codeSignatureWithLinkedit(UserMachO *macho, struct linkedit_data_command *cmd);
 
@@ -73,8 +73,8 @@ namespace mrk
 	class UserMachO : public MachO
 	{
 		public:
-			UserMachO() { this-> task = NULL; this->file_path = NULL; }
-			UserMachO(const char *path);
+			explicit UserMachO() : task(NULL), file_path(NULL) { }
+			explicit UserMachO(const char *path);
 
 			~UserMachO() { }
 

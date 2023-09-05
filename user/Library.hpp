@@ -15,12 +15,7 @@ namespace dyld
 	{
 		public:
 			Library(xnu::Task *task, dyld::Dyld *dyld, struct dyld_image_info *image_info)
-			{
-				this->task = task;
-				this->dyld = dyld;
-				this->image_info = image_info;
-				this->path = this->task->readString(image_file_path);
-			}
+				: task(task), dyld(dyld), image_info(image_info), path(task->readString(image_file_path)) { }
 
 			~Library() { free(this->path); }
 

@@ -23,15 +23,16 @@ class Symbol
 		Symbol() { }
 
 		Symbol(MachO *macho, uint32_t type, char *name, mach_vm_address_t address, off_t offset, Segment *segment, Section *section)
+			: macho(macho),
+			  type(type),
+			  name(name),
+			  demangled_name(NULL), // this->getDemangledName();
+			  address(address),
+			  offset(offset),
+			  segment(segment),
+			  section(section)
 		{
-			this->macho = macho;
-			this->type = type;
-			this->name = name;
-			this->demangled_name = NULL; // this->getDemangledName();
-			this->address = address;
-			this->offset = offset;
-			this->segment = segment;
-			this->section = section;
+
 		}
 
 		bool isUndefined() { return type == N_UNDF; }

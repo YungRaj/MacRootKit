@@ -30,6 +30,8 @@ namespace xnu
 			Task(Kernel *kernel, mach_port_t task_port);
 			Task(Kernel *kernel, task_t task);
 
+			void initialize();
+
 			static mach_port_t getTaskPort(Kernel *kernel, int pid);
 
 			static Task* getTaskByName(Kernel *kernel, char *name);

@@ -40,10 +40,11 @@ void Module::mapSection(Sect section) requires requires(Sect sect) {
 }
 
 Loader::Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary)
+    : architecture(Architecture::getArchitecture()),
+      harness(harness),
+      binary(binary)
 {
-    this->architecture = Architecture::getArchitecture();
-    this->harness = harness;
-    this->binary = binary;
+    
 }
 
 void Loader::loadModuleFromKext(const char *kextPath)

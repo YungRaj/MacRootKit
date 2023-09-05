@@ -7,19 +7,15 @@ namespace mrk
 {
 
 MacRootKit::MacRootKit(Kernel *kernel)
+	: kernel(kernel),
+	  kextKmods(reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"))),
+	  platformArchitecture(Arch::getCurrentArchitecture()),
+	  kernelPatcher(new KernelPatcher(this->kernel)),
+	  architecture(Arch::initArchitecture());
 {
-	this->kernel = kernel;
-	this->kernel->setRootKit(this);
-
-	this->kextKmods = reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"));
-
-	this->platformArchitecture = Arch::getCurrentArchitecture();;
+	kernel->setRootKit(this);
 
 	this->registerCallbacks();
-
-	this->kernelPatcher = new KernelPatcher(this->kernel);
-
-	this->architecture = Arch::initArchitecture();
 }
 
 MacRootKit::~MacRootKit()

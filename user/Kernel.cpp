@@ -38,13 +38,9 @@ const char* getOSBuildVersion()
 	return buildVersion;
 }
 
-Kernel::Kernel()
+Kernel::Kernel() : kernel(this), connection(open_kernel_tfp0_connection()), slide(getSlide())
 {
-	this->kernel = this;
-
 	Task();
-
-	this->connection = open_kernel_tfp0_connection();
 
 	// UserMachO *userMachO = new UserMachO();
 #ifdef __x86_64__

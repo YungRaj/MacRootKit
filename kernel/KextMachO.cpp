@@ -6,39 +6,51 @@ namespace xnu
 {
 
 KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
-{
-	this->kernel = kernel;
-	this->name = name;
-	this->base_offset = 0;
-	this->size = 0;
-	
+    : kernel(kernel),
+      name(name),
+      base_offset(0),
+      size(0),
+      kernel_cache(
 #ifdef __arm64__
-	this->kernel_cache = Kernel::findKernelCache();
-	this->kernel_collection = 0;
-#elif __x86_64__
-	this->kernel_collection = Kernel::findKernelCollection();
-	this->kernel_cache = 0;
+          Kernel::findKernelCache()
+#else
+          0
 #endif
+      ),
+      kernel_collection(
+#ifdef __x86_64__
+          Kernel::findKernelCollection()
+#else
+          0
+#endif
+      )
+{
 
 	this->initWithBase(base, 0);
-	this->kmod_info = reinterpret_cast<kmod_info_t*>(this->getSymbolAddressByName("_kmod_info"));
+	
+	kmod_info = reinterpret_cast<kmod_info_t*>(this->getSymbolAddressByName("_kmod_info"));
 }
 
 KextMachO::KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info)
-{
-	this->kernel = kernel;
-	this->name = name;
-	this->kmod_info = kmod_info;
-	this->name = &this->kmod_info->name[0];
-	this->base_offset = 0;
-
+    : kernel(kernel),
+      name(&kmod_info->name[0]),
+      kmod_info(kmod_info),
+      base_offset(0),
+      kernel_cache(
 #ifdef __arm64__
-	this->kernel_cache = Kernel::findKernelCache();
-	this->kernel_collection = 0;
-#elif __x86_64__
-	this->kernel_collection = Kernel::findKernelCollection();
-	this->kernel_cache = 0;
+          Kernel::findKernelCache()
+#else
+          0
 #endif
+      ),
+      kernel_collection(
+#ifdef __x86_64__
+          Kernel::findKernelCollection()
+#else
+          0
+#endif
+      )
+{
 
 	this->initWithBase(this->kmod_info->address, 0);
 }

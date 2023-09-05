@@ -20,12 +20,7 @@ namespace Fuzzer
 		struct SegmentRaw
 		{
 			public:
-				SegmentRaw(uintptr_t address, size_t size, int prot)
-				{
-					this->address = address;
-					this->size = size;
-					this->prot = prot;
-				}
+				SegmentRaw(uintptr_t address, size_t size, int prot) : address(address), size(size), prot(prot) { }
 
 				uintptr_t getAddress() { return address; }
 
@@ -44,12 +39,7 @@ namespace Fuzzer
 		struct SymbolRaw
 		{
 			public:
-				SymbolRaw(const char *name, uintptr_t address, int type)
-				{
-					this->name = name;
-					this->address = address;
-					this->type = type;
-				}
+				SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
 
 				const char* getName() { return name; }
 

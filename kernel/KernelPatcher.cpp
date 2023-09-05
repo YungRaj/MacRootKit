@@ -38,15 +38,24 @@ KernelPatcher::KernelPatcher()
 }
 
 KernelPatcher::KernelPatcher(xnu::Kernel *kernel)
+	: kernel(kernel),
+	  kextKmods(reinterpret_cast<kmod_info_t**>(this->kernel->getSymbolAddressByName("_kmod")))
 {
 	that = this;
 
-	this->kernel = kernel;
-	this->kextKmods = reinterpret_cast<kmod_info_t**>(this->kernel->getSymbolAddressByName("_kmod"));
+	this->initialize();
+}
 
+KernelPatcher::~KernelPatcher()
+{
+
+}
+
+void KernelPatcher::initialize()
+{
 	this->processAlreadyLoadedKexts();
 
-	this->waitingForAlreadyLoadedKexts = false;
+	waitingForAlreadyLoadedKexts = false;
 
 	this->installEntitlementHook();
 
@@ -59,10 +68,6 @@ KernelPatcher::KernelPatcher(xnu::Kernel *kernel)
 #endif
 
 	// this->installDummyBreakpoint();
-}
-
-KernelPatcher::~KernelPatcher()
-{
 }
 
 bool KernelPatcher::dummyBreakpoint(union Arch::RegisterState *state)

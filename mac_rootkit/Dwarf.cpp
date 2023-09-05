@@ -648,15 +648,13 @@ struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
 	return NULL;
 }
 
-DwarfDIE::DwarfDIE(Dwarf *dwarf,
-				   CompilationUnit *unit,
-				   DIE *die,
-				   DwarfDIE *parent)
+DwarfDIE::DwarfDIE(Dwarf *dwarf, CompilationUnit *unit, DIE *die, DwarfDIE *parent)
+	: dwarf(dwarf),
+	  compilationUnit(compilationUnit),
+	  die(die),
+	  parent(parent)
 {
-	this->dwarf = dwarf;
-	this->compilationUnit = unit;
-	this->die = die;
-	this->parent = parent;
+
 }
 
 struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
@@ -686,53 +684,49 @@ uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
 }
 
 CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die)
+	: dwarf(dwarf),
+	  header(header),
+	  die(die)
 {
-	this->dwarf = dwarf;
-	this->header = hdr;
-	this->die = die;
+
 }
 
 Dwarf::Dwarf(const char *debugSymbols)
+	: macho(NULL), // this->macho = new KernelMachO(debugSymbols);
+	  machoWithDebug(macho),
+	  dwarf(macho->getSegment("__DWARF"),
+	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
+	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
+	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges"),
+	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
+	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
+	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
+	   __debug_str(macho->getSection("__DWARF", "__debug_str")),
+	   __apple_names(macho->getSection("__DWARF", "__apple_names")),
+	   __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
+	   __apple_types(macho->getSection("__DWARF", "__apple_types")),
+	   __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
 {
-	// this->macho = new KernelMachO(debugSymbols);
-
-	this->machoWithDebug = macho;
-
-	this->dwarf = macho->getSegment("__DWARF");
-
-	this->__debug_line = macho->getSection("__DWARF", "__debug_line");
-	this->__debug_loc = macho->getSection("__DWARF", "__debug_loc");
-	this->__debug_aranges = macho->getSection("__DWARF", "__debug_aranges");
-	this->__debug_info = macho->getSection("__DWARF", "__debug_info");
-	this->__debug_ranges = macho->getSection("__DWARF", "__debug_ranges");
-	this->__debug_abbrev = macho->getSection("__DWARF", "__debug_abbrev");
-	this->__debug_str = macho->getSection("__DWARF", "__debug_str");
-	this->__apple_names = macho->getSection("__DWARF", "__apple_names");
-	this->__apple_namespac = macho->getSection("__DWARF", "__apple_namespac");
-	this->__apple_types = macho->getSection("__DWARF", "__apple_types");
-	this->__apple_objc = macho->getSection("__DWARF", "__apple_objc");
-
-	this->populateDebugSymbols();
+	
 }
 
 Dwarf::Dwarf(MachO *macho, const char *debugSymbols)
+	: macho(macho),
+	  machoWithDebug(macho),
+	  dwarf(macho->getSegment("__DWARF"),
+	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
+	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
+	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges"),
+	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
+	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
+	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
+	   __debug_str(macho->getSection("__DWARF", "__debug_str")),
+	   __apple_names(macho->getSection("__DWARF", "__apple_names")),
+	   __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
+	   __apple_types(macho->getSection("__DWARF", "__apple_types")),
+	   __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
 {
-	this->macho = macho;
-	this->machoWithDebug = macho;
 
-	this->dwarf = macho->getSegment("__DWARF");
-
-	this->__debug_line = macho->getSection("__DWARF", "__debug_line");
-	this->__debug_loc = macho->getSection("__DWARF", "__debug_loc");
-	this->__debug_aranges = macho->getSection("__DWARF", "__debug_aranges");
-	this->__debug_info = macho->getSection("__DWARF", "__debug_info");
-	this->__debug_ranges = macho->getSection("__DWARF", "__debug_ranges");
-	this->__debug_abbrev = macho->getSection("__DWARF", "__debug_abbrev");
-	this->__debug_str = macho->getSection("__DWARF", "__debug_str");
-	this->__apple_names = macho->getSection("__DWARF", "__apple_names");
-	this->__apple_namespac = macho->getSection("__DWARF", "__apple_namespac");
-	this->__apple_types = macho->getSection("__DWARF", "__apple_types");
-	this->__apple_objc = macho->getSection("__DWARF", "__apple_objc");
 }
 
 DIE* Dwarf::getDebugInfoEntryByName(const char *name)

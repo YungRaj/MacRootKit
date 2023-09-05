@@ -21,7 +21,7 @@ namespace std
 	class Array
 	{
 		public:
-			Array() { head = NULL; tail = NULL; size = 0; }
+			Array() : head(NULL), tail(NULL), size(0) { }
 
 			~Array()
 			{
