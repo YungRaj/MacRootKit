@@ -21,6 +21,7 @@ Harness::Harness(xnu::Kernel *kernel)
     this->loader = new Loader(this->fuzzBinary);
 }
 
+template <typename CpuType>
 char* Harness::getMachOFromFatHeader(char *file_data)
 {
     struct fat_header *header = reinterpret_cast<struct fat_header*>(file_data);
@@ -43,20 +44,31 @@ char* Harness::getMachOFromFatHeader(char *file_data)
 
         offset = arch->offset;
 
-    #ifdef __arm64__
+	#ifdef __arm64__
 
-        if(cputype == CPU_TYPE_ARM64)
+		static_assert(CpuType == CPU_TYPE_ARM64);
+
+	#elif __x86_64__
+
+		static_assert(CpuType == CPU_TYPE_X86_64);
+
+	#endif
+
+		if constexpr (std::is_same_v<CpuType, CPU_TYPE_ARM64>)
+		{
+			if (cputype == CPU_TYPE_ARM64)
+			{
+				return file_data + offset;
+			}
+		}
+
+        if constexpr (std::is_same_v<CpuType, CPU_TYPE_X86_64>)
         {
-            return file_data + offset;
+            if (cputype == CPU_TYPE_X86_64)
+            {
+                return file_data + offset;
+            }
         }
-    #elif __x86_64__
-
-        if(cputype == CPU_TYPE_ARM64)
-        {
-            return file_data + offset;
-        }
-
-    #endif
 
         arch++;
     }
@@ -468,7 +480,7 @@ fail:
     printf("Load Kernel MachO failed!\n");
 }
 
-void Harness::loadBinary(const char *path, const char *symbolsFile)
+void Harness::loadBinary(const char *path, const char *mapFile)
 {
 
 }
@@ -495,7 +507,7 @@ void Harness::loadKernelExtension(const char *path)
 	this->loader->loadModuleFromKext(path);
 }
 
-void Harness::populateSymbols(const char *symbolsFile)
+void Harness::populateSymbols(const char *mapFile)
 {
 
 }

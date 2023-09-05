@@ -49,6 +49,8 @@ Loader::Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary)
 
 void Loader::loadModuleFromKext(const char *kextPath)
 {
+    Fuzzer::Module *module;
+
     uintptr_t loadAddress = 0;
     uintptr_t oldLoadAddress = 0;
 
@@ -63,6 +65,8 @@ void Loader::loadModuleFromKext(const char *kextPath)
     fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
     fuzzBinary->size = size;
     fuzzBinary->binary.macho = new KextMachO(loadAddress);
+
+    module = new Module(kextPath, fuzzBinary);
 }
 
 void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
