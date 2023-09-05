@@ -104,7 +104,7 @@ Kernel::Kernel(mach_port_t kernel_task_port)
 	: version(xnu::getKernelVersion()),
 	  osBuildVersion(xnu::getOSBuildVersion()),
 	  kernel_task_port(kernel_task_port),
-	  base(Kernel::fidnKernelBase()),
+	  base(Kernel::findKernelBase()),
 	  disassembler(new Disassembler(this)),
 	  kernelWriteLock(IOSimpleLockAlloc),
 	  kernelDebugKit(xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion))
