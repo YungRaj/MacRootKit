@@ -100,7 +100,7 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
     
     if(fd == -1)
     {
-        printf("Error opening file: %d\n", error);
+        printf("Error opening file: %d\n", fd);
 
         *out_buffer = NULL;
 
@@ -744,11 +744,11 @@ void loadKernel(const char *kernelPath, off_t slide, bool debugSymbols)
 
 int main()
 {
-    // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
+    loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Kernels/kernel.release.t6000", 0, false);
 
     // printf("Build Version: %s OSBuildVersion: %s\n", getKernelVersion(), getOSBuildVersion());
 
-    KDKFromBuildInfo(getOSBuildVersion(), getKernelVersion());
+    // KDKFromBuildInfo(getOSBuildVersion(), getKernelVersion());
 
     // loadKernel("/Library/Developer/KDKs/KDK_13.3.1_22E261.kdk/System/Library/Extensions/apfs.kext/Contents/MacOS/apfs", 0, false);
 

@@ -17,58 +17,59 @@ namespace Fuzzer
 
 	struct RawBinary
 	{
+		struct SegmentRaw
+		{
+			public:
+				SegmentRaw(uintptr_t address, size_t size, int prot)
+				{
+					this->address = address;
+					this->size = size;
+					this->prot = prot;
+				}
+
+				uintptr_t getAddress() { return address; }
+
+				size_t getSize() { return size; }
+
+				int getProt() { return prot; }
+			private:
+				uintptr_t address;
+
+				size_t size;
+
+				int prot;
+
+		};
+
+		struct SymbolRaw
+		{
+			public:
+				SymbolRaw(const char *name, uintptr_t address, int type)
+				{
+					this->name = name;
+					this->address = address;
+					this->type = type;
+				}
+
+				const char* getName() { return name; }
+
+				uintptr_t getAddress() { return address; }
+
+				int getType() { return type; }
+
+				bool isUndefined() { return false; }
+
+				bool isExternal() { return false; }
+
+			private:
+				const char *name;
+
+				uintptr_t address;
+
+				int type;
+		};
+
 		public:
-			struct SegmentRaw
-			{
-				public:
-					SegmentRaw(uintptr_t address, size_t size, int prot)
-					{
-						this->address = address;
-						this->size = size;
-						this->prot = prot;
-					}
-
-					uintptr_t getAddress() { return address; }
-
-					size_t getSize() { return size; }
-
-					int getProt() { return prot; }
-				private:
-					uintptr_t address;
-
-					size_t size;
-
-					int prot;
-
-			};
-
-			struct SymbolRaw
-			{
-				public:
-					SymbolRaw(const char *name, uintptr_t address, int type)
-					{
-						this->name = name;
-						this->address = address;
-						this->type = type;
-					}
-
-					const char* getName() { return name; }
-
-					uintptr_t getAddress() { return address; }
-
-					int getType() { return type; }
-
-					bool isUndefined() { return false; }
-
-					bool isExternal() { return false; }
-
-				private:
-					const char *name;
-
-					uintptr_t address;
-
-					int type;
-			};
 
 			explicit RawBinary(const char *path, const char *symbolsFile);
 
@@ -134,12 +135,12 @@ namespace Fuzzer
 			{ sym->getSymbol(); }
 		}
 		{
-			static_assert(std::is_same_v<Binary, MachO*> || std::is_same_v<T, RawBinary*>,
+			static_assert(std::is_same_v<Binary, MachO*> || std::is_same_v<Binary, RawBinary*>,
 		                  "Unsupported type for FuzzBinary:getSymbol()");
 
 		    if constexpr (std::is_base_of<MachO, Binary>::value)
 		    {
-		        return dynamic_cast<T>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
+		        return dynamic_cast<Sym>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
 		    }
 
 		    if constexpr (std::is_same_v<Binary, MachO*>)
