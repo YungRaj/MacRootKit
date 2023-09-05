@@ -95,6 +95,7 @@ struct nx_superblock {
 };
 
 typedef struct nx_superblock nx_superblock_t;
+
 """
 
 # Define the template for ctypes structure class
@@ -171,6 +172,8 @@ for typedef_type, typedef_name in typedefs:
 
 # Extract struct names and definitions using regular expressions
 struct_definitions = re.findall(r"struct ([a-zA-Z_]+) \{([\s\S]+?)\};", c_code)
+
+print(struct_definitions)
 
 # Process struct definitions and generate ctypes structure classes
 for struct_name, struct_body in struct_definitions:

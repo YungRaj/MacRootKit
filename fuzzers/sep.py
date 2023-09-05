@@ -13,7 +13,7 @@ struct sep_message {
     uint8_t     opcode;
     uint8_t     param;
     uint32_t    data;
-} __attribute__((packed));
+};
 
 static const
 struct sep_message (*mailbox_get_message)() = (void *)TARGET_MAILBOX_GET_MESSAGE;
@@ -223,3 +223,10 @@ def get_struct_format_from_ctypes_structure(ctypes_structure):
     return ''.join(struct_format_list)
 
 # Get the struct format string for each class
+
+sep_message_format = get_struct_format_from_ctypes_structure(sep_message)
+
+sep_message_size = struct.calcsize(sep_message_format)
+
+print(f"sep_message format: {sep_message_format}")
+print(f"sep_message size: {sep_message_size}")
