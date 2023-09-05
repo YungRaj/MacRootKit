@@ -105,8 +105,17 @@ namespace Fuzzer
 			Array<SegmentRaw*> segments;
 	};
 
+	template <typename T>
+	concept ClassType = std::is_class_v<T>;
+
+	template <typename T>
+	concept FundamentalType = std::is_fundamental_v<T>;
+
+	template <typename T>
+	concept PodType = std::is_pod_v<T>;
+
 	template<typename T>
-	concept IntegralOrPointer = std::is_integral_v<T> || std::is_pointer_v<T>;
+	concept IntegralOrPointerType = std::is_integral_v<T> || std::is_pointer_v<T>;
 
 	struct FuzzBinary
 	{
@@ -201,8 +210,8 @@ namespace Fuzzer
 	};
 
 	template <typename T>
-	concept FuzzableType = std::is_class_v<T> || std::is_fundamental_v<T> || std::is_pod_v<T> || IntegralOrPointerType<T>;
-	
+	concept FuzzableType = ClassType<T> || FundamentalType<T> || PodType<T> || IntegralOrPointerType<T>;
+
 	class Harness
 	{
 		explicit Harness(xnu::Kernel *kernel);
