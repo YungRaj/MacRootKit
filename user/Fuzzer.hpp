@@ -201,12 +201,8 @@ namespace Fuzzer
 	};
 
 	template <typename T>
-	struct FuzzableType
-	{
-	    static constexpr bool value =
-	        std::is_class_v<T> || std::is_fundamental_v<T> || std::is_pod_v<T> || IntegralOrPointerType<T>;
-	};
-
+	concept FuzzableType = std::is_class_v<T> || std::is_fundamental_v<T> || std::is_pod_v<T> || IntegralOrPointerType<T>;
+	
 	class Harness
 	{
 		explicit Harness(xnu::Kernel *kernel);
