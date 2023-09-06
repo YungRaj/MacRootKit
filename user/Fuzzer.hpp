@@ -161,7 +161,7 @@ namespace Fuzzer
 			{ bin->getSymbol(); sym->getName(); sym->getAddress();  }
 		}
 		{
-			static_assert(std::is_same_v<Binary, MachO*> || std::is_same_v<Binary, RawBinary*>,
+			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSymbol()");
 
 		    if constexpr (std::is_base_of<MachO, Binary>::value)
@@ -187,7 +187,7 @@ namespace Fuzzer
 			{ bin->getSegment(); seg->getName(); seg->getAddress(); }
 		}
 		{
-			static_assert(std::is_same_v<Binary, MachO*> || std::is_same_v<Binary, RawBinary*>,
+			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSegment()");
 
 		    if constexpr (std::is_base_of<MachO, Binary>::value)
@@ -229,7 +229,7 @@ namespace Fuzzer
 		template<typename T>
 		T getBinary()
 		{
-		    static_assert(std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>,
+		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Module::getBinary()");
 
 		    if constexpr (std::is_base_of<MachO, T>::value)
