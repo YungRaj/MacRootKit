@@ -123,6 +123,9 @@ namespace Fuzzer
 	template<typename T>
 	concept IntegralOrPointerType = IntegralType<T> || PointerType<T>;
 
+	template<typename T>
+	concept CastableType = FundamentalType<T> || PodType<T> || IntegralType<T> || PointerType<T>;
+
 	struct FuzzBinary
 	{
 		const char *path;
@@ -147,6 +150,9 @@ namespace Fuzzer
 		} binary;
 
 		static_assert(BinaryFormat<decltype(binary)>, "All types in the union must satisfy the BinaryFormat concept");
+
+		template<typename T>
+		T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
 		
 		const char* getPath() { return path; }
 

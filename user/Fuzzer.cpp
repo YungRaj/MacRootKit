@@ -412,7 +412,11 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
     if(reinterpret_cast<struct mach_header_64*>(file_data)->magic == FAT_CIGAM)
     {
-        file_data = this->getMachOFromFatHeader(file_data);
+    #ifdef __arm64__
+        file_data = this->getMachOFromFatHeader<CPU_TYPE_ARM64>(file_data);
+    #elif __x86_64__
+        file_data = this->getMachOFromFatHeader<CPU_TYPE_X86_64>(file_data);
+    #endif
     }
 
     *oldLoadAddress = UINT64_MAX;
