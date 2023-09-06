@@ -58,7 +58,7 @@ namespace Fuzzer
 			template<typename T>
 			T getBinary()
 			{
-			    static_assert(std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>,
+			    static_assert(BinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");
 
 			    if constexpr (std::is_base_of<MachO, T>::value)

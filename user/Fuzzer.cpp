@@ -507,7 +507,18 @@ void Harness::loadKernelExtension(const char *path)
 	this->loader->loadModuleFromKext(path);
 }
 
-void Harness::populateSymbols(const char *mapFile)
+void Harness::populateSymbolsFromMapFile(const char *mapFile)
 {
 
+}
+
+template <typename T>
+void Harness::mutate(T data) requires FuzzableType<T>
+{
+	if constexpr (IntegralType<T>)
+	{
+        
+    } else {
+        
+    }
 }

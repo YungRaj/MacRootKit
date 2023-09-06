@@ -115,7 +115,13 @@ namespace Fuzzer
 	concept PodType = std::is_pod_v<T>;
 
 	template<typename T>
-	concept IntegralOrPointerType = std::is_integral_v<T> || std::is_pointer_v<T>;
+	concept IntegralType = std::is_integral_v<T>;
+
+	template<typename T>
+	concept PointerType = std::is_pointer_v<T>;
+
+	template<typename T>
+	concept IntegralOrPointerType = IntegralType<T> || PointerType<T>;
 
 	struct FuzzBinary
 	{
