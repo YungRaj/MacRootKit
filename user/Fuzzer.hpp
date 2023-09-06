@@ -109,6 +109,9 @@ namespace Fuzzer
 	concept ClassType = std::is_class_v<T>;
 
 	template <typename T>
+	concept PointerToClassType = std::is_pointer_v<T> && std::is_class_v<std::remove_pointer_t<T>>;
+
+	template <typename T>
 	concept FundamentalType = std::is_fundamental_v<T>;
 
 	template <typename T>
@@ -140,6 +143,9 @@ namespace Fuzzer
 
 		union
 		{
+			/* We know the binary is a any of the below BinaryFormats */
+			void *bin;
+
 			/* Support MachO and Raw Binary */
 			MachO *macho;
 
@@ -183,12 +189,12 @@ namespace Fuzzer
 
 		    if constexpr (std::is_same_v<Binary, MachO*>)
 		    {
-		        return this->fuzzBinary->binary.macho->getSymbol(symbolname);
+		    	return this->fuzzBinary->binary.macho->getSymbol(symbolname);
 		    }
 
 		    if constexpr (std::is_same_v<Binary, RawBinary*>)
 		    {
-		        return this->fuzzBinary->binary.raw->getSymbol(symbolname);
+		    	return this->fuzzBinary->binary.raw->getSymbol(symbolname);
 		    }
 
 		    return NULL;
@@ -239,10 +245,15 @@ namespace Fuzzer
 		}
 
 		template<typename T>
-		T getBinary()
+		T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
 		{
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Module::getBinary()");
+
+		    if(!dynamic_cast<T>(this->fuzzBinary->binary.bin))
+		    {
+		    	return NULL
+		    }
 
 		    if constexpr (std::is_base_of<MachO, T>::value)
 		    {
@@ -251,7 +262,7 @@ namespace Fuzzer
 
 		    if constexpr (std::is_same_v<T, MachO*>)
 		    {
-		        return this->fuzzBinary->binary.macho;
+		    	return this->fuzzBinary->binary.macho;
 		    }
 
 		    if constexpr (std::is_same_v<T, RawBinary*>)

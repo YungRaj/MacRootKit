@@ -56,10 +56,15 @@ namespace Fuzzer
 			struct FuzzBinary* getModuleBinary() { return moduleBinary; }
 
 			template<typename T>
-			T getBinary()
+			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
 			{
 			    static_assert(BinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");
+
+			    if(!dynamic_cast<T>(this->fuzzBinary->binary.bin))
+			    {
+			    	return NULL;
+			    }
 
 			    if constexpr (std::is_base_of<MachO, T>::value)
 			    {
@@ -68,7 +73,7 @@ namespace Fuzzer
 
 			    if constexpr (std::is_same_v<T, MachO*>)
 			    {
-			        return this->fuzzBinary->binary.macho;
+			    	return this->fuzzBinary->binary.macho;
 			    }
 
 			    if constexpr (std::is_same_v<T, RawBinary*>)
