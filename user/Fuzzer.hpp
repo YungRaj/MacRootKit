@@ -9,6 +9,8 @@ extern "C"
 };
 
 class MachO;
+class KernelMachO;
+class KextMachO;
 
 namespace Fuzzer
 {
@@ -20,7 +22,7 @@ namespace Fuzzer
 		struct SegmentRaw
 		{
 			public:
-				SegmentRaw(uintptr_t address, size_t size, int prot) : address(address), size(size), prot(prot) { }
+				explicit SegmentRaw(uintptr_t address, size_t size, int prot) : address(address), size(size), prot(prot) { }
 
 				uintptr_t getAddress() { return address; }
 
@@ -39,7 +41,7 @@ namespace Fuzzer
 		struct SymbolRaw
 		{
 			public:
-				SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
+				explicit SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
 
 				const char* getName() { return name; }
 
@@ -141,6 +143,12 @@ namespace Fuzzer
 		template<typename T>
 		concept BinaryFormat = std::is_baseof<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>;
 
+		template <typename T>
+		using GetSymbolReturnType = decltype(std::declval<T>()->getSymbol(nullptr));
+
+		template <typename T>
+		using GetSegmentReturnType = decltype(std::declval<T>()->getSegment(nullptr));
+
 		union
 		{
 			/* We know the binary is a any of the below BinaryFormats */
@@ -157,9 +165,12 @@ namespace Fuzzer
 		} binary;
 
 		static_assert(BinaryFormat<MachO*>);
-		static_assert(BinaryFormat<RawBinary*>);
+		static_assert(BinaryFormat<Fuzzer::RawBinary*>);
 
-		static_assert(BinaryFormat<decltype(binary)>, "All types in the union must satisfy the BinaryFormat concept");
+		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
+		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
+
+		static_assert(BinaryFormat<decltype(binary.raw)> && BinaryFormat<decltype(binary.macho)>, "All types in the union must satisfy the BinaryFormat concept");
 
 		template<typename T>
 		T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
@@ -180,7 +191,9 @@ namespace Fuzzer
 
 		template<typename Sym, typename Binary>
 		Sym getSymbol(char *symbolname) requires requires (Sym sym, Binary bin) {
-			{ bin->getSymbol(); sym->getName(); sym->getAddress();  }
+			{ sym->getName(); }
+			{ sym->getAddress(); }
+			{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 		}
 		{
 			static_assert(BinaryFormat<Binary>,
@@ -206,7 +219,9 @@ namespace Fuzzer
 
 		template<typename Seg, typename Binary>
 		Seg getSegment(char *segname) requires requires (Seg seg, Binary bin) {
-			{ bin->getSegment(); seg->getName(); seg->getAddress(); }
+			{ seg->getName(); }
+			{ seg->getAddress(); }
+			{ std::is_same_v<GetSegmentReturnType<Binary>, Seg> }
 		}
 		{
 			static_assert(BinaryFormat<Binary>,
@@ -284,20 +299,23 @@ namespace Fuzzer
 		template <typename CpuType>
 		char* getMachOFromFatHeader(char *file_data);
 
-		bool mapSegmentsFromRawBinary(char *file_data, char *mapFile);
-		bool mapSegmentsFromMachO(char *file_data);
+		template<typename Binary>
+		bool mapSegments(char *file_data, char *mapFile);
 
-		void getMappingInfoForMachO(char *file_data, size_t *size, uintptr_t *load_addr);
+		template<typename Binary>
+		void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
 
 		void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 		void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
+		template<typename Binary = RawBinary>
 		void loadBinary(const char *path, const char *mapFile);
+
 		void loadKernel(const char *path, off_t slide);
 		void loadKernelExtension(const char *path);
-
 		void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
+		template<typename Binary = RawBinary>
 		void populateSymbolsFromMapFile(const char *mapFile);
 
 		template <typename T>

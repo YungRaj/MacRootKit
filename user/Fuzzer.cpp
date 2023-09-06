@@ -171,33 +171,42 @@ void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
     free(file_data);
 }
 
-void Harness::getMappingInfoForMachO(char *file_data, size_t *size, uintptr_t *load_addr)
+template<typename Binary>
+void Harness::getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr)
 {
-    struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
-
-    uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
-
-    for(int i = 0; i < header->ncmds; i++)
+    if constexpr (std::is_same_v<Binary, MachO>)
     {
-        struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+        struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-        uint32_t cmdtype = load_cmd->cmd;
-        uint32_t cmdsize = load_cmd->cmdsize;
+        uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
 
-        if(cmdtype == LC_SEGMENT_64)
+        for(int i = 0; i < header->ncmds; i++)
         {
-            struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
+            struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-            mach_vm_address_t vmaddr = segment_command->vmaddr;
+            uint32_t cmdtype = load_cmd->cmd;
+            uint32_t cmdsize = load_cmd->cmdsize;
 
-            if(vmaddr < *load_addr && strcmp(segment_command->segname, "__TEXT") == 0)
-                *load_addr = vmaddr;
+            if(cmdtype == LC_SEGMENT_64)
+            {
+                struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-            *size += segment_command->vmsize;
+                mach_vm_address_t vmaddr = segment_command->vmaddr;
+
+                if(vmaddr < *load_addr && strcmp(segment_command->segname, "__TEXT") == 0)
+                    *load_addr = vmaddr;
+
+                *size += segment_command->vmsize;
+            }
+
+            q += cmdsize;
         }
-
-        q += cmdsize;
     }
+
+    if constexpr (std::is_same_v<Binary, RawBinary>)
+    {
+
+    }    
 }
 
 void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress)
@@ -305,67 +314,78 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintpt
     }
 }
 
-bool Harness::mapSegmentsFromMachO(char *file_data)
+template<typename Binary>
+bool Harness::mapSegments(char *file_data, char *mapFile)
 {
-    struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
-
-    uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
-
-    for(int i = 0; i < header->ncmds; i++)
+    if constexpr (std::is_same_v<Binary, MachO>)
     {
-        struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+        struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-        uint32_t cmdtype = load_cmd->cmd;
-        uint32_t cmdsize = load_cmd->cmdsize;
+        uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
 
-        if(cmdtype == LC_SEGMENT_64)
+        for(int i = 0; i < header->ncmds; i++)
         {
-            struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
+            struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-            printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
-                                          segment_command->segname,
-                                          segment_command->vmaddr,
-                                          segment_command->vmaddr + segment_command->vmsize);
+            uint32_t cmdtype = load_cmd->cmd;
+            uint32_t cmdsize = load_cmd->cmdsize;
 
-            if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
+            if(cmdtype == LC_SEGMENT_64)
             {
-                printf("mprotect(R/W) failed!\n");
+                struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-                return false;
+                printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
+                                              segment_command->segname,
+                                              segment_command->vmaddr,
+                                              segment_command->vmaddr + segment_command->vmsize);
+
+                if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
+                {
+                    printf("mprotect(R/W) failed!\n");
+
+                    return false;
+                }
+
+                memcpy((void*) segment_command->vmaddr, file_data + segment_command->fileoff, segment_command->filesize);
+
+                uint8_t *sects  = q + sizeof(struct segment_command_64);
+
+                for(int j = 0; j < segment_command->nsects; j++)
+                {
+                    struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
+
+                    mach_vm_address_t sect_addr = section->addr;
+
+                    printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
+                                                    section->addr,
+                                                    section->addr + section->size,
+                                                    section->sectname);
+
+                    memcpy((void*) section->addr, file_data + section->offset, section->size);
+
+                    sects += sizeof(struct section_64);
+                };
+
+                if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, segment_command->maxprot) == -1)
+                {
+                    printf("mprotect(maxprot) failed!\n");
+
+                    return false;
+                }
             }
 
-            memcpy((void*) segment_command->vmaddr, file_data + segment_command->fileoff, segment_command->filesize);
+            q += cmdsize;
 
-            uint8_t *sects  = q + sizeof(struct segment_command_64);
-
-            for(int j = 0; j < segment_command->nsects; j++)
-            {
-                struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
-
-                mach_vm_address_t sect_addr = section->addr;
-
-                printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
-                                                section->addr,
-                                                section->addr + section->size,
-                                                section->sectname);
-
-                memcpy((void*) section->addr, file_data + section->offset, section->size);
-
-                sects += sizeof(struct section_64);
-            };
-
-            if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, segment_command->maxprot) == -1)
-            {
-                printf("mprotect(maxprot) failed!\n");
-
-                return false;
-            }
-        }
-
-        q += cmdsize;
+            return true;
+    }
     }
 
-    return true;
+    if constexpr (std::is_same_v<Binary, RawBinary>)
+    {
+
+    }
+
+    return false;
 }
 
 void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)
@@ -455,7 +475,7 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
     this->updateSegmentLoadCommandsForNewLoadAddress(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
 
-    success = this->mapSegmentsFromMachO(file_data);
+    success = this->mapSegments<MachO>(file_data, NULL);
 
     if(!success)
     {
@@ -484,6 +504,7 @@ fail:
     printf("Load Kernel MachO failed!\n");
 }
 
+template<typename Binary>
 void Harness::loadBinary(const char *path, const char *mapFile)
 {
 
@@ -511,6 +532,7 @@ void Harness::loadKernelExtension(const char *path)
 	this->loader->loadModuleFromKext(path);
 }
 
+template<typename Binary>
 void Harness::populateSymbolsFromMapFile(const char *mapFile)
 {
 

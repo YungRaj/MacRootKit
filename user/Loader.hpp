@@ -84,7 +84,14 @@ namespace Fuzzer
 			    return NULL;
 			}
 
-			uintptr_t getBase() { return base; }
+			template<typename T>
+			T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
+
+			template<typename T> requires IntegralOrPointerType<T>
+			T getBase()
+			{
+				return reinterpret_cast<T>(base);
+			}
 
 			size_t getSize() { return size; }
 
@@ -160,10 +167,26 @@ namespace Fuzzer
 
 			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
-			void linkSymbols(Module *module);
-			void linkSymbol(Module *module, Symbol *symbol);
+			template<typename Sym, typename Binary>
+			void linkSymbols(Module *module) requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			};
 
-			void stubFunction(Module *module, Symbol *symbol, uintptr_t stub);
+			template<typename Sym, typename Binary>
+			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym){
+				{ sym->getName() };
+				{ sym->getAddress() };
+				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			};
+
+			template<typename Sym, typename Binary>
+			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			};
 
 			void* allocateModuleMemory(uintptr_t addr, size_t sz, int prot);
 
