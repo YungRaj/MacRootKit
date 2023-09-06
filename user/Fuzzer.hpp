@@ -139,21 +139,25 @@ namespace Fuzzer
 		size_t size;
 
 		template<typename T>
-		concept BinaryFormat = std::is_baseof<MachO, T> || std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary>;
+		concept BinaryFormat = std::is_baseof<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>;
 
 		union
 		{
 			/* We know the binary is a any of the below BinaryFormats */
 			void *bin;
 
-			/* Support MachO and Raw Binary */
+			/* Support MachO */
 			MachO *macho;
 
+			/* Support Raw Binary */
 			RawBinary *raw;
 
 			/* Support ELFs and PE32 binaries later */
 			/* This union constrains the Binary Format types */
 		} binary;
+
+		static_assert(BinaryFormat<MachO*>);
+		static_assert(BinaryFormat<RawBinary*>);
 
 		static_assert(BinaryFormat<decltype(binary)>, "All types in the union must satisfy the BinaryFormat concept");
 
@@ -182,7 +186,7 @@ namespace Fuzzer
 			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSymbol()");
 
-		    if constexpr (std::is_base_of<MachO, Binary>::value)
+		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<Sym>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
 		    }
@@ -208,7 +212,7 @@ namespace Fuzzer
 			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSegment()");
 
-		    if constexpr (std::is_base_of<MachO, Binary>::value)
+		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<Seg>(this->fuzzBinary->binary.macho->getSegment(segname));
 		    }
@@ -252,10 +256,10 @@ namespace Fuzzer
 
 		    if(!dynamic_cast<T>(this->fuzzBinary->binary.bin))
 		    {
-		    	return NULL
+		    	return NULL;
 		    }
 
-		    if constexpr (std::is_base_of<MachO, T>::value)
+		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
 		    }

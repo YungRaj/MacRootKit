@@ -66,7 +66,7 @@ namespace Fuzzer
 			    	return NULL;
 			    }
 
-			    if constexpr (std::is_base_of<MachO, T>::value)
+			    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 			    {
 			        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
 			    }
