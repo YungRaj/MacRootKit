@@ -144,7 +144,18 @@ namespace Fuzzer
 		size_t size;
 
 		template<typename T>
-		concept BinaryFormat = std::is_baseof<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*> || std::is_same_v<T, RawBinary*>;
+		concept MachOFormat = std::is_baseof<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
+
+		template<typename T>
+		concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
+
+		template<typename T>
+		concept BinaryFormat = MachOFormat<T> || RawBinaryFormat<T>
+
+		static_assert(MachOFormat<KernelMachO*>);
+		static_assert(MachOFormat<KextMachO*>);
+
+		static_assert(RawBinaryFormat<RawBinary*>);
 
 		template <typename T>
 		using GetSymbolReturnType = decltype(std::declval<T>()->getSymbol(nullptr));
@@ -175,11 +186,11 @@ namespace Fuzzer
 			/* This union constrains the Binary Format types */
 		} binary;
 
-		static_assert(BinaryFormat<MachO*>);
-		static_assert(BinaryFormat<Fuzzer::RawBinary*>);
-
 		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
 		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
+
+		static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
+		static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
 
 		static_assert(BinaryFormat<decltype(binary.raw)> && BinaryFormat<decltype(binary.macho)>, "All types in the union must satisfy the BinaryFormat concept");
 
@@ -282,7 +293,7 @@ namespace Fuzzer
 		{
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Module::getBinary()");
-		    
+
 		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
@@ -320,7 +331,7 @@ namespace Fuzzer
 		void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 		void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
-		template<typename Binary = RawBinary> requires BinaryFormat<Binary> && !std::is_same_v<Binary, MachO>
+		template<typename Binary = RawBinary> requires BinaryFormat<Binary> && !MachOFormat<Binary>
 		void loadBinary(const char *path, const char *mapFile);
 
 		void loadMachO(const char *path);
