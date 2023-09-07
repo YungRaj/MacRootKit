@@ -183,6 +183,13 @@ namespace Fuzzer
 				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 			};
 
+			template<typename Sym, typename Binary>
+			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
+				{ sym->getName() };
+				{ sym->getAddress() };
+				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			};
+
 			void* allocateModuleMemory(uintptr_t addr, size_t sz, int prot);
 
 		private:

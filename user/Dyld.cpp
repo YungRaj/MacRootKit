@@ -31,7 +31,7 @@ static char* Contains(char *str, const char *substr)
 	return strstr(str, substr);
 }
 
-Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task) : 	kernel(kernel), task(task)
+Dyld::Dyld(xnu::Kernel *kernel, xnu::Task *task) : kernel(kernel), task(task)
 {
 	this->iterateAllImages();
 }
