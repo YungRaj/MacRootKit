@@ -24,7 +24,16 @@ namespace Fuzzer
 			public:
 				explicit SegmentRaw(uintptr_t address, size_t size, int prot) : address(address), size(size), prot(prot) { }
 
+				template<typename T>
+				T operator[](uint64_t index) { return reinterpret_cast<T>((uint8_t*) address + index); }
+
 				uintptr_t getAddress() { return address; }
+
+				template<typename T>
+				T getAddressAs()
+				{
+					return reinterpret_cast<T>(address);
+				}
 
 				size_t getSize() { return size; }
 
@@ -65,7 +74,16 @@ namespace Fuzzer
 
 			explicit RawBinary(const char *path, const char *mapFile);
 
+			template<typename T>
+			T operator[](uint64_t index) { return reinterpret_cast<T>((uint8_t*) base + index); }
+
 			uintptr_t getBase() { return base; }
+
+			template<typename T>
+			T getBaseAs()
+			{
+				return reinterpret_cast<T>(base);
+			}
 
 			char* getMapFile() { return mapFile; }
 
