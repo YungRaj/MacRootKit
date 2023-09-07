@@ -18,8 +18,20 @@ Harness::Harness(xnu::Kernel *kernel)
     loadKernel(kdkInfo->kernelPath, 0);
     addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), kdkInfo->kernelDebugSymbolsPath);
 
-    this->loader = new Loader(this->fuzzBinary);
+    loader = new Loader(this->fuzzBinary);
 }
+
+Harness::Harness(const char *binary)
+ : fuzzBinary(new FuzzBinary)
+ {
+
+ }
+
+ Harness::Harness(const char *binary, const char *mapFile)
+ : fuzzBinary(new FuzzBinary)
+ {
+
+ }
 
 template <typename CpuType>
 char* Harness::getMachOFromFatHeader(char *file_data)
@@ -388,6 +400,12 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
     return false;
 }
 
+template<typename Binary>
+bool Harness::unmapSegments()
+{
+    
+}
+
 void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)
 {
     bool success;
@@ -541,7 +559,7 @@ void Harness::populateSymbolsFromMapFile(const char *mapFile)
 template <typename T>
 void Harness::mutate(T data) requires FuzzableType<T>
 {
-	if constexpr (IntegralType<T>)
+	if constexpr (ScalarType<T>)
 	{
         
     } else {

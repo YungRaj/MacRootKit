@@ -61,11 +61,6 @@ namespace Fuzzer
 			    static_assert(BinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");
 
-			    if(!dynamic_cast<T>(this->fuzzBinary->binary.bin))
-			    {
-			    	return NULL;
-			    }
-
 			    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 			    {
 			        return dynamic_cast<T>(this->fuzzBinary->binary.macho);

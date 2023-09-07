@@ -117,6 +117,9 @@ namespace Fuzzer
 	concept FundamentalType = std::is_fundamental_v<T>;
 
 	template <typename T>
+	concept ScalarType = std::is_scalar_v<T>;
+
+	template <typename T>
 	concept PodType = std::is_pod_v<T>;
 
 	template<typename T>
@@ -160,7 +163,15 @@ namespace Fuzzer
 			/* Support Raw Binary */
 			RawBinary *raw;
 
-			/* Support ELFs and PE32 binaries later */
+			/* Support ELFs, PE32 and TE binaries later */
+
+			/* Support EFI fuzzing on PE32/TE */
+			/* Support Linux kernel fuzzing on ELFs */
+			
+			// PortableExecutable pe;
+			// TerseExecutable te;
+			// ELF elf;
+
 			/* This union constrains the Binary Format types */
 		} binary;
 
@@ -253,6 +264,9 @@ namespace Fuzzer
 	{
 		explicit Harness(xnu::Kernel *kernel);
 
+		explicit Harness(const char *binary);
+		explicit Harness(const char *binary, const char *mapFile);
+
 		~Harness();
 
 		struct FuzzBinary* getFuzzBinary() { return fuzzBinary; }
@@ -268,12 +282,7 @@ namespace Fuzzer
 		{
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Module::getBinary()");
-
-		    if(!dynamic_cast<T>(this->fuzzBinary->binary.bin))
-		    {
-		    	return NULL;
-		    }
-
+		    
 		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
@@ -296,26 +305,31 @@ namespace Fuzzer
 
 		char* getMapFile() { return mapFile; }
 
-		template <typename CpuType>
+		template <typename CpuType> requires ScalarType<T>
 		char* getMachOFromFatHeader(char *file_data);
 
-		template<typename Binary>
+		template<typename Binary> requires BinaryFormat<Binary>
 		bool mapSegments(char *file_data, char *mapFile);
 
-		template<typename Binary>
+		template<typename Binary> requires BinaryFormat<Binary>
+		bool unmapSegments();
+
+		template<typename Binary> requires BinaryFormat<Binary>
 		void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
 
 		void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 		void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
-		template<typename Binary = RawBinary>
+		template<typename Binary = RawBinary> requires BinaryFormat<Binary> && !std::is_same_v<Binary, MachO>
 		void loadBinary(const char *path, const char *mapFile);
+
+		void loadMachO(const char *path);
 
 		void loadKernel(const char *path, off_t slide);
 		void loadKernelExtension(const char *path);
 		void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
-		template<typename Binary = RawBinary>
+		template<typename Binary = RawBinary> requires BinaryFormat<Binary>
 		void populateSymbolsFromMapFile(const char *mapFile);
 
 		template <typename T>
