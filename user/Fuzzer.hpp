@@ -347,12 +347,12 @@ namespace Fuzzer
 		void mutate(T data) requires FuzzableType<T>;
 
 		template<typename Func, typename... Args, typename Binary, typename Sym>
-    	std::invoke_result_t<Func, Args...> execute(Func func, Args... args) requires requires (Binary bin, Sym sym)
-    	{
-    		{ sym->getName() };
+		std::invoke_result_t<Func, Args...> execute(Func func, Args... args) requires requires (Binary bin, Sym sym)
+		{
+			{ sym->getName() };
 			{ sym->getAddress() };
 			{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
-    	};
+		};
 
 		private:
 			xnu::Kernel *kernel;
