@@ -12,6 +12,12 @@ class MachO;
 class KernelMachO;
 class KextMachO;
 
+extern "C"
+{
+	extern char* cxx_demangle(char *mangled);
+	extern char* swift_demangle(char *mangled);
+}
+
 namespace Fuzzer
 {
 	class Loader;
@@ -22,7 +28,9 @@ namespace Fuzzer
 		struct SegmentRaw
 		{
 			public:
-				explicit SegmentRaw(uintptr_t address, size_t size, int prot) : address(address), size(size), prot(prot) { }
+				explicit SegmentRaw(const char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
+
+				const char* getName() { return name; }
 
 				template<typename T>
 				T operator[](uint64_t index) { return reinterpret_cast<T>((uint8_t*) address + index); }
@@ -38,25 +46,72 @@ namespace Fuzzer
 				size_t getSize() { return size; }
 
 				int getProt() { return prot; }
+
+				int getIndex() { return idx; }
+
 			private:
+				char *name;
+
 				uintptr_t address;
 
 				size_t size;
 
 				int prot;
+				int idx;
 
 		};
 
 		struct SymbolRaw
 		{
+			enum LanguageType
+			{
+				LANG_TYPE_C,
+				LANG_TYPE_CXX,
+				LANG_TYPE_CXX,
+				LANG_TYPE_OBJC,
+				LANG_TYPE_SWIFT,
+				LANG_TYPE_RUST
+			};
+
+			template<LanguageType LangType>
+			concept ManglableLang = LangType == LANG_TYPE_CXX || LangType == LANG_TYPE_SWIFT;
+
 			public:
 				explicit SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
 
 				const char* getName() { return name; }
 
+				template<LanguageType LangType> requires ManglableLang<LangType>
+				char* getDemangledName()
+				{
+					if constexpr (LangType == LANG_TYPE_SWIFT)
+					{
+						char *_swift_demangle = swift_demangle(getName());
+
+						if(_swift_demangle)
+							return _swift_demangle;
+					}
+
+					if constexpr (LangType == LANG_TYPE_CXX)
+					{
+						char *_cxx_demangle = cxx_demangle(getName());
+
+						if(_cxx_demangle)
+							return _cxx_demangle;
+					}
+
+					char *empty = new char[1];
+
+					*empty = '\0';
+
+					return empty;
+				}
+
 				uintptr_t getAddress() { return address; }
 
 				int getType() { return type; }
+
+				bool isNamed() { return !name || strcmp(name, "") == 0; }
 
 				bool isUndefined() { return false; }
 
@@ -113,8 +168,8 @@ namespace Fuzzer
 				return NULL;
 			}
 
-			void populateSymbolsFromLinkerMap();
-			void populateSegmentsFromLinkerMap();
+			void populateSymbols();
+			void populateSegments();
 
 		private:
 			uintptr_t base;
@@ -181,6 +236,9 @@ namespace Fuzzer
 		template <typename T>
 		using GetSegmentReturnType = decltype(std::declval<T>()->getSegment(nullptr));
 
+		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
+		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
+
 		union
 		{
 			/* We know the binary is a any of the below BinaryFormats */
@@ -195,7 +253,7 @@ namespace Fuzzer
 			/* Support ELFs, PE32 and TE binaries later */
 
 			/* Support EFI fuzzing on PE32/TE */
-			/* Support Linux kernel fuzzing on ELFs */
+			/* Support Linux Binary fuzzing on ELFs */
 			
 			// PortableExecutable pe;
 			// TerseExecutable te;
@@ -203,9 +261,6 @@ namespace Fuzzer
 
 			/* This union constrains the Binary Format types */
 		} binary;
-
-		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
-		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
 
 		static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
 		static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
@@ -330,7 +385,7 @@ namespace Fuzzer
 		    return NULL;
 		}
 
-		Loader* getLoader() { return loader; }
+		Fuzzer::Loader* getLoader() { return loader; }
 
 		char* getMapFile() { return mapFile; }
 
@@ -370,7 +425,7 @@ namespace Fuzzer
 			{ sym->getAddress() };
 			{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 		};
-		std::invoke_result_t<Func, Args...> execute(Func func, Args... args);
+		std::invoke_result_t<Func, Args...> execute(const char *name, Func func, Args... args);
 
 		private:
 			xnu::Kernel *kernel;
@@ -379,7 +434,7 @@ namespace Fuzzer
 
 			struct FuzzBinary *fuzzBinary;
 
-			Loader *loader;
+			Fuzzer::Loader *loader;
 
 			const char *mapFile;
 	};

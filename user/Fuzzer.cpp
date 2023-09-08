@@ -30,7 +30,7 @@ Harness::Harness(const char *binary)
  Harness::Harness(const char *binary, const char *mapFile)
  : fuzzBinary(new FuzzBinary)
  {
-
+    
  }
 
 template <typename CpuType>
@@ -403,7 +403,7 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
 template<typename Binary>
 bool Harness::unmapSegments()
 {
-    
+
 }
 
 void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)
@@ -565,4 +565,10 @@ void Harness::mutate(T data) requires FuzzableType<T>
     } else {
         
     }
+}
+
+template<typename Func, typename... Args, typename Binary, typename Sym>
+std::invoke_result_t<Func, Args...> Harnes::execute(const char *name, Func func, Args... args)
+{
+
 }

@@ -18,12 +18,14 @@ namespace Fuzzer
 	class Module
 	{
 		public:
-			explicit Module(const char *path, struct FuzzBinary *binary) 
-				: path(path), moduleBinary(binary), mainBinary() { }
+			explicit Module(Fuzzer::Loader *loader, const char *path, struct FuzzBinary *binary) 
+				: loader(loader), path(path), moduleBinary(loader->getFuzzBinary()), mainBinary() { }
 
 			explicit Module(const char *path, uintptr_t base, off_t slide) : path(path), base(base), slide(slide) { }
 
 			~Module();
+
+			Fuzzer::Loader* getLoader() { return loader; }
 
 			const char* getName() { return name; }
 
@@ -117,6 +119,8 @@ namespace Fuzzer
 		    }
 
 		private:
+			Loader *loader;
+
 			const char *name;
 			const char *path;
 
