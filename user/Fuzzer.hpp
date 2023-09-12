@@ -296,10 +296,6 @@ namespace Fuzzer
 			}
 		};
 
-		using AnyBinary = Binary<void*>;
-
-		AnyBinary binary;
-
 		template<PointerToClassType T>
 		constexpr Binary<T> MakeBinary(T ptr)
 		{
@@ -315,6 +311,10 @@ namespace Fuzzer
 					  BinaryFormat<decltype(binary.terseExecutable)> &&
 					  BinaryFormat<decltype(binary.raw)>,
 					  "All types in the union must satisfy the BinaryFormat concept");
+
+		using AnyBinary = Binary<void*>;
+
+		AnyBinary binary;
 
 		template<typename T>
 		T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
