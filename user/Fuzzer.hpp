@@ -12,6 +12,10 @@ class MachO;
 class KernelMachO;
 class KextMachO;
 
+class PE;
+class TE;
+class ELF;
+
 extern "C"
 {
 	extern char* cxx_demangle(char *mangled);
@@ -217,13 +221,22 @@ namespace Fuzzer
 		size_t size;
 
 		template<typename T>
-		concept MachOFormat = std::is_baseof<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
+		concept MachOFormat = std::is_base_of_v<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
+
+		template<typename T>
+		concept ELFFormat = std::is_same_v<T, ELF*>;
+
+		template<typename T>
+		concept PEFormat = std::is_same_v<T, PE*>;
+
+		template<typename T>
+		concept TEFormat = std::is_same_v<T, TE*>;
 
 		template<typename T>
 		concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
 
 		template<typename T>
-		concept BinaryFormat = MachOFormat<T> || RawBinaryFormat<T>
+		concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T>;
 
 		static_assert(MachOFormat<KernelMachO*>);
 		static_assert(MachOFormat<KextMachO*>);
@@ -239,33 +252,39 @@ namespace Fuzzer
 		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
 		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
 
-		union
+		template <PointerToClassType T> requires BinaryFormat<T>
+		union Binary
 		{
 			/* We know the binary is a any of the below BinaryFormats */
-			void *bin;
+			PointerToClassType bin;
 
 			/* Support MachO */
 			MachO *macho;
 
+			/* Support Linux Binary fuzzing on ELFs */
+			ELF *elf;
+
+			/* Support EFI fuzzing on PE32/TE */
+			PE *portableExecutable;
+
+			TE *terseExecutable;
+
 			/* Support Raw Binary */
 			RawBinary *raw;
 
-			/* Support ELFs, PE32 and TE binaries later */
-
-			/* Support EFI fuzzing on PE32/TE */
-			/* Support Linux Binary fuzzing on ELFs */
-			
-			// PortableExecutable pe;
-			// TerseExecutable te;
-			// ELF elf;
-
 			/* This union constrains the Binary Format types */
+			/* The following binary formats are supported but may not be implemented */
 		} binary;
 
 		static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
 		static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
 
-		static_assert(BinaryFormat<decltype(binary.raw)> && BinaryFormat<decltype(binary.macho)>, "All types in the union must satisfy the BinaryFormat concept");
+		static_assert(BinaryFormat<decltype(binary.macho)> &&
+					  BinaryFormat<decltype(binary.elf)>&&
+					  BinaryFormat<decltype(binary.portableExecutable)> &&
+					  BinaryFormat<decltype(binary.terseExecutable)> &&
+					  BinaryFormat<decltype(binary.raw)>,
+					  "All types in the union must satisfy the BinaryFormat concept");
 
 		template<typename T>
 		T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
@@ -294,7 +313,7 @@ namespace Fuzzer
 			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSymbol()");
 
-		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
+		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<Sym>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
 		    }
@@ -322,7 +341,7 @@ namespace Fuzzer
 			static_assert(BinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSegment()");
 
-		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
+		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<Seg>(this->fuzzBinary->binary.macho->getSegment(segname));
 		    }
@@ -367,7 +386,7 @@ namespace Fuzzer
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Module::getBinary()");
 
-		    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
+		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
 		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
 		    }
