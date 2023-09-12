@@ -288,11 +288,11 @@ namespace Fuzzer
 			Binary(T ptr) : bin(ptr) {}
 
 			template <typename U> requires BinaryFormat<U>
-			BinaryUnion(const BinaryUnion<U>& other)
+			Binary(const Binary<U>& other)
 			{
 				static_assert(std::is_convertible_v<U, T>, "Incompatible BinaryFormat types for type punning");
 				
-				binPtr = reinterpret_cast<T>(static_cast<U>(other.binPtr));
+				binPtr = static_cast<T>(static_cast<U>(other.binPtr));
 			}
 		};
 
