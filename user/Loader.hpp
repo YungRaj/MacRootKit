@@ -25,11 +25,11 @@ namespace Fuzzer
 
 			~Module();
 
-			Fuzzer::Loader* getLoader() { return loader; }
+			constexpr Fuzzer::Loader* getLoader() const { return loader; }
 
-			const char* getName() { return name; }
+			constexpr const char* getName() const { return name; }
 
-			const char* getPath() { return path; }
+			constexpr const char* getPath() const { return path; }
 
 			uintptr_t getEntryPoint();
 
@@ -53,9 +53,9 @@ namespace Fuzzer
 				{ sym->isExternal(); }
 			}
 
-			struct FuzzBinary* getMainBinary() { return mainBinary; }
+			constexpr struct FuzzBinary* getMainBinary() const { return mainBinary; }
 
-			struct FuzzBinary* getModuleBinary() { return moduleBinary; }
+			constexpr struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
 
 			template<typename T>
 			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
@@ -81,18 +81,18 @@ namespace Fuzzer
 			    return NULL;
 			}
 
-			template<typename T>
-			T operator[](uint64_t index) requires CastableType<T> { return reinterpret_cast<T>((uint8_t*) base + index); }
+			template<typename T> requires CastableType<T>
+			constexpr T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
 
 			template<typename T> requires IntegralOrPointerType<T>
-			T getBase()
+			constexpr T getBase() const
 			{
 				return reinterpret_cast<T>(base);
 			}
 
-			size_t getSize() { return size; }
+			constexpr size_t getSize() const { return size; }
 
-			off_t getSlide() { return slide; }
+			constexpr off_t getSlide() const { return slide; }
 
 		    void load();
 
@@ -141,11 +141,11 @@ namespace Fuzzer
 
 			~Loader();
 
-			Fuzzer::Harness* getHarness() { return harness; }
+			constexpr Fuzzer::Harness* getHarness() const { return harness; }
 
-			struct FuzzBinary* getFuzzBinary() { return binary; }
+			constexpr struct FuzzBinary* getFuzzBinary() const { return binary; }
 
-			Architecture* getArchitecture() { return arch; }
+			constexpr inline Architecture* getArchitecture() const { return arch; }
 
 			Fuzzer::Module* getModule(char *name)
 			{
