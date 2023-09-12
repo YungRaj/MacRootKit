@@ -30,7 +30,7 @@ Harness::Harness(const char *binary)
  Harness::Harness(const char *binary, const char *mapFile)
  : fuzzBinary(new FuzzBinary)
  {
-    
+
  }
 
 template <typename CpuType>
@@ -541,7 +541,7 @@ void Harness::loadKernel(const char *kernelPath, off_t slide)
     this->fuzzBinary->base = reinterpret_cast<void*>(loadAddress);
     this->fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
     this->fuzzBinary->size = loadSize;
-    this->fuzzBinary->binary.macho = new KernelMachO(loadAddress);
+    this->fuzzBinary->binary = MakeBinary<KernelMachO*>(new KernelMachO(loadAddress));
 }
 
 

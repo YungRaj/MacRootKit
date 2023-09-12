@@ -64,7 +64,7 @@ void Loader::loadModuleFromKext(const char *kextPath)
     fuzzBinary->base = reinterpret_cast<void*>(loadAddress);
     fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
     fuzzBinary->size = size;
-    fuzzBinary->binary.macho = new KextMachO(loadAddress);
+    fuzzBinary->binary = MakeBinary<KextMachO*>(new KextMachO(loadAddress));
 
     module = new Module(kextPath, fuzzBinary);
 }
