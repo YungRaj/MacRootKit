@@ -150,6 +150,16 @@ namespace xnu
 		char kernelDebugSymbolsPath[KDK_PATH_SIZE];
 	};
 
+	template<typename T>
+	struct Xref
+	{
+		mach_vm_address_t what;
+
+		mach_vm_address_t where;
+
+		T data;
+	};
+
 	class KDK
 	{
 		public:
@@ -175,10 +185,14 @@ namespace xnu
 
 			char* findString(char *s);
 
-			std::Array<mach_vm_address_t> getExternalReferences(mach_vm_address_t addr);
+			template<typename T>
+			std::Array<Xref<T>*> getExternalReferences(mach_vm_address_t addr);
 
-			std::Array<mach_vm_address_t> getStringReferences(mach_vm_address_t addr);
-			std::Array<mach_vm_address_t> getStringReferences(const char *s);
+			template<typename T>
+			std::Array<Xref<T>*> getStringReferences(mach_vm_address_t addr);
+
+			template<typename T>
+			std::Array<Xref<T>*> getStringReferences(const char *s);
 
 			void parseDebugInformation();
 

@@ -398,17 +398,20 @@ char* KDK::findString(char *s)
 
 }
 
-std::Array<mach_vm_address_t> KDK::getExternalReferences(mach_vm_address_t addr)
+template<typename T>
+std::Array<Xref<T>*> KDK::getExternalReferences(mach_vm_address_t addr)
 {
 
 }
 
-std::Array<mach_vm_address_t> KDK::getStringReferences(mach_vm_address_t addr)
+template<typename T>
+std::Array<Xref<T>*> KDK::getStringReferences(mach_vm_address_t addr)
 {
 
 }
 
-std::Array<mach_vm_address_t> KDK::getStringReferences(const char *s)
+template<typename T>
+std::Array<Xref<T>*> KDK::getStringReferences(const char *s)
 {
 
 }
