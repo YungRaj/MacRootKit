@@ -296,7 +296,9 @@ namespace Fuzzer
 			}
 		};
 
-		BinaryUnion<void*> binary;
+		using AnyBinary = Binary<void*>;
+
+		AnyBinary binary;
 
 		template<PointerToClassType T>
 		constexpr Binary<T> MakeBinary(T ptr)
