@@ -1,7 +1,9 @@
 #ifndef __ELF_HPP_
 #define __ELF_HPP_
 
-class ELF
+#include "BinaryFormat.hpp"
+
+class ELF : public Binary::BinaryFormat
 {
 	public:
 

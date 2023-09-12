@@ -3,6 +3,8 @@
 
 #include "mach-o.h"
 
+#include "BinaryFormat.hpp"
+
 #include "Array.hpp"
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"
@@ -24,7 +26,7 @@ class Section;
 
 #endif
 
-class MachO
+class MachO : public Binary::BinaryFormat
 {
 	public:
 		MachO();

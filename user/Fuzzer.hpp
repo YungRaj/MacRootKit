@@ -8,6 +8,8 @@ extern "C"
 	#include <stdio.h>
 };
 
+#include "BinaryFormat.hpp"
+
 class MachO;
 class KernelMachO;
 class KextMachO;
@@ -27,7 +29,7 @@ namespace Fuzzer
 	class Loader;
 	class Module;
 
-	struct RawBinary
+	struct RawBinary : Binary::BinaryFormat
 	{
 		struct SegmentRaw
 		{
@@ -187,8 +189,11 @@ namespace Fuzzer
 	template <typename T>
 	concept ClassType = std::is_class_v<T>;
 
+	template<typename T>
+	concept VoidPointerType = std::is_same_v<std::remove_pointer_t<T>, void>;
+
 	template <typename T>
-	concept PointerToClassType = std::is_pointer_v<T> && std::is_class_v<std::remove_pointer_t<T>>;
+	concept PointerToClassType = (std::is_pointer_v<T> && std::is_class_v<std::remove_pointer_t<T>>) || VoidPointerType<T>;
 
 	template <typename T>
 	concept FundamentalType = std::is_fundamental_v<T>;
@@ -236,7 +241,7 @@ namespace Fuzzer
 		concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
 
 		template<typename T>
-		concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T>;
+		concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T> || VoidPointerType<T>;
 
 		static_assert(MachOFormat<KernelMachO*>);
 		static_assert(MachOFormat<KextMachO*>);
@@ -256,7 +261,7 @@ namespace Fuzzer
 		union Binary
 		{
 			/* We know the binary is a any of the below BinaryFormats */
-			PointerToClassType bin;
+			T bin;
 
 			/* Support MachO */
 			MachO *macho;
@@ -272,9 +277,32 @@ namespace Fuzzer
 			/* Support Raw Binary */
 			RawBinary *raw;
 
+			/* Support void* to use type punning */
+			void* binPtr;
+
 			/* This union constrains the Binary Format types */
 			/* The following binary formats are supported but may not be implemented */
-		} binary;
+
+			Binary() : binPtr(nullptr) {}
+
+			Binary(T ptr) : bin(ptr) {}
+
+			template <typename U> requires BinaryFormat<U>
+			BinaryUnion(const BinaryUnion<U>& other)
+			{
+				static_assert(std::is_convertible_v<U, T>, "Incompatible BinaryFormat types for type punning");
+				
+				binPtr = reinterpret_cast<T>(static_cast<U>(other.binPtr));
+			}
+		};
+
+		BinaryUnion<void*> binary;
+
+		template<PointerToClassType T>
+		constexpr Binary<T> MakeBinary(T ptr)
+		{
+		    return Binary<T>(ptr);
+		}
 
 		static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
 		static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
