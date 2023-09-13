@@ -413,7 +413,7 @@ namespace Fuzzer
 		}
 
 		template<typename T>
-		T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
+		T getBinary() requires BinaryFormat<T> && PointerToClassType<T>
 		{
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Harness::getBinary()");
