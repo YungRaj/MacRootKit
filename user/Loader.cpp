@@ -30,15 +30,6 @@ void Module::mapSegment(Seg segment) requires requires(Seg seg) {
 
 }
 
-template<typename Sect>
-void Module::mapSection(Sect section) requires requires(Sect sect) {
-    { sect.getAddress() };
-    { sect.getSize() };
-}
-{
-
-}
-
 Loader::Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary)
     : architecture(Architecture::getArchitecture()),
       harness(harness),
@@ -181,16 +172,19 @@ fail:
     printf("Load Kext MachO failed!\n");
 }
 
+template<typename Sym, typename Binary>
 void Loader::linkSymbols(Module *module)
 {
 
 }
 
+template<typename Sym, typename Binary>
 void Loader::linkSymbol(Module *module, Symbol *symbol)
 {
 
 }
 
+template<typename Sym, typename Binary>
 void Loader::stubFunction(Module *module, Symbol *symbol, uintptr_t stub)
 {
 

@@ -568,7 +568,7 @@ void Harness::mutate(T data) requires FuzzableType<T>
 }
 
 template<typename Func, typename... Args, typename Binary, typename Sym>
-std::invoke_result_t<Func, Args...> Harnes::execute(const char *name, Func func, Args... args)
+std::invoke_result_t<Func, Args...> Harness::execute(const char *name, Func func, Args... args)
 {
 
 }

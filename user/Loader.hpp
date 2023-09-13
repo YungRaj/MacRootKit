@@ -101,21 +101,9 @@ namespace Fuzzer
 		        { seg->getAddress() };
 		    }
 
-		    template<typename Sect>
-		    void mapSection(Sect section) requires requires(Sect sect) {
-		        { sect->getAddress() };
-		        { sect->getSize() };
-		    }
-
 		    template<typename Seg>
 		    void modifySegment(Seg segment) requires requires(Seg seg) {
 		        { seg->getAddress() };
-		    }
-
-		    template<typename Sect>
-		    void modifySection(Sect section) requires requires(Sect sect) {
-		        { sect->getAddress() };
-		        { sect->getSize() };
 		    }
 
 		private:
@@ -166,28 +154,28 @@ namespace Fuzzer
 
 			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
-			template<typename Sym, typename Binary>
+			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
 			void linkSymbols(Module *module) requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 			};
 
-			template<typename Sym, typename Binary>
+			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
 			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym){
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 			};
 
-			template<typename Sym, typename Binary>
+			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
 			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
 			};
 
-			template<typename Sym, typename Binary>
+			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
 			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };

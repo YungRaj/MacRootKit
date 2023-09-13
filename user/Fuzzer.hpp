@@ -414,7 +414,7 @@ namespace Fuzzer
 		T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
 		{
 		    static_assert(BinaryFormat<T>,
-		                  "Unsupported type for Module::getBinary()");
+		                  "Unsupported type for Harness::getBinary()");
 
 		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
@@ -441,10 +441,10 @@ namespace Fuzzer
 		template <typename CpuType> requires ScalarType<T>
 		char* getMachOFromFatHeader(char *file_data);
 
-		template<typename Binary> requires BinaryFormat<Binary>
+		template<typename Binary, typename Seg> requires BinaryFormat<Binary>
 		bool mapSegments(char *file_data, char *mapFile);
 
-		template<typename Binary> requires BinaryFormat<Binary>
+		template<typename Binary, typename Seg> requires BinaryFormat<Binary>
 		bool unmapSegments();
 
 		template<typename Binary> requires BinaryFormat<Binary>
