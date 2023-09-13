@@ -33,24 +33,62 @@ namespace Fuzzer
 
 			uintptr_t getEntryPoint();
 
-			template<typename Sym>
-			Array<Sym>* getSymbols() requires requires (Sym sym) {
+			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			constexpr Array<Sym>* getSymbols() requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
+				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			}
+			{
+				return this->getBinary<Binary>()->getAllSymbols();
 			}
 
-			template<typename Sym>
-			Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) {
+			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			constexpr Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ sym->isUndefined() };
+				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			}
+			{
+				Binary bin = this->getBinary<Binary>();
+
+				Array<Sym> *syms = new Array<Sym>();
+				Array<Sym> *allsyms = bin->getAllSymbols();
+
+				for(int i = 0; i < allsyms->getSize(); i++)
+				{
+					Sym sym = allsyms->get(i);
+
+					if(sym->isUndefined())
+						syms->add(sym);
+				}
+
+				return syms;
 			}
 
-			template<typename Sym>
-			Array<Sym>* getExternalSymbols() requires requires (Sym sym) {
+			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			constexpr Array<Sym>* getExternalSymbols() requires requires (Sym sym) {
 				{ sym->getName() };
 				{ sym->getAddress() };
-				{ sym->isExternal(); }
+				{ sym->isExternal() }
+				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			}
+			{
+				Binary bin = this->getBinary<Binary>();
+
+				Array<Sym> *syms = new Array<Sym>();
+				Array<Sym> *allsyms = bin->getAllSymbols();
+
+				for(int i = 0; i < allsyms->getSize(); i++)
+				{
+					Sym sym = allsyms->get(i);
+
+					if(sym->isExternal())
+						syms->add(sym);
+				}
+
+				return syms;
 			}
 
 			constexpr struct FuzzBinary* getMainBinary() const { return mainBinary; }
@@ -58,12 +96,12 @@ namespace Fuzzer
 			constexpr struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
 
 			template<typename T>
-			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>()
+			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>
 			{
 			    static_assert(BinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");
 
-			    if constexpr (std::is_base_of<MachO, std::remove_pointer_t<Binary>>)
+			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
 			    {
 			        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
 			    }
@@ -107,7 +145,7 @@ namespace Fuzzer
 		    }
 
 		private:
-			Loader *loader;
+			Fuzzer::Loader *loader;
 
 			const char *name;
 			const char *path;
@@ -149,6 +187,9 @@ namespace Fuzzer
 
 				return NULL;
 			}
+
+			template<typename Binary> requires BinaryFormat<Binary>
+			void loadModule(Module *module);
 
 			void loadModuleFromKext(const char *kextPath);
 

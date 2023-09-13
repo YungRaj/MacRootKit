@@ -16,7 +16,7 @@ class SymbolTable
 
 		SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
 
-		std::Array<Symbol*> getAllSymbols() { return symbolTable; }
+		std::Array<Symbol*>* getAllSymbols() { return &symbolTable; }
 
 		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
 

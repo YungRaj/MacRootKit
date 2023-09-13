@@ -38,6 +38,28 @@ Loader::Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary)
     
 }
 
+template<typename Binary>
+void Loader::loadModule(Module *module)
+{
+    if constexpr (MachOFormat<Binary>)
+    {
+        Array<Symbol*> *symbols = this->getSymbols<Binary, Symbol*>();
+        Array<Symbol*> *externalSymbols = this->getExternalSymbols<Binary, Symbol*>();
+        Array<Symbol*> *undefinedSymbols = this->getUndefinedSymbols<Binary, Symbol*>();
+
+        for(int i = 0; i < externalSymbols->getSize(); i++)
+        {
+            Symbol *symbol = externalSymbols->get(i);
+        }
+
+        for(int i = 0; i < undefinedSymbols->getSize(); i++)
+        {
+            Symbol *symbol = undefinedSymbols->get(i);
+        }
+
+    }
+}
+
 void Loader::loadModuleFromKext(const char *kextPath)
 {
     Fuzzer::Module *module;
@@ -58,6 +80,10 @@ void Loader::loadModuleFromKext(const char *kextPath)
     fuzzBinary->binary = MakeBinary<KextMachO*>(new KextMachO(loadAddress));
 
     module = new Module(kextPath, fuzzBinary);
+
+    this->modules.add(module);
+
+    this->loadModule<KextMachO*>(module);
 }
 
 void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);

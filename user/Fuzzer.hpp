@@ -148,6 +148,8 @@ namespace Fuzzer
 
 			constexpr char* getMapFile() const { return mapFile; }
 
+			constexpr Array<SymbolRaw*>* getAllSymbols() { return &symbols; }
+
 			SymbolRaw* getSymbol(const char *name)
 			{
 				for(int i = 0; i < symbols.getSize(); i++)
