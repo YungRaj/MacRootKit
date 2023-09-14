@@ -31,14 +31,18 @@ class KDKKernelMachO : KernelMachO
 			readKDKKernelFromPath(path, &this->buffer);
 
 			if(!buffer)
-				panic("MacRK::KDK could not be read from disk at path %s\n", path);
+			{
+				MAC_RK_LOG("MacRK::KDK could not be read from disk at path %s\n", path);
+				
+			} else
+			{
+				header = reinterpret_cast<struct mach_header_64*>(buffer);
+				symbolTable = new SymbolTable();
 
-			header = reinterpret_cast<struct mach_header_64*>(buffer);
-			symbolTable = new SymbolTable();
-
-			base = this->getBase();
-			
-			this->parseMachO();
+				base = this->getBase();
+				
+				this->parseMachO();
+			}
 		}
 
 		mach_vm_address_t getBase()
