@@ -24,20 +24,19 @@ class KDKKernelMachO : KernelMachO
 {
 	public:
 		KDKKernelMachO(xnu::Kernel *kernel, const char *path)
+			: kernel(kernel),
+			  path(path),
+			  aslr_slide(kernel->getSlide())
 		{
-			this->kernel = kernel;
-			this->path = path;
-			this->aslr_slide = kernel->getSlide();
-
 			readKDKKernelFromPath(path, &this->buffer);
 
-			if(!this->buffer)
+			if(!buffer)
 				panic("MacRK::KDK could not be read from disk at path %s\n", path);
 
-			this->header = reinterpret_cast<struct mach_header_64*>(buffer);
-			this->symbolTable = new SymbolTable();
+			header = reinterpret_cast<struct mach_header_64*>(buffer);
+			symbolTable = new SymbolTable();
 
-			this->base = this->getBase();
+			base = this->getBase();
 			
 			this->parseMachO();
 		}
