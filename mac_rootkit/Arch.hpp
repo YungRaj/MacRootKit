@@ -210,7 +210,7 @@ namespace Arch
 	{
 		public:
 
-			constexpr size_t getBranchSize()
+			constexpr static size_t getBranchSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -224,7 +224,7 @@ namespace Arch
 			    static_assert(false, "Unsupported architecture!");
 			}
 
-			constexpr size_t getCallSize()
+			constexpr static size_t getCallSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -238,7 +238,7 @@ namespace Arch
 			    static_assert(false, "Unsupported architecture!");
 			}
 
-			constexpr size_t getBreakpointSize()
+			constexpr static size_t getBreakpointSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
