@@ -49,7 +49,7 @@ namespace Arch
 
 		union Breakpoint makeBreakpoint();
 
-		size_t BreakpointSize();
+		constexpr size_t BreakpointSize() { return Breakpoint; }
 
 		union Breakpoint
 		{
@@ -69,8 +69,8 @@ namespace Arch
 
 		union Branch makeBranch(mach_vm_address_t to, mach_vm_address_t from);
 
-		size_t NormalBranchSize();
-		size_t IndirectBranchSize();
+		constexpr size_t NormalBranchSize() { return NormalBranch; }
+		constexpr size_t IndirectBranchSize() { return IndirectBranch; }
 
 		union Branch
 		{
@@ -89,7 +89,7 @@ namespace Arch
 
 		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from);
 
-		size_t FunctionCallSize();
+		constexpr size_t FunctionCallSize() { return CallFunction; }
 
 		union FunctionCall
 		{

@@ -23,11 +23,24 @@ namespace Arch
 		ARCH_MIPS
 	};
 
-	extern enum Architectures current_architecture;
+	constexpr enum Architectures current_architecture = Architecture::getCurrentArchitecture();
+
+	constexpr enum Architectures getCurrentArchitecture()
+	{
+		enum Architectures arch;
+
+	#ifdef __x86_64__
+		arch = ARCH_x86_64;
+	#elif __arm64__
+		arch = ARCH_arm64;
+	#else
+		arch = ARCH_unknown;
+	#endif
+
+		return arch;
+	}
 
 	Architecture* initArchitecture();
-
-	enum Architectures getCurrentArchitecture();
 
 	extern "C"
 	{
@@ -177,6 +190,111 @@ namespace Arch
 		} state_arm64;
 	};
 
+	template<enum Architectures ArchType>
+	concept x86_64 = ArchType == ARCH_x86_64;
+
+	template<enum Architectures ArchType>
+	concept arm64 = ArchType == ARCH_arm64;
+
+	template<enum Architectures ArchType>
+	concept i386 = ArchType == ARCH_i386;
+
+	template<enum Architectures ArchType>
+	concept armv7 = ArchType == ARCH_armv7;
+
+	template<enum Architectures ArchType>
+	concept SupportedProcessor = ArchType == x86_64 || ArchType == arm64 || ArchType == i386 || ArchType == armv7;
+
+	template <enum Architectures ArchType>
+	class Instructions
+	{
+		public:
+
+			constexpr size_t getBranchSize()
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					return x86_64::SmallJumpSize();
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					return arm64::NormalBranchSize();
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+
+			constexpr size_t getCallSize()
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					return x86_64::FunctionCallSize();
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					return arm64::FunctionCallSize();
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+
+			constexpr size_t getBreakpointSize()
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					return x86_64::BreakpointSize();
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					return arm64::BreakpointSize();
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+
+			static void makeJmp(union FunctionJmp *jmp, mach_vm_address_t to, mach_vm_address_t from)
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					jmp->jmp_x86_64 = x86_64::makeJmp(to, from);
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					jmp->jmp_arm64 = arm64::makeJmp(to, from);
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+
+			static void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					call->call_x86_64 = x86_64::makeCall(to, from);
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					call->call_arm64 = arm64::makeCall(to, from);
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+
+			static void makeBreakpoint(union Breakpoint *breakpoint)
+			{
+				if constexpr (ArchType == ARCH_x86_64)
+				{
+					breakpoint->breakpoint_x86_64 = x86_64::makeBreakpoint();
+				}
+				else if constexpr (ArchType == ARCH_arm64)
+				{
+					breakpoint->breakpoint_arm64 = x86_64::makeBreakpoint();
+			    }
+
+			    static_assert(false, "Unsupported architecture!");
+			}
+	};
+
 	class Architecture
 	{
 		public:
@@ -186,11 +304,20 @@ namespace Arch
 
 			static enum Architectures getArchitecture();
 
-			size_t getBranchSize();
+			constexpr size_t getBranchSize()
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::getBranchSize();
+			}
 
-			size_t getCallSize();
+			constexpr size_t getCallSize()
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::getCallSize();
+			}
 
-			size_t getBreakpointSize();
+			constexpr size_t getBreakpointSize()
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::getBreakpointSize();
+			}
 
 			bool setInterrupts(bool enable);
 
@@ -200,11 +327,20 @@ namespace Arch
 
 			bool setPaging(bool enable);
 
-			void makeJmp(union FunctionJmp *patch, mach_vm_address_t to, mach_vm_address_t from);
+			void makeJmp(union FunctionJmp *jmp, mach_vm_address_t to, mach_vm_address_t from)
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::makeJmp(jmp, to, from);
+			}
 
-			void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from);
+			void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::makeCall(call, to, from);
+			}
 
-			void makeBreakpoint(union Breakpoint *breakpoint);
+			void makeBreakpoint(union Breakpoint *breakpoint)
+			{
+				return Instructions<Arch::getCurrentArchitecture()>::makeBreakpoint(breakpoint);
+			}
 
 		private:
 			enum Architectures arch;

@@ -21,8 +21,6 @@ namespace Arch
 {
 	namespace arm64
 	{
-		size_t BreakpointSize() { return Breakpoint; }
-
 		union Breakpoint makeBreakpoint()
 		{
 			union Breakpoint breakpoint;
@@ -33,9 +31,6 @@ namespace Arch
 
 			return breakpoint;
 		}
-
-		size_t NormalBranchSize() { return NormalBranch; }
-		size_t IndirectBranchSize() { return IndirectBranch; }
 
 		union Branch makeBranch(mach_vm_address_t to, mach_vm_address_t from)
 		{
@@ -75,8 +70,6 @@ namespace Arch
 
 			return branch;
 		}
-
-		size_t FunctionCallSize() { return CallFunction; }
 
 		union FunctionCall makeCall(mach_vm_address_t to, mach_vm_address_t from)
 		{
