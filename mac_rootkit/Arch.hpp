@@ -124,8 +124,8 @@ namespace Arch
 	using RegisterState_x86_64 = struct Arch::x86_64::x86_64_register_state;
 	using RegisterState_arm64 = struct Arch::arm64::arm64_register_state;
 
-	using FunctionJmp_x86_64 = union Arch::x86_64::Jump;
-	using FunctionJmp_arm64 = union Arch::arm64::Branch;
+	using Jmp_x86_64 = union Arch::x86_64::Jump;
+	using Branch_arm64 = union Arch::arm64::Branch;
 
 	using FunctionCall_x86_64 = union Arch::x86_64::FunctionCall;
 	using FunctionCall_arm64 = union Arch::arm64::FunctionCall;
@@ -139,10 +139,10 @@ namespace Arch
 		RegisterState_arm64 state_arm64;
 	};
 
-	union FunctionJmp
+	union Branch
 	{
-		FunctionJmp_x86_64 jmp_x86_64;
-		FunctionJmp_arm64  jmp_arm64;
+		Jmp_x86_64 jmp_x86_64;
+		Branch_arm64  br_arm64;
 	};
 
 	union FunctionCall
@@ -252,15 +252,15 @@ namespace Arch
 			    static_assert(false, "Unsupported architecture!");
 			}
 
-			static void makeJmp(union FunctionJmp *jmp, mach_vm_address_t to, mach_vm_address_t from)
+			static void makeBranch(union Branch *branch, mach_vm_address_t to, mach_vm_address_t from)
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
-					jmp->jmp_x86_64 = x86_64::makeJmp(to, from);
+					branch->jmp_x86_64 = x86_64::makeJmp(to, from);
 				}
 				else if constexpr (ArchType == ARCH_arm64)
 				{
-					jmp->jmp_arm64 = arm64::makeJmp(to, from);
+					branch->br_arm64 = arm64::makeBranch(to, from);
 			    }
 
 			    static_assert(false, "Unsupported architecture!");
@@ -327,9 +327,9 @@ namespace Arch
 
 			bool setPaging(bool enable);
 
-			void makeJmp(union FunctionJmp *jmp, mach_vm_address_t to, mach_vm_address_t from)
+			void makeBranch(union Branch *branch, mach_vm_address_t to, mach_vm_address_t from)
 			{
-				return Instructions<Arch::getCurrentArchitecture()>::makeJmp(jmp, to, from);
+				return Instructions<Arch::getCurrentArchitecture()>::makeBranch(branch, to, from);
 			}
 
 			void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)

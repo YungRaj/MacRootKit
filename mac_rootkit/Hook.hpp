@@ -48,7 +48,7 @@ struct HookPatch
 
 	enum HookType type;
 
-	union FunctionJmp patch;
+	union Branch patch;
 
 	mrk::Payload *payload;
 

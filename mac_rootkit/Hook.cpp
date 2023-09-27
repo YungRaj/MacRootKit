@@ -252,22 +252,22 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	payload->writeBytes(original_opcodes, min);
 
-	union FunctionJmp to_hook_function;
+	union Branch to_hook_function;
 
 	// build the FunctionPatch branch/jmp instruction from original function to hooked function
 	// NOTE: if function is hooked more than once, then original = previous hook
 
-	architecture->makeJmp(&to_hook_function, to, from);
+	architecture->makeBranch(&to_hook_function, to, from);
 
 	replace_opcodes = new uint8_t[branch_size];
 
 	memcpy(replace_opcodes, (void*) &to_hook_function, branch_size);
 
-	union FunctionJmp to_original_function;
+	union Branch to_original_function;
 
 	// build the FunctionPatch branch/jmp instruction from trampoline to original function
 
-	architecture->makeJmp(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
+	architecture->makeBranch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
 	
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
@@ -326,12 +326,12 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	this->task->read(from, (void*) original_opcodes, min);
 
-	union FunctionJmp to_trampoline;
+	union Branch to_trampoline;
 
 	// build the FunctionPatch branch/jmp instruction from original function to hooked function
 	// NOTE: if function is hooked more than once, then original = previous hook
 
-	architecture->makeJmp(&to_trampoline, trampoline, from);
+	architecture->makeBranch(&to_trampoline, trampoline, from);
 
 	replace_opcodes = new uint8_t[branch_size];
 
@@ -376,13 +376,13 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 		payload->writeBytes((uint8_t*) pop_registers, (size_t) ((uint8_t*) pop_registers_end - (uint8_t*) pop_registers));
 	}
 
-	union FunctionJmp to_original_function;
+	union Branch to_original_function;
 
 	// build the FunctionPatch branch/jmp instruction from trampoline to original function
 
 	payload->writeBytes(original_opcodes, min);
 
-	architecture->makeJmp(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
+	architecture->makeBranch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
 
 	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
 
