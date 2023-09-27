@@ -36,24 +36,24 @@ namespace Fuzzer
 			public:
 				explicit SegmentRaw(const char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
 
-				constexpr const char* getName() const { return name; }
+				const char* getName() const { return name; }
 
 				template<typename T>
-				constexpr T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) address + index); }
+				T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) address + index); }
 
-				constexpr uintptr_t getAddress() const { return address; }
+				uintptr_t getAddress() const { return address; }
 
 				template<typename T>
-				constexpr T getAddressAs() const
+				T getAddressAs() const
 				{
 					return reinterpret_cast<T>(address);
 				}
 
-				constexpr size_t getSize() const { return size; }
+				size_t getSize() const { return size; }
 
-				constexpr int getProt() const { return prot; }
+				int getProt() const { return prot; }
 
-				constexpr int getIndex() const { return idx; }
+				int getIndex() const { return idx; }
 
 			private:
 				char *name;
@@ -85,7 +85,7 @@ namespace Fuzzer
 			public:
 				explicit SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
 
-				constexpr const char* getName() const { return name; }
+				const char* getName() const { return name; }
 
 				template<LanguageType LangType> requires ManglableLang<LangType>
 				char* getDemangledName()
@@ -113,15 +113,15 @@ namespace Fuzzer
 					return empty;
 				}
 
-				constexpr uintptr_t getAddress() const { return address; }
+				uintptr_t getAddress() const { return address; }
 
-				constexpr int getType() const { return type; }
+				int getType() const { return type; }
 
-				constexpr bool isNamed() { return !name || strcmp(name, "") == 0; }
+				bool isNamed() { return !name || strcmp(name, "") == 0; }
 
-				constexpr bool isUndefined() const { return false; }
+				bool isUndefined() const { return false; }
 
-				constexpr bool isExternal() const { return false; }
+				bool isExternal() const { return false; }
 
 			private:
 				const char *name;
@@ -136,19 +136,19 @@ namespace Fuzzer
 			explicit RawBinary(const char *path, const char *mapFile);
 
 			template<typename T>
-			constexpr T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
 
-			constexpr uintptr_t getBase() const { return base; }
+			uintptr_t getBase() const { return base; }
 
 			template<typename T>
-			constexpr T getBaseAs() const
+			T getBaseAs() const
 			{
 				return reinterpret_cast<T>(base);
 			}
 
-			constexpr char* getMapFile() const { return mapFile; }
+			char* getMapFile() const { return mapFile; }
 
-			constexpr Array<SymbolRaw*>* getAllSymbols() { return &symbols; }
+			Array<SymbolRaw*>* getAllSymbols() const { return &symbols; }
 
 			SymbolRaw* getSymbol(const char *name)
 			{
@@ -319,18 +319,18 @@ namespace Fuzzer
 		AnyBinary binary;
 
 		template<typename T> requires CastableType<T>
-		constexpr T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+		T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
 		
-		constexpr const char* getPath() const { return path; }
+		const char* getPath() const { return path; }
 
 		template<typename T> requires IntegralOrPointerType<T>
-		constexpr T getBase() const
+		T getBase() const
 		{
 			return reinterpret_cast<T>(base);
 		}
 
 		template<typename T> requires IntegralOrPointerType<T>
-		constexpr T getOriginalBase() const
+		T getOriginalBase() const
 		{
 			return reinterpret_cast<T>(base);
 		}
@@ -404,7 +404,7 @@ namespace Fuzzer
 
 		~Harness();
 
-		constexpr struct FuzzBinary* getFuzzBinary() const { return fuzzBinary; }
+		struct FuzzBinary* getFuzzBinary() const { return fuzzBinary; }
 
 		template<typename Sym>
 		Array<Sym>* getSymbols() requires requires (Sym sym) {
@@ -412,8 +412,8 @@ namespace Fuzzer
 			{ sym->getAddress() };
 		}
 
-		template<typename T>
-		T getBinary() requires BinaryFormat<T> && PointerToClassType<T>
+		template<typename T> requires BinaryFormat<T> && PointerToClassType<T>
+		T getBinary()
 		{
 		    static_assert(BinaryFormat<T>,
 		                  "Unsupported type for Harness::getBinary()");
@@ -436,9 +436,9 @@ namespace Fuzzer
 		    return NULL;
 		}
 
-		constexpr Fuzzer::Loader* getLoader() const { return loader; }
+		Fuzzer::Loader* getLoader() const { return loader; }
 
-		constexpr char* getMapFile() const { return mapFile; }
+		char* getMapFile() const { return mapFile; }
 
 		template <typename CpuType> requires ScalarType<T>
 		char* getMachOFromFatHeader(char *file_data);

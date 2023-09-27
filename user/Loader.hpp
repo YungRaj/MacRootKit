@@ -25,16 +25,16 @@ namespace Fuzzer
 
 			~Module();
 
-			constexpr Fuzzer::Loader* getLoader() const { return loader; }
+			Fuzzer::Loader* getLoader() const { return loader; }
 
-			constexpr const char* getName() const { return name; }
+			const char* getName() const { return name; }
 
-			constexpr const char* getPath() const { return path; }
+			const char* getPath() const { return path; }
 
 			uintptr_t getEntryPoint();
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			constexpr Array<Sym>* getSymbols() requires requires (Sym sym) {
+			Array<Sym>* getSymbols() requires requires (Sym sym) const {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
@@ -44,7 +44,7 @@ namespace Fuzzer
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			constexpr Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) {
+			Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) const {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ sym->isUndefined() };
@@ -68,7 +68,7 @@ namespace Fuzzer
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			constexpr Array<Sym>* getExternalSymbols() requires requires (Sym sym) {
+			Array<Sym>* getExternalSymbols() requires requires (Sym sym) const {
 				{ sym->getName() };
 				{ sym->getAddress() };
 				{ sym->isExternal() }
@@ -91,9 +91,9 @@ namespace Fuzzer
 				return syms;
 			}
 
-			constexpr struct FuzzBinary* getMainBinary() const { return mainBinary; }
+			struct FuzzBinary* getMainBinary() const { return mainBinary; }
 
-			constexpr struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
+			struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
 
 			template<typename T>
 			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>
@@ -120,17 +120,17 @@ namespace Fuzzer
 			}
 
 			template<typename T> requires CastableType<T>
-			constexpr T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
 
 			template<typename T> requires IntegralOrPointerType<T>
-			constexpr T getBase() const
+			T getBase() const
 			{
 				return reinterpret_cast<T>(base);
 			}
 
-			constexpr size_t getSize() const { return size; }
+			size_t getSize() const { return size; }
 
-			constexpr off_t getSlide() const { return slide; }
+			off_t getSlide() const { return slide; }
 
 		    void load();
 
@@ -167,11 +167,11 @@ namespace Fuzzer
 
 			~Loader();
 
-			constexpr Fuzzer::Harness* getHarness() const { return harness; }
+			Fuzzer::Harness* getHarness() const { return harness; }
 
-			constexpr struct FuzzBinary* getFuzzBinary() const { return binary; }
+			struct FuzzBinary* getFuzzBinary() const { return binary; }
 
-			constexpr inline Architecture* getArchitecture() const { return arch; }
+			constexpr inline Architecture* getArchitecture() const { return Arch::getCurrentArchitecture(); }
 
 			Fuzzer::Module* getModule(char *name)
 			{
