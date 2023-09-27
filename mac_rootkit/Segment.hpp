@@ -21,9 +21,10 @@ class Segment
 			  address(segment_command->vmaddr),
 			  size(segment_command->vmsize),
 			  fileoffset(segment_command->fileoff),
-			  filesize(segment_command->filesize),
-			  name(new char[strlen(segment_command->segname) + 1])
+			  filesize(segment_command->filesize)
 		{
+			name = new char[strlen(segment_command->segname) + 1];
+			
 			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
 
 			this->populateSections();

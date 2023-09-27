@@ -4,7 +4,6 @@
 #include <sys/types.h>
 
 #include "Symbol.hpp"
-#include "MachO.hpp"
 
 class Symbol;
 class MachO;

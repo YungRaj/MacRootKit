@@ -6,37 +6,79 @@
 extern "C"
 {
 	#include <stdio.h>
+	#include <string.h>
 };
+
+#include "Array.hpp"
+
+#include "Kernel.hpp"
 
 #include "BinaryFormat.hpp"
 
-class MachO;
-class KernelMachO;
-class KextMachO;
+#include "MachO.hpp"
+#include "KernelMachO.hpp"
+#include "KextMachO.hpp"
 
-class PE;
-class TE;
-class ELF;
+#include "PortableExecutable.hpp"
+#include "TerseExecutable.hpp"
 
-extern "C"
-{
-	extern char* cxx_demangle(char *mangled);
-	extern char* swift_demangle(char *mangled);
-}
+#include "ELF.hpp"
+
+template <typename T>
+concept ClassType = std::is_class_v<T>;
+
+template<typename T>
+concept VoidPointerType = std::is_same_v<std::remove_pointer_t<T>, void>;
+
+template <typename T>
+concept PointerToClassType = (std::is_pointer_v<T> && std::is_class_v<std::remove_pointer_t<T>>) || VoidPointerType<T>;
+
+template <typename T>
+concept FundamentalType = std::is_fundamental_v<T>;
+
+template <typename T>
+concept ScalarType = std::is_scalar_v<T>;
+
+template <typename T>
+concept PodType = std::is_pod_v<T>;
+
+template<typename T>
+concept IntegralType = std::is_integral_v<T>;
+
+template<typename T>
+concept PointerType = std::is_pointer_v<T>;
+
+template<typename T>
+concept IntegralOrPointerType = IntegralType<T> || PointerType<T>;
+
+template<typename T>
+concept CastableType = FundamentalType<T> || PodType<T> || IntegralType<T> || PointerType<T>;
 
 namespace Fuzzer
 {
 	class Loader;
 	class Module;
 
+	enum LanguageType
+	{
+		LANG_TYPE_C,
+		LANG_TYPE_CXX,
+		LANG_TYPE_OBJC,
+		LANG_TYPE_SWIFT,
+		LANG_TYPE_RUST
+	};
+
+	template<LanguageType LangType>
+	concept ManglableLang = LangType == LANG_TYPE_CXX || LangType == LANG_TYPE_SWIFT;
+
 	struct RawBinary : Binary::BinaryFormat
 	{
 		struct SegmentRaw
 		{
 			public:
-				explicit SegmentRaw(const char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
+				explicit SegmentRaw(char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
 
-				const char* getName() const { return name; }
+				char* getName() const { return name; }
 
 				template<typename T>
 				T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) address + index); }
@@ -69,23 +111,10 @@ namespace Fuzzer
 
 		struct SymbolRaw
 		{
-			enum LanguageType
-			{
-				LANG_TYPE_C,
-				LANG_TYPE_CXX,
-				LANG_TYPE_CXX,
-				LANG_TYPE_OBJC,
-				LANG_TYPE_SWIFT,
-				LANG_TYPE_RUST
-			};
-
-			template<LanguageType LangType>
-			concept ManglableLang = LangType == LANG_TYPE_CXX || LangType == LANG_TYPE_SWIFT;
-
 			public:
-				explicit SymbolRaw(const char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
+				explicit SymbolRaw(char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
 
-				const char* getName() const { return name; }
+				char* getName() const { return name; }
 
 				template<LanguageType LangType> requires ManglableLang<LangType>
 				char* getDemangledName()
@@ -124,7 +153,7 @@ namespace Fuzzer
 				bool isExternal() const { return false; }
 
 			private:
-				const char *name;
+				char *name;
 
 				uintptr_t address;
 
@@ -133,7 +162,7 @@ namespace Fuzzer
 
 		public:
 
-			explicit RawBinary(const char *path, const char *mapFile);
+			explicit RawBinary(char *path, const char *mapFile);
 
 			template<typename T>
 			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
@@ -148,7 +177,7 @@ namespace Fuzzer
 
 			char* getMapFile() const { return mapFile; }
 
-			Array<SymbolRaw*>* getAllSymbols() const { return &symbols; }
+			std::Array<SymbolRaw*>* getAllSymbols() { return &symbols; }
 
 			SymbolRaw* getSymbol(const char *name)
 			{
@@ -156,7 +185,7 @@ namespace Fuzzer
 				{
 					SymbolRaw *sym = symbols.get(i);
 
-					if(strcmp(name, symbol->getName()) == 0)
+					if(strcmp(name, sym->getName()) == 0)
 						return sym;
 				}
 
@@ -169,7 +198,7 @@ namespace Fuzzer
 				{
 					SegmentRaw *seg = segments.get(i);
 
-					if(strcmp(name, symbol->getName()) == 0)
+					if(strcmp(name, seg->getName()) == 0)
 						return seg;
 				}
 
@@ -184,39 +213,44 @@ namespace Fuzzer
 
 			char *mapFile;
 
-			Array<SymbolRaw*> symbols;
-			Array<SegmentRaw*> segments;
+			std::Array<SymbolRaw*> symbols;
+			std::Array<SegmentRaw*> segments;
 	};
 
-	template <typename T>
-	concept ClassType = std::is_class_v<T>;
+	template<typename T>
+	concept MachOFormat = std::is_base_of_v<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
 
 	template<typename T>
-	concept VoidPointerType = std::is_same_v<std::remove_pointer_t<T>, void>;
-
-	template <typename T>
-	concept PointerToClassType = (std::is_pointer_v<T> && std::is_class_v<std::remove_pointer_t<T>>) || VoidPointerType<T>;
-
-	template <typename T>
-	concept FundamentalType = std::is_fundamental_v<T>;
-
-	template <typename T>
-	concept ScalarType = std::is_scalar_v<T>;
-
-	template <typename T>
-	concept PodType = std::is_pod_v<T>;
+	concept ELFFormat = std::is_same_v<T, ELF*>;
 
 	template<typename T>
-	concept IntegralType = std::is_integral_v<T>;
+	concept PEFormat = std::is_same_v<T, PE*>;
 
 	template<typename T>
-	concept PointerType = std::is_pointer_v<T>;
+	concept TEFormat = std::is_same_v<T, TE*>;
 
 	template<typename T>
-	concept IntegralOrPointerType = IntegralType<T> || PointerType<T>;
+	concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
 
 	template<typename T>
-	concept CastableType = FundamentalType<T> || PodType<T> || IntegralType<T> || PointerType<T>;
+	concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T> || VoidPointerType<T>;
+
+	// static_assert(MachOFormat<xnu::KernelMachO*>, "KernelMachO does not satisfy MachOFormat constraint");
+	// static_assert(MachOFormat<xnu::KextMachO*>, "KextMachO does not satisfy MachOFormat constraint");
+
+	static_assert(RawBinaryFormat<RawBinary*>);
+
+	using SymbolRaw = RawBinary::SymbolRaw;
+	using SegmentRaw = RawBinary::SegmentRaw;
+
+	template <typename T>
+	using GetSymbolReturnType = decltype(std::declval<T>()->getSymbol(nullptr));
+
+	template <typename T>
+	using GetSegmentReturnType = decltype(std::declval<T>()->getSegment(nullptr));
+
+	static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
+	static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
 
 	struct FuzzBinary
 	{
@@ -226,38 +260,6 @@ namespace Fuzzer
 		void *originalBase;
 
 		size_t size;
-
-		template<typename T>
-		concept MachOFormat = std::is_base_of_v<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
-
-		template<typename T>
-		concept ELFFormat = std::is_same_v<T, ELF*>;
-
-		template<typename T>
-		concept PEFormat = std::is_same_v<T, PE*>;
-
-		template<typename T>
-		concept TEFormat = std::is_same_v<T, TE*>;
-
-		template<typename T>
-		concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
-
-		template<typename T>
-		concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T> || VoidPointerType<T>;
-
-		static_assert(MachOFormat<KernelMachO*>);
-		static_assert(MachOFormat<KextMachO*>);
-
-		static_assert(RawBinaryFormat<RawBinary*>);
-
-		template <typename T>
-		using GetSymbolReturnType = decltype(std::declval<T>()->getSymbol(nullptr));
-
-		template <typename T>
-		using GetSegmentReturnType = decltype(std::declval<T>()->getSegment(nullptr));
-
-		static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
-		static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
 
 		template <PointerToClassType T> requires BinaryFormat<T>
 		union Binary
@@ -299,20 +301,10 @@ namespace Fuzzer
 		};
 
 		template<PointerToClassType T> requires BinaryFormat<T>
-		constexpr Binary<T> MakeBinary(T ptr)
+		static constexpr Binary<T> MakeBinary(T ptr)
 		{
 		    return Binary<T>(ptr);
 		}
-
-		static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
-		static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
-
-		static_assert(BinaryFormat<decltype(binary.macho)> &&
-					  BinaryFormat<decltype(binary.elf)>&&
-					  BinaryFormat<decltype(binary.portableExecutable)> &&
-					  BinaryFormat<decltype(binary.terseExecutable)> &&
-					  BinaryFormat<decltype(binary.raw)>,
-					  "All types in the union must satisfy the BinaryFormat concept");
 
 		using AnyBinary = Binary<void*>;
 
@@ -336,10 +328,11 @@ namespace Fuzzer
 		}
 
 		template<typename Sym, typename Binary>
-		Sym getSymbol(char *symbolname) requires requires (Sym sym, Binary bin) {
-			{ sym->getName(); }
-			{ sym->getAddress(); }
-			{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+		Sym getSymbol(char *symbolname) requires requires (Sym sym, Binary bin)
+		{
+			sym->getName();
+			sym->getAddress();
+			std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 		}
 		{
 			static_assert(BinaryFormat<Binary>,
@@ -347,27 +340,28 @@ namespace Fuzzer
 
 		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
-		        return dynamic_cast<Sym>(this->fuzzBinary->binary.macho->getSymbol(symbolname));
+		        return dynamic_cast<Sym>(binary.macho->getSymbol(symbolname));
 		    }
 
 		    if constexpr (std::is_same_v<Binary, MachO*>)
 		    {
-		    	return this->fuzzBinary->binary.macho->getSymbol(symbolname);
+		    	return binary.macho->getSymbol(symbolname);
 		    }
 
 		    if constexpr (std::is_same_v<Binary, RawBinary*>)
 		    {
-		    	return this->fuzzBinary->binary.raw->getSymbol(symbolname);
+		    	return binary.raw->getSymbol(symbolname);
 		    }
 
 		    return NULL;
 		}
 
 		template<typename Seg, typename Binary>
-		Seg getSegment(char *segname) requires requires (Seg seg, Binary bin) {
-			{ seg->getName(); }
-			{ seg->getAddress(); }
-			{ std::is_same_v<GetSegmentReturnType<Binary>, Seg> }
+		Seg getSegment(char *segname) requires requires (Seg seg, Binary bin)
+		{
+			seg->getName();
+			seg->getAddress();
+			std::is_same_v<GetSegmentReturnType<Binary>, Seg>;
 		}
 		{
 			static_assert(BinaryFormat<Binary>,
@@ -375,119 +369,133 @@ namespace Fuzzer
 
 		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
 		    {
-		        return dynamic_cast<Seg>(this->fuzzBinary->binary.macho->getSegment(segname));
+		        return dynamic_cast<Seg>(binary.macho->getSegment(segname));
 		    }
 
 		    if constexpr (std::is_same_v<Binary, MachO*>)
 		    {
-		        return this->fuzzBinary->binary.macho->getSegment(segname);
+		        return binary.macho->getSegment(segname);
 		    }
 
 		    if constexpr (std::is_same_v<Binary, RawBinary*>)
 		    {
-		        return this->fuzzBinary->binary.raw->getSegment(segname);
+		        return binary.raw->getSegment(segname);
 		    }
 
 		    return NULL;
 		}
 	};
 
+	static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
+	static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
+
+	static_assert(BinaryFormat<decltype(FuzzBinary::binary.macho)> &&
+				  BinaryFormat<decltype(FuzzBinary::binary.elf)>&&
+				  BinaryFormat<decltype(FuzzBinary::binary.portableExecutable)> &&
+				  BinaryFormat<decltype(FuzzBinary::binary.terseExecutable)> &&
+				  BinaryFormat<decltype(FuzzBinary::binary.raw)>,
+				  "All types in the union must satisfy the BinaryFormat concept");
+
 	template <typename T>
 	concept FuzzableType = ClassType<T> || FundamentalType<T> || PodType<T> || IntegralOrPointerType<T>;
 
 	class Harness
 	{
-		explicit Harness(xnu::Kernel *kernel);
+		public:
+			explicit Harness(xnu::Kernel *kernel);
 
-		explicit Harness(const char *binary);
-		explicit Harness(const char *binary, const char *mapFile);
+			explicit Harness(const char *binary);
+			explicit Harness(const char *binary, const char *mapFile);
 
-		~Harness();
+			~Harness();
 
-		struct FuzzBinary* getFuzzBinary() const { return fuzzBinary; }
+			struct FuzzBinary* getFuzzBinary() const { return fuzzBinary; }
 
-		template<typename Sym>
-		Array<Sym>* getSymbols() requires requires (Sym sym) {
-			{ sym->getName() };
-			{ sym->getAddress() };
-		}
+			template<typename Sym>
+			std::Array<Sym>* getSymbols() requires requires (Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+			};
 
-		template<typename T> requires BinaryFormat<T> && PointerToClassType<T>
-		T getBinary()
-		{
-		    static_assert(BinaryFormat<T>,
-		                  "Unsupported type for Harness::getBinary()");
+			template<typename T> requires BinaryFormat<T> && PointerToClassType<T>
+			T getBinary()
+			{
+			    static_assert(BinaryFormat<T>,
+			                  "Unsupported type for Harness::getBinary()");
 
-		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
-		    {
-		        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
-		    }
+			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
+			    {
+			        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
+			    }
 
-		    if constexpr (std::is_same_v<T, MachO*>)
-		    {
-		    	return this->fuzzBinary->binary.macho;
-		    }
+			    if constexpr (std::is_same_v<T, MachO*>)
+			    {
+			    	return this->fuzzBinary->binary.macho;
+			    }
 
-		    if constexpr (std::is_same_v<T, RawBinary*>)
-		    {
-		        return this->fuzzBinary->binary.raw;
-		    }
+			    if constexpr (std::is_same_v<T, RawBinary*>)
+			    {
+			        return this->fuzzBinary->binary.raw;
+			    }
 
-		    return NULL;
-		}
+			    return NULL;
+			}
 
-		Fuzzer::Loader* getLoader() const { return loader; }
+			Fuzzer::Loader* getLoader() const { return loader; }
 
-		char* getMapFile() const { return mapFile; }
+			char* getMapFile() const { return mapFile; }
 
-		template <typename CpuType> requires ScalarType<T>
-		char* getMachOFromFatHeader(char *file_data);
+			template <int CpuType>
+			char* getMachOFromFatHeader(char *file_data);
 
-		template<typename Binary, typename Seg> requires BinaryFormat<Binary>
-		bool mapSegments(char *file_data, char *mapFile);
+			template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+			bool mapSegments(char *file_data, char *mapFile);
 
-		template<typename Binary, typename Seg> requires BinaryFormat<Binary>
-		bool unmapSegments();
+			template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+			bool unmapSegments();
 
-		template<typename Binary> requires BinaryFormat<Binary>
-		void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
+			template<typename Binary> requires BinaryFormat<Binary>
+			void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
 
-		void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
-		void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
+			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
+			void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
-		template<typename Binary = RawBinary> requires BinaryFormat<Binary> && !MachOFormat<Binary>
-		void loadBinary(const char *path, const char *mapFile);
+			template<typename Binary = RawBinary> requires (BinaryFormat<Binary> && !MachOFormat<Binary>)
+			void loadBinary(const char *path, const char *mapFile);
 
-		void loadMachO(const char *path);
+			void loadMachO(const char *path);
 
-		void loadKernel(const char *path, off_t slide);
-		void loadKernelExtension(const char *path);
-		void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
+			void loadKernel(const char *path, off_t slide);
+			void loadKernelExtension(const char *path);
+			void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
-		template<typename Binary = RawBinary> requires BinaryFormat<Binary>
-		void populateSymbolsFromMapFile(const char *mapFile);
+			void addDebugSymbolsFromKernel(const char *debugSymbols);
 
-		template <typename T>
-		void mutate(T data) requires FuzzableType<T>;
+			template<typename Binary = RawBinary> requires BinaryFormat<Binary>
+			void populateSymbolsFromMapFile(const char *mapFile);
 
-		template<typename Func, typename... Args, typename Binary, typename Sym> requires requires (Binary bin, Sym sym)
-		{
-			{ sym->getName() };
-			{ sym->getAddress() };
-			{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
-		};
-		std::invoke_result_t<Func, Args...> execute(const char *name, Func func, Args... args);
+			template <typename T>
+			void mutate(T data) requires FuzzableType<T>;
+
+			template<typename Func, typename... Args, typename Binary, typename Sym> requires requires (Binary bin, Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+
+			} std::invoke_result_t<Func, Args...> execute(const char *name, Func func, Args... args);
 
 		private:
 			xnu::Kernel *kernel;
 
-			xnu::KDKInfo *kdk;
+			xnu::KDKInfo *kdkInfo;
 
 			struct FuzzBinary *fuzzBinary;
 
 			Fuzzer::Loader *loader;
 
-			const char *mapFile;
+			char *mapFile;
 	};
 };
 

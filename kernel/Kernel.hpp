@@ -34,6 +34,11 @@ namespace mrk
 	class MacRootKit;
 };
 
+namespace Debug
+{
+	class Dwarf;
+};
+
 namespace xnu
 {
 	static const char* getKernelVersion();

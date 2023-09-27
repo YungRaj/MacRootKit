@@ -12,8 +12,8 @@ namespace Arch
 
 	enum Architectures
 	{
-		ARCH_unknown 	= -1,
-		ARCH_none 		=  0,
+		ARCH_unsupported = -1,
+		ARCH_none 		 =  0,
 		ARCH_i386,
 		ARCH_x86_64,
 		ARCH_armv7,
@@ -23,22 +23,46 @@ namespace Arch
 		ARCH_MIPS
 	};
 
-	constexpr enum Architectures current_architecture = Architecture::getCurrentArchitecture();
+	template <bool IsX86, bool IsArm, bool Is64Bit>
+	struct CurrentArchitecture
+	{
+		static_assert((!IsX86 && IsArm) || (IsX86 && !IsArm), "Unsupported Architecture!");
+
+	    static constexpr Architectures value = []
+	    {
+			if constexpr (IsX86)
+			{
+				if constexpr (Is64Bit)
+					return ARCH_x86_64;
+				else
+					return ARCH_i386;
+
+			} else if constexpr (IsArm)
+			{
+				if constexpr (Is64Bit)
+					return ARCH_arm64;
+				else
+					return ARCH_armv7;
+			} else
+			{
+				return ARCH_unsupported;
+			}
+
+		} ();
+	};
 
 	constexpr enum Architectures getCurrentArchitecture()
 	{
-		enum Architectures arch;
-
 	#ifdef __x86_64__
-		arch = ARCH_x86_64;
+		return CurrentArchitecture<true, false, true>::value;
 	#elif __arm64__
-		arch = ARCH_arm64;
-	#else
-		arch = ARCH_unknown;
+		return CurrentArchitecture<false, true, true>::value;
 	#endif
 
-		return arch;
+		return ARCH_unsupported;
 	}
+
+	constexpr enum Architectures current_architecture = Arch::getCurrentArchitecture();
 
 	Architecture* initArchitecture();
 
@@ -191,21 +215,21 @@ namespace Arch
 	};
 
 	template<enum Architectures ArchType>
-	concept x86_64 = ArchType == ARCH_x86_64;
+	concept _x86_64 = ArchType == ARCH_x86_64;
 
 	template<enum Architectures ArchType>
-	concept arm64 = ArchType == ARCH_arm64;
+	concept _arm64 = ArchType == ARCH_arm64;
 
 	template<enum Architectures ArchType>
-	concept i386 = ArchType == ARCH_i386;
+	concept _i386 = ArchType == ARCH_i386;
 
 	template<enum Architectures ArchType>
-	concept armv7 = ArchType == ARCH_armv7;
+	concept _armv7 = ArchType == ARCH_armv7;
 
 	template<enum Architectures ArchType>
-	concept SupportedProcessor = ArchType == x86_64 || ArchType == arm64 || ArchType == i386 || ArchType == armv7;
+	concept SupportedProcessor = _x86_64<ArchType> || _arm64<ArchType> || _i386<ArchType> || _armv7<ArchType>;
 
-	template <enum Architectures ArchType>
+	template <enum Architectures ArchType> requires SupportedProcessor<ArchType>
 	class Instructions
 	{
 		public:
@@ -220,8 +244,6 @@ namespace Arch
 				{
 					return arm64::NormalBranchSize();
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 
 			constexpr static size_t getCallSize()
@@ -234,8 +256,6 @@ namespace Arch
 				{
 					return arm64::FunctionCallSize();
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 
 			constexpr static size_t getBreakpointSize()
@@ -248,22 +268,18 @@ namespace Arch
 				{
 					return arm64::BreakpointSize();
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 
 			static void makeBranch(union Branch *branch, mach_vm_address_t to, mach_vm_address_t from)
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
-					branch->jmp_x86_64 = x86_64::makeJmp(to, from);
+					branch->jmp_x86_64 = x86_64::makeJump(to, from);
 				}
 				else if constexpr (ArchType == ARCH_arm64)
 				{
 					branch->br_arm64 = arm64::makeBranch(to, from);
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 
 			static void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
@@ -276,8 +292,6 @@ namespace Arch
 				{
 					call->call_arm64 = arm64::makeCall(to, from);
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 
 			static void makeBreakpoint(union Breakpoint *breakpoint)
@@ -288,10 +302,8 @@ namespace Arch
 				}
 				else if constexpr (ArchType == ARCH_arm64)
 				{
-					breakpoint->breakpoint_arm64 = x86_64::makeBreakpoint();
+					breakpoint->breakpoint_arm64 = arm64::makeBreakpoint();
 			    }
-
-			    static_assert(false, "Unsupported architecture!");
 			}
 	};
 

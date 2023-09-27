@@ -13,6 +13,7 @@ namespace xnu
 {
 	class Kernel;
 	class Kext;
+	class KextMachO;
 }
 
 namespace xnu

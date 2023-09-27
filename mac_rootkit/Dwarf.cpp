@@ -435,6 +435,8 @@ size_t DWFormSize(enum DW_FORM form)
 			return 4;
 		case DW_FORM::udata:
 			return 4;
+		case DW_FORM::sdata:
+			return 4;
 		case DW_FORM::flag:
 			return 4;
 		case DW_FORM::strp:
@@ -651,7 +653,7 @@ struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
 
 DwarfDIE::DwarfDIE(Dwarf *dwarf, CompilationUnit *unit, DIE *die, DwarfDIE *parent)
 	: dwarf(dwarf),
-	  compilationUnit(compilationUnit),
+	  compilationUnit(unit),
 	  die(die),
 	  parent(parent)
 {
@@ -686,7 +688,7 @@ uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
 
 CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die)
 	: dwarf(dwarf),
-	  header(header),
+	  header(hdr),
 	  die(die)
 {
 
@@ -695,18 +697,18 @@ CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DI
 Dwarf::Dwarf(const char *debugSymbols)
 	: macho(NULL), // this->macho = new KernelMachO(debugSymbols);
 	  machoWithDebug(macho),
-	  dwarf(macho->getSegment("__DWARF"),
+	  dwarf(macho->getSegment("__DWARF")),
 	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
 	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
-	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges"),
+	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges")),
 	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
 	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
 	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
-	   __debug_str(macho->getSection("__DWARF", "__debug_str")),
-	   __apple_names(macho->getSection("__DWARF", "__apple_names")),
-	   __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
-	   __apple_types(macho->getSection("__DWARF", "__apple_types")),
-	   __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
+	  __debug_str(macho->getSection("__DWARF", "__debug_str")),
+	  __apple_names(macho->getSection("__DWARF", "__apple_names")),
+	  __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
+	  __apple_types(macho->getSection("__DWARF", "__apple_types")),
+	  __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
 {
 	
 }
@@ -714,18 +716,18 @@ Dwarf::Dwarf(const char *debugSymbols)
 Dwarf::Dwarf(MachO *macho, const char *debugSymbols)
 	: macho(macho),
 	  machoWithDebug(macho),
-	  dwarf(macho->getSegment("__DWARF"),
+	  dwarf(macho->getSegment("__DWARF")),
 	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
 	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
-	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges"),
+	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges")),
 	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
 	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
 	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
-	   __debug_str(macho->getSection("__DWARF", "__debug_str")),
-	   __apple_names(macho->getSection("__DWARF", "__apple_names")),
-	   __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
-	   __apple_types(macho->getSection("__DWARF", "__apple_types")),
-	   __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
+	  __debug_str(macho->getSection("__DWARF", "__debug_str")),
+	  __apple_names(macho->getSection("__DWARF", "__apple_names")),
+	  __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
+	  __apple_types(macho->getSection("__DWARF", "__apple_types")),
+	  __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
 {
 
 }

@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <ptrauth.h>
 
+/*
 #include <algorithm>
 #include <array>
 #include <bsm/libbsm.h>
@@ -32,6 +33,7 @@
 #include <sys/sysctl.h>
 #include <unistd.h>
 #include <vector>
+*/
 
 #include <IOKit/IOKitLib.h>
 
@@ -113,7 +115,7 @@ char injectedCode_x86_64[] =
 	"\x58"										// 		pop rax
 	"\x48\x89\xe5"								//		mov rbp, rsp
 	"\x5d"										// 		pop rbp
-	"\xc3";										// 		ret
+	"\xc3"										// 		ret
 	
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -637,6 +639,7 @@ int main(int argc, char **argv)
 		{
 			if(wait_for_process_name)
 			{
+				/*
 				es_client_t *client = NULL;
 
 				ensure(es_new_client(&client, ^(es_client_t *client, const es_message_t *message)
@@ -680,7 +683,7 @@ int main(int argc, char **argv)
 				
 				ensure(es_subscribe(client, events, sizeof(events) / sizeof(*events)) == ES_RETURN_SUCCESS);
 				
-				dispatch_main();
+				dispatch_main(); */
 			} else
 			{
 				err = injectLibrary(library);

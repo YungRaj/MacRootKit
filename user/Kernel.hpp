@@ -4,6 +4,7 @@
 #include "Task.hpp"
 
 #include "MachO.hpp"
+#include "KernelMachO.hpp"
 #include "UserMachO.hpp"
 
 #include "Disassembler.hpp"
@@ -18,8 +19,10 @@ extern "C"
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 
-class MachO;
-class Symbol;
+namespace Debug
+{
+	class Dwarf;
+};
 
 namespace xnu
 {
@@ -160,25 +163,31 @@ namespace xnu
 		T data;
 	};
 
+
 	class KDK
 	{
 		public:
 			explicit KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo);
 
 			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
+			
 			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
-			char* getPath() { return path; }
+			static void getKDKPathFromBuildInfo(const char *buildVersion, char *outPath);
 
-			xnu::Kernel* getKernel() { return kernel; }
+			static void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath);
 
-			Debug::Dwarf* getDwarf() { return dwarf; }
+			char* getPath() const { return path; }
 
-			MachO* getMachO() { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
+			xnu::Kernel* getKernel() const { return kernel; }
 
-			mach_vm_address_t getBase() { return base; }
+			Debug::Dwarf* getDwarf() const { return dwarf; }
 
-			mach_vm_address_t getKDKSymbolAddressByName(const char *sym);
+			MachO* getMachO() const { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
+
+			mach_vm_address_t getBase() const { return base; }
+
+			mach_vm_address_t getKDKSymbolAddressByName(char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
@@ -199,9 +208,11 @@ namespace xnu
 		private:
 			bool valid;
 
-			const char *path;
+		 	char *path;
 
 			KDKKernelType type;
+
+			xnu::KDKInfo *kdkInfo;
 
 			xnu::Kernel *kernel;
 

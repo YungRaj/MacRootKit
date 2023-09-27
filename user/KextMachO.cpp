@@ -1,28 +1,35 @@
 #include "KextMachO.hpp"
 
-KextMachO::KextMachO(uintptr_t base)
-	: buffer(reinterpret_cast<char*>(base)),
-      header(reinterpret_cast<struct mach_header_64*>(this->buffer)),
-      base(reinterpret_cast<mach_vm_address_t>(this->buffer)),
-      symbolTable(new SymbolTable()),
-      slide(0)
+extern "C"
 {
+	#include <fcntl.h>
+};
+
+KextMachO::KextMachO(uintptr_t base)
+{
+	buffer = reinterpret_cast<char*>(base),
+	header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+	symbolTable = new SymbolTable();
+	aslr_slide = 0;
+
 	this->parseMachO();
 }
 
 KextMachO::KextMachO(uintptr_t base, off_t slide)
-	: buffer(reinterpret_cast<char*>(base)),
-      header(reinterpret_cast<struct mach_header_64*>(this->buffer)),
-      base(reinterpret_cast<mach_vm_address_t>(this->buffer)),
-      symbolTable(new SymbolTable()),
-      slide(slide)
 {
+	buffer = reinterpret_cast<char*>(base),
+	header = reinterpret_cast<struct mach_header_64*>(this->buffer);
+	base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+	symbolTable = new SymbolTable();
+	aslr_slide = 0;
+
 	this->parseMachO();
 }
 
 KextMachO::KextMachO(const char *path, off_t slide)
 {
-	int fd = open(kextPath, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 
 	size_t size = lseek(fd, 0, SEEK_END);
 
@@ -40,7 +47,7 @@ KextMachO::KextMachO(const char *path, off_t slide)
 
 	this->symbolTable = new SymbolTable();
 
-	this->slide = slide;
+	this->aslr_slide = slide;
 
 	this->parseMachO();
 
@@ -49,7 +56,7 @@ KextMachO::KextMachO(const char *path, off_t slide)
 
 KextMachO::KextMachO(const char *path)
 {
-	int fd = open(kextPath, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 
 	size_t size = lseek(fd, 0, SEEK_END);
 
@@ -67,7 +74,7 @@ KextMachO::KextMachO(const char *path)
 
 	this->symbolTable = new SymbolTable();
 
-	this->slide = 0;
+	this->aslr_slide = 0;
 
 	this->parseMachO();
 

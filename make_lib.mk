@@ -51,7 +51,7 @@ ARM64_ASMSOURCES := $(wildcard arm64/*.s)
 ARM64_ASMOBJECTS :=  $(patsubst arm64/%.s, $(OBJ)/%.o, $(ARM64_ASMSOURCES))
 endif
 
-CFLAGS += -std=c++20 -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
+CFLAGS += -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
 LDFLAGS += -std=c++20 -framework IOKit -framework CoreFoundation -L/usr/local/lib /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 

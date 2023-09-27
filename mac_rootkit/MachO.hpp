@@ -13,12 +13,6 @@
 
 #include "Log.hpp"
 
-class Symbol;
-class SymbolTable;
-
-class Segment;
-class Section;
-
 #ifdef __USER__
 
 #define max(x, y) (x > y ? x : y)
@@ -33,7 +27,7 @@ class MachO : public Binary::BinaryFormat
 
 		~MachO();
 
-		virtual void initWithBase(mach_vm_address_t base, off_t slide);
+		virtual void initWithBase(mach_vm_address_t machoBase, off_t slide);
 
 		struct mach_header_64* getMachHeader() { return header; }
 
@@ -51,6 +45,8 @@ class MachO : public Binary::BinaryFormat
 		std::Array<Segment*>* getSegments() { return &segments; }
 		
 		std::Array<Section*>* getSections(Segment* segment);
+
+		std::Array<Symbol*>* getAllSymbols() { return symbolTable->getAllSymbols(); }
 
 		SymbolTable* getSymbolTable() { return symbolTable; }
 

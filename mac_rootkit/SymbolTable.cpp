@@ -124,7 +124,7 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 	return NULL;
 }
 
-void replaceSymbol(Symbol *symbol)
+void SymbolTable::replaceSymbol(Symbol *symbol)
 {
 	for(int i = symbolTable.getSize() - 1; i >= 0; i--)
 	{
@@ -132,9 +132,9 @@ void replaceSymbol(Symbol *symbol)
 
 		if(strcmp(sym->getName(), symbol->getName()) == 0)
 		{
-			symbolTable->remove(sym);
+			symbolTable.remove(sym);
 		}
 	}
 
-	symbolTable->add(symbol);
+	symbolTable.add(symbol);
 }

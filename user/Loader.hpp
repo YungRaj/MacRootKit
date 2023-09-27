@@ -3,6 +3,7 @@
 
 #include <type_traits>
 
+#include "Arch.hpp"
 #include "Fuzzer.hpp"
 #include "Array.hpp"
 
@@ -15,11 +16,16 @@ namespace Fuzzer
 {
 	struct FuzzBinary;
 
+	class Loader;
+
+	template <typename T>
+	using GetAllSymbolsReturnType = decltype(std::declval<T>()->getAllSymbols());
+
 	class Module
 	{
 		public:
 			explicit Module(Fuzzer::Loader *loader, const char *path, struct FuzzBinary *binary) 
-				: loader(loader), path(path), moduleBinary(loader->getFuzzBinary()), mainBinary() { }
+				: loader(loader), path(path), mainBinary(binary) { }
 
 			explicit Module(const char *path, uintptr_t base, off_t slide) : path(path), base(base), slide(slide) { }
 
@@ -34,27 +40,29 @@ namespace Fuzzer
 			uintptr_t getEntryPoint();
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			Array<Sym>* getSymbols() requires requires (Sym sym) const {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			std::Array<Sym>* getSymbols() const requires requires (Binary bin, Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
 			}
 			{
 				return this->getBinary<Binary>()->getAllSymbols();
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			Array<Sym>* getUndefinedSymbols() requires requires (Sym sym) const {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ sym->isUndefined() };
-				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			std::Array<Sym>* getUndefinedSymbols() const requires requires (Binary bin, Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				sym->isUndefined();
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
 			}
 			{
 				Binary bin = this->getBinary<Binary>();
 
-				Array<Sym> *syms = new Array<Sym>();
-				Array<Sym> *allsyms = bin->getAllSymbols();
+				std::Array<Sym> *syms = new std::Array<Sym>();
+				std::Array<Sym> *allsyms = bin->getAllSymbols();
 
 				for(int i = 0; i < allsyms->getSize(); i++)
 				{
@@ -68,17 +76,18 @@ namespace Fuzzer
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			Array<Sym>* getExternalSymbols() requires requires (Sym sym) const {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ sym->isExternal() }
-				{ bin->getAllSymbols() } -> std::same_as<Array<Sym>*>;
+			std::Array<Sym>* getExternalSymbols() const requires requires (Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				sym->isExternal();
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
 			}
 			{
 				Binary bin = this->getBinary<Binary>();
 
-				Array<Sym> *syms = new Array<Sym>();
-				Array<Sym> *allsyms = bin->getAllSymbols();
+				std::Array<Sym> *syms = new std::Array<Sym>();
+				std::Array<Sym> *allsyms = bin->getAllSymbols();
 
 				for(int i = 0; i < allsyms->getSize(); i++)
 				{
@@ -103,17 +112,17 @@ namespace Fuzzer
 
 			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
 			    {
-			        return dynamic_cast<T>(this->fuzzBinary->binary.macho);
+			        return dynamic_cast<T>(this->moduleBinary->binary.macho);
 			    }
 
 			    if constexpr (std::is_same_v<T, MachO*>)
 			    {
-			    	return this->fuzzBinary->binary.macho;
+			    	return this->moduleBinary->binary.macho;
 			    }
 
 			    if constexpr (std::is_same_v<T, RawBinary*>)
 			    {
-			        return this->fuzzBinary->binary.raw;
+			        return this->moduleBinary->binary.raw;
 			    }
 
 			    return NULL;
@@ -136,13 +145,13 @@ namespace Fuzzer
 
 		    template<typename Seg>
 		    void mapSegment(Seg segment) requires requires(Seg seg) {
-		        { seg->getAddress() };
-		    }
+		        seg->getAddress();
+		    };
 
 		    template<typename Seg>
 		    void modifySegment(Seg segment) requires requires(Seg seg) {
-		        { seg->getAddress() };
-		    }
+		        seg->getAddress();
+		    };
 
 		private:
 			Fuzzer::Loader *loader;
@@ -171,13 +180,13 @@ namespace Fuzzer
 
 			struct FuzzBinary* getFuzzBinary() const { return binary; }
 
-			constexpr inline Architecture* getArchitecture() const { return Arch::getCurrentArchitecture(); }
+			Arch::Architecture* getArchitecture() const { return arch; }
 
 			Fuzzer::Module* getModule(char *name)
 			{
 				for(int i = 0; i < modules.getSize(); i++)
 				{
-					Fuzzer::Module *module = module.get(i);
+					Fuzzer::Module *module = modules.get(i);
 
 					if(strcmp(module->getName(), name) == 0)
 					{
@@ -196,43 +205,47 @@ namespace Fuzzer
 			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
 			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
-			void linkSymbols(Module *module) requires requires (Sym sym) {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			void linkSymbols(Module *module) requires requires (Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
 			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
-			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym){
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
 			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
-			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) 
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
 			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
-			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) {
-				{ sym->getName() };
-				{ sym->getAddress() };
-				{ std::is_same_v<GetSymbolReturnType<Binary>, Sym> };
+			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym)
+			{
+				sym->getName();
+				sym->getAddress();
+				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
-			void* allocateModuleMemory(uintptr_t addr, size_t sz, int prot);
+			void* allocateModuleMemory(size_t sz, int prot);
 
 		private:
 			Fuzzer::Harness *harness;
 
-			Architecture *arch;
+			Arch::Architecture *arch;
 
 			struct FuzzBinary *binary;
 
-			Array<Module*> modules;
+			std::Array<Module*> modules;
 	};
 };
 

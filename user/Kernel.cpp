@@ -2,7 +2,7 @@
 
 using namespace xnu;
 
-const char* getKernelVersion()
+const char* xnu::getKernelVersion()
 {
 	char *kernelBuildVersion = new char[256];
 
@@ -17,7 +17,7 @@ const char* getKernelVersion()
 	return kernelBuildVersion;
 }
 
-const char* getOSBuildVersion()
+const char* xnu::getOSBuildVersion()
 {
 	int mib[2];
 
@@ -38,8 +38,10 @@ const char* getOSBuildVersion()
 	return buildVersion;
 }
 
-Kernel::Kernel() : kernel(this), connection(open_kernel_tfp0_connection()), slide(getSlide())
+Kernel::Kernel() : connection(open_kernel_tfp0_connection()), slide(getSlide())
 {
+	kernel = this;
+
 	Task();
 
 	// UserMachO *userMachO = new UserMachO();
@@ -50,8 +52,6 @@ Kernel::Kernel() : kernel(this), connection(open_kernel_tfp0_connection()), slid
 #endif
 
 	 //this->macho = userMachO;
-
-	this->slide = this->getSlide();
 }
 
 Kernel::~Kernel()

@@ -1,10 +1,7 @@
 #ifndef __KERNEL_MACHO_HPP_
 #define __KERNEL_MACHO_HPP_
 
-#include "Kernel.hpp"
 #include "MachO.hpp"
-
-class MachO;
 
 namespace xnu
 {
@@ -13,6 +10,8 @@ namespace xnu
 	class KernelMachO : public MachO 
 	{
 		public:
+			KernelMachO() { }
+
 			KernelMachO(uintptr_t base);
 			KernelMachO(uintptr_t base, off_t slide);
 

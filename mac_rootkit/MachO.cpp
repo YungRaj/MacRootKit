@@ -11,13 +11,14 @@ MachO::~MachO()
 	
 }
 
-void MachO::initWithBase(mach_vm_address_t base, off_t slide)
-	: base(base),
-	  aslr_slide(slide),
-	  buffer(reinterpret_cast<char*>(base)),
-	  header(reinterpret_cast<struct mach_header_64*>(buffer)),
-	  symbolTable(new SymbolTable())
+void MachO::initWithBase(mach_vm_address_t machoBase, off_t slide)
 {
+	base = machoBase;
+	aslr_slide = slide;
+	buffer = reinterpret_cast<char*>(base);
+	header = reinterpret_cast<struct mach_header_64*>(buffer);
+	symbolTable = new SymbolTable();
+
 	this->parseMachO();
 }
 

@@ -3,16 +3,19 @@
 #include "MachO.hpp"
 #include "KernelMachO.hpp"
 
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/proc.h>
-#include <sys/kauth.h>
-#include <sys/errno.h>
-#include <sys/fcntl.h>
-#include <sys/file.h>
+extern "C"
+{
+	#include <sys/param.h>
+	#include <sys/mount.h>
+	#include <sys/vnode.h>
+	#include <sys/proc.h>
+	#include <sys/kauth.h>
+	#include <sys/errno.h>
+	#include <sys/fcntl.h>
+	#include <sys/file.h>
 
-#include <libkern/libkern.h>
+	#include <dirent.h>
+};
 
 using namespace xnu;
 
@@ -20,20 +23,20 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring);
 
 kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer);
 
-class KDKKernelMachO : KernelMachO
+class KDKKernelMachO : public KernelMachO
 {
 	public:
 		KDKKernelMachO(xnu::Kernel *kernel, const char *path)
 			: kernel(kernel),
 			  path(path),
-			  aslr_slide(kernel->getSlide())
+			  kernelSlide(kernel->getSlide())
 		{
 			readKDKKernelFromPath(path, &this->buffer);
 
 			if(!buffer)
 			{
 				MAC_RK_LOG("MacRK::KDK could not be read from disk at path %s\n", path);
-				
+
 			} else
 			{
 				header = reinterpret_cast<struct mach_header_64*>(buffer);
@@ -100,7 +103,7 @@ class KDKKernelMachO : KernelMachO
 
 				name = &strtab[nl->n_strx];
 
-				address = nl->n_value + this->kernel->getSlide();
+				address = nl->n_value + this->kernelSlide;
 				// add the kernel slide so that the address is correct
 
 				symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
@@ -111,7 +114,11 @@ class KDKKernelMachO : KernelMachO
 			MAC_RK_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
 		}
 	private:
+		xnu::Kernel *kernel;
+
 		const char *path;
+
+		off_t kernelSlide;
 
 };
 
@@ -121,7 +128,7 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
     if (!dir)
     {
-        printf("Error opening directory");
+        MAC_RK_LOG("Error opening directory");
 
         return NULL;
     }
@@ -135,7 +142,7 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
             char childName[KDK_PATH_SIZE];
             snprintf(childName, KDK_PATH_SIZE, "%s/%s", basePath, entry->d_name);
 
-            printf("Found KDK with build version '%s': %s\n", substring, childName);
+            MAC_RK_LOG("Found KDK with build version '%s': %s\n", substring, childName);
 
             closedir(dir);
 
@@ -154,7 +161,7 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
     
     if(fd == -1)
     {
-        printf("Error opening file: %d\n", error);
+        MAC_RK_LOG("Error opening file: %s \n", path);
 
         *out_buffer = NULL;
 
@@ -325,7 +332,7 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 	{
 		*outType = type;
 
-		snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/", path, getKDKKernelNameFromType(type));
+		snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s", path, getKDKKernelNameFromType(type));
 	}
 }
 
@@ -352,7 +359,7 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion
 	kdkInfo = new KDKInfo;
 
 	KDK::getKDKPathFromBuildInfo(buildVersion, kdkInfo->path);
-	KDK::getKDKKernelFromPath(kdkPath, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
+	KDK::getKDKKernelFromPath(kdkInfo->path, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
 
 	if(kdkInfo->path[0] == '\0' ||
 	   kdkInfo->type == KdkKernelTypeNone ||
@@ -373,15 +380,16 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion
 }
 
 KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
+	: kernel(kernel),
+	  kdkInfo(kdkInfo),
+	  type(kdkInfo->type),
+	  path(kdkInfo->path),
+	  kernelWithDebugSymbols(dynamic_cast<KernelMachO*>(new KDKKernelMachO(kernel, kdkInfo->kernelDebugSymbolsPath)))
 {
-	this->kernel = kernel;
-	this->kdkInfo = kdkInfo;
-	this->type = kdkInfo->type;
-	this->path = &kdkInfo->path;
-	this->kernelWithDebugSymbols = new KDKKernelMachO(kernel, &kdkInfo->kernelDebugSymbolsPath);
+
 }
 
-mach_vm_address_t KDK::getKDKSymbolAddressByName(const char *sym)
+mach_vm_address_t KDK::getKDKSymbolAddressByName(char *sym)
 {
 	return this->kernelWithDebugSymbols->getSymbolAddressByName(sym);
 }
@@ -393,12 +401,12 @@ Symbol* KDK::getKDKSymbolByName(char *symname)
 
 Symbol* KDK::getKDKSymbolByAddress(mach_vm_address_t address)
 {
-	return this->kernelWithDebugSymbols->getSymbolByAddress(symname);
+	return this->kernelWithDebugSymbols->getSymbolByAddress(address);
 }
 
 char* KDK::findString(char *s)
 {
-
+	return NULL;
 }
 
 template<typename T>

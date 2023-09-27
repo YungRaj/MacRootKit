@@ -16,17 +16,20 @@ UserMachO::UserMachO(const char *path) : objc(NULL), file_path(strdup(path))
 
 void UserMachO::withTask(Task *task)
 {
-	this->task = task;
-	this->dyld = task->getDyld(); 
-	this->dyld_base = this->dyld->getDyld();
-	this->dyld_shared_cache = this->dyld->getDyldSharedCache();
-	this->file_path = dyld->getMainImagePath();
-	this->symbolTable = new SymbolTable();
+	task = task;
+
+	dyld = task->getDyld(); 
+	dyld_base = this->dyld->getDyld();
+	dyld_shared_cache = this->dyld->getDyldSharedCache();
+
+	file_path = dyld->getMainImagePath();
+
+	symbolTable = new SymbolTable();
 }
 
 void UserMachO::withFilePath(const char *path)
 {
-	int fd = open(kextPath, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 
 	size_t size = lseek(fd, 0, SEEK_END);
 

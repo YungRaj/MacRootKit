@@ -1,9 +1,20 @@
 #include "Fuzzer.hpp"
-#include "Kernel.hpp"
+#include "Loader.hpp"
 #include "Log.hpp"
 
 extern "C"
 {
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+    #include <errno.h> 
+    #include <string.h> 
+    #include <dirent.h>
+
+    #include <sys/mman.h>
+    #include <sys/stat.h>
+
 	#include "mach-o.h"
 };
 
@@ -11,14 +22,14 @@ using namespace Fuzzer;
 
 Harness::Harness(xnu::Kernel *kernel)
     : fuzzBinary(new FuzzBinary),
-      kdkInfo(KDK::KDKInfoFromBuildInfo(kernel,
+      kdkInfo(xnu::KDK::KDKInfoFromBuildInfo(kernel,
       									xnu::getOSBuildVersion(),
       									xnu::getKernelVersion()))
 {
     loadKernel(kdkInfo->kernelPath, 0);
-    addDebugSymbolsFromKernel(this->getBinary<KernelMachO*>(), kdkInfo->kernelDebugSymbolsPath);
+    addDebugSymbolsFromKernel(kdkInfo->kernelDebugSymbolsPath);
 
-    loader = new Loader(this->fuzzBinary);
+    loader = new Fuzzer::Loader(this, this->fuzzBinary);
 }
 
 Harness::Harness(const char *binary)
@@ -33,7 +44,7 @@ Harness::Harness(const char *binary)
 
  }
 
-template <typename CpuType>
+template <int CpuType>
 char* Harness::getMachOFromFatHeader(char *file_data)
 {
     struct fat_header *header = reinterpret_cast<struct fat_header*>(file_data);
@@ -66,7 +77,7 @@ char* Harness::getMachOFromFatHeader(char *file_data)
 
 	#endif
 
-		if constexpr (std::is_same_v<CpuType, CPU_TYPE_ARM64>)
+		if constexpr (CpuType == CPU_TYPE_ARM64)
 		{
 			if (cputype == CPU_TYPE_ARM64)
 			{
@@ -74,7 +85,7 @@ char* Harness::getMachOFromFatHeader(char *file_data)
 			}
 		}
 
-        if constexpr (std::is_same_v<CpuType, CPU_TYPE_X86_64>)
+        if constexpr (CpuType == CPU_TYPE_X86_64)
         {
             if (cputype == CPU_TYPE_X86_64)
             {
@@ -88,7 +99,7 @@ char* Harness::getMachOFromFatHeader(char *file_data)
     return NULL;
 }
 
-void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
+void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 {
 	KernelMachO *macho = this->getBinary<KernelMachO*>();
 
@@ -103,7 +114,7 @@ void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
     {
         MAC_RK_LOG("Error opening kernel Mach-O %s", kernelPath);
 
-        return 0;
+        return;
     }
 
     off_t file_size = lseek(fd, 0, SEEK_END);
@@ -122,9 +133,7 @@ void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
 
         close(fd);
 
-        *outfile = NULL;
-
-        return 0;
+        return;
     }
 
     size_t total_size = 0;
@@ -170,7 +179,7 @@ void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
 
 					nl->n_value = address;
 
-				 	symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
+				 	symbol = new Symbol(macho, nl->n_type & N_TYPE, name, address, macho->addressToOffset(address), macho->segmentForAddress(address), macho->sectionForAddress(address));
 
 				 	symbolTable->replaceSymbol(symbol);
 				}
@@ -183,7 +192,7 @@ void Harness::addDebugSymbolsFromKernel(const char *debugSymbols)
     free(file_data);
 }
 
-template<typename Binary>
+template<typename Binary> requires BinaryFormat<Binary>
 void Harness::getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr)
 {
     if constexpr (std::is_same_v<Binary, MachO>)
@@ -326,7 +335,7 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintpt
     }
 }
 
-template<typename Binary>
+template<typename Binary, typename Seg> requires BinaryFormat<Binary>
 bool Harness::mapSegments(char *file_data, char *mapFile)
 {
     if constexpr (std::is_same_v<Binary, MachO>)
@@ -400,7 +409,7 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
     return false;
 }
 
-template<typename Binary>
+template<typename Binary, typename Seg> requires BinaryFormat<Binary>
 bool Harness::unmapSegments()
 {
 
@@ -459,7 +468,7 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
     *oldLoadAddress = UINT64_MAX;
 
-    getMappingInfoForMachO(file_data, loadSize, oldLoadAddress);
+    getMappingInfo<MachO>(file_data, loadSize, oldLoadAddress);
 
     if(*oldLoadAddress == UINT64_MAX)
     {
@@ -493,7 +502,7 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
     this->updateSegmentLoadCommandsForNewLoadAddress(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
 
-    success = this->mapSegments<MachO>(file_data, NULL);
+    success = this->mapSegments<MachO, Segment>(file_data, NULL);
 
     if(!success)
     {
@@ -522,7 +531,7 @@ fail:
     printf("Load Kernel MachO failed!\n");
 }
 
-template<typename Binary>
+template<typename Binary> requires (BinaryFormat<Binary> && !MachOFormat<Binary>)
 void Harness::loadBinary(const char *path, const char *mapFile)
 {
 
@@ -535,13 +544,13 @@ void Harness::loadKernel(const char *kernelPath, off_t slide)
 
     size_t loadSize = 0;
 
-    loadAddress = this->loadKernelMachO(kernelPath, &loadAddress, &loadSize, &oldLoadAddress);
+    this->loadKernelMachO(kernelPath, &loadAddress, &loadSize, &oldLoadAddress);
 
     this->fuzzBinary->path = kernelPath;
     this->fuzzBinary->base = reinterpret_cast<void*>(loadAddress);
     this->fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
     this->fuzzBinary->size = loadSize;
-    this->fuzzBinary->binary = MakeBinary<KernelMachO*>(new KernelMachO(loadAddress));
+    this->fuzzBinary->binary = FuzzBinary::MakeBinary<KernelMachO*>(new KernelMachO(loadAddress));
 }
 
 
@@ -550,7 +559,7 @@ void Harness::loadKernelExtension(const char *path)
 	this->loader->loadModuleFromKext(path);
 }
 
-template<typename Binary>
+template<typename Binary> requires BinaryFormat<Binary>
 void Harness::populateSymbolsFromMapFile(const char *mapFile)
 {
 
@@ -567,8 +576,13 @@ void Harness::mutate(T data) requires FuzzableType<T>
     }
 }
 
-template<typename Func, typename... Args, typename Binary, typename Sym>
-std::invoke_result_t<Func, Args...> Harness::execute(const char *name, Func func, Args... args)
+template<typename Func, typename... Args, typename Binary, typename Sym> requires requires (Binary bin, Sym sym)
+{
+    sym->getName();
+    sym->getAddress();
+    std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+
+} std::invoke_result_t<Func, Args...> Harness::execute(const char *name, Func func, Args... args)
 {
 
 }

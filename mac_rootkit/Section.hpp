@@ -17,9 +17,10 @@ class Section
 			: section(section),
 			  address(section->addr),
 			  offset(section->offset),
-			  size(section->size),
-			  name(new char[strlen(section->sectname) + 1])
+			  size(section->size)
 		{
+			name = new char[strlen(section->sectname) + 1];
+
 			strlcpy(this->name, section->sectname, strlen(section->sectname) + 1);
 		}
 

@@ -1,5 +1,5 @@
-#ifndef __PORTABLE_EXECUTABLE_HPP_
-#define __PORTABLE_EXECUTABLE_HPP_
+#ifndef __TERSE_EXECUTABLE_HPP_
+#define __TERSE_EXECUTABLE_HPP_
 
 #include "BinaryFormat.hpp"
 

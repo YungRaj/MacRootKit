@@ -1,8 +1,6 @@
 #ifndef __SYMBOL_HPP_
 #define __SYMBOL_HPP_
 
-#include "MachO.hpp"
-
 #include "Segment.hpp"
 #include "Section.hpp"
 

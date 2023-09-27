@@ -4259,7 +4259,7 @@ namespace Arch
 	{
 		namespace Assembler
 		{
-			uint32_t assembleInstruction(char *ins)
+			uint32_t assemble_instruction(char *ins)
 			{
 				uint32_t assembly;
 
@@ -4348,7 +4348,7 @@ namespace Arch
 					if(num_ins)
 						memcpy(temp_assembly, assembly, num_ins * sizeof(uint32_t));
 
-					temp_assembly[num_ins] = assemble_one(temp);
+					temp_assembly[num_ins] = assemble_instruction(temp);
 
 					num_ins++;
 

@@ -13,9 +13,9 @@ using namespace Arch;
 Disassembler::Disassembler(xnu::Task *task)
 	: task(task),
 	  architecture(Arch::getCurrentArchitecture()),
-	  disassembler(getDisassemblerFromArch()), 
+	  disassembler(getDisassemblerFromArch())
 {
-	this->initDisassembler();
+	initDisassembler();
 }
 
 Disassembler::~Disassembler()
