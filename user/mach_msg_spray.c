@@ -791,10 +791,10 @@ void mach_ports_destroy(mach_port_t *ports, size_t count)
 
 		if(MACH_PORT_VALID(port))
 		{
-			kr = mach_port_destroy(mach_task_self(), port);
+			kr = mach_port_deallocate(mach_task_self(), port);
 
 			if(kr != KERN_SUCCESS)
-				fprintf(stderr, "%s: %s returned %d: %s\n", __func__, "mach_port_destroy", kr, mach_error_string(kr));
+				fprintf(stderr, "%s: %s returned %d: %s\n", __func__, "mach_port_deallocate", kr, mach_error_string(kr));
 			
 			assert(kr == KERN_SUCCESS);
 		}
@@ -977,7 +977,7 @@ ipc_kmsg_kalloc_fragmentation_spray_fragment_memory_(struct ipc_kmsg_kalloc_frag
 		if (!MACH_PORT_VALID(port))
 			continue;
 
-		mach_port_destroy(mach_task_self(), port);
+		mach_port_deallocate(mach_task_self(), port);
 
 		ports[port_idx] = MACH_PORT_DEAD;
 		free_size -= kalloc_size_per_port;

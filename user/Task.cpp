@@ -31,26 +31,27 @@ Task::Task(Kernel *kernel, int pid)
     : kernel(kernel),
       pid(pid),
       task_port(Task::getTaskForPid(pid)),
-      proc(Task::findProcByPid(kernel, pid)),
-      task(Task::getTaskFromProc(kernel, this->proc)),
-      name(this->getTaskName()),
-      dyld(new dyld::Dyld(kernel, this)),
-      macho(new mrk::UserMachO())
+      proc(Task::findProcByPid(kernel, pid))
 {
+	task = Task::getTaskFromProc(kernel, this->proc);
+	name = this->getTaskName();
 
+	dyld = new dyld::Dyld(kernel, this);
+	macho = new mrk::UserMachO();
 }
 
 Task::Task(Kernel *kernel, char *name)
     : kernel(kernel),
       name(name),
-      proc(Task::findProcByName(kernel, name)),
-      task(Task::getTaskFromProc(kernel, this->proc)),
-      pid(this->findPid()),
-      task_port(Task::getTaskForPid(pid)),
-      dyld(new dyld::Dyld(kernel, this)),
-      macho(new mrk::UserMachO())
+      proc(Task::findProcByName(kernel, name))
 {
+	task = Task::getTaskFromProc(kernel, this->proc);
+	
+	pid = this->findPid();
+	task_port = Task::getTaskForPid(pid);
 
+	dyld = new dyld::Dyld(kernel, this);
+	macho = new mrk::UserMachO();
 }
 		
 Task::Task(Kernel *kernel, mach_port_t task_port) : kernel(kernel), task_port(task_port)

@@ -4,8 +4,9 @@
 #include <type_traits>
 
 #include "Arch.hpp"
-#include "Fuzzer.hpp"
 #include "Array.hpp"
+
+#include "Fuzzer.hpp"
 
 class MachO;
 class Symbol;
@@ -16,6 +17,7 @@ namespace Fuzzer
 {
 	struct FuzzBinary;
 
+	class Harness;
 	class Loader;
 
 	template <typename T>
@@ -105,7 +107,7 @@ namespace Fuzzer
 			struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
 
 			template<typename T>
-			T getBinary() requires BinaryFormat<T> && PointerToClassType<T>
+			T getBinary() const requires BinaryFormat<T> && PointerToClassType<T>
 			{
 			    static_assert(BinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");

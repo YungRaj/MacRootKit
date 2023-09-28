@@ -1,13 +1,15 @@
 #ifndef __DYLD_H_
 #define __DYLD_H_
 
-#include <mach/mach_types.h>
+extern "C"
+{
+	#include <mach-o.h>
+	
+	#include <mach/mach_types.h>
+	#include <sys/types.h>
 
-#include <sys/types.h>
-
-#include <dyld_cache_format.h>
-
-#include <mach-o.h>
+	#include <dyld_cache_format.h>
+}
 
 #include "Array.hpp"
 

@@ -1,12 +1,15 @@
 #ifndef __SECTION_HPP_
 #define __SECTION_HPP_
 
-#include <mach/mach_types.h>
-#include <sys/types.h>
+extern "C"
+{
+	#include <mach-o.h>
+	
+	#include <mach/mach_types.h>
+	#include <sys/types.h>
 
-#include <string.h>
-
-#include "mach-o.h"
+	#include <string.h>
+}
 
 #include "Log.hpp"
 

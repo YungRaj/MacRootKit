@@ -1,13 +1,17 @@
 #ifndef __SEGMENT_HPP_
 #define __SEGMENT_HPP_
 
-#include <mach/mach_types.h>
-#include <sys/types.h>
+extern "C"
+{
+	#include <mach-o.h>
+
+	#include <mach/mach_types.h>
+
+	#include <sys/types.h>
+}
 
 #include "Array.hpp"
 #include "Section.hpp"
-
-#include "mach-o.h"
 
 #include "Log.hpp"
 
@@ -24,7 +28,7 @@ class Segment
 			  filesize(segment_command->filesize)
 		{
 			name = new char[strlen(segment_command->segname) + 1];
-			
+
 			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
 
 			this->populateSections();

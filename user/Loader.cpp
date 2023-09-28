@@ -81,13 +81,13 @@ void Loader::loadModuleFromKext(const char *kextPath)
     fuzzBinary->base = reinterpret_cast<void*>(loadAddress);
     fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
     fuzzBinary->size = file_size;
-    // fuzzBinary->binary = FuzzBinary::MakeBinary<xnu::KextMachO*>(new xnu::KextMachO(loadAddress));
+    fuzzBinary->binary = FuzzBinary::MakeBinary<xnu::KextMachO*>(new xnu::KextMachO(loadAddress));
 
     module = new Module(this, kextPath, fuzzBinary);
 
     this->modules.add(module);
 
-    // this->loadModule<xnu::KextMachO*>(module);
+    this->loadModule<xnu::KextMachO*>(module);
 }
 
 void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)

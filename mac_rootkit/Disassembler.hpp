@@ -4,7 +4,12 @@
 #include <capstone/capstone.h>
 
 #include "Arch.hpp"
-#include "Task.hpp"
+
+namespace xnu
+{
+	class Kernel;
+	class Task;
+}
 
 using namespace Arch;
 

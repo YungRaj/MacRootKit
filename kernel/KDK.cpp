@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/vnode_if.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
 #include <sys/errno.h>
@@ -14,22 +15,28 @@
 
 #include <libkern/libkern.h>
 
+#include <kern/task.h>
+
+#include "strparse.hpp"
+
 using namespace xnu;
 
 char* findKDKWithBuildVersion(const char *basePath, const char *substring);
 
-kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer);
+kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer);
 
 class KDKKernelMachO : KernelMachO
 {
 	public:
-		KDKKernelMachO(xnu::Kernel *kernel, const char *path)
-			: kernel(kernel),
-			  path(path),
-			  aslr_slide(kernel->getSlide()),
+		KDKKernelMachO(xnu::Kernel *kern, const char *path)
+			: path(path)
 
 		{
-			readKDKKernelFromPath(path, &buffer);
+			kernel = kern;
+
+			aslr_slide = kernel->getSlide();
+
+			readKDKKernelFromPath(kernel, path, &buffer);
 
 			if(!buffer)
 				panic("MacRK::KDK could not be read from disk at path %s\n", path);
@@ -119,7 +126,7 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
     int error = vnode_lookup(basePath, 0, &vnode, context);
 
-    vfs_context_rele(context);
+    /*
 
     if (error == 0 && vnode)
     {
@@ -132,13 +139,23 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
         vnode_t childVnode = NULLVP;
 
-        int result = VNOP_READDIR(vnode, &childVnode, &vattr, NULL, 0, NULL, vfs_context_kernel());
+        struct dirent *dirent_buffer = (struct dirent *) IOMalloc(MAXPATHLEN);
+
+		struct uio auio;
+
+		uio_createwithbuffer(1, 0, UIO_SYSSPACE, UIO_READ, &auio, sizeof(auio));
+
+		uio_addiov(&auio, CAST_USER_ADDR_T(dirent_buffer), MAXPATHLEN);
+
+        int result = VOP_READDIR(vnode, &auio, context);
 
         while (result == 0 && childVnode != NULLVP)
         {
             char childName[KDK_PATH_SIZE];
 
-            vn_getpath(childVnode, childName, KDK_PATH_SIZE);
+            int childNameLen = 0;
+
+            vn_getpath(childVnode, childName, &childNameLen);
 
             if(strstr(childName, substring))
             {
@@ -149,7 +166,7 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
             vnode_t nextChildVnode = NULLVP;
 
-            result = VNOP_READDIR(vnode, &nextChildVnode, &vattr, NULL, 0, NULL, vfs_context_kernel());
+            result = VOP_READDIR(vnode, &auio, context);
 
             vnode_put(childVnode);
 
@@ -158,17 +175,20 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring)
 
         vnode_put(vnode);
     }
+    */
+
+    vfs_context_rele(context);
 
     return NULL;
 }
 
-kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
+kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer)
 {
     errno_t error = 0;
 
-    int fileDescriptor = -1;
+    vnode_t vnode = NULLVP;
     
-    error = vnode_open(path, O_RDONLY, 0, 0, &fileDescriptor, vfs_context_current());
+    error = vnode_open(path, O_RDONLY, 0, 0, &vnode, vfs_context_current());
     
     if(error != 0)
     {
@@ -184,11 +204,11 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
     VATTR_INIT(&vattr);
     VATTR_WANTED(&vattr, va_data_size);
 
-    error = vnode_getattr(fileDescriptor, &vattr, vfs_context_current());
+    error = vnode_getattr(vnode, &vattr, vfs_context_current());
     
     if(error != 0)
     {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+        vnode_close(vnode, FREAD, vfs_context_current());
 
         *out_buffer = NULL;
         
@@ -199,11 +219,11 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
 
     off_t fileSize = vattr.va_data_size;
     
-    char *buffer = (char *)kalloc((size_t)fileSize);
+    char *buffer = (char *)IOMalloc((size_t) fileSize);
 
     if(buffer == NULL)
     {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+        vnode_close(vnode, FREAD, vfs_context_current());
 
         *out_buffer = NULL;
         
@@ -214,22 +234,22 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
     
     size_t bytesRead = 0;
 
-    error = vn_rdwr(UIO_READ, fileDescriptor, buffer, (int)fileSize, 0, UIO_SYSSPACE, 0, vfs_context_current(), &bytesRead, 0, 0);
+    error = vn_rdwr(UIO_READ, vnode, buffer, (int) fileSize, 0, UIO_SYSSPACE, 0, kauth_cred_get(), NULL, kernel->getProc());
     
     if(error != 0)
     {
-        vnode_close(fileDescriptor, FREAD, vfs_context_current());
+        vnode_close(vnode, FREAD, vfs_context_current());
 
          *out_buffer = NULL;
 
          MAC_RK_LOG("MacRK:: KDK Error reading file: %d\n", error);
         
-        kfree(buffer, (size_t)fileSize);
+        IOFree(buffer, (size_t)fileSize);
         
         return KERN_FAILURE;
     }
     
-    vnode_close(fileDescriptor, FREAD, vfs_context_current());
+    vnode_close(vnode, FREAD, vfs_context_current());
     
     *out_buffer = buffer;
     
@@ -383,7 +403,7 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 	{
 		*outType = type;
 
-		snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/", path, getKDKKernelNameFromType(type));
+		snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s", path, getKDKKernelNameFromType(type));
 	}
 }
 
@@ -410,7 +430,7 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion
 	kdkInfo = new KDKInfo;
 
 	KDK::getKDKPathFromBuildInfo(buildVersion, kdkInfo->path);
-	KDK::getKDKKernelFromPath(kdkPath, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
+	KDK::getKDKKernelFromPath(kdkInfo->path, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
 
 	if(kdkInfo->path[0] == '\0' ||
 	   kdkInfo->type == KdkKernelTypeNone ||

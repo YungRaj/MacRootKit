@@ -15,7 +15,7 @@ extern "C"
     #include <sys/mman.h>
     #include <sys/stat.h>
 
-	#include "mach-o.h"
+	#include <mach-o.h>
 };
 
 using namespace Fuzzer;

@@ -58,9 +58,12 @@ enum strparse_result strreplace(char *str, char find, char replace);
 
 #ifdef __KERNEL__
 
-char* strdup(char *s);
+extern "C"
+{
+	char* strdup(char *s);
 
-char* strstr(char *string, char *substring);
+	char* strstr(char *string, char *substring);
+}
 
 #endif
 

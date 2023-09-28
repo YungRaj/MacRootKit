@@ -6,9 +6,12 @@
 #include "Segment.hpp"
 #include "Section.hpp"
 
-#include <string.h>
+extern "C"
+{
+	#include <string.h>
 
-#include "mach-o.h"
+	#include <mach-o.h>
+}
 
 namespace Arch
 {
@@ -16,8 +19,6 @@ namespace Arch
 	{
 		namespace PatchFinder
 		{
-			#define NO_REG -1
-
 			using namespace Arch::arm64;
 
 			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,

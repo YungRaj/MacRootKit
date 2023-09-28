@@ -60,7 +60,7 @@ namespace mrk
 
 			mrk::Plugin* getPlugin(const char *pluginName)
 			{
-				for(size_t i = 0; i < plugins.getSize(); i++)
+				for(int i = 0; i < plugins.getSize(); i++)
 				{
 					Plugin *plugin = plugins.get(i);
 
@@ -112,7 +112,7 @@ namespace mrk
 
 			kmod_info_t **kextKmods;
 
-			Array<mrk::Plugin*> plugins;
+			std::Array<mrk::Plugin*> plugins;
 
 			StoredArray<entitlement_callback_t> entitlementCallbacks;
 

@@ -10,7 +10,10 @@
 
 #include "Dyld.hpp"
 
-#include "mach-o.h"
+extern "C"
+{
+	#include <mach-o.h>
+}
 
 class Segment;
 class Section;

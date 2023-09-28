@@ -5,7 +5,7 @@
 using namespace mrk;
 using namespace xnu;
 
-Payload::Payload(Task *task, Hook *hook, vm_prot_t protection) : task(task), hook(hook), prot(prot), current_offset(0)
+Payload::Payload(Task *task, Hook *hook, vm_prot_t protection) : task(task), hook(hook), prot(protection), current_offset(0)
 {
 	
 }

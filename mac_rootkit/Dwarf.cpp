@@ -1404,7 +1404,7 @@ void Dwarf::parseDebugLines()
 					case DW_LNS::fixed_advance_pc:
 					;
 					{
-						uint64_t program_counter = *reinterpret_cast<uint16_t*>(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						uint64_t program_counter = *reinterpret_cast<uint16_t*>(debug_line_begin + debug_line_offset);
 
 						debug_line_offset += sizeof(uint16_t);
 
@@ -1589,7 +1589,7 @@ void Dwarf::parseDebugRanges()
 			rangeEntries = new RangeEntries;
 		} else
 		{
-			MAC_RK_LOG("%08x %016x %016x\n", current_ranges_offset, value0, value1);
+			MAC_RK_LOG("%08x %016llx %016llx\n", current_ranges_offset, value0, value1);
 
 			struct RangeEntry *range = new RangeEntry;
 

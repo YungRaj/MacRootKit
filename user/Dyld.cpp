@@ -93,7 +93,7 @@ void Dyld::iterateAllImages()
 
 				this->main_image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
-				memcpy(this->main_image_info, image_info, sizeof(image_info));
+				memcpy(this->main_image_info, image_info, sizeof(struct dyld_image_info));
 
 				this->dyld_shared_cache = this->all_image_infos->sharedCacheBaseAddress;
 

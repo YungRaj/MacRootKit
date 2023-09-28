@@ -1,5 +1,5 @@
-#ifndef __KERNEL_MACHO_HPP_
-#define __KERNEL_MACHO_HPP_
+#ifndef __KEXT_MACHO_HPP_
+#define __KEXT_MACHO_HPP_
 
 #include "MachO.hpp"
 
@@ -30,6 +30,6 @@ namespace xnu
 			xnu::Kernel *kernel;
 	};
 
-}
+};
 
 #endif

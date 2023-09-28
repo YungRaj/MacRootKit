@@ -11,6 +11,8 @@ namespace Arch
 	{
 		namespace PatchFinder
 		{
+			#define NO_REG -1
+
 			enum text : int
 			{
 				__UNKNOWN_TEXT = -1,

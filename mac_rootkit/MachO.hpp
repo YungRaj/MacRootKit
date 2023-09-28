@@ -1,7 +1,10 @@
 #ifndef __MACHO_HPP_
 #define __MACHO_HPP_
 
-#include "mach-o.h"
+extern "C"
+{
+	#include <mach-o.h>
+}
 
 #include "BinaryFormat.hpp"
 

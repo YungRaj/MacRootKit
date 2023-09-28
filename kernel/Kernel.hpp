@@ -1,14 +1,18 @@
 #ifndef __KERNEL_HPP_
 #define __KERNEL_HPP_
 
+extern "C"
+{
+	#include <libkern/libkern.h>
+
+	#include <kern/host.h>
+
+	#include <mach/mach_types.h>
+
+	#include <sys/sysctl.h>
+}
+
 #include <IOKit/IOLib.h>
-
-#include <libkern/libkern.h>
-
-#include <kern/host.h>
-#include <mach/mach_types.h>
-
-#include <sys/sysctl.h>
 
 #include "MacRootKit.hpp"
 
@@ -17,10 +21,9 @@
 #include "Task.hpp"
 
 #include "Disassembler.hpp"
-
 #include "Dwarf.hpp"
+
 #include "KernelMachO.hpp"
-#include "Symbol.hpp"
 
 class IOKernelRootKitService;
 
@@ -41,6 +44,8 @@ namespace Debug
 
 namespace xnu
 {
+	class KDK;
+
 	static const char* getKernelVersion();
 
 	static const char* getOSBuildVersion();
@@ -88,11 +93,11 @@ namespace xnu
 
 			static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
 
-			const char* getVersion() { return buildVersion; }
+			const char* getVersion() const { return version; }
 
-			const char* getOSBuildVersion() { return osBuildVersion; }
+			const char* getOSBuildVersion() const { return osBuildVersion; }
 
-			MachO* getMachO() { return macho; }
+			MachO* getMachO() const { return macho; }
 
 			virtual mach_vm_address_t getBase();
 
@@ -190,12 +195,6 @@ namespace xnu
 
 			IOSimpleLock *kernelWriteLock;
 
-			Kernel(mach_port_t kernel_task_port);
-
-			Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
-
-			Kernel(mach_vm_address_t base, off_t slide);
-
 			void createKernelTaskPort();
 	};
 
@@ -255,15 +254,19 @@ namespace xnu
 			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 
-			char* getPath() { return path; }
+			static void getKDKPathFromBuildInfo(const char *buildVersion, char *outPath);
 
-			xnu::Kernel* getKernel() { return kernel; }
+			static void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath);
 
-			Debug::Dwarf* getDwarf() { return dwarf; }
+			xnu::Kernel* getKernel() const { return kernel; }
 
-			MachO* getMachO() { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
+			Debug::Dwarf* getDwarf() const { return dwarf; }
 
-			mach_vm_address_t getBase() { return base; }
+			MachO* getMachO() const { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
+
+			mach_vm_address_t getBase() const { return base; }
+
+			char* getPath() const { return path; }
 
 			mach_vm_address_t getKDKSymbolAddressByName(const char *sym);
 
@@ -286,7 +289,9 @@ namespace xnu
 		private:
 			bool valid;
 
-			const char *path;
+			char *path;
+
+			KDKInfo *kdkInfo;
 
 			KDKKernelType type;
 

@@ -1,34 +1,38 @@
 #ifndef __TASK_HPP_
 #define __TASK_HPP_
 
-#include "Process.hpp"
-
 #include "Disassembler.hpp"
 
 #include "MachO.hpp"
 #include "Segment.hpp"
 #include "Section.hpp"
 
-namespace xnu
-{
-	class Kernel;
-}
+#include "Process.hpp"
 
-class Disassembler;
+extern "C"
+{
+	#include <libkern/libkern.h>
+	
+	#include <kern/host.h>
+	#include <mach/mach_types.h>
+	#include <sys/sysctl.h>
+}
 
 typedef void* pmap_t;
 
-typedef void* proc_t;
+class Disassembler;
 
 namespace xnu
 {
+	class Kernel;
+
 	class Task
 	{
 		public:
 			Task();
 
-			Task(Kernel *kernel, mach_port_t task_port);
-			Task(Kernel *kernel, task_t task);
+			Task(xnu::Kernel *kernel, mach_port_t task_port);
+			Task(xnu::Kernel *kernel, task_t task);
 
 			void initialize();
 
@@ -110,7 +114,7 @@ namespace xnu
 			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
 
 		protected:
-			Kernel *kernel;
+			xnu::Kernel *kernel;
 
 			char *name;
 

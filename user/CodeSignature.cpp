@@ -12,8 +12,6 @@ using namespace mrk;
 
 #define swap32(x) OSSwapInt32(x)
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
 CodeSignature* CodeSignature::codeSignatureWithLinkedit(UserMachO *macho, struct linkedit_data_command *cmd)
 {
 	return new CodeSignature(macho, cmd);
