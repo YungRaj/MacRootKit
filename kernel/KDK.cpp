@@ -21,7 +21,53 @@
 
 using namespace xnu;
 
-char* findKDKWithBuildVersion(const char *basePath, const char *substring);
+struct macOSVersionMap
+{
+    const char* buildVersion;
+    const char* versionNumber;
+};
+
+struct macOSVersionMap macOSVersions[] =
+{
+	{"22G120", "13.6"},
+	{"22G91", "13.5.2"},
+	{"22G90", "13.5.1"},
+	{"22G74", "13.5"},
+	{"22F82", "13.4.1"},
+	{"22F66", "13.4"},
+	{"22E261", "13.3.1"},
+	{"22E252", "13.3"},
+	{"22D68", "13.2.1"},
+	{"22D49", "13.2"},
+	{"22C65", "13.1"},
+	{"22A400", "13.0.1"},
+	{"22A380", "13.0"},
+	{"21G72", "12.5"},
+	{"2179", "12.4"},
+	{"21E258", "12.3.1"},
+	{"21D62", "12.2.1"},
+	{"21D49", "12.2"},
+	{"21C52", "12.1"},
+    {"21A559", "12.0.1"},
+    {"21A344", "12.0"},
+    {"20G165", "11.6.1"},
+    {"20G161", "11.6"},
+    {"20G143", "11.5.2"},
+    {"20G125", "11.5.1"},
+    {"20G121", "11.5"},
+    {"20F71", "11.4"},
+    {"20E241", "11.3.1"},
+    {"20E232", "11.3"},
+    {"20D91", "11.2.3"},
+    {"20D80", "11.2.2"},
+    {"20D74", "11.2.1"},
+    {"20D64", "11.2"},
+    {"20C69", "11.1"},
+    {"20B29", "11.0.1"},
+    {"20A2411", "11.0"},
+};
+
+char* getKDKWithBuildVersion(const char *basePath, const char *buildVersion);
 
 kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer);
 
@@ -118,68 +164,25 @@ class KDKKernelMachO : public KernelMachO
 		const char *path;
 };
 
-char* findKDKWithBuildVersion(const char *basePath, const char *substring)
+char* getKDKWithBuildVersion(const char *basePath, const char *buildVersion)
 {
-    vnode_t vnode = NULLVP;
+	char kdkPath[1024];
 
-    vfs_context_t context = vfs_context_create(NULL);
+	size_t numEntries = sizeof(macOSVersions) / sizeof(macOSVersions[0]);
 
-    int error = vnode_lookup(basePath, 0, &vnode, context);
+	for(int i = 0; i < numEntries; i++)
+	{
+		struct macOSVersionMap map = macOSVersions[i];
 
-    /*
+		if(strcmp(buildVersion, map.buildVersion) == 0)
+		{
+			snprintf(kdkPath, 1024, "%s/KDK_%s_%s.kdk", basePath, map.versionNumber, map.buildVersion);
 
-    if (error == 0 && vnode)
-    {
-        struct vnode_attr vattr;
+			return strdup(kdkPath);
+		}
+	}
 
-        VATTR_INIT(&vattr);
-        VATTR_WANTED(&vattr, va_type);
-
-        vattr.va_type = VDIR;
-
-        vnode_t childVnode = NULLVP;
-
-        struct dirent *dirent_buffer = (struct dirent *) IOMalloc(MAXPATHLEN);
-
-		struct uio auio;
-
-		uio_createwithbuffer(1, 0, UIO_SYSSPACE, UIO_READ, &auio, sizeof(auio));
-
-		uio_addiov(&auio, CAST_USER_ADDR_T(dirent_buffer), MAXPATHLEN);
-
-        int result = VOP_READDIR(vnode, &auio, context);
-
-        while (result == 0 && childVnode != NULLVP)
-        {
-            char childName[KDK_PATH_SIZE];
-
-            int childNameLen = 0;
-
-            vn_getpath(childVnode, childName, &childNameLen);
-
-            if(strstr(childName, substring))
-            {
-                MAC_RK_LOG("MacRK::Found KDK with build version '%s': %s\n", substring, childName);
-
-                return strdup(childName);
-            }
-
-            vnode_t nextChildVnode = NULLVP;
-
-            result = VOP_READDIR(vnode, &auio, context);
-
-            vnode_put(childVnode);
-
-            childVnode = nextChildVnode;
-        }
-
-        vnode_put(vnode);
-    }
-    */
-
-    vfs_context_rele(context);
-
-    return NULL;
+	return NULL;
 }
 
 kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer)
@@ -305,7 +308,7 @@ char* getKDKKernelNameFromType(KDKKernelType type)
 
 void KDK::getKDKPathFromBuildInfo(char *buildVersion, char *outPath)
 {
-	char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
+	char* KDK = getKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
 
 	if(outPath)
 	{
