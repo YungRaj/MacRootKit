@@ -328,7 +328,7 @@ namespace Arch
 
 			mach_vm_address_t stepBack64(MachO *macho, mach_vm_address_t start, size_t length, char *mnemonic, char *op_string)
 			{
-				cs_insn *insn;
+				cs_insn *insn = NULL;
 
 				size_t count;
 
@@ -344,6 +344,9 @@ namespace Arch
 
 						while(n != 1)
 							n = Arch::x86_64::Disassembler::disassemble(reinterpret_cast<mach_vm_address_t>((*macho)[offset - ++j]), Arch::x86_64::MaxInstructionSize, &insn);
+
+						if(!insn)
+							return 0;
 
 						if(insn->size + (offset - j) != offset)
 							return 0;

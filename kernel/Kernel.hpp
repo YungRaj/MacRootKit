@@ -14,10 +14,6 @@ extern "C"
 
 #include <IOKit/IOLib.h>
 
-#include "MacRootKit.hpp"
-
-#include "IOKernelRootKitService.hpp"
-
 #include "Task.hpp"
 
 #include "Disassembler.hpp"
@@ -46,9 +42,9 @@ namespace xnu
 {
 	class KDK;
 
-	static const char* getKernelVersion();
+	static char* getKernelVersion();
 
-	static const char* getOSBuildVersion();
+	static char* getOSBuildVersion();
 
 	class Kernel : public xnu::Task
 	{
@@ -190,8 +186,8 @@ namespace xnu
 			mach_port_t kernel_task_port;
 
 		private:
-			const char *version;
-			const char *osBuildVersion;
+			char *version;
+			char *osBuildVersion;
 
 			IOSimpleLock *kernelWriteLock;
 
@@ -251,12 +247,12 @@ namespace xnu
 		public:
 			explicit KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo);
 
-			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
-			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
+			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, char *buildVersion, char *kernelVersion);
+			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, char *buildVersion, char *kernelVersion);
 
-			static void getKDKPathFromBuildInfo(const char *buildVersion, char *outPath);
+			static void getKDKPathFromBuildInfo(char *buildVersion, char *outPath);
 
-			static void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath);
+			static void getKDKKernelFromPath(char *path, char *kernelVersion, KDKKernelType *outType, char *outKernelPath);
 
 			xnu::Kernel* getKernel() const { return kernel; }
 
@@ -268,7 +264,7 @@ namespace xnu
 
 			char* getPath() const { return path; }
 
-			mach_vm_address_t getKDKSymbolAddressByName(const char *sym);
+			mach_vm_address_t getKDKSymbolAddressByName(char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
 			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
@@ -282,7 +278,7 @@ namespace xnu
 			std::Array<Xref<T>*> getStringReferences(mach_vm_address_t addr);
 
 			template<typename T>
-			std::Array<Xref<T>*> getStringReferences(const char *s);
+			std::Array<Xref<T>*> getStringReferences(char *s);
 
 			void parseDebugInformation();
 

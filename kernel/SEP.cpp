@@ -1,15 +1,13 @@
 #include "SEP.hpp"
 
-#include "MacRootKit.hpp"
-
 namespace SEP
 {
 
 void initialize()
 {
-	MacRootKit *rootkit = mac_rootkit_get_rootkit();
+	mrk::MacRootKit *rootkit = mac_rootkit_get_rootkit();
 
-	plugin = new Plugin("SEP", 1, 0, NULL, 0, NULL, 0, NULL, 0);
+	plugin = new mrk::Plugin("SEP", 1, 0, NULL, 0, NULL, 0, NULL, 0);
 
 	appleA7IOP = rootkit->getKextByIdentifier("com.apple.driver.AppleA7IOP");
 	appleSEPManager = rootkit->getKextByIdentifier("com.apple.driver.AppleSEPManager");

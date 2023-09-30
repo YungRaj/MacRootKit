@@ -13,6 +13,10 @@ extern "C"
 
 #include "Array.hpp"
 
+#include "Disassembler.hpp"
+
+#include "Hook.hpp"
+
 namespace xnu
 {
 	class Kernel;

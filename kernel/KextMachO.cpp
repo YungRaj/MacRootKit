@@ -9,7 +9,6 @@ KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
     : kernel(kernel),
       name(name),
       base_offset(0),
-      size(0),
       kernel_cache(
 #ifdef __arm64__
           Kernel::findKernelCache()
@@ -25,6 +24,7 @@ KextMachO::KextMachO(Kernel *kernel, char *name, mach_vm_address_t base)
 #endif
       )
 {
+	size = 0;
 
 	this->initWithBase(base, 0);
 	

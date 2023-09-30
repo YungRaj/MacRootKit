@@ -11,7 +11,7 @@ MacRootKit::MacRootKit(Kernel *kernel)
 	  kextKmods(reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"))),
 	  platformArchitecture(Arch::getCurrentArchitecture()),
 	  kernelPatcher(new KernelPatcher(this->kernel)),
-	  architecture(Arch::initArchitecture());
+	  architecture(Arch::initArchitecture())
 {
 	kernel->setRootKit(this);
 

@@ -9,8 +9,6 @@
 #include "Patcher.hpp"
 #include "Arch.hpp"
 
-#include "Plugin.hpp"
-
 namespace xnu
 {
 	class Kernel;

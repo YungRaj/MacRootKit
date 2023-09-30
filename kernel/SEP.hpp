@@ -3,7 +3,7 @@
 
 #include "Array.hpp"
 
-#include "Plugin.hpp"
+#include "MacRootKit.hpp"
 
 namespace mrk
 {
@@ -14,7 +14,7 @@ extern mrk::MacRootKit* mac_rootkit_get_rootkit();
 
 namespace SEP
 {
-	static Plugin *plugin;
+	static mrk::Plugin *plugin;
 
 	static Kext *appleA7IOP;
 	static Kext *appleSEPManager;

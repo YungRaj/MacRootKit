@@ -25,7 +25,7 @@ char* findKDKWithBuildVersion(const char *basePath, const char *substring);
 
 kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer);
 
-class KDKKernelMachO : KernelMachO
+class KDKKernelMachO : public KernelMachO
 {
 	public:
 		KDKKernelMachO(xnu::Kernel *kern, const char *path)
@@ -303,7 +303,7 @@ char* getKDKKernelNameFromType(KDKKernelType type)
 	return NULL;
 }
 
-void KDK::getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
+void KDK::getKDKPathFromBuildInfo(char *buildVersion, char *outPath)
 {
 	char* KDK = findKDKWithBuildVersion("/Library/Developer/KDKs", buildVersion);
 
@@ -321,7 +321,7 @@ void KDK::getKDKPathFromBuildInfo(const char *buildVersion, char *outPath)
 	}
 }
 
-void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath)
+void KDK::getKDKKernelFromPath(char *path, char *kernelVersion, KDKKernelType *outType, char *outKernelPath)
 {
 	KDKKernelType type = KdkKernelTypeNone;
 
@@ -407,12 +407,12 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 	}
 }
 
-KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
+KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, char *buildVersion, char *kernelVersion)
 {
 	return new KDK(kernel, KDK::KDKInfoFromBuildInfo(kernel, buildVersion, kernelVersion));
 }
 
-KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
+KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, char *buildVersion, char *kernelVersion)
 {
 	struct KDKInfo *kdkInfo;
 
@@ -455,12 +455,12 @@ KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
 	  kdkInfo(kdkInfo),
 	  type(kdkInfo->type),
 	  path(kdkInfo->path),
-	  kernelWithDebugSymbols(new KernelMachO(kernel, kdkInfo->kernelDebugSymbolsPath))
+	  kernelWithDebugSymbols(dynamic_cast<KernelMachO*>(new KDKKernelMachO(kernel, kdkInfo->kernelDebugSymbolsPath)))
 {
 	
 }
 
-mach_vm_address_t KDK::getKDKSymbolAddressByName(const char *sym)
+mach_vm_address_t KDK::getKDKSymbolAddressByName(char *sym)
 {
 	return this->kernelWithDebugSymbols->getSymbolAddressByName(sym);
 }
@@ -472,7 +472,7 @@ Symbol* KDK::getKDKSymbolByName(char *symname)
 
 Symbol* KDK::getKDKSymbolByAddress(mach_vm_address_t address)
 {
-	return this->kernelWithDebugSymbols->getSymbolByAddress(symname);
+	return this->kernelWithDebugSymbols->getSymbolByAddress(address);
 }
 
 char* KDK::findString(char *s)
@@ -493,7 +493,7 @@ std::Array<Xref<T>*> KDK::getStringReferences(mach_vm_address_t addr)
 }
 
 template<typename T>
-std::Array<Xref<T>*> KDK::getStringReferences(const char *s)
+std::Array<Xref<T>*> KDK::getStringReferences(char *s)
 {
 	
 }

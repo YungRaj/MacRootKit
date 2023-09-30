@@ -126,7 +126,7 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 
 void SymbolTable::replaceSymbol(Symbol *symbol)
 {
-	for(int i = symbolTable.getSize() - 1; i >= 0; i--)
+	for(size_t i = symbolTable.getSize() - 1; i >= 0; i--)
 	{
 		Symbol *sym = symbolTable.get(i);
 

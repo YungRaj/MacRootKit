@@ -6,6 +6,8 @@
 #include "Kernel.hpp"
 #include "KernelPatcher.hpp"
 
+#include "Plugin.hpp"
+
 #include "Kext.hpp"
 
 #include <string.h>
@@ -62,7 +64,7 @@ namespace mrk
 			{
 				for(int i = 0; i < plugins.getSize(); i++)
 				{
-					Plugin *plugin = plugins.get(i);
+					mrk::Plugin *plugin = plugins.get(i);
 
 					if(strcmp(plugin->getProduct(), pluginName) == 0)
 						return plugin;

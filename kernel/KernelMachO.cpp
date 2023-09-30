@@ -1,3 +1,5 @@
+#include "MacRootKit.hpp"
+
 #include "KernelMachO.hpp"
 
 #include "Kernel.hpp"

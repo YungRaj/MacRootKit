@@ -11,10 +11,19 @@ extern "C"
 {
 	#include "kern.h"
 
+	#include <IOKit/IOLib.h>
+
+	#include <libkern/OSKextLib.h>
+
+	#include <mach/mach_types.h>
+
 	#include <sys/param.h>
 	#include <sys/mount.h>
 	#include <sys/vnode.h>
 	#include <sys/namei.h>
+	#include <sys/sysctl.h>
+	#include <sys/utsname.h>
+
 	#include <vfs/vfs_support.h>
 }
 
@@ -32,9 +41,7 @@ using namespace Arch::x86_64::PatchFinder;
 
 #endif
 
-using namespace xnu;
-
-const char* getKernelVersion()
+char* xnu::getKernelVersion()
 {
 	char *kernelBuildVersion = new char[256];
 
@@ -49,12 +56,18 @@ const char* getKernelVersion()
 	return kernelBuildVersion;
 }
 
-const char* getOSBuildVersion()
+extern int sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+char* xnu::getOSBuildVersion()
 {
 	int mib[2];
 
 	size_t len = 256;
+
 	char *buildVersion = new char[len];
+
+	#define CTL_KERN 1
+	#define KERN_OSVERSION 65
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSVERSION;
@@ -69,6 +82,8 @@ const char* getOSBuildVersion()
 
 	return buildVersion;
 }
+
+using namespace xnu;
 
 off_t Kernel::tempExecutableMemoryOffset = 0;
 
@@ -104,20 +119,22 @@ Kernel::Kernel(mach_port_t kernel_task_port)
 	: version(xnu::getKernelVersion()),
 	  osBuildVersion(xnu::getOSBuildVersion()),
 	  kernel_task_port(kernel_task_port),
-	  base(Kernel::findKernelBase()),
-	  disassembler(new Disassembler(this)),
-	  kernelWriteLock(IOSimpleLockAlloc),
-	  kernelDebugKit(xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion))
+	  kernelWriteLock(IOSimpleLockAlloc())
 {
+	base = Kernel::findKernelBase();
 
+	disassembler = new Disassembler(this);
+
+	kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide)
 	: version(xnu::getKernelVersion()),
 	  osBuildVersion(xnu::getOSBuildVersion()),
-	  macho(new KernelMachO(this)),
-	  disassembler(this)
+	  macho(new KernelMachO(this))
 {
+	disassembler = new Disassembler(this);
+
 	macho->initWithBase(base, slide);
 	
 	kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
@@ -127,9 +144,10 @@ Kernel::Kernel(mach_vm_address_t base, off_t slide)
 	: version(xnu::getKernelVersion()),
 	  osBuildVersion(xnu::getOSBuildVersion()),
 	  macho(new KernelMachO(this)),
-	  disassembler(this),
-	  kernelWriteLock(IOSimpleLockAlloc()),
+	  kernelWriteLock(IOSimpleLockAlloc())
 {
+	disassembler = new Disassembler(this);
+
 	macho->initWithBase(base, slide);
 
 #ifdef __x86_64__

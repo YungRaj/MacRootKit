@@ -48,7 +48,7 @@ Task::Task(Kernel *kernel, mach_port_t task_port)
 Task::Task(Kernel *kernel, task_t task)
 	: kernel(kernel),
 	  task(task),
-	  disassembler(new Dissasembler(this))
+	  disassembler(new Disassembler(this))
 {
 	this->initialize();
 }

@@ -56,7 +56,7 @@ KERNEL_HEADERS = -I$(KFWK)/Headers -I$(IOKIT_FWK)/Headers
 
 CPATH := /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
 
-CFLAGS += -g -I/usr/include -I/usr/local/include $(KERNEL_HEADERS) -Wno-nullability-completeness -Wno-implicit-int-conversion -Wno-shadow -Wno-visibility -Wno-unused-variable -O2 -g -fno-builtin -fno-common -mkernel -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -nostdinc -nostdlib
+CFLAGS += -g -I/usr/include -I/usr/local/include $(KERNEL_HEADERS) -Wno-nullability-completeness -Wno-implicit-int-conversion -Wno-shadow -Wno-visibility -Wno-unused-variable -O2 -g -fno-builtin -fno-common -mkernel -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -nostdlib
 
 LDFLAGS += -std=c++20 -g -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -Wl,-kext -lkmod -lkmodc++ -lcc_kext
 
