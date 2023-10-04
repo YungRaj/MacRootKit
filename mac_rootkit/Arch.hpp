@@ -229,6 +229,19 @@ namespace Arch
 	template<enum Architectures ArchType>
 	concept SupportedProcessor = _x86_64<ArchType> || _arm64<ArchType> || _i386<ArchType> || _armv7<ArchType>;
 
+	#define PAGE_SHIFT_ARM64 14
+
+	#define PAGE_SHIFT_X86_64  12
+
+	template<enum Architectures ArchType>
+	static constexpr uint32_t getPageShift() requires SupportedProcessor<ArchType>
+	{
+		if constexpr (ArchType == ARCH_arm64)
+			return PAGE_SHIFT_ARM64;
+		if constexpr (ArchType == ARCH_x86_64)
+			return PAGE_SHIFT_X86_64;
+	}
+
 	template <enum Architectures ArchType> requires SupportedProcessor<ArchType>
 	class Instructions
 	{

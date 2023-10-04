@@ -9,6 +9,8 @@
 
 #include "Hook.hpp"
 
+#include "Arch.hpp"
+
 namespace xnu
 {
 	class Kernel;
@@ -21,15 +23,7 @@ namespace mrk
 {
 	class Payload
 	{
-	#ifdef __arm64__
-		#define ARM64_PAGE_SHIFT 14
-
-		static constexpr uint32_t expectedSize = 1 << ARM64_PAGE_SHIFT;
-	#elif  __x86_64__
-		#define X86_64_PAGE_SHIFT 12
-
-		static constexpr uint32_t expectedSize = 1 << X86_64_PAGE_SHIFT;
-	#endif
+		static constexpr uint32_t expectedSize = Arch::getPageShift<Arch::getCurrentArchitecture()>();
 
 		public:
 			Payload(Task *task, Hook *hook, vm_prot_t prot);
