@@ -65,20 +65,6 @@ extern "C"
 
 }
 
-SymbolTable::SymbolTable()
-{
-
-}
-
-SymbolTable::SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
-    : symtab(symtab),
-      nsyms(nsyms),
-      strtab(strtab),
-      strsize(strsize)
-{
-	
-}
-
 Symbol* SymbolTable::getSymbolByName(char *symname)
 {
 	for(int32_t i = 0; i < symbolTable.getSize(); i++)

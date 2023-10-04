@@ -13,7 +13,17 @@ class SymbolTable
 	public:
 		explicit SymbolTable();
 
-		SymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
+		explicit SymbolTable(struct nlist_64 *symtab,
+							 uint32_t nsyms,
+							 char *strtab,
+							 size_t strsize)
+		    : symtab(symtab),
+		      nsyms(nsyms),
+		      strtab(strtab),
+		      strsize(strsize)
+		{
+			
+		}
 
 		std::Array<Symbol*>* getAllSymbols() { return &symbolTable; }
 
