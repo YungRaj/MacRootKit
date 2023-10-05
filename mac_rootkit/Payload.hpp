@@ -23,7 +23,7 @@ namespace mrk
 {
 	class Payload
 	{
-		static constexpr uint32_t expectedSize = Arch::getPageShift<Arch::getCurrentArchitecture()>();
+		static constexpr uint32_t expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
 
 		public:
 			Payload(Task *task, Hook *hook, vm_prot_t prot);

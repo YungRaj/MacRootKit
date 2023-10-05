@@ -64,6 +64,13 @@ namespace Arch
 
 	constexpr enum Architectures current_architecture = Arch::getCurrentArchitecture();
 
+	constexpr bool isValidArchitecture()
+	{
+		return Arch::getCurrentArchitecture() != ARCH_unsupported || Arch::getCurrentArchitecture() != ARCH_none;
+	}
+
+	static_assert(Arch::isValidArchitecture());
+
 	Architecture* initArchitecture();
 
 	extern "C"
@@ -240,6 +247,12 @@ namespace Arch
 			return PAGE_SHIFT_ARM64;
 		if constexpr (ArchType == ARCH_x86_64)
 			return PAGE_SHIFT_X86_64;
+	}
+
+	template<enum Architectures ArchType>
+	static constexpr uint64_t getPageSize() requires SupportedProcessor<ArchType>
+	{
+		return 1 << Arch::getPageShift<ArchType>();
 	}
 
 	template <enum Architectures ArchType> requires SupportedProcessor<ArchType>

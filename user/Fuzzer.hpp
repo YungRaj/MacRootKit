@@ -71,7 +71,7 @@ namespace Fuzzer
 	template<LanguageType LangType>
 	concept ManglableLang = LangType == LANG_TYPE_CXX || LangType == LANG_TYPE_SWIFT;
 
-	struct RawBinary : Binary::BinaryFormat
+	struct RawBinary : public Binary::BinaryFormat
 	{
 		struct SegmentRaw
 		{
