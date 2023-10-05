@@ -66,7 +66,7 @@ namespace Arch
 
 	constexpr bool isValidArchitecture()
 	{
-		return Arch::getCurrentArchitecture() != ARCH_unsupported || Arch::getCurrentArchitecture() != ARCH_none;
+		return Arch::getCurrentArchitecture() != ARCH_unsupported && Arch::getCurrentArchitecture() != ARCH_none;
 	}
 
 	static_assert(Arch::isValidArchitecture());
