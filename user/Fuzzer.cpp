@@ -578,6 +578,8 @@ void Harness::mutate(T data) requires FuzzableType<T>
 
 template<typename Func, typename... Args, typename Binary, typename Sym> requires requires (Binary bin, Sym sym)
 {
+    std::is_invocable_v<Func, Args...>;
+    
     sym->getName();
     sym->getAddress();
     std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
