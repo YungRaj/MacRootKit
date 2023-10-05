@@ -255,6 +255,8 @@ namespace Arch
 		return 1 << Arch::getPageShift<ArchType>();
 	}
 
+	static_assert(Arch::getPageSize<Arch::getCurrentArchitecture()>() % 0x1000 == 0);
+
 	template <enum Architectures ArchType> requires SupportedProcessor<ArchType>
 	class Instructions
 	{
