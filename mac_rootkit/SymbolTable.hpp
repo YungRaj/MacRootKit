@@ -11,7 +11,7 @@ class MachO;
 class SymbolTable
 {
 	public:
-		explicit SymbolTable();
+		explicit SymbolTable() { }
 
 		explicit SymbolTable(struct nlist_64 *symtab,
 							 uint32_t nsyms,
@@ -22,7 +22,7 @@ class SymbolTable
 		      strtab(strtab),
 		      strsize(strsize)
 		{
-			
+
 		}
 
 		std::Array<Symbol*>* getAllSymbols() { return &symbolTable; }
