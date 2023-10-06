@@ -26,7 +26,7 @@ namespace mrk
 		static constexpr uint32_t expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
 
 		public:
-			Payload(Task *task, Hook *hook, vm_prot_t prot);
+			Payload(xnu::Task *task, Hook *hook, vm_prot_t prot);
 
 			~Payload();
 
@@ -58,7 +58,7 @@ namespace mrk
 			bool commit();
 		
 		private:
-			Task *task;
+			xnu::Task *task;
 
 			mach_vm_address_t address;
 

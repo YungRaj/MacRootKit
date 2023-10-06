@@ -71,8 +71,52 @@ namespace Fuzzer
 	template<LanguageType LangType>
 	concept ManglableLang = LangType == LANG_TYPE_CXX || LangType == LANG_TYPE_SWIFT;
 
+	template <typename T, typename Sym>
+	concept HasCompatibleSymbol = std::is_same_v<Sym, decltype(std::declval<T>()->getSymbol(nullptr))>;
+
+	template <typename T, typename Seg>
+	concept HasCompatibleSegment = std::is_same_v<Seg, decltype(std::declval<T>()->getSegment(nullptr))>;
+
+	template <typename T, typename Sym, typename Seg>
+	concept MappableBinary = HasCompatibleSymbol<T, Sym> && HasCompatibleSegment<T, Seg>;
+
+	template<typename T, typename Sym, typename Seg>
+	struct LinkerMap
+	{
+		static_assert(MappableBinary<T, Sym, Seg>);
+
+		public:
+			explicit LinkerMap(T binary, char *map)
+					: binary(binary), mapFilePath(map) { }
+
+			T getBinary() const { return binary; }
+
+			char* getMapFilePath() const { return mapFilePath; }
+
+			char* getMapFile() const { return mapFile; }
+
+			std::Array<Sym>& getSymbols() { return symbols; }
+			std::Array<Seg>& getSegments() { return segments; }
+
+			size_t getSymbolCount() { return symbols.getSize(); }
+
+			size_t getSegmentCount() { return segments.getSize(); }
+
+			void read();
+
+		private:
+			T binary;
+
+			std::Array<Sym> symbols;
+			std::Array<Seg> segments;
+
+			char *mapFilePath;
+			char *mapFile;
+	};
+
 	struct RawBinary : public Binary::BinaryFormat
 	{
+
 		struct SegmentRaw
 		{
 			public:
@@ -177,10 +221,12 @@ namespace Fuzzer
 
 			char* getMapFile() const { return mapFile; }
 
-			std::Array<SymbolRaw*>* getAllSymbols() { return &symbols; }
+			std::Array<SymbolRaw*>* getAllSymbols() { return &linkerMap->getSymbols(); }
 
 			SymbolRaw* getSymbol(const char *name)
 			{
+				std::Array<SymbolRaw*> &symbols = linkerMap->getSymbols();
+
 				for(int i = 0; i < symbols.getSize(); i++)
 				{
 					SymbolRaw *sym = symbols.get(i);
@@ -194,6 +240,8 @@ namespace Fuzzer
 
 			SegmentRaw* getSegment(const char *name)
 			{
+				std::Array<SegmentRaw*> &segments = linkerMap->getSegments();
+
 				for(int i = 0; i < segments.getSize(); i++)
 				{
 					SegmentRaw *seg = segments.get(i);
@@ -213,8 +261,7 @@ namespace Fuzzer
 
 			char *mapFile;
 
-			std::Array<SymbolRaw*> symbols;
-			std::Array<SegmentRaw*> segments;
+			LinkerMap<RawBinary*, SymbolRaw*, SegmentRaw*> *linkerMap;
 	};
 
 	template<typename T>
@@ -481,7 +528,7 @@ namespace Fuzzer
 			template<typename Func, typename... Args, typename Binary, typename Sym> requires requires (Binary bin, Sym sym)
 			{
 				std::is_invocable_v<Func, Args...>;
-				
+
 				sym->getName();
 				sym->getAddress();
 				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
