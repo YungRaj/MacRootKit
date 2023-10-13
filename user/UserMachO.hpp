@@ -1,8 +1,9 @@
 #ifndef _USER_MACHO_HPP__
 #define _USER_MACHO_HPP__
 
+#include "vector.hpp"
+
 #include "MachO.hpp"
-#include "Array.hpp"
 #include "SymbolTable.hpp"
 
 #include "ObjC.hpp"

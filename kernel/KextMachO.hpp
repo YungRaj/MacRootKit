@@ -6,7 +6,7 @@
 
 #include "MachO.hpp"
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "SymbolTable.hpp"
 
 namespace xnu

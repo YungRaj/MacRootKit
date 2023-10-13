@@ -3,7 +3,7 @@
 
 #include <mach/kmod.h>
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "Pair.hpp"
 
 namespace mrk
@@ -26,7 +26,7 @@ namespace mrk
 
 			virtual void routeFunction(mrk::Hook *hook);
 
-			std::Array<Hook*>* getHooks() { return &hooks; }
+			std::vector<Hook*>* getHooks() { return &hooks; }
 
 			mrk::Hook* hookForFunction(mach_vm_address_t address);
 
@@ -41,7 +41,7 @@ namespace mrk
 			void removeHook(mrk::Hook *hook);
 
 		private:
-			std::Array<mrk::Hook*> hooks;
+			std::vector<mrk::Hook*> hooks;
 	};
 
 }

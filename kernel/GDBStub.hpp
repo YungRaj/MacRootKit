@@ -2,7 +2,7 @@
 #define __GDBSTUB_HPP_
 
 #include <Architecture.hpp>
-#include <Array.hpp>
+#include <vector.hpp>
 
 namespace xnu
 {
@@ -59,7 +59,7 @@ namespace Debug
 
 			virtual void watchpoint(xnu::Thread* thread) = 0;
 
-			virtual std::Array<DebuggerAction> clientData(uint8_t *data) = 0;
+			virtual std::vector<DebuggerAction> clientData(uint8_t *data) = 0;
 
 			bool notifyThreadStopped(Kernel::KThread* thread);
 

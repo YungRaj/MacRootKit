@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #include "Arch.hpp"
-#include "Array.hpp"
+#include "vector.hpp"
 
 #include "Fuzzer.hpp"
 
@@ -42,29 +42,29 @@ namespace Fuzzer
 			uintptr_t getEntryPoint();
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			std::Array<Sym>* getSymbols() const requires requires (Binary bin, Sym sym)
+			std::vector<Sym>* getSymbols() const requires requires (Binary bin, Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
 			}
 			{
 				return this->getBinary<Binary>()->getAllSymbols();
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			std::Array<Sym>* getUndefinedSymbols() const requires requires (Binary bin, Sym sym)
+			std::vector<Sym>* getUndefinedSymbols() const requires requires (Binary bin, Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
 				sym->isUndefined();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
 			}
 			{
 				Binary bin = this->getBinary<Binary>();
 
-				std::Array<Sym> *syms = new std::Array<Sym>();
-				std::Array<Sym> *allsyms = bin->getAllSymbols();
+				std::vector<Sym> *syms = new std::vector<Sym>();
+				std::vector<Sym> *allsyms = bin->getAllSymbols();
 
 				for(int i = 0; i < allsyms->getSize(); i++)
 				{
@@ -78,18 +78,18 @@ namespace Fuzzer
 			}
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			std::Array<Sym>* getExternalSymbols() const requires requires (Sym sym)
+			std::vector<Sym>* getExternalSymbols() const requires requires (Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
 				sym->isExternal();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::Array<Sym>*>;
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
 			}
 			{
 				Binary bin = this->getBinary<Binary>();
 
-				std::Array<Sym> *syms = new std::Array<Sym>();
-				std::Array<Sym> *allsyms = bin->getAllSymbols();
+				std::vector<Sym> *syms = new std::vector<Sym>();
+				std::vector<Sym> *allsyms = bin->getAllSymbols();
 
 				for(int i = 0; i < allsyms->getSize(); i++)
 				{
@@ -247,7 +247,7 @@ namespace Fuzzer
 
 			struct FuzzBinary *binary;
 
-			std::Array<Module*> modules;
+			std::vector<Module*> modules;
 	};
 };
 

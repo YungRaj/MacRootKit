@@ -41,7 +41,7 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 {
 	Hook *hook;
 
-	std::Array<Hook*> *hooks = patcher->getHooks();
+	std::vector<Hook*> *hooks = patcher->getHooks();
 
 	for(int i = 0; i < hooks->getSize(); i++)
 	{
@@ -73,7 +73,7 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 {
 	Hook *hook;
 
-	std::Array<Hook*> *hooks = patcher->getHooks();
+	std::vector<Hook*> *hooks = patcher->getHooks();
 
 	for(int i = 0; i < hooks->getSize(); i++)
 	{
@@ -118,7 +118,7 @@ void Hook::withBreakpointParams(Task *task, mach_vm_address_t breakpoint)
 
 struct HookPatch* Hook::getLatestRegisteredHook()
 {
-	std::Array<struct HookPatch*> *hooks = this->getHooks();
+	std::vector<struct HookPatch*> *hooks = this->getHooks();
 
 	if(hooks->getSize() == 0)
 		return NULL;
@@ -128,7 +128,7 @@ struct HookPatch* Hook::getLatestRegisteredHook()
 
 mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 {
-	std::Array<struct HookPatch*> *hooks = this->getHooks();
+	std::vector<struct HookPatch*> *hooks = this->getHooks();
 
 	for(int i = 0; i < hooks->getSize(); i++)
 	{

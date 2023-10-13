@@ -11,7 +11,7 @@ extern "C"
 	#include <dyld_cache_format.h>
 }
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 class MachO;
 class Segment;
@@ -88,7 +88,7 @@ namespace dyld
 
 			xnu::Task *task;
 
-			std::Array<Library*> libraries;
+			std::vector<Library*> libraries;
 
 			mach_vm_address_t main_image_load_base;
 

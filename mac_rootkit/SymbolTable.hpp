@@ -25,7 +25,7 @@ class SymbolTable
 
 		}
 
-		std::Array<Symbol*>* getAllSymbols() { return &symbolTable; }
+		std::vector<Symbol*>* getAllSymbols() { return &symbolTable; }
 
 		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
 
@@ -46,7 +46,7 @@ class SymbolTable
 		void replaceSymbol(Symbol *symbol);
 
 	private:
-		std::Array<Symbol*> symbolTable;
+		std::vector<Symbol*> symbolTable;
 
 		struct nlist_64 *symtab;
 		

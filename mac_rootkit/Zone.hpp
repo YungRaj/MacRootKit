@@ -29,14 +29,14 @@ namespace Heap
 {
 	static Kernel *kernel = NULL;
 
-	static Array<Zone*> zones;
+	static std::vector<Zone*> zones;
 
-	static Array<KallocHeap*> allHeaps;
+	static std::vector<KallocHeap*> allHeaps;
 
-	static Array<KallocTypeView*> allTypeViews;
+	static std::vector<KallocTypeView*> allTypeViews;
 
-	static mach_vm_address_t zone_array;
-	static mach_vm_address_t zone_security_array;
+	static mach_vm_address_t zone_std::vector;
+	static mach_vm_address_t zone_security_std::vector;
 	static mach_vm_address_t zone_submaps;
 
 	static mach_vm_address_t kalloc_zones_default;
@@ -206,7 +206,7 @@ namespace Heap
 
 			~KallocHeap();
 
-			Array<Zone*> getZones() { return &zones; }
+			std::vector<Zone*> getZones() { return &zones; }
 
 			char* getKHeapName() { return kh_name; }
 
@@ -220,7 +220,7 @@ namespace Heap
 		private:
 			Kernel *kernel;
 
-			Array<Zone*> zones;
+			std::vector<Zone*> zones;
 
 			enum zone_kheap_id_t kheap_id;
 

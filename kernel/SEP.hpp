@@ -1,7 +1,7 @@
 #ifndef __SEP_HPP_
 #define __SEP_HPP_
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 #include "MacRootKit.hpp"
 

@@ -695,7 +695,7 @@ namespace Heap
 {
 	Zone* zoneForAddress(mach_vm_address_t z)
 	{
-		Array<Zone*> *zones = &Heap::allZones;
+		std::vector<Zone*> *zones = &Heap::allZones;
 
 		for(int i = 0; i < zones->getSize(); i++)
 		{
@@ -717,7 +717,7 @@ namespace Heap
 
 	void enumerateAllZones(Kernel *kernel)
 	{
-		Array<Zone*> *all_zones = &Heap::allZones;
+		std::vector<Zone*> *all_zones = &Heap::allZones;
 
 		MachO *macho = kernel->getMachO();
 

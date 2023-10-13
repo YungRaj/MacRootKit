@@ -1,5 +1,5 @@
-#ifndef __BINARY_HPP__
-#define __BINARY_HPP__
+#ifndef __BINARY_FORMAT_HPP__
+#define __BINARY_FORMAT_HPP__
 
 namespace Binary
 {

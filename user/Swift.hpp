@@ -3,7 +3,7 @@
 
 #include "ObjC.hpp"
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "Dictionary.hpp"
 
 class MachO;
@@ -210,7 +210,7 @@ namespace Swift
 
 		ObjectiveC::ObjCClass *isa;
 
-		std::Array<Method*> methods;
+		std::vector<Method*> methods;
 
 		ObjectiveC::ObjCClass* getObjCClass() { return isa; }
 	};
@@ -271,7 +271,7 @@ namespace Swift
 	{
 		struct FieldDescriptor *descriptor;
 
-		std::Array<struct Field*> records;
+		std::vector<struct Field*> records;
 	};
 
 	struct AssociatedTypeRecord
@@ -323,7 +323,7 @@ namespace Swift
 			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc) { this->macho = macho; this->objc = objc; this->populateSections(); this->parseSwift(); }
 			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : SwiftMetadata(macho, objc) { this->text = text; this->populateSections(); this->parseSwift(); }
 
-			std::Array<Type*>* getAllTypes() { return &swift_types; }
+			std::vector<Type*>* getAllTypes() { return &swift_types; }
 
 			ObjectiveC::ObjCData* getObjCMetaData() { return objc; }
 
@@ -372,12 +372,12 @@ namespace Swift
 
 			Segment *text;
 
-			std::Array<struct Type*> swift_types;
+			std::vector<struct Type*> swift_types;
 
-			std::Array<struct Class*> classes;
-			std::Array<struct Struct*> structs;
-			std::Array<struct Enum*> enums;
-			std::Array<struct Protocol*> protocols;
+			std::vector<struct Class*> classes;
+			std::vector<struct Struct*> structs;
+			std::vector<struct Enum*> enums;
+			std::vector<struct Protocol*> protocols;
 
 			Section *typeref;
 			Section *entry;

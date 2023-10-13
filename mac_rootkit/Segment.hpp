@@ -10,7 +10,7 @@ extern "C"
 	#include <sys/types.h>
 }
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "Section.hpp"
 
 #include "Log.hpp"
@@ -60,7 +60,7 @@ class Segment
 
 		size_t getFileSize() { return filesize; }
 
-		std::Array<Section*>* getSections() { return &sections; }
+		std::vector<Section*>* getSections() { return &sections; }
 
 		Section* getSection(char *sectname)
 		{
@@ -102,7 +102,7 @@ class Segment
 	private:
 		struct segment_command_64 *segment;
 
-		std::Array<Section*> sections;
+		std::vector<Section*> sections;
 
 		char *name;
 

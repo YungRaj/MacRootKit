@@ -26,7 +26,7 @@
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 template<typename classname>
 static inline classname getIvar(id self, const char *name)

@@ -1,7 +1,7 @@
 #ifndef __DICTIONARY_HPP_
 #define __DICTIONARY_HPP_
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 namespace std
 {
@@ -61,8 +61,8 @@ namespace std
 			}
 
 		private:
-			std::Array<char*> keys;
-			std::Array<T> values;
+			std::vector<char*> keys;
+			std::vector<T> values;
 	};
 };
 

@@ -195,13 +195,13 @@ namespace xnu
 			char* findString(char *s);
 
 			template<typename T>
-			std::Array<Xref<T>*> getExternalReferences(mach_vm_address_t addr);
+			std::vector<Xref<T>*> getExternalReferences(mach_vm_address_t addr);
 
 			template<typename T>
-			std::Array<Xref<T>*> getStringReferences(mach_vm_address_t addr);
+			std::vector<Xref<T>*> getStringReferences(mach_vm_address_t addr);
 
 			template<typename T>
-			std::Array<Xref<T>*> getStringReferences(const char *s);
+			std::vector<Xref<T>*> getStringReferences(const char *s);
 
 			void parseDebugInformation();
 

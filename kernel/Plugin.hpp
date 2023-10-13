@@ -11,7 +11,7 @@ extern "C"
 #include "API.h"
 #include "APIUtil.hpp"
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 #include "Disassembler.hpp"
 
@@ -74,7 +74,7 @@ namespace mrk
 				xnu::Kext *kext;
 			};
 
-			std::Array<union Target> targets;
+			std::vector<union Target> targets;
 
 			IOService *service;
 
@@ -93,7 +93,7 @@ namespace mrk
 			const char **betaArg;
 			size_t betaArgNum;
 
-			std::Array<Hook*> hooks;
+			std::vector<Hook*> hooks;
 	};
 };
 

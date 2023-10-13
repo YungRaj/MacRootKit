@@ -16,11 +16,11 @@ ObjCData* parseObjectiveC(mrk::UserMachO *macho)
 	return new ObjCData(macho);
 }
 
-std::Array<ObjCClass*>* parseClassList(ObjCData *data)
+std::vector<ObjCClass*>* parseClassList(ObjCData *data)
 {
 	mrk::UserMachO *macho = data->getMachO();
 
-	std::Array<ObjCClass*> *classes = new std::Array<ObjCClass*>();
+	std::vector<ObjCClass*> *classes = new std::vector<ObjCClass*>();
 
 	Section *classlist = data->getClassList();
 
@@ -80,11 +80,11 @@ std::Array<ObjCClass*>* parseClassList(ObjCData *data)
 	return classes;
 }
 
-std::Array<Category*>* parseCategoryList(ObjCData *data)
+std::vector<Category*>* parseCategoryList(ObjCData *data)
 {
 	mrk::UserMachO *macho = data->getMachO();
 
-	std::Array<Category*> *categories = new std::Array<Category*>();
+	std::vector<Category*> *categories = new std::vector<Category*>();
 
 	Section *catlist = data->getCategoryList();
 
@@ -125,11 +125,11 @@ std::Array<Category*>* parseCategoryList(ObjCData *data)
 	return categories;
 }
 
-std::Array<Protocol*>* parseProtocolList(ObjCData *data)
+std::vector<Protocol*>* parseProtocolList(ObjCData *data)
 {
 	mrk::UserMachO *macho = data->getMachO();
 
-	std::Array<Protocol*> *protocols = new std::Array<Protocol*>();
+	std::vector<Protocol*> *protocols = new std::vector<Protocol*>();
 
 	Section *protlist = data->getProtocolList();
 
@@ -169,7 +169,7 @@ std::Array<Protocol*>* parseProtocolList(ObjCData *data)
 	return protocols;
 }
 
-void parseMethodList(ObjCData *metadata, ObjC *object, std::Array<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
+void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> *methodList, enum MethodType methtype, struct _objc_2_class_method_info *methodInfo)
 {
 	mrk::UserMachO *macho = metadata->getMachO();
 
@@ -273,7 +273,7 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::Array<Method*> *meth
 	}
 }
 
-void parsePropertyList(ObjCData *metadata, ObjC *object, std::Array<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo)
+void parsePropertyList(ObjCData *metadata, ObjC *object, std::vector<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo)
 {
 	struct _objc_2_class_property_info *properties;
 

@@ -410,19 +410,19 @@ char* KDK::findString(char *s)
 }
 
 template<typename T>
-std::Array<Xref<T>*> KDK::getExternalReferences(mach_vm_address_t addr)
+std::vector<Xref<T>*> KDK::getExternalReferences(mach_vm_address_t addr)
 {
 
 }
 
 template<typename T>
-std::Array<Xref<T>*> KDK::getStringReferences(mach_vm_address_t addr)
+std::vector<Xref<T>*> KDK::getStringReferences(mach_vm_address_t addr)
 {
 
 }
 
 template<typename T>
-std::Array<Xref<T>*> KDK::getStringReferences(const char *s)
+std::vector<Xref<T>*> KDK::getStringReferences(const char *s)
 {
 
 }

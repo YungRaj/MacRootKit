@@ -8,7 +8,7 @@ extern "C"
 
 #include "BinaryFormat.hpp"
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"
 #include "Segment.hpp"
@@ -45,11 +45,11 @@ class MachO : public Binary::BinaryFormat
 		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
 		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
 
-		std::Array<Segment*>* getSegments() { return &segments; }
+		std::vector<Segment*>* getSegments() { return &segments; }
 		
-		std::Array<Section*>* getSections(Segment* segment);
+		std::vector<Section*>* getSections(Segment* segment);
 
-		std::Array<Symbol*>* getAllSymbols() { return symbolTable->getAllSymbols(); }
+		std::vector<Symbol*>* getAllSymbols() { return symbolTable->getAllSymbols(); }
 
 		SymbolTable* getSymbolTable() { return symbolTable; }
 
@@ -98,7 +98,7 @@ class MachO : public Binary::BinaryFormat
 
 		struct mach_header_64 *header;
 
-		std::Array<Segment*> segments;
+		std::vector<Segment*> segments;
 
 		SymbolTable *symbolTable;
 

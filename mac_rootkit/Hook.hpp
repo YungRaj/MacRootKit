@@ -6,7 +6,7 @@
 
 #include "Arch.hpp"
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 #include <x86_64/Isa_x86_64.hpp>
 #include <arm64/Isa_arm64.hpp>
@@ -62,10 +62,10 @@ template<typename T, typename Y = enum HookType>
 using HookCallbackPair = Pair<T, Y>;
 
 template<typename T, typename Y = enum HookType>
-using HookCallbackArray = std::Array<HookCallbackPair<T, Y>*>;
+using HookCallbackArray = std::vector<HookCallbackPair<T, Y>*>;
 
 template<typename T = struct HookPatch*>
-using HookArray = std::Array<T>;
+using HookArray = std::vector<T>;
 
 namespace mrk
 {

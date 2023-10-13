@@ -26,7 +26,7 @@
 #include <UIKit/UIKit.h>
 #include <Foundation/Foundation.h>
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 template<typename classname>
 static inline classname getIvar(id self, const char *name)
@@ -91,7 +91,7 @@ int OpenAppStoreURL(NSString *appID);
 
 static AppStoreCrawlServer *appStoreCrawlServer;
 
-static Array<AppStoreCrawlClient*> appStoreCrawlClients;
+static std::vector<AppStoreCrawlClient*> appStoreCrawlClients;
 
 struct AppStoreCrawlServer
 {

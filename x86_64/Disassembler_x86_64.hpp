@@ -3,7 +3,7 @@
 
 #include <capstone/capstone.h>
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 struct DisasmSig;
 
@@ -31,7 +31,7 @@ namespace Arch
 
 			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, x86_insn insn, size_t num, size_t lookup_size);
 
-			mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::Array<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
+			mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::vector<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
 		}
 	}
 };

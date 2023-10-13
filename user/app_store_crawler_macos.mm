@@ -29,7 +29,7 @@
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 template<typename classname>
 static inline classname getIvar(id self, const char *name)
@@ -107,7 +107,7 @@ extern "C"
 
 static AppStoreCrawlServer *appStoreCrawlServer;
 
-static Array<AppStoreCrawlClient*> appStoreCrawlClients;
+static std::vector<AppStoreCrawlClient*> appStoreCrawlClients;
 
 _TtC9App_Store15OfferButtonView* CrawlForOfferButton()
 {

@@ -9,7 +9,7 @@ class SymbolTable;
 class Segment;
 class Section;
 
-#include "Array.hpp"
+#include "vector.hpp"
 #include "MachO.hpp"
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"
@@ -90,7 +90,7 @@ namespace Debug
 
 			uint64_t code;
 
-			std::Array<struct AttrAbbrev*> abbreviationTable;
+			std::vector<struct AttrAbbrev*> abbreviationTable;
 
 			enum DW_TAG tag;
 
@@ -124,15 +124,15 @@ namespace Debug
 
 			DwarfDIE* getParent() { return parent; }
 
-			std::Array<DwarfDIE*>* getChildren() { return &children; }
+			std::vector<DwarfDIE*>* getChildren() { return &children; }
 
-			std::Array<struct Attribute*>* getAttributes() { return &attributes; }
+			std::vector<struct Attribute*>* getAttributes() { return &attributes; }
 
 			void addChild(DwarfDIE *child) { this->children.add(child); }
 			void removeChild(DwarfDIE *child) { this->children.remove(child); }
 
 			void addAttribute(struct Attribute *attribute) { this->attributes.add(attribute); }
-			void addAttributes(std::Array<struct Attribute*> &attrs) { for(int i = 0; i < attrs.getSize(); i++) this->attributes.add(attrs.get(i)); }
+			void addAttributes(std::vector<struct Attribute*> &attrs) { for(int i = 0; i < attrs.getSize(); i++) this->attributes.add(attrs.get(i)); }
 
 			struct Attribute* getAttribute(enum DW_AT attr);
 			struct Attribute* getAttribute(int index) { return this->attributes.get(index); }
@@ -148,8 +148,8 @@ namespace Debug
 
 			DwarfDIE *parent;
 
-			std::Array<DwarfDIE*> children;
-			std::Array<struct Attribute*> attributes;
+			std::vector<DwarfDIE*> children;
+			std::vector<struct Attribute*> attributes;
 	};
 
 	#pragma pack(1)
@@ -170,7 +170,7 @@ namespace Debug
 		public:
 			explicit CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die);
 
-			std::Array<DwarfDIE*>* getDebugInfoEntries() { return &debugInfoEntries; }
+			std::vector<DwarfDIE*>* getDebugInfoEntries() { return &debugInfoEntries; }
 
 			Dwarf* getDwarf() { return dwarf; }
 
@@ -187,7 +187,7 @@ namespace Debug
 
 			struct CompileUnitHeader *header;
 
-			std::Array<DwarfDIE*> debugInfoEntries;
+			std::vector<DwarfDIE*> debugInfoEntries;
 
 			LineTable *lineTable;
 	
@@ -287,7 +287,7 @@ namespace Debug
 		Segment *segment;
 		Section *section;
 
-		std::Array<LTSourceLine*> sourceLines;
+		std::vector<LTSourceLine*> sourceLines;
 	};
 
 	static LTStateMachine gInitialState =
@@ -310,8 +310,8 @@ namespace Debug
 		public:
 			explicit LineTable(MachO *macho, Dwarf *dwarf) { this->macho = macho; this->dwarf = dwarf; }
 
-			std::Array<struct LTSourceFile*>* getSourceFileNames() { return &files; }
-			std::Array<char*>* getIncludeDirectories() { return &include_directories; }
+			std::vector<struct LTSourceFile*>* getSourceFileNames() { return &files; }
+			std::vector<char*>* getIncludeDirectories() { return &include_directories; }
 
 			CompilationUnit* getCompilationUnit() { return compilationUnit; }
 
@@ -340,10 +340,10 @@ namespace Debug
 
 			CompilationUnit *compilationUnit;
 
-			std::Array<Sequence*> sources;
+			std::vector<Sequence*> sources;
 
-			std::Array<char*> include_directories;
-			std::Array<struct LTSourceFile*> files;
+			std::vector<char*> include_directories;
+			std::vector<struct LTSourceFile*> files;
 	};
 
 	struct LocationTableEntry
@@ -357,7 +357,7 @@ namespace Debug
 
 		Segment *segment;
 
-		std::Array<DW_OP> location_ops;
+		std::vector<DW_OP> location_ops;
 	};
 
 	#pragma pack(1)
@@ -381,7 +381,7 @@ namespace Debug
 	{
 		struct AddressRangeHeader header;
 
-		std::Array<struct AddressRange*> ranges;
+		std::vector<struct AddressRange*> ranges;
 	};
 
 	struct RangeEntry
@@ -392,7 +392,7 @@ namespace Debug
 		uint64_t value1;
 	};
 
-	using RangeEntries = std::Array<struct RangeEntry*>;
+	using RangeEntries = std::vector<struct RangeEntry*>;
 
 	#pragma options align=reset
 
@@ -421,8 +421,8 @@ namespace Debug
 			Section* getAppleTypes() { return __apple_types; }
 			Section* getAppleObjc() { return __apple_objc; }
 
-			std::Array<CompilationUnit*>* getCompilationUnits() { return &compilationUnits; }
-			std::Array<LineTable*>* getLineTables() { return &lineTables; }
+			std::vector<CompilationUnit*>* getCompilationUnits() { return &compilationUnits; }
+			std::vector<LineTable*>* getLineTables() { return &lineTables; }
 
 			LineTable* getLineTable(const char *name);
 			LineTable* getLineTable(CompilationUnit *unit);
@@ -447,15 +447,15 @@ namespace Debug
 			MachO *macho;
 			MachO *machoWithDebug;
 
-			std::Array<DIE*> dies;
-			std::Array<CompilationUnit*> compilationUnits;
+			std::vector<DIE*> dies;
+			std::vector<CompilationUnit*> compilationUnits;
 
-			std::Array<LineTable*> lineTables;
+			std::vector<LineTable*> lineTables;
 
-			std::Array<struct LocationTableEntry*> locationTable;
+			std::vector<struct LocationTableEntry*> locationTable;
 
-			std::Array<RangeEntries*> ranges;
-			std::Array<struct AddressRangeEntry*> addressRanges;
+			std::vector<RangeEntries*> ranges;
+			std::vector<struct AddressRangeEntry*> addressRanges;
 
 			Segment *dwarf;
 

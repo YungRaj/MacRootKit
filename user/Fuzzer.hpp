@@ -9,7 +9,7 @@ extern "C"
 	#include <string.h>
 };
 
-#include "Array.hpp"
+#include "vector.hpp"
 
 #include "Kernel.hpp"
 
@@ -78,7 +78,7 @@ namespace Fuzzer
 	concept HasCompatibleSegment = std::is_same_v<Seg, decltype(std::declval<T>()->getSegment(nullptr))>;
 
 	template <typename T, typename Sym, typename Seg>
-	concept MappableBinary = HasCompatibleSymbol<T, Sym> && HasCompatibleSegment<T, Seg>;
+	concept MappableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasCompatibleSymbol<T, Sym> && HasCompatibleSegment<T, Seg>;
 
 	template<typename T, typename Sym, typename Seg>
 	struct LinkerMap
@@ -95,8 +95,8 @@ namespace Fuzzer
 
 			char* getMapFile() const { return mapFile; }
 
-			std::Array<Sym>& getSymbols() { return symbols; }
-			std::Array<Seg>& getSegments() { return segments; }
+			std::vector<Sym>& getSymbols() { return symbols; }
+			std::vector<Seg>& getSegments() { return segments; }
 
 			size_t getSymbolCount() { return symbols.getSize(); }
 
@@ -107,8 +107,8 @@ namespace Fuzzer
 		private:
 			T binary;
 
-			std::Array<Sym> symbols;
-			std::Array<Seg> segments;
+			std::vector<Sym> symbols;
+			std::vector<Seg> segments;
 
 			char *mapFilePath;
 			char *mapFile;
@@ -221,11 +221,11 @@ namespace Fuzzer
 
 			char* getMapFile() const { return mapFile; }
 
-			std::Array<SymbolRaw*>* getAllSymbols() { return &linkerMap->getSymbols(); }
+			std::vector<SymbolRaw*>* getAllSymbols() { return &linkerMap->getSymbols(); }
 
 			SymbolRaw* getSymbol(const char *name)
 			{
-				std::Array<SymbolRaw*> &symbols = linkerMap->getSymbols();
+				std::vector<SymbolRaw*> &symbols = linkerMap->getSymbols();
 
 				for(int i = 0; i < symbols.getSize(); i++)
 				{
@@ -240,7 +240,7 @@ namespace Fuzzer
 
 			SegmentRaw* getSegment(const char *name)
 			{
-				std::Array<SegmentRaw*> &segments = linkerMap->getSegments();
+				std::vector<SegmentRaw*> &segments = linkerMap->getSegments();
 
 				for(int i = 0; i < segments.getSize(); i++)
 				{
@@ -459,7 +459,7 @@ namespace Fuzzer
 			struct FuzzBinary* getFuzzBinary() const { return fuzzBinary; }
 
 			template<typename Sym>
-			std::Array<Sym>* getSymbols() requires requires (Sym sym)
+			std::vector<Sym>* getSymbols() requires requires (Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
