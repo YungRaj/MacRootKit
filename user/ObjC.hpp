@@ -3,7 +3,7 @@
 
 #include <mach/mach_types.h>
 
-#include "vector.hpp"
+#include <vector>
 #include "PAC.hpp"
 
 class Segment;
@@ -396,13 +396,13 @@ namespace ObjectiveC
 
 			char* getName() { return name; }
 
-			std::vector<Method*>* getInstanceMethods() { return &instance_methods; }
-			std::vector<Method*>* getClassMethods() { return &class_methods; }
+			std::vector<Method*>& getInstanceMethods() { return instance_methods; }
+			std::vector<Method*>& getClassMethods() { return class_methods; }
 
-			std::vector<Method*>* getOptionalInstanceMethods() { return &optional_instance_methods; }
-			std::vector<Method*>* getOptionalClassMethods() { return &optional_class_methods; }
+			std::vector<Method*>& getOptionalInstanceMethods() { return optional_instance_methods; }
+			std::vector<Method*>& getOptionalClassMethods() { return optional_class_methods; }
 
-			std::vector<Property*>* getInstanceProperties() { return &instance_properties; }
+			std::vector<Property*>& getInstanceProperties() { return instance_properties; }
 
 			mach_vm_address_t getOffset() { return offset; }
 
@@ -431,10 +431,10 @@ namespace ObjectiveC
 
 			char* getClassName() { return class_name; }
 
-			std::vector<Method*>* getInstanceMethods() { return &instance_methods; }
-			std::vector<Method*>* getClassMethods() { return &class_methods; }
+			std::vector<Method*>& getInstanceMethods() { return instance_methods; }
+			std::vector<Method*>& getClassMethods() { return class_methods; }
 
-			std::vector<Property*>* getProperties() { return &properties; }
+			std::vector<Property*>& getProperties() { return properties; }
 
 		private:
 			struct _objc_2_category *category;
@@ -547,13 +547,13 @@ namespace ObjectiveC
 
 			Property* getProperty(char *propertyname);
 
-			std::vector<Method*>* getMethods() { return &methods; }
+			std::vector<Method*>& getMethods() { return methods; }
 
-			std::vector<Protocol*>* getProtocols() { return &protocols; }
+			std::vector<Protocol*>& getProtocols() { return protocols; }
 
-			std::vector<Ivar*>* getIvars() { return &ivars; }
+			std::vector<Ivar*>& getIvars() { return ivars; }
 
-			std::vector<Property*>* getProperties() { return &properties; }
+			std::vector<Property*>& getProperties() { return properties; }
 
 			bool isValid() { return (name && isa);}
 
@@ -637,9 +637,9 @@ namespace ObjectiveC
 		private:
 			mrk::UserMachO *macho;
 
-			std::vector<ObjCClass*> *classes;
-			std::vector<Category*> *categories;
-			std::vector<Protocol*> *protocols;
+			std::vector<ObjCClass*> classes;
+			std::vector<Category*> categories;
+			std::vector<Protocol*> protocols;
 
 			Segment *data;
 			Segment *data_const;
