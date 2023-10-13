@@ -68,10 +68,10 @@ namespace Debug
 
 			uint64_t getCode() { return code; }
 
-			size_t getAttributesCount() { return abbreviationTable.getSize(); }
+			size_t getAttributesCount() { return abbreviationTable.size(); }
 
 			struct AttrAbbrev* getAttribute(enum DW_AT attr);
-			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.get(index); }
+			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.at(index); }
 
 			char* getName() { return name; }
 
@@ -79,11 +79,11 @@ namespace Debug
 
 			void setOffset(off_t offset) { this->offset = offset; }
 
-			struct AttrAbbrev* getAbbreviation(int index) { return this->abbreviationTable.get(index); }
+			struct AttrAbbrev* getAbbreviation(int index) { return this->abbreviationTable.at(index); }
 			struct AttrAbbrev* getAbbreviation(enum DW_AT attr);
 
-			void addAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.add(abbreviation); }
-			void removeAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.remove(abbreviation); }
+			void addAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.push_back(abbreviation); }
+			void removeAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.erase(std::remove(abbreviationTable.begin(), abbreviationTable.end(), abbreviation), abbreviationTable.end()); }
 
 		private:
 			Dwarf *dwarf;
@@ -128,14 +128,14 @@ namespace Debug
 
 			std::vector<struct Attribute*>* getAttributes() { return &attributes; }
 
-			void addChild(DwarfDIE *child) { this->children.add(child); }
-			void removeChild(DwarfDIE *child) { this->children.remove(child); }
+			void addChild(DwarfDIE *child) { this->children.push_back(child); }
+			void removeChild(DwarfDIE *child) { this->children.erase(std::remove(children.begin(), children.end(), child), children.end()); }
 
-			void addAttribute(struct Attribute *attribute) { this->attributes.add(attribute); }
-			void addAttributes(std::vector<struct Attribute*> &attrs) { for(int i = 0; i < attrs.getSize(); i++) this->attributes.add(attrs.get(i)); }
+			void addAttribute(struct Attribute *attribute) { this->attributes.push_back(attribute); }
+			void addAttributes(std::vector<struct Attribute*> &attrs) { for(int i = 0; i < attrs.size(); i++) this->attributes.push_back(attrs.at(i)); }
 
 			struct Attribute* getAttribute(enum DW_AT attr);
-			struct Attribute* getAttribute(int index) { return this->attributes.get(index); }
+			struct Attribute* getAttribute(int index) { return this->attributes.at(index); }
 
 			uint64_t getAttributeValue(enum DW_AT attr);
 
@@ -178,7 +178,7 @@ namespace Debug
 
 			char* getSourceFileName() { return source_file; }
 
-			void addDebugInfoEntry(DwarfDIE *dwarfDIE) { this->debugInfoEntries.add(dwarfDIE); }
+			void addDebugInfoEntry(DwarfDIE *dwarfDIE) { this->debugInfoEntries.push_back(dwarfDIE); }
 
 		private:
 			Dwarf *dwarf;
@@ -317,7 +317,7 @@ namespace Debug
 
 			LTSourceLine* getSourceLine(mach_vm_address_t pc);
 			
-			LTSourceFile* getSourceFile(int index) { return this->files.get(index); }
+			LTSourceFile* getSourceFile(int index) { return this->files.at(index); }
 
 			void setCompilationUnit(CompilationUnit *cu) { this->compilationUnit = cu; }
 
@@ -325,9 +325,9 @@ namespace Debug
 
 			void setStandardOpcodeLengths(struct LTStandardOpcodeLengths *opcodes) { memcpy(&standardOpcodeLengths, opcodes, sizeof(struct LTStandardOpcodeLengths)); }
 
-			void addSequence(Sequence *sequence) { this->sources.add(sequence); }
-			void addSourceFile(struct LTSourceFile *file) { this->files.add(file); }
-			void addIncludeDirectory(char *directory) { this->include_directories.add(directory); }
+			void addSequence(Sequence *sequence) { this->sources.push_back(sequence); }
+			void addSourceFile(struct LTSourceFile *file) { this->files.push_back(file); }
+			void addIncludeDirectory(char *directory) { this->include_directories.push_back(directory); }
 
 		private:
 			MachO *macho;

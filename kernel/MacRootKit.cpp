@@ -45,30 +45,30 @@ void MacRootKit::registerEntitlementCallback(void *user, entitlement_callback_t 
 {
 	StoredPair<entitlement_callback_t> *pair = StoredPair<entitlement_callback_t>::create(callback, user);
 
-	this->entitlementCallbacks.add(pair);
+	this->entitlementCallbacks.push_back(pair);
 }
 
 void MacRootKit::registerBinaryLoadCallback(void *user, binaryload_callback_t callback)
 {
 	StoredPair<binaryload_callback_t> *pair = StoredPair<binaryload_callback_t>::create(callback, user);
 
-	this->binaryLoadCallbacks.add(pair);
+	this->binaryLoadCallbacks.push_back(pair);
 }
 
 void MacRootKit::registerKextLoadCallback(void *user, kextload_callback_t callback)
 {
 	StoredPair<kextload_callback_t> *pair = StoredPair<kextload_callback_t>::create(callback, user);
 
-	this->kextLoadCallbacks.add(pair);
+	this->kextLoadCallbacks.push_back(pair);
 }
 
 Kext* MacRootKit::getKextByIdentifier(char *name)
 {
 	std::vector<Kext*> *kexts = this->getKexts();
 
-	for(int i = 0; i < kexts->getSize(); i++)
+	for(int i = 0; i < kexts->size(); i++)
 	{
-		Kext *kext = kexts->get(i);
+		Kext *kext = kexts->at(i);
 
 		if(strcmp(kext->getName(), name) == 0)
 		{
@@ -83,9 +83,9 @@ Kext* MacRootKit::getKextByAddress(mach_vm_address_t address)
 {
 	std::vector<Kext*> *kexts = this->getKexts();
 
-	for(int i = 0; i < kexts->getSize(); i++)
+	for(int i = 0; i < kexts->size(); i++)
 	{
-		Kext *kext = kexts->get(i);
+		Kext *kext = kexts->at(i);
 
 		if(kext->getAddress() == address)
 		{
@@ -118,7 +118,7 @@ void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
 		kext = new Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));
 	}
 
-	kexts.add(kext);
+	kexts.push_back(kext);
 }
 
 kmod_info_t* MacRootKit::findKmodInfo(const char *kextname)

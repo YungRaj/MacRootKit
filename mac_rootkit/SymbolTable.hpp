@@ -39,9 +39,9 @@ class SymbolTable
 
 		Symbol* getSymbolByOffset(off_t offset);
 
-		void addSymbol(Symbol *symbol) { symbolTable.add(symbol); }
+		void addSymbol(Symbol *symbol) { symbolTable.push_back(symbol); }
 
-		void removeSymbol(Symbol *symbol) { symbolTable.remove(symbol); }
+		void removeSymbol(Symbol *symbol) { symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), symbol), symbolTable.end()); }
 
 		void replaceSymbol(Symbol *symbol);
 

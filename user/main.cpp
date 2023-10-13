@@ -145,8 +145,7 @@ vm_address_t remote_stack;
 vm_address_t remote_code;
 vm_address_t remote_data;
 
-thread_t thread;
-pthread_t pthread;
+thread_t remote_thread;
 
 arm_thread_state64_t state = {0};
 
@@ -159,7 +158,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 #ifndef __arm64e__
 	state.__pc = (uint64_t) ptrauth_sign_unauthenticated((void*) function, ptrauth_key_process_independent_code, ptrauth_string_discriminator("pc"));
 
-	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
+	thread_convert_thread_state(remote_thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
 
 	state.__lr = gadget_address;
 	state.__sp = ((remote_stack + STACK_SIZE) - (STACK_SIZE / 4));
@@ -171,7 +170,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 	state.__opaque_sp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("sp"));
 	state.__opaque_fp = (void*) ptrauth_sign_unauthenticated((void*)((remote_stack + STACK_SIZE) - (STACK_SIZE / 4)), ptrauth_key_asda, ptrauth_string_discriminator("fp"));;
 
-	thread_convert_thread_state(thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
+	thread_convert_thread_state(remote_thread, THREAD_CONVERT_THREAD_STATE_FROM_SELF, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state), stateCount, reinterpret_cast<thread_state_t>(&state), &stateCount);
 #endif
 
 	char *local_fake_stack = (char *)malloc((size_t) STACK_SIZE);
@@ -267,7 +266,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 
 	printf("Calling function at %p...\n", (void *)function);
 
-	kret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, ARM_THREAD_STATE64_COUNT);
+	kret = thread_set_state(remote_thread, ARM_THREAD_STATE64, (thread_state_t)&state, ARM_THREAD_STATE64_COUNT);
 
 	if(kret != KERN_SUCCESS)
 	{
@@ -276,13 +275,13 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 		exit(-1);
 	}
 
-	thread_resume(thread);
+	thread_resume(remote_thread);
 
 	while(1)
 	{
 		usleep(250000);
 
-		thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
+		thread_get_state(remote_thread, ARM_THREAD_STATE64, (thread_state_t)&state, &stateCount);
 
 	#ifdef __arm64e__
 		if(ptrauth_strip(state.__opaque_pc, ptrauth_key_process_independent_code) == (void*) gadget_address)
@@ -292,7 +291,7 @@ static uint64_t ropcall(mach_vm_address_t function, char *argMap, uint64_t *arg1
 		{
 			printf("Returned from function!\n");
 
-			thread_suspend(thread);
+			thread_suspend(remote_thread);
 
 			break;
 		}
@@ -379,7 +378,7 @@ int injectLibrary(char *dylib)
 
 	printf("pthread_create_from_mach_thread = 0x%llx\n", pthread_create_from_mach_thread);
 
-	if((kr = thread_create(task->getTaskPort(), &thread)) != KERN_SUCCESS)
+	if((kr = thread_create(task->getTaskPort(), &remote_thread)) != KERN_SUCCESS)
 	{
 		fprintf(stderr, "Could not create new thread in task!\n");
 
@@ -518,9 +517,9 @@ int injectLibrary(char *dylib)
 
 	sleep(5);
 
-	thread_suspend(thread);
+	thread_suspend(remote_thread);
 
-	thread_terminate(thread);
+	thread_terminate(remote_thread);
 
 	vm_deallocate(task->getTaskPort(), remote_stack, STACK_SIZE);
 

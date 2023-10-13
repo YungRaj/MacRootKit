@@ -168,7 +168,7 @@ bool KextMachO::parseLoadCommands()
 					sect_offset += sizeof(struct section_64);
 				}
 
-				this->segments.add(segment);
+				this->segments.push_back(segment);
 
 				break;
 			}

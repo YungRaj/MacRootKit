@@ -60,7 +60,7 @@ std::vector<ObjCClass*>* parseClassList(ObjCData *data)
 
 			if(c->isValid())
 			{
-				classes->add(c);
+				classes->push_back(c);
 			}
 		}
 
@@ -72,7 +72,7 @@ std::vector<ObjCClass*>* parseClassList(ObjCData *data)
 
 			if(metac->isValid())
 			{
-				classes->add(metac);
+				classes->push_back(metac);
 			}
 		}
 	}
@@ -117,7 +117,7 @@ std::vector<Category*>* parseCategoryList(ObjCData *data)
 			{
 				cat = new Category(data, objc_category);
 
-				categories->add(cat);
+				categories->push_back(cat);
 			}
 		}
 	}
@@ -162,7 +162,7 @@ std::vector<Protocol*>* parseProtocolList(ObjCData *data)
 		{
 			p = new Protocol(data, objc_protocol);
 
-			protocols->add(p);
+			protocols->push_back(p);
 		}
 	}
 
@@ -234,7 +234,7 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> *met
 
 			MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
 
-			methodList->add(meth);
+			methodList->push_back(meth);
 
 			off += sizeof(struct _objc_2_method);
 
@@ -249,7 +249,7 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> *met
 			{
 				Method *meth = new Method(object, method);
 
-				methodList->add(meth);
+				methodList->push_back(meth);
 
 				MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
 			}
@@ -264,7 +264,7 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> *met
 
 			Method *meth = new Method(object, method);
 
-			methodList->add(meth);
+			methodList->push_back(meth);
 
 			MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
 		}
@@ -296,7 +296,7 @@ void parsePropertyList(ObjCData *metadata, ObjC *object, std::vector<Property*> 
 
 		Property *prop = new Property(object, property);
 
-		propertyList->add(prop);
+		propertyList->push_back(prop);
 
 		MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
 
@@ -791,9 +791,9 @@ mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 
 Protocol* ObjCClass::getProtocol(char *protocolname)
 {
-	for(int i = 0; i < this->getProtocols()->getSize(); i++)
+	for(int i = 0; i < this->getProtocols()->size(); i++)
 	{
-		Protocol *protocol = this->getProtocols()->get(i);
+		Protocol *protocol = this->getProtocols()->at(i);
 
 		if(strcmp(protocol->getName(), protocolname) == 0)
 		{
@@ -806,9 +806,9 @@ Protocol* ObjCClass::getProtocol(char *protocolname)
 
 Method* ObjCClass::getMethod(char *methodname)
 {
-	for(int i = 0; i < this->getMethods()->getSize(); i++)
+	for(int i = 0; i < this->getMethods()->size(); i++)
 	{
-		Method *method = this->getMethods()->get(i);
+		Method *method = this->getMethods()->at(i);
 
 		if(strcmp(method->getName(), methodname) == 0)
 		{
@@ -821,9 +821,9 @@ Method* ObjCClass::getMethod(char *methodname)
 
 Ivar* ObjCClass::getIvar(char *ivarname)
 {
-	for(int i = 0; i < this->getIvars()->getSize(); i++)
+	for(int i = 0; i < this->getIvars()->size(); i++)
 	{
-		Ivar *ivar = this->getIvars()->get(i);
+		Ivar *ivar = this->getIvars()->at(i);
 
 		if(strcmp(ivar->getName(), ivarname) == 0)
 		{
@@ -836,9 +836,9 @@ Ivar* ObjCClass::getIvar(char *ivarname)
 
 Property* ObjCClass::getProperty(char *propertyname)
 {
-	for(int i = 0; i < this->getProperties()->getSize(); i++)
+	for(int i = 0; i < this->getProperties()->size(); i++)
 	{
-		Property *property = this->getProperties()->get(i);
+		Property *property = this->getProperties()->at(i);
 
 		if(strcmp(property->getName(), propertyname) == 0)
 		{
@@ -909,7 +909,7 @@ void ObjCClass::parseMethods()
 			{
 				Method *meth = new Method(this, method);
 
-				this->methods.add(meth);
+				this->methods.push_back(meth);
 
 				if(metaclass)
 				{
@@ -934,7 +934,7 @@ void ObjCClass::parseMethods()
 				{
 					Method *meth = new Method(this, method);
 
-					this->methods.add(meth);
+					this->methods.push_back(meth);
 
 					if(metaclass)
 					{
@@ -1014,7 +1014,7 @@ void ObjCClass::parseIvars()
 
 		Ivar *iv = new Ivar(this, ivar);
 
-		this->ivars.add(iv);
+		this->ivars.push_back(iv);
 
 		MAC_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->getOffset(), iv->getName());
 
@@ -1066,7 +1066,7 @@ void ObjCClass::parseProperties()
 
 		Property *prop = new Property(this, property);
 
-		this->properties.add(prop);
+		this->properties.push_back(prop);
 
 		MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
 
@@ -1122,9 +1122,9 @@ void ObjCData::parseObjC()
 
 ObjCClass* ObjCData::getClassByName(char *classname)
 {
-	for(int i = 0; i < this->classes->getSize(); i++)
+	for(int i = 0; i < this->classes->size(); i++)
 	{
-		ObjCClass *cls = this->classes->get(i);
+		ObjCClass *cls = this->classes->at(i);
 
 		if(cls->getName() && strcmp(cls->getName(), classname) == 0)
 		{
@@ -1137,9 +1137,9 @@ ObjCClass* ObjCData::getClassByName(char *classname)
 
 ObjCClass* ObjCData::getClassByIsa(mach_vm_address_t isa)
 {
-	for(int i = 0; i < this->classes->getSize(); i++)
+	for(int i = 0; i < this->classes->size(); i++)
 	{
-		ObjCClass *cls = this->classes->get(i);
+		ObjCClass *cls = this->classes->at(i);
 
 		if(reinterpret_cast<mach_vm_address_t>(cls->getClass()) == isa)
 		{
@@ -1153,9 +1153,9 @@ ObjCClass* ObjCData::getClassByIsa(mach_vm_address_t isa)
 
 Protocol* ObjCData::getProtocol(char *protoname)
 {
-	for(int i = 0; i < this->protocols->getSize(); i++)
+	for(int i = 0; i < this->protocols->size(); i++)
 	{
-		Protocol *protocol = this->protocols->get(i);
+		Protocol *protocol = this->protocols->at(i);
 
 		if(strcmp(protocol->getName(), protoname) == 0)
 		{
@@ -1168,9 +1168,9 @@ Protocol* ObjCData::getProtocol(char *protoname)
 
 Category* ObjCData::getCategory(char *catname)
 {
-	for(int i = 0; i < this->categories->getSize(); i++)
+	for(int i = 0; i < this->categories->size(); i++)
 	{
-		Category *category = this->categories->get(i);
+		Category *category = this->categories->at(i);
 
 		if(strcmp(category->getName(), catname) == 0)
 		{

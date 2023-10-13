@@ -38,9 +38,9 @@ class Segment
 		{
 			delete name;
 
-			for(int i = 0; i < sections.getSize(); i++)
+			for(int i = 0; i < sections.size(); i++)
 			{
-				Section *section = sections.get(i);
+				Section *section = sections.at(i);
 
 				delete section;
 			}
@@ -64,9 +64,9 @@ class Segment
 
 		Section* getSection(char *sectname)
 		{
-			for(int i = 0; i < sections.getSize(); i++)
+			for(int i = 0; i < sections.size(); i++)
 			{
-				Section *section = sections.get(i);
+				Section *section = sections.at(i);
 
 				if(strcmp(section->getSectionName(), sectname) == 0 ||
 				   strncmp(section->getSectionName(), sectname, strlen(sectname)) == 0)
@@ -78,7 +78,7 @@ class Segment
 			return NULL;
 		}
 
-		void addSection(Section *section) { sections.add(section); }
+		void addSection(Section *section) { sections.push_back(section); }
 
 		void populateSections()
 		{

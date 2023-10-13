@@ -43,9 +43,9 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 
 	std::vector<Hook*> *hooks = patcher->getHooks();
 
-	for(int i = 0; i < hooks->getSize(); i++)
+	for(int i = 0; i < hooks->size(); i++)
 	{
-		hook = hooks->get(i);
+		hook = hooks->at(i);
 
 		if(hook->getFrom() == address && hook->getHookType() == kHookTypeInstrumentFunction)
 		{
@@ -75,9 +75,9 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 
 	std::vector<Hook*> *hooks = patcher->getHooks();
 
-	for(int i = 0; i < hooks->getSize(); i++)
+	for(int i = 0; i < hooks->size(); i++)
 	{
-		hook = hooks->get(i);
+		hook = hooks->at(i);
 
 		if(hook->getFrom() == address && hook->getHookType() == kHookTypeBreakpoint)
 		{
@@ -120,19 +120,19 @@ struct HookPatch* Hook::getLatestRegisteredHook()
 {
 	std::vector<struct HookPatch*> *hooks = this->getHooks();
 
-	if(hooks->getSize() == 0)
+	if(hooks->size() == 0)
 		return NULL;
 
-	return hooks->get((int) (hooks->getSize() - 1));
+	return hooks->at((int) (hooks->size() - 1));
 }
 
 mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 {
 	std::vector<struct HookPatch*> *hooks = this->getHooks();
 
-	for(int i = 0; i < hooks->getSize(); i++)
+	for(int i = 0; i < hooks->size(); i++)
 	{
-		struct HookPatch *patch = hooks->get(i);
+		struct HookPatch *patch = hooks->at(i);
 
 		mach_vm_address_t to = patch->to;
 		mach_vm_address_t trampoline = patch->trampoline;
@@ -154,9 +154,9 @@ mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 
 enum HookType Hook::getHookTypeForCallback(mach_vm_address_t callback)
 {
-	for(int i = 0; i < this->getCallbacks()->getSize(); i++)
+	for(int i = 0; i < this->getCallbacks()->size(); i++)
 	{
-		auto pair = this->getCallbacks()->get(i);
+		auto pair = this->getCallbacks()->at(i);
 
 		mach_vm_address_t cb = pair->first;
 
@@ -187,14 +187,14 @@ Payload* Hook::prepareTrampoline()
 
 void Hook::registerHook(struct HookPatch *patch)
 {
-	this->hooks.add(patch);
+	this->hooks.push_back(patch);
 }
 
 void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype)
 {
 	HookCallbackPair<mach_vm_address_t, enum HookType> *pair = HookCallbackPair<mach_vm_address_t, enum HookType>::create(callback, hooktype);
 
-	this->callbacks.add(pair);
+	this->callbacks.push_back(pair);
 }
 
 void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)

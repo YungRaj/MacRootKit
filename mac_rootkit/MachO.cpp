@@ -194,9 +194,9 @@ mach_vm_address_t MachO::getBufferAddress(mach_vm_address_t address)
 
 Segment* MachO::getSegment(char *segmentname)
 {
-	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
+	for(uint32_t i = 0; i < this->getSegments()->size(); i++)
 	{
-		Segment *segment = this->getSegments()->get(i);
+		Segment *segment = this->getSegments()->at(i);
 
 		if(strcmp(segment->getSegmentName(), segmentname) == 0 ||
 		   strncmp(segment->getSegmentName(), segmentname, strlen(segmentname)) == 0)
@@ -210,16 +210,16 @@ Segment* MachO::getSegment(char *segmentname)
 
 Section* MachO::getSection(char *segmentname, char *sectionname)
 {
-	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
+	for(uint32_t i = 0; i < this->getSegments()->size(); i++)
 	{
-		Segment *segment = this->getSegments()->get(i);
+		Segment *segment = this->getSegments()->at(i);
 
 		if(strcmp(segment->getSegmentName(), segmentname) == 0 ||
 			strncmp(segment->getSegmentName(), segmentname, strlen(segmentname)) == 0)
 		{
-			for(uint32_t j = 0; j < segment->getSections()->getSize(); j++)
+			for(uint32_t j = 0; j < segment->getSections()->size(); j++)
 			{
-				Section *section = segment->getSections()->get(j);
+				Section *section = segment->getSections()->at(j);
 
 				if(strcmp(section->getSectionName(), sectionname) == 0 ||
 				   strncmp(section->getSectionName(), sectionname, strlen(sectionname)) == 0)
@@ -235,9 +235,9 @@ Section* MachO::getSection(char *segmentname, char *sectionname)
 
 Segment* MachO::segmentForAddress(mach_vm_address_t address)
 {
-	for(uint32_t i = 0; i < this->getSegments()->getSize(); i++)
+	for(uint32_t i = 0; i < this->getSegments()->size(); i++)
 	{
-		Segment *segment = this->getSegments()->get(i);
+		Segment *segment = this->getSegments()->at(i);
 
 		if(address >= segment->getAddress() && address <= segment->getAddress() + segment->getSize())
 		{
@@ -255,9 +255,9 @@ Section* MachO::sectionForAddress(mach_vm_address_t address)
 	if(!segment)
 		return NULL;
 
-	for(uint32_t i = 0; i < segment->getSections()->getSize(); i++)
+	for(uint32_t i = 0; i < segment->getSections()->size(); i++)
 	{
-		Section *section = segment->getSections()->get(i);
+		Section *section = segment->getSections()->at(i);
 
 		if(address >= section->getAddress() && address <= section->getAddress() + section->getSize())
 		{

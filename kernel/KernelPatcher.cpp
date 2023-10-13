@@ -205,9 +205,9 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 
 		entitlementCallbacks = rootkit->getEntitlementCallbacks();
 
-		for(int i = 0; i < entitlementCallbacks->getSize(); i++)
+		for(int i = 0; i < entitlementCallbacks->size(); i++)
 		{
-			auto handler = entitlementCallbacks->get(i);
+			auto handler = entitlementCallbacks->at(i);
 
 			MacRootKit::entitlement_callback_t callback = handler->first;
 
@@ -240,9 +240,9 @@ void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread)
 
 		binaryLoadCallbacks = rootkit->getBinaryLoadCallbacks();
 
-		for(int i = 0; i < binaryLoadCallbacks->getSize(); i++)
+		for(int i = 0; i < binaryLoadCallbacks->size(); i++)
 		{
-			auto handler = binaryLoadCallbacks->get(i);
+			auto handler = binaryLoadCallbacks->at(i);
 
 			MacRootKit::binaryload_callback_t callback = handler->first;
 
@@ -455,9 +455,9 @@ void KernelPatcher::processKext(kmod_info_t *kmod, bool loaded)
 
 	OSKext = KernelPatcher::OSKextLookupKextWithIdentifier(static_cast<char*>(kmod->name));
 
-	for(int i = 0; i < kextLoadCallbacks->getSize(); i++)
+	for(int i = 0; i < kextLoadCallbacks->size(); i++)
 	{
-		auto handler = kextLoadCallbacks->get(i);
+		auto handler = kextLoadCallbacks->at(i);
 
 		MacRootKit::kextload_callback_t callback = handler->first;
 
@@ -651,7 +651,7 @@ void KernelPatcher::applyKernelPatch(struct KernelPatch *patch)
 		}
 	}
 
-	this->kernelPatches.add(patch);
+	this->kernelPatches.push_back(patch);
 }
 
 void KernelPatcher::applyKextPatch(struct KextPatch *patch)
@@ -735,7 +735,7 @@ void KernelPatcher::applyKextPatch(struct KextPatch *patch)
 		}
 	}
 
-	this->kextPatches.add(patch);
+	this->kextPatches.push_back(patch);
 }
 
 void KernelPatcher::removeKernelPatch(struct KernelPatch *patch)
@@ -819,7 +819,7 @@ void KernelPatcher::removeKernelPatch(struct KernelPatch *patch)
 		}
 	}
 
-	this->kernelPatches.add(patch);
+	this->kernelPatches.push_back(patch);
 }
 
 void KernelPatcher::removeKextPatch(struct KextPatch *patch)
@@ -903,5 +903,5 @@ void KernelPatcher::removeKextPatch(struct KextPatch *patch)
 		}
 	}
 
-	this->kextPatches.add(patch);
+	this->kextPatches.push_back(patch);
 }

@@ -53,14 +53,14 @@ namespace mrk
 
 				target.target = t;
 
-				this->targets.add(target);
+				this->targets.push_back(target);
 			}
 
-			void addHook(xnu::Kernel *kernel, Hook *hook) { this->addTarget(kernel); this->hooks.add(hook); }
+			void addHook(xnu::Kernel *kernel, Hook *hook) { this->addTarget(kernel); this->hooks.push_back(hook); }
 
-			void addHook(xnu::Kext *kext, Hook *hook) { this->addTarget(kext); this->hooks.add(hook); }
+			void addHook(xnu::Kext *kext, Hook *hook) { this->addTarget(kext); this->hooks.push_back(hook); }
 
-			void removeHook(Hook *hook) { this->hooks.remove(hook); }
+			void removeHook(Hook *hook) { this->hooks.erase(std::remove(hooks.begin(), hooks.end(), hook), hooks.end()); }
 			
 			void (*pluginStart)();
 			void (*pluginStop)();

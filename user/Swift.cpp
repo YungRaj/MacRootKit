@@ -319,7 +319,7 @@ void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescript
 		field->mangled_name = "";
 		field->demangled_name = "";
 
-		fields->records.add(field);
+		fields->records.push_back(field);
 
 		type->field = field;
 	}

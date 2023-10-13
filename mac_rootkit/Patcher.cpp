@@ -25,14 +25,14 @@ void Patcher::onKextLoad(void *kext, kmod_info_t *kmod)
 
 void Patcher::routeFunction(Hook *hook)
 {
-	hooks.add(hook);
+	hooks.push_back(hook);
 }
 
 bool Patcher::isFunctionHooked(mach_vm_address_t address)
 {
-	for(int i = 0; i < this->getHooks()->getSize(); i++)
+	for(int i = 0; i < this->getHooks()->size(); i++)
 	{
-		Hook *hook = this->getHooks()->get(i);
+		Hook *hook = this->getHooks()->at(i);
 
 		if(hook->getHookType() == kHookTypeInstrumentFunction ||
 		   hook->getHookType() == kHookTypeReplaceFunction)
@@ -49,9 +49,9 @@ bool Patcher::isFunctionHooked(mach_vm_address_t address)
 
 bool Patcher::isBreakpointAtInstruction(mach_vm_address_t address)
 {
-	for(int i = 0; i < this->getHooks()->getSize(); i++)
+	for(int i = 0; i < this->getHooks()->size(); i++)
 	{
-		Hook *hook = this->getHooks()->get(i);
+		Hook *hook = this->getHooks()->at(i);
 
 		if(hook->getHookType() == kHookTypeBreakpoint)
 		{
@@ -72,9 +72,9 @@ Hook* Patcher::hookForFunction(mach_vm_address_t address)
 	if(!this->isFunctionHooked(address))
 		return NULL;
 
-	for(int i = 0; i < this->getHooks()->getSize(); i++)
+	for(int i = 0; i < this->getHooks()->size(); i++)
 	{
-		Hook *h = this->getHooks()->get(i);
+		Hook *h = this->getHooks()->at(i);
 
 		if(h->getHookType() == kHookTypeInstrumentFunction ||
 		   h->getHookType() == kHookTypeReplaceFunction)
@@ -96,9 +96,9 @@ Hook* Patcher::breakpointForAddress(mach_vm_address_t address)
 	if(!this->isBreakpointAtInstruction(address))
 		return NULL;
 
-	for(int i = 0; i < this->getHooks()->getSize(); i++)
+	for(int i = 0; i < this->getHooks()->size(); i++)
 	{
-		Hook *h = this->getHooks()->get(i);
+		Hook *h = this->getHooks()->at(i);
 
 		if(h->getHookType() == kHookTypeBreakpoint)
 		{
@@ -116,9 +116,9 @@ void Patcher::installHook(Hook *hook, mach_vm_address_t hooked)
 {
 	hook->hookFunction(hooked);
 
-	if(!this->hooks.find(hook))
+	if(std::find(hooks.begin(), hooks.end(), hook) != hooks.end())
 	{
-		this->hooks.add(hook);
+		this->hooks.push_back(hook);
 	}
 }
 
@@ -126,7 +126,7 @@ void Patcher::removeHook(Hook *hook)
 {
 	hook->uninstallHook();
 
-	this->hooks.remove(hook);
+	this->hooks.erase(std::remove(hooks.begin(), hooks.end(), hook), hooks.end());
 
 	delete hook;
 }

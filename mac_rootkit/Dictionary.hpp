@@ -17,13 +17,13 @@ namespace std
 
 			T get(char *key)
 			{
-				for(int i = 0; i < keys.getSize(); i++)
+				for(int i = 0; i < keys.size(); i++)
 				{
-					char *k = keys.get(i);
+					char *k = keys.at(i);
 
 					if(strcmp(k, key) == 0)
 					{
-						return values.get(i);
+						return values.at(i);
 					}
 				}
 
@@ -32,9 +32,9 @@ namespace std
 
 			int find(char *key)
 			{
-				for(int i = 0; i < keys.getSize(); i++)
+				for(int i = 0; i < keys.size(); i++)
 				{
-					char *k = keys.get(i);
+					char *k = keys.at(i);
 
 					if(strcmp(k, key) == 0)
 					{
@@ -56,8 +56,8 @@ namespace std
 					return;
 				}
 
-				keys.add(key);
-				values.add(value);
+				keys.push_back(key);
+				values.push_back(value);
 			}
 
 		private:

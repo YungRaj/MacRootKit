@@ -98,9 +98,9 @@ namespace Fuzzer
 			std::vector<Sym>& getSymbols() { return symbols; }
 			std::vector<Seg>& getSegments() { return segments; }
 
-			size_t getSymbolCount() { return symbols.getSize(); }
+			size_t getSymbolCount() { return symbols.size(); }
 
-			size_t getSegmentCount() { return segments.getSize(); }
+			size_t getSegmentCount() { return segments.size(); }
 
 			void read();
 
@@ -227,9 +227,9 @@ namespace Fuzzer
 			{
 				std::vector<SymbolRaw*> &symbols = linkerMap->getSymbols();
 
-				for(int i = 0; i < symbols.getSize(); i++)
+				for(int i = 0; i < symbols.size(); i++)
 				{
-					SymbolRaw *sym = symbols.get(i);
+					SymbolRaw *sym = symbols.at(i);
 
 					if(strcmp(name, sym->getName()) == 0)
 						return sym;
@@ -242,9 +242,9 @@ namespace Fuzzer
 			{
 				std::vector<SegmentRaw*> &segments = linkerMap->getSegments();
 
-				for(int i = 0; i < segments.getSize(); i++)
+				for(int i = 0; i < segments.size(); i++)
 				{
-					SegmentRaw *seg = segments.get(i);
+					SegmentRaw *seg = segments.at(i);
 
 					if(strcmp(name, seg->getName()) == 0)
 						return seg;

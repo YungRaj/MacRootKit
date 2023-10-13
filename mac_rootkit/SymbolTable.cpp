@@ -67,9 +67,9 @@ extern "C"
 
 Symbol* SymbolTable::getSymbolByName(char *symname)
 {
-	for(int32_t i = 0; i < symbolTable.getSize(); i++)
+	for(int32_t i = 0; i < symbolTable.size(); i++)
 	{
-		Symbol *symbol = symbolTable.get(i);
+		Symbol *symbol = symbolTable.at(i);
 
 		if(strcmp(symbol->getName(), symname) == 0)
 		{
@@ -82,9 +82,9 @@ Symbol* SymbolTable::getSymbolByName(char *symname)
 
 Symbol* SymbolTable::getSymbolByAddress(mach_vm_address_t address)
 {
-	for(int32_t i = 0; i < symbolTable.getSize(); i++)
+	for(int32_t i = 0; i < symbolTable.size(); i++)
 	{
-		Symbol *symbol = symbolTable.get(i);
+		Symbol *symbol = symbolTable.at(i);
 
 		if(symbol->getAddress() == address)
 		{
@@ -97,9 +97,9 @@ Symbol* SymbolTable::getSymbolByAddress(mach_vm_address_t address)
 
 Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 {
-	for(int32_t i = 0; i < symbolTable.getSize(); i++)
+	for(int32_t i = 0; i < symbolTable.size(); i++)
 	{
-		Symbol *symbol = symbolTable.get(i);
+		Symbol *symbol = symbolTable.at(i);
 
 		if(symbol->getOffset() == offset)
 		{
@@ -112,15 +112,15 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 
 void SymbolTable::replaceSymbol(Symbol *symbol)
 {
-	for(size_t i = symbolTable.getSize() - 1; i >= 0; i--)
+	for(size_t i = symbolTable.size() - 1; i >= 0; i--)
 	{
-		Symbol *sym = symbolTable.get(i);
+		Symbol *sym = symbolTable.at(i);
 
 		if(strcmp(sym->getName(), symbol->getName()) == 0)
 		{
-			symbolTable.remove(sym);
+			symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), sym), symbolTable.end());
 		}
 	}
 
-	symbolTable.add(symbol);
+	symbolTable.push_back(symbol);
 }

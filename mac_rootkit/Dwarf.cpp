@@ -638,9 +638,9 @@ DIE::DIE(Dwarf *dwarf,
 
 struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
 {
-	for(int i = 0; i < abbreviationTable.getSize(); i++)
+	for(int i = 0; i < abbreviationTable.size(); i++)
 	{
-		struct AttrAbbrev *ab = abbreviationTable.get(i);
+		struct AttrAbbrev *ab = abbreviationTable.at(i);
 
 		if(attr == ab->attr_spec.name)
 		{
@@ -662,9 +662,9 @@ DwarfDIE::DwarfDIE(Dwarf *dwarf, CompilationUnit *unit, DIE *die, DwarfDIE *pare
 
 struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
 {
-	for(int i = 0; i < this->attributes.getSize(); i++)
+	for(int i = 0; i < this->attributes.size(); i++)
 	{
-		struct Attribute *attribute = this->attributes.get(i);
+		struct Attribute *attribute = this->attributes.at(i);
 
 		if(attribute->abbreviation.attr_spec.name == attr)
 			return attribute;
@@ -675,9 +675,9 @@ struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
 
 uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
 {
-	for(int i = 0; i < this->attributes.getSize(); i++)
+	for(int i = 0; i < this->attributes.size(); i++)
 	{
-		struct Attribute *attribute = this->attributes.get(i);
+		struct Attribute *attribute = this->attributes.at(i);
 
 		if(attribute->abbreviation.attr_spec.name == attr)
 			return attribute->value;
@@ -794,9 +794,9 @@ void Dwarf::parseDebugAbbrev()
 
 				DIE *die = new DIE(this, code, name, tag, children);
 
-				stack.add(die);
+				stack.push_back(die);
 
-				dies.add(die);
+				dies.push_back(die);
 
 				MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
 			}
@@ -842,16 +842,16 @@ void Dwarf::parseDebugAbbrev()
 
 					MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
 
-					stack.add(die);
+					stack.push_back(die);
 
-					dies.add(die);
+					dies.push_back(die);
 				}
 
 			} else
 			{
 				MAC_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
 				
-				DIE *die = stack.get(stack.getSize() - 1);
+				DIE *die = stack.at(stack.size() - 1);
 
 				struct AttrAbbrev *ab = new AttrAbbrev;
 
@@ -873,9 +873,9 @@ void Dwarf::parseDebugAbbrev()
 
 DIE* Dwarf::getDebugInfoEntryByCode(uint64_t code)
 {
-	for(int i = 0; i < dies.getSize(); i++)
+	for(int i = 0; i < dies.size(); i++)
 	{
-		DIE *die = dies.get(i);
+		DIE *die = dies.at(i);
 
 		if(die->getCode() == code)
 		{
@@ -938,9 +938,9 @@ void Dwarf::parseDebugInfo()
 
 		if(code == 0)
 		{
-			stack.remove(stack.getSize() - 1);
+			stack.erase(stack.end() - 1);
 
-			if(stack.getSize() == 0)
+			if(stack.size() == 0)
 			{
 				header = NULL;
 			}
@@ -950,7 +950,7 @@ void Dwarf::parseDebugInfo()
 
 		DIE *die = getDebugInfoEntryByCode(code);
 
-		DwarfDIE *parent = stack.getSize() > 0 ? stack.get(stack.getSize() - 1) : NULL;
+		DwarfDIE *parent = stack.size() > 0 ? stack.at(stack.size() - 1) : NULL;
 
 		DwarfDIE *dwarfDIE = new DwarfDIE(this, compilationUnit, die, parent);
 
@@ -958,15 +958,15 @@ void Dwarf::parseDebugInfo()
 		{
 			compilationUnit = new CompilationUnit(this, header, die);
 
-			this->compilationUnits.add(compilationUnit);
+			this->compilationUnits.push_back(compilationUnit);
 
 			new_compile_unit = false;
 		}
 
-		for(int i = 0; i < stack.getSize(); i++)
+		for(int i = 0; i < stack.size(); i++)
 				MAC_RK_LOG("\t");
 
-		MAC_RK_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.getSize());
+		MAC_RK_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.size());
 
 		uint64_t die_code = die->getCode();
 
@@ -1095,7 +1095,7 @@ void Dwarf::parseDebugInfo()
 
 			dwarfDIE->addAttribute(attribute);
 
-			for(int i = 0; i < stack.getSize(); i++)
+			for(int i = 0; i < stack.size(); i++)
 				MAC_RK_LOG("\t");
 
 			MAC_RK_LOG("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
@@ -1103,7 +1103,7 @@ void Dwarf::parseDebugInfo()
 
 		if(static_cast<bool>(die->getHasChildren()))
 		{
-			stack.add(dwarfDIE);
+			stack.push_back(dwarfDIE);
 		}
 
 		if(parent)
@@ -1236,7 +1236,7 @@ void Dwarf::parseDebugLines()
 					case DW_LNE::end_sequence:
 					;
 					{
-						sequence->sourceLines.add(sourceLine);
+						sequence->sourceLines.push_back(sourceLine);
 
 						struct LTSourceLine *newSourceLine = new LTSourceLine;
 
@@ -1267,7 +1267,7 @@ void Dwarf::parseDebugLines()
 
 						MAC_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n", sourceLine->state.address, sourceLine->state.line, sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa, sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
 
-						sequence->sourceLines.add(sourceLine);
+						sequence->sourceLines.push_back(sourceLine);
 
 						struct LTSourceLine *newSourceLine = new LTSourceLine;
 
@@ -1465,7 +1465,7 @@ void Dwarf::parseDebugLines()
 			
 				sourceLine->state.prologue_end = 0;
 
-				sequence->sourceLines.add(sourceLine);
+				sequence->sourceLines.push_back(sourceLine);
 
 				struct LTSourceLine *newSourceLine = new LTSourceLine;
 
@@ -1477,7 +1477,7 @@ void Dwarf::parseDebugLines()
 
 		debug_line_offset = (end - debug_line_begin);
 
-		this->lineTables.add(lineTable);
+		this->lineTables.push_back(lineTable);
 	}
 }
 
@@ -1520,7 +1520,7 @@ void Dwarf::parseDebugLocations()
 			{
 				uint8_t byte = *reinterpret_cast<uint8_t*>(debug_loc_begin + debug_loc_offset);
 
-				location_entry->location_ops.add(static_cast<DW_OP>(byte));
+				location_entry->location_ops.push_back(static_cast<DW_OP>(byte));
 
 				MAC_RK_LOG("0x%x ", byte);
 
@@ -1542,7 +1542,7 @@ void Dwarf::parseDebugLocations()
 
 			location_entry->kind = DW_LLE::end_of_list;
 
-			this->locationTable.add(location_entry);
+			this->locationTable.push_back(location_entry);
 
 			location_entry = new LocationTableEntry;
 
@@ -1584,7 +1584,7 @@ void Dwarf::parseDebugRanges()
 
 			current_ranges_offset = debug_ranges_offset;
 
-			this->ranges.add(rangeEntries);
+			this->ranges.push_back(rangeEntries);
 
 			rangeEntries = new RangeEntries;
 		} else
@@ -1597,7 +1597,7 @@ void Dwarf::parseDebugRanges()
 			range->value0 = value0;
 			range->value1 = value1;
 
-			rangeEntries->add(range);
+			rangeEntries->push_back(range);
 		}
 	}
 }
@@ -1654,13 +1654,13 @@ void Dwarf::parseDebugAddressRanges()
 
 				MAC_RK_LOG("(0x%016llx, 0x%016llx)\n", address, address + size);
 
-				arange_entry->ranges.add(range);
+				arange_entry->ranges.push_back(range);
 			}
 
 			offset += (sizeof(uint64_t) * 2);
 		}
 
-		this->addressRanges.add(arange_entry);
+		this->addressRanges.push_back(arange_entry);
 
 		debug_aranges_offset += length;
 	}

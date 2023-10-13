@@ -49,14 +49,14 @@ void Loader::loadModule(Module *module)
         std::vector<Symbol*> *externalSymbols = module->getExternalSymbols<Binary, GetSymbolReturnType<Binary>>();
         std::vector<Symbol*> *undefinedSymbols = module->getUndefinedSymbols<Binary, GetSymbolReturnType<Binary>>();
 
-        for(int i = 0; i < externalSymbols->getSize(); i++)
+        for(int i = 0; i < externalSymbols->size(); i++)
         {
-            Symbol *symbol = externalSymbols->get(i);
+            Symbol *symbol = externalSymbols->at(i);
         }
 
-        for(int i = 0; i < undefinedSymbols->getSize(); i++)
+        for(int i = 0; i < undefinedSymbols->size(); i++)
         {
-            Symbol *symbol = undefinedSymbols->get(i);
+            Symbol *symbol = undefinedSymbols->at(i);
         }
 
     }
@@ -85,7 +85,7 @@ void Loader::loadModuleFromKext(const char *kextPath)
 
     module = new Module(this, kextPath, fuzzBinary);
 
-    this->modules.add(module);
+    this->modules.push_back(module);
 
     this->loadModule<xnu::KextMachO*>(module);
 }

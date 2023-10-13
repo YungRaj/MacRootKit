@@ -62,9 +62,9 @@ namespace mrk
 
 			mrk::Plugin* getPlugin(const char *pluginName)
 			{
-				for(int i = 0; i < plugins.getSize(); i++)
+				for(int i = 0; i < plugins.size(); i++)
 				{
-					mrk::Plugin *plugin = plugins.get(i);
+					mrk::Plugin *plugin = plugins.at(i);
 
 					if(strcmp(plugin->getProduct(), pluginName) == 0)
 						return plugin;
@@ -73,7 +73,7 @@ namespace mrk
 				return NULL;
 			}
 
-			void installPlugin(mrk::Plugin *plugin) { this->plugins.add(plugin); }
+			void installPlugin(mrk::Plugin *plugin) { this->plugins.push_back(plugin); }
 
 			StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
 

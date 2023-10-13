@@ -66,12 +66,12 @@ namespace Fuzzer
 				std::vector<Sym> *syms = new std::vector<Sym>();
 				std::vector<Sym> *allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms->getSize(); i++)
+				for(int i = 0; i < allsyms->size(); i++)
 				{
-					Sym sym = allsyms->get(i);
+					Sym sym = allsyms->at(i);
 
 					if(sym->isUndefined())
-						syms->add(sym);
+						syms->push_back(sym);
 				}
 
 				return syms;
@@ -91,12 +91,12 @@ namespace Fuzzer
 				std::vector<Sym> *syms = new std::vector<Sym>();
 				std::vector<Sym> *allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms->getSize(); i++)
+				for(int i = 0; i < allsyms->size(); i++)
 				{
-					Sym sym = allsyms->get(i);
+					Sym sym = allsyms->at(i);
 
 					if(sym->isExternal())
-						syms->add(sym);
+						syms->push_back(sym);
 				}
 
 				return syms;
@@ -186,9 +186,9 @@ namespace Fuzzer
 
 			Fuzzer::Module* getModule(char *name)
 			{
-				for(int i = 0; i < modules.getSize(); i++)
+				for(int i = 0; i < modules.size(); i++)
 				{
-					Fuzzer::Module *module = modules.get(i);
+					Fuzzer::Module *module = modules.at(i);
 
 					if(strcmp(module->getName(), name) == 0)
 					{

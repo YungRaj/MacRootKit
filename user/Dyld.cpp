@@ -108,7 +108,7 @@ void Dyld::iterateAllImages()
 			free(image_file);
 		}
 
-		this->libraries.add(library);
+		this->libraries.push_back(library);
 	}
 
 	assert(found_main_image);
