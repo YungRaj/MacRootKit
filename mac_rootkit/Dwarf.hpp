@@ -124,9 +124,9 @@ namespace Debug
 
 			DwarfDIE* getParent() { return parent; }
 
-			std::vector<DwarfDIE*>* getChildren() { return &children; }
+			std::vector<DwarfDIE*>& getChildren() { return children; }
 
-			std::vector<struct Attribute*>* getAttributes() { return &attributes; }
+			std::vector<struct Attribute*>& getAttributes() { return attributes; }
 
 			void addChild(DwarfDIE *child) { this->children.push_back(child); }
 			void removeChild(DwarfDIE *child) { this->children.erase(std::remove(children.begin(), children.end(), child), children.end()); }

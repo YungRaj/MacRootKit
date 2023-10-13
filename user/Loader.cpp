@@ -45,7 +45,7 @@ void Loader::loadModule(Module *module)
 {
     if constexpr (MachOFormat<Binary>)
     {
-        std::vector<Symbol*> *symbols = module->getSymbols<Binary, GetSymbolReturnType<Binary>>();
+        std::vector<Symbol*> &symbols = module->getSymbols<Binary, GetSymbolReturnType<Binary>>();
         std::vector<Symbol*> *externalSymbols = module->getExternalSymbols<Binary, GetSymbolReturnType<Binary>>();
         std::vector<Symbol*> *undefinedSymbols = module->getUndefinedSymbols<Binary, GetSymbolReturnType<Binary>>();
 

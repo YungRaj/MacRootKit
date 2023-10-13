@@ -64,11 +64,11 @@ void MacRootKit::registerKextLoadCallback(void *user, kextload_callback_t callba
 
 Kext* MacRootKit::getKextByIdentifier(char *name)
 {
-	std::vector<Kext*> *kexts = this->getKexts();
+	std::vector<Kext*> &kexts = this->getKexts();
 
-	for(int i = 0; i < kexts->size(); i++)
+	for(int i = 0; i < kexts.size(); i++)
 	{
-		Kext *kext = kexts->at(i);
+		Kext *kext = kexts.at(i);
 
 		if(strcmp(kext->getName(), name) == 0)
 		{
@@ -81,11 +81,11 @@ Kext* MacRootKit::getKextByIdentifier(char *name)
 
 Kext* MacRootKit::getKextByAddress(mach_vm_address_t address)
 {
-	std::vector<Kext*> *kexts = this->getKexts();
+	std::vector<Kext*> &kexts = this->getKexts();
 
-	for(int i = 0; i < kexts->size(); i++)
+	for(int i = 0; i < kexts.size(); i++)
 	{
-		Kext *kext = kexts->at(i);
+		Kext *kext = kexts.at(i);
 
 		if(kext->getAddress() == address)
 		{

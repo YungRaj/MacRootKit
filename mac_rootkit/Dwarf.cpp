@@ -1,5 +1,6 @@
 #include "Dwarf.hpp"
 #include "KernelMachO.hpp"
+#include "Kernel.hpp"
 
 #include <string.h>
 
@@ -695,7 +696,11 @@ CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DI
 }
 
 Dwarf::Dwarf(const char *debugSymbols)
-	: macho(NULL), // this->macho = new KernelMachO(debugSymbols);
+#ifdef __USER__
+	: macho(new KernelMachO(debugSymbols)),
+#else
+	: macho(new KDKKernelMachO(xnu::Kernel::xnu(), debugSymbols)),
+#endif
 	  machoWithDebug(macho),
 	  dwarf(macho->getSegment("__DWARF")),
 	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
@@ -710,7 +715,7 @@ Dwarf::Dwarf(const char *debugSymbols)
 	  __apple_types(macho->getSection("__DWARF", "__apple_types")),
 	  __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
 {
-	
+	populateDebugSymbols();
 }
 
 Dwarf::Dwarf(MachO *macho, const char *debugSymbols)
@@ -1209,7 +1214,7 @@ void Dwarf::parseDebugLines()
 
 		memcpy(&sourceLine->state, &gInitialState, sizeof(struct LTStateMachine));
 
-		sourceFile = lineTable->getSourceFile(sourceLine->state.file);
+		sourceFile = lineTable->getSourceFile(sourceLine->state.file - 1);
 
 		sourceLine->source_file = sourceFile;
 

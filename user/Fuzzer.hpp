@@ -9,7 +9,7 @@ extern "C"
 	#include <string.h>
 };
 
-#include "vector.hpp"
+#include <vector>
 
 #include "Kernel.hpp"
 
@@ -221,7 +221,7 @@ namespace Fuzzer
 
 			char* getMapFile() const { return mapFile; }
 
-			std::vector<SymbolRaw*>* getAllSymbols() { return &linkerMap->getSymbols(); }
+			std::vector<SymbolRaw*>& getAllSymbols() { return linkerMap->getSymbols(); }
 
 			SymbolRaw* getSymbol(const char *name)
 			{

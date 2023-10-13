@@ -41,11 +41,11 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 {
 	Hook *hook;
 
-	std::vector<Hook*> *hooks = patcher->getHooks();
+	std::vector<Hook*> &hooks = patcher->getHooks();
 
-	for(int i = 0; i < hooks->size(); i++)
+	for(int i = 0; i < hooks.size(); i++)
 	{
-		hook = hooks->at(i);
+		hook = hooks.at(i);
 
 		if(hook->getFrom() == address && hook->getHookType() == kHookTypeInstrumentFunction)
 		{
@@ -73,11 +73,11 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 {
 	Hook *hook;
 
-	std::vector<Hook*> *hooks = patcher->getHooks();
+	std::vector<Hook*> &hooks = patcher->getHooks();
 
-	for(int i = 0; i < hooks->size(); i++)
+	for(int i = 0; i < hooks.size(); i++)
 	{
-		hook = hooks->at(i);
+		hook = hooks.at(i);
 
 		if(hook->getFrom() == address && hook->getHookType() == kHookTypeBreakpoint)
 		{
@@ -118,21 +118,21 @@ void Hook::withBreakpointParams(Task *task, mach_vm_address_t breakpoint)
 
 struct HookPatch* Hook::getLatestRegisteredHook()
 {
-	std::vector<struct HookPatch*> *hooks = this->getHooks();
+	std::vector<struct HookPatch*> &hooks = this->getHooks();
 
-	if(hooks->size() == 0)
+	if(hooks.size() == 0)
 		return NULL;
 
-	return hooks->at((int) (hooks->size() - 1));
+	return hooks.at((int) (hooks.size() - 1));
 }
 
 mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 {
-	std::vector<struct HookPatch*> *hooks = this->getHooks();
+	std::vector<struct HookPatch*> &hooks = this->getHooks();
 
-	for(int i = 0; i < hooks->size(); i++)
+	for(int i = 0; i < hooks.size(); i++)
 	{
-		struct HookPatch *patch = hooks->at(i);
+		struct HookPatch *patch = hooks.at(i);
 
 		mach_vm_address_t to = patch->to;
 		mach_vm_address_t trampoline = patch->trampoline;
@@ -154,9 +154,9 @@ mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 
 enum HookType Hook::getHookTypeForCallback(mach_vm_address_t callback)
 {
-	for(int i = 0; i < this->getCallbacks()->size(); i++)
+	for(int i = 0; i < this->getCallbacks().size(); i++)
 	{
-		auto pair = this->getCallbacks()->at(i);
+		auto pair = this->getCallbacks().at(i);
 
 		mach_vm_address_t cb = pair->first;
 

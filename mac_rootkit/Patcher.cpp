@@ -30,9 +30,9 @@ void Patcher::routeFunction(Hook *hook)
 
 bool Patcher::isFunctionHooked(mach_vm_address_t address)
 {
-	for(int i = 0; i < this->getHooks()->size(); i++)
+	for(int i = 0; i < this->getHooks().size(); i++)
 	{
-		Hook *hook = this->getHooks()->at(i);
+		Hook *hook = this->getHooks().at(i);
 
 		if(hook->getHookType() == kHookTypeInstrumentFunction ||
 		   hook->getHookType() == kHookTypeReplaceFunction)
@@ -49,9 +49,9 @@ bool Patcher::isFunctionHooked(mach_vm_address_t address)
 
 bool Patcher::isBreakpointAtInstruction(mach_vm_address_t address)
 {
-	for(int i = 0; i < this->getHooks()->size(); i++)
+	for(int i = 0; i < this->getHooks().size(); i++)
 	{
-		Hook *hook = this->getHooks()->at(i);
+		Hook *hook = this->getHooks().at(i);
 
 		if(hook->getHookType() == kHookTypeBreakpoint)
 		{
@@ -72,9 +72,9 @@ Hook* Patcher::hookForFunction(mach_vm_address_t address)
 	if(!this->isFunctionHooked(address))
 		return NULL;
 
-	for(int i = 0; i < this->getHooks()->size(); i++)
+	for(int i = 0; i < this->getHooks().size(); i++)
 	{
-		Hook *h = this->getHooks()->at(i);
+		Hook *h = this->getHooks().at(i);
 
 		if(h->getHookType() == kHookTypeInstrumentFunction ||
 		   h->getHookType() == kHookTypeReplaceFunction)
@@ -96,9 +96,9 @@ Hook* Patcher::breakpointForAddress(mach_vm_address_t address)
 	if(!this->isBreakpointAtInstruction(address))
 		return NULL;
 
-	for(int i = 0; i < this->getHooks()->size(); i++)
+	for(int i = 0; i < this->getHooks().size(); i++)
 	{
-		Hook *h = this->getHooks()->at(i);
+		Hook *h = this->getHooks().at(i);
 
 		if(h->getHookType() == kHookTypeBreakpoint)
 		{

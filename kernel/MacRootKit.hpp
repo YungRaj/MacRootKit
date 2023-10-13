@@ -52,7 +52,7 @@ namespace mrk
 
 			enum Arch::Architectures getPlatformArchitecture() { return platformArchitecture; }
 
-			std::vector<xnu::Kext*>* getKexts() { return &kexts; }
+			std::vector<xnu::Kext*>& getKexts() { return kexts; }
 
 			xnu::Kext* getKextByIdentifier(char *name);
 
@@ -75,11 +75,11 @@ namespace mrk
 
 			void installPlugin(mrk::Plugin *plugin) { this->plugins.push_back(plugin); }
 
-			StoredArray<entitlement_callback_t>* getEntitlementCallbacks() { return &entitlementCallbacks; }
+			StoredArray<entitlement_callback_t>& getEntitlementCallbacks() { return entitlementCallbacks; }
 
-			StoredArray<binaryload_callback_t>* getBinaryLoadCallbacks() { return &binaryLoadCallbacks; }
+			StoredArray<binaryload_callback_t>& getBinaryLoadCallbacks() { return binaryLoadCallbacks; }
 
-			StoredArray<kextload_callback_t>* getKextLoadCallbacks() { return &kextLoadCallbacks; }
+			StoredArray<kextload_callback_t>& getKextLoadCallbacks() { return kextLoadCallbacks; }
 
 			void registerCallbacks();
 

@@ -25,7 +25,7 @@ class SymbolTable
 
 		}
 
-		std::vector<Symbol*>* getAllSymbols() { return &symbolTable; }
+		std::vector<Symbol*>& getAllSymbols() { return symbolTable; }
 
 		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
 

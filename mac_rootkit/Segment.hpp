@@ -60,7 +60,7 @@ class Segment
 
 		size_t getFileSize() { return filesize; }
 
-		std::vector<Section*>* getSections() { return &sections; }
+		std::vector<Section*>& getSections() { return sections; }
 
 		Section* getSection(char *sectname)
 		{

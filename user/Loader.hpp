@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #include "Arch.hpp"
-#include "vector.hpp"
+#include <vector>
 
 #include "Fuzzer.hpp"
 
@@ -42,11 +42,11 @@ namespace Fuzzer
 			uintptr_t getEntryPoint();
 
 			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
-			std::vector<Sym>* getSymbols() const requires requires (Binary bin, Sym sym)
+			std::vector<Sym>& getSymbols() const requires requires (Binary bin, Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
+				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym*>&>;
 			}
 			{
 				return this->getBinary<Binary>()->getAllSymbols();
@@ -64,11 +64,11 @@ namespace Fuzzer
 				Binary bin = this->getBinary<Binary>();
 
 				std::vector<Sym> *syms = new std::vector<Sym>();
-				std::vector<Sym> *allsyms = bin->getAllSymbols();
+				std::vector<Sym> &allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms->size(); i++)
+				for(int i = 0; i < allsyms.size(); i++)
 				{
-					Sym sym = allsyms->at(i);
+					Sym sym = allsyms.at(i);
 
 					if(sym->isUndefined())
 						syms->push_back(sym);
@@ -89,11 +89,11 @@ namespace Fuzzer
 				Binary bin = this->getBinary<Binary>();
 
 				std::vector<Sym> *syms = new std::vector<Sym>();
-				std::vector<Sym> *allsyms = bin->getAllSymbols();
+				std::vector<Sym> &allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms->size(); i++)
+				for(int i = 0; i < allsyms.size(); i++)
 				{
-					Sym sym = allsyms->at(i);
+					Sym sym = allsyms.at(i);
 
 					if(sym->isExternal())
 						syms->push_back(sym);

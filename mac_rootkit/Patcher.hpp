@@ -26,7 +26,7 @@ namespace mrk
 
 			virtual void routeFunction(mrk::Hook *hook);
 
-			std::vector<Hook*>* getHooks() { return &hooks; }
+			std::vector<Hook*>& getHooks() { return hooks; }
 
 			mrk::Hook* hookForFunction(mach_vm_address_t address);
 

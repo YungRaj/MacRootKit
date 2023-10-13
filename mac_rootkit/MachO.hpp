@@ -34,7 +34,7 @@ class MachO : public Binary::BinaryFormat
 
 		struct mach_header_64* getMachHeader() { return header; }
 
-		mach_vm_address_t getBase() { return base; }
+		virtual mach_vm_address_t getBase() { return base; }
 
 		mach_vm_address_t getEntryPoint() { return entry_point; }
 
@@ -45,11 +45,11 @@ class MachO : public Binary::BinaryFormat
 		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
 		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
 
-		std::vector<Segment*>* getSegments() { return &segments; }
+		std::vector<Segment*>& getSegments() { return segments; }
 		
-		std::vector<Section*>* getSections(Segment* segment);
+		std::vector<Section*>& getSections(Segment* segment);
 
-		std::vector<Symbol*>* getAllSymbols() { return symbolTable->getAllSymbols(); }
+		std::vector<Symbol*>& getAllSymbols() { return symbolTable->getAllSymbols(); }
 
 		SymbolTable* getSymbolTable() { return symbolTable; }
 

@@ -65,6 +65,8 @@ namespace xnu
 
 			~Kernel();
 
+			static xnu::Kernel* xnu() { return kernel; }
+
 			static xnu::Kernel* create(mach_port_t kernel_task_port);
 
 			static xnu::Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
@@ -298,6 +300,19 @@ namespace xnu
 			Debug::Dwarf *dwarf;
 
 			mach_vm_address_t base;
+	};
+
+	class KDKKernelMachO : public KernelMachO
+	{
+		public:
+			explicit KDKKernelMachO(xnu::Kernel *kernel, const char *path);
+
+			mach_vm_address_t getBase() override;
+
+			void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize) override;
+
+		private:
+			const char *path;
 	};
 };
 

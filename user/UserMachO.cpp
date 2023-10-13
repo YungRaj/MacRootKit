@@ -41,7 +41,6 @@ void UserMachO::withFilePath(const char *path)
 
 	bytes_read = read(fd, this->buffer, size);
 
-	this->buffer = reinterpret_cast<char*>(malloc(size));
 	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
 

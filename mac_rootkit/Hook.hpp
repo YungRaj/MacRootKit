@@ -102,9 +102,9 @@ namespace mrk
 
 			mach_vm_address_t getTrampolineFromChain(mach_vm_address_t address);
 
-			HookArray<struct HookPatch*>* getHooks() { return &hooks; }
+			HookArray<struct HookPatch*>& getHooks() { return hooks; }
 
-			HookCallbackArray<mach_vm_address_t>* getCallbacks() { return &callbacks; }
+			HookCallbackArray<mach_vm_address_t>& getCallbacks() { return callbacks; }
 
 			enum HookType getHookType() { return hooktype; }
 

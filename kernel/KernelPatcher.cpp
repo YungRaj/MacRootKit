@@ -203,7 +203,7 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char *entitlem
 
 		MacRootKit *rootkit = that->getKernel()->getRootKit();
 
-		entitlementCallbacks = rootkit->getEntitlementCallbacks();
+		entitlementCallbacks = &rootkit->getEntitlementCallbacks();
 
 		for(int i = 0; i < entitlementCallbacks->size(); i++)
 		{
@@ -238,7 +238,7 @@ void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread)
 
 		MacRootKit *rootkit = that->getKernel()->getRootKit();
 
-		binaryLoadCallbacks = rootkit->getBinaryLoadCallbacks();
+		binaryLoadCallbacks = &rootkit->getBinaryLoadCallbacks();
 
 		for(int i = 0; i < binaryLoadCallbacks->size(); i++)
 		{
@@ -451,7 +451,7 @@ void KernelPatcher::processKext(kmod_info_t *kmod, bool loaded)
 
 	rootkit = this->getKernel()->getRootKit();
 
-	kextLoadCallbacks = rootkit->getKextLoadCallbacks();
+	kextLoadCallbacks = &rootkit->getKextLoadCallbacks();
 
 	OSKext = KernelPatcher::OSKextLookupKextWithIdentifier(static_cast<char*>(kmod->name));
 

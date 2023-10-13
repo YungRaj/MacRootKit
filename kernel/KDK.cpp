@@ -76,98 +76,92 @@ char* getKDKWithBuildVersion(const char *basePath, const char *buildVersion);
 
 kern_return_t readKDKKernelFromPath(xnu::Kernel *kernel, const char *path, char **out_buffer);
 
-class KDKKernelMachO : public KernelMachO
+KDKKernelMachO::KDKKernelMachO(xnu::Kernel *kern, const char *path)
+	: path(path)
+
 {
-	public:
-		KDKKernelMachO(xnu::Kernel *kern, const char *path)
-			: path(path)
+	kernel = kern;
 
+	aslr_slide = kernel->getSlide();
+
+	readKDKKernelFromPath(kernel, path, &buffer);
+
+	if(!buffer)
+		panic("MacRK::KDK could not be read from disk at path %s\n", path);
+
+	header = reinterpret_cast<struct mach_header_64*>(buffer);
+	symbolTable = new SymbolTable();
+
+	base = this->getBase();
+	
+	this->parseMachO();
+}
+
+mach_vm_address_t KDKKernelMachO::getBase()
+{
+	struct mach_header_64 *hdr = this->header;
+
+	uint8_t *cmds = reinterpret_cast<uint8_t*>(hdr)+ sizeof(struct mach_header_64);
+
+	uint8_t *q = cmds;
+
+	mach_vm_address_t base = UINT64_MAX;
+
+	for(int i = 0; i < hdr->ncmds; i++)
+	{
+		struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+
+		uint32_t cmdtype = load_cmd->cmd;
+		uint32_t cmdsize = load_cmd->cmdsize;
+
+		if(load_cmd->cmd == LC_SEGMENT_64)
 		{
-			kernel = kern;
+			struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
 
-			aslr_slide = kernel->getSlide();
+			uint64_t vmaddr = segment->vmaddr;
+			uint64_t vmsize = segment->vmsize;
 
-			readKDKKernelFromPath(kernel, path, &buffer);
+			uint64_t fileoffset = segment->fileoff;
+			uint64_t filesize = segment->filesize;
 
-			if(!buffer)
-				panic("MacRK::KDK could not be read from disk at path %s\n", path);
-
-			header = reinterpret_cast<struct mach_header_64*>(buffer);
-			symbolTable = new SymbolTable();
-
-			base = this->getBase();
+			if(vmaddr < base)
+				base = vmaddr;
 			
-			this->parseMachO();
 		}
 
-		mach_vm_address_t getBase()
-		{
-			struct mach_header_64 *hdr = this->header;
+		q = q + load_cmd->cmdsize;
+	}
 
-			uint8_t *cmds = reinterpret_cast<uint8_t*>(hdr)+ sizeof(struct mach_header_64);
+	if(base == UINT64_MAX)
+		return 0;
 
-			uint8_t *q = cmds;
+	return base;
+}
 
-			mach_vm_address_t base = UINT64_MAX;
+void KDKKernelMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+{
+	for(int i = 0; i < nsyms; i++)
+	{
+		Symbol *symbol;
 
-			for(int i = 0; i < hdr->ncmds; i++)
-			{
-				struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+		struct nlist_64 *nl = &symtab[i];
 
-				uint32_t cmdtype = load_cmd->cmd;
-				uint32_t cmdsize = load_cmd->cmdsize;
+		char *name;
 
-				if(load_cmd->cmd == LC_SEGMENT_64)
-				{
-					struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
+		mach_vm_address_t address;
 
-					uint64_t vmaddr = segment->vmaddr;
-					uint64_t vmsize = segment->vmsize;
+		name = &strtab[nl->n_strx];
 
-					uint64_t fileoffset = segment->fileoff;
-					uint64_t filesize = segment->filesize;
+		address = nl->n_value + this->kernel->getSlide();
+		// add the kernel slide so that the address is correct
 
-					if(vmaddr < base)
-						base = vmaddr;
-					
-				}
+		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
 
-				q = q + load_cmd->cmdsize;
-			}
+		this->symbolTable->addSymbol(symbol);
+	}
 
-			if(base == UINT64_MAX)
-				return 0;
-
-			return base;
-		}
-
-		void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
-		{
-			for(int i = 0; i < nsyms; i++)
-			{
-				Symbol *symbol;
-
-				struct nlist_64 *nl = &symtab[i];
-
-				char *name;
-
-				mach_vm_address_t address;
-
-				name = &strtab[nl->n_strx];
-
-				address = nl->n_value + this->kernel->getSlide();
-				// add the kernel slide so that the address is correct
-
-				symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
-
-				this->symbolTable->addSymbol(symbol);
-			}
-
-			MAC_RK_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
-		}
-	private:
-		const char *path;
-};
+	MAC_RK_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
+}
 
 char* getKDKWithBuildVersion(const char *basePath, const char *buildVersion)
 {
