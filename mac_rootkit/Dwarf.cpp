@@ -1688,3 +1688,11 @@ void Dwarf<T>::parseDebugAddressRanges()
 template class Debug::Dwarf<KernelMachO*>;
 template class Debug::Dwarf<KextMachO*>;
 
+#ifdef __USER__
+
+// template class Debug::Dwarf<ELF*>;
+// template class Debug::Dwarf<PortableExecutable*>;
+// template class Debug::Dwarf<TerseExecutable*>;
+
+#endif
+
