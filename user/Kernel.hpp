@@ -3,6 +3,8 @@
 
 #include "Task.hpp"
 
+#include "Dwarf.hpp"
+
 #include "MachO.hpp"
 #include "KernelMachO.hpp"
 #include "UserMachO.hpp"
@@ -18,11 +20,6 @@ extern "C"
 
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
-
-namespace Debug
-{
-	class Dwarf;
-};
 
 namespace xnu
 {
@@ -181,7 +178,7 @@ namespace xnu
 
 			xnu::Kernel* getKernel() const { return kernel; }
 
-			Debug::Dwarf* getDwarf() const { return dwarf; }
+			Debug::Dwarf<KernelMachO*>* getDwarf() const { return dwarf; }
 
 			MachO* getMachO() const { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
 
@@ -218,7 +215,7 @@ namespace xnu
 
 			xnu::KernelMachO *kernelWithDebugSymbols;
 
-			Debug::Dwarf *dwarf;
+			Debug::Dwarf<KernelMachO*> *dwarf;
 
 			mach_vm_address_t base;
 	};

@@ -16,7 +16,7 @@ ObjCData* parseObjectiveC(mrk::UserMachO *macho)
 	return new ObjCData(macho);
 }
 
-void parseClassList(ObjCData *data, std::vector<ObjCClass*> &classes )
+void parseClassList(ObjCData *data, std::vector<ObjCClass*> &classes)
 {
 	mrk::UserMachO *macho = data->getMachO();
 

@@ -3,29 +3,60 @@
 
 #include <DwarfV5.hpp>
 
-class Symbol;
-class SymbolTable;
-
-class Segment;
-class Section;
+#include "Log.hpp"
 
 #include "vector.hpp"
-#include "MachO.hpp"
-#include "Symbol.hpp"
-#include "SymbolTable.hpp"
-#include "Segment.hpp"
-#include "Section.hpp"
 
-#include "Log.hpp"
+#include "BinaryFormat.hpp"
+
+namespace Binary
+{
+	class BinaryFormat;
+};
 
 namespace Debug
 {
 	using namespace Debug;
 
+	template <typename BinaryFormat>
+	struct BinaryFormatAttributes
+	{
+		using SegmentType = decltype(std::declval<BinaryFormat>()->getSegment(nullptr));
+		using SectionType = decltype(std::declval<BinaryFormat>()->getSection(nullptr, nullptr));
+		using SymbolType = decltype(std::declval<BinaryFormat>()->getSymbol(nullptr));
+	};
+
+	template <typename T>
+	concept HasOperatorBracket = requires(T t, uint64_t index)
+	{
+	    { (*t) [index] } -> std::same_as<uint8_t*>;
+	};
+
+	template <typename T, typename Sym>
+	concept HasCompatibleSymbol = std::is_same_v<Sym, decltype(std::declval<T>()->getSymbol(nullptr))>;
+
+	template <typename T, typename Seg>
+	concept HasCompatibleSegment = std::is_same_v<Seg, decltype(std::declval<T>()->getSegment(nullptr))>;
+
+	template <typename T, typename Sect>
+	concept HasCompatibleSect = std::is_same_v<Sect, decltype(std::declval<T>()->getSection(nullptr))>;
+
+	template<typename T, typename Sym = typename BinaryFormatAttributes<T>::SymbolType, typename Seg = typename BinaryFormatAttributes<T>::SegmentType, typename Sect = typename BinaryFormatAttributes<T>::SectionType>
+	concept DebuggableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasOperatorBracket<T>;
+
+	template<typename T> requires DebuggableBinary<T>
 	class Dwarf;
+
+	template<typename T> requires DebuggableBinary<T>
 	class CompilationUnit;
+
+	template<typename T> requires DebuggableBinary<T>
 	class DIE;
+
+	template<typename T> requires DebuggableBinary<T>
 	class LineTable;
+
+	template<typename T> requires DebuggableBinary<T>
 	class AbbreviationTable;
 
 	struct AttrSpec
@@ -51,13 +82,17 @@ namespace Debug
 		uint64_t value;
 	};
 
-	Dwarf* parseDebugSymbols(MachO *macho);
-	Dwarf* parseDebugSymbols(MachO *macho, const char *dSYM);
+	template<typename T, typename Sym = typename BinaryFormatAttributes<T>::SymbolType, typename Seg = typename BinaryFormatAttributes<T>::SegmentType, typename Sect = typename BinaryFormatAttributes<T>::SectionType> requires DebuggableBinary<T, Sym, Seg>
+	Dwarf<T>* parseDebugSymbols(T binary);
 
+	template<typename T, typename Sym = typename BinaryFormatAttributes<T>::SymbolType, typename Seg = typename BinaryFormatAttributes<T>::SegmentType, typename Sect = typename BinaryFormatAttributes<T>::SectionType> requires DebuggableBinary<T, Sym, Seg>
+	Dwarf<T>* parseDebugSymbols(T binary, const char *dSYM);
+
+	template<typename T> requires DebuggableBinary<T>
 	class DIE
 	{
 		public:
-			explicit DIE(Dwarf *dwarf,
+			explicit DIE(Dwarf<T> *dwarf,
 						 uint64_t code,
 						 char *name,
 						 enum DW_TAG tag,
@@ -86,7 +121,7 @@ namespace Debug
 			void removeAbbreviation(struct AttrAbbrev *abbreviation) { this->abbreviationTable.erase(std::remove(abbreviationTable.begin(), abbreviationTable.end(), abbreviation), abbreviationTable.end()); }
 
 		private:
-			Dwarf *dwarf;
+			Dwarf<T> *dwarf;
 
 			uint64_t code;
 
@@ -98,7 +133,7 @@ namespace Debug
 
 			char *name;
 
-			DIE *parent;
+			DIE<T> *parent;
 
 			uint32_t idx;
 			uint32_t sibling_idx;
@@ -107,29 +142,30 @@ namespace Debug
 			off_t offset;
 	};
 
+	template<typename T> requires DebuggableBinary<T>
 	class DwarfDIE
 	{
 		public:
-			explicit DwarfDIE(Dwarf *dwarf,
-							  CompilationUnit *unit,
-							  DIE *die,
-							  DwarfDIE *parent);
+			explicit DwarfDIE(Dwarf<T> *dwarf,
+							  CompilationUnit<T> *unit,
+							  DIE<T> *die,
+							  DwarfDIE<T> *parent);
 
-			Dwarf* getDwarf() { return dwarf; }
+			Dwarf<T>* getDwarf() { return dwarf; }
 
-			DIE* getDebugInfoEntry() { return die; }
+			DIE<T>* getDebugInfoEntry() { return die; }
 
 			enum DW_TAG getTag() { return die->getTag(); }
 			enum DW_CHILDREN hasChildren() { return die->getHasChildren(); }
 
-			DwarfDIE* getParent() { return parent; }
+			DwarfDIE<T>* getParent() { return parent; }
 
-			std::vector<DwarfDIE*>& getChildren() { return children; }
+			std::vector<DwarfDIE<T>*>& getChildren() { return children; }
 
 			std::vector<struct Attribute*>& getAttributes() { return attributes; }
 
-			void addChild(DwarfDIE *child) { this->children.push_back(child); }
-			void removeChild(DwarfDIE *child) { this->children.erase(std::remove(children.begin(), children.end(), child), children.end()); }
+			void addChild(DwarfDIE<T> *child) { this->children.push_back(child); }
+			void removeChild(DwarfDIE<T> *child) { this->children.erase(std::remove(children.begin(), children.end(), child), children.end()); }
 
 			void addAttribute(struct Attribute *attribute) { this->attributes.push_back(attribute); }
 			void addAttributes(std::vector<struct Attribute*> &attrs) { for(int i = 0; i < attrs.size(); i++) this->attributes.push_back(attrs.at(i)); }
@@ -140,13 +176,13 @@ namespace Debug
 			uint64_t getAttributeValue(enum DW_AT attr);
 
 		private:
-			Dwarf *dwarf;
+			Dwarf<T> *dwarf;
 
-			CompilationUnit *compilationUnit;
+			CompilationUnit<T> *compilationUnit;
 
-			DIE *die;
+			DIE<T> *die;
 
-			DwarfDIE *parent;
+			DwarfDIE<T> *parent;
 
 			std::vector<DwarfDIE*> children;
 			std::vector<struct Attribute*> attributes;
@@ -165,31 +201,32 @@ namespace Debug
 
 	#pragma options align=reset
 
+	template<typename T> requires DebuggableBinary<T>
 	class CompilationUnit
 	{
 		public:
-			explicit CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die);
+			explicit CompilationUnit(Dwarf<T> *dwarf, struct CompileUnitHeader *hdr, DIE<T> *die);
 
-			std::vector<DwarfDIE*>* getDebugInfoEntries() { return &debugInfoEntries; }
+			std::vector<DwarfDIE<T>*>& getDebugInfoEntries() { return debugInfoEntries; }
 
-			Dwarf* getDwarf() { return dwarf; }
+			Dwarf<T>* getDwarf() { return dwarf; }
 
-			LineTable* getLineTable() { return lineTable; }
+			LineTable<T>* getLineTable() { return lineTable; }
 
 			char* getSourceFileName() { return source_file; }
 
-			void addDebugInfoEntry(DwarfDIE *dwarfDIE) { this->debugInfoEntries.push_back(dwarfDIE); }
+			void addDebugInfoEntry(DwarfDIE<T> *dwarfDIE) { this->debugInfoEntries.push_back(dwarfDIE); }
 
 		private:
-			Dwarf *dwarf;
+			Dwarf<T> *dwarf;
 
-			DIE *die;
+			DIE<T> *die;
 
 			struct CompileUnitHeader *header;
 
-			std::vector<DwarfDIE*> debugInfoEntries;
+			std::vector<DwarfDIE<T>*> debugInfoEntries;
 
-			LineTable *lineTable;
+			LineTable<T> *lineTable;
 	
 			char *source_file;
 			char *source_language;
@@ -305,21 +342,22 @@ namespace Debug
 		.epilogue_begin = 0
 	};
 
+	template<typename T> requires DebuggableBinary<T>
 	class LineTable
 	{
 		public:
-			explicit LineTable(MachO *macho, Dwarf *dwarf) { this->macho = macho; this->dwarf = dwarf; }
+			explicit LineTable(T binary, Dwarf<T> *dwarf) { this->binary = binary; this->dwarf = dwarf; }
 
-			std::vector<struct LTSourceFile*>* getSourceFileNames() { return &files; }
-			std::vector<char*>* getIncludeDirectories() { return &include_directories; }
+			std::vector<struct LTSourceFile*>& getSourceFileNames() { return files; }
+			std::vector<char*>& getIncludeDirectories() { return include_directories; }
 
-			CompilationUnit* getCompilationUnit() { return compilationUnit; }
+			CompilationUnit<T>* getCompilationUnit() { return compilationUnit; }
 
 			LTSourceLine* getSourceLine(mach_vm_address_t pc);
 			
 			LTSourceFile* getSourceFile(int index) { return this->files.at(index); }
 
-			void setCompilationUnit(CompilationUnit *cu) { this->compilationUnit = cu; }
+			void setCompilationUnit(CompilationUnit<T> *cu) { this->compilationUnit = cu; }
 
 			void setPrologue(struct LTPrologue *p) { memcpy(&prologue, p, sizeof(struct LTPrologue)); }
 
@@ -330,15 +368,15 @@ namespace Debug
 			void addIncludeDirectory(char *directory) { this->include_directories.push_back(directory); }
 
 		private:
-			MachO *macho;
+			T binary;
 
-			Dwarf *dwarf;
+			Dwarf<T> *dwarf;
 
 			struct LTPrologue prologue;
 
 			struct LTStandardOpcodeLengths standardOpcodeLengths;
 
-			CompilationUnit *compilationUnit;
+			CompilationUnit<T> *compilationUnit;
 
 			std::vector<Sequence*> sources;
 
@@ -396,40 +434,45 @@ namespace Debug
 
 	#pragma options align=reset
 
+	template<typename T> requires DebuggableBinary<T>
 	class Dwarf
 	{
 		public:
+			using Seg = typename BinaryFormatAttributes<T>::SegmentType;
+			using Sect = typename BinaryFormatAttributes<T>::SectionType;
+			using Sym = typename BinaryFormatAttributes<T>::SymbolType;
+
 			explicit Dwarf(const char *debugSymbols);
-			explicit Dwarf(MachO *macho, const char *debugSymbols);
+			explicit Dwarf(T binary, const char *debugSymbols);
 
-			CompilationUnit getCompilationUnit(const char *source_file);
+			CompilationUnit<T> getCompilationUnit(const char *source_file);
 
-			DIE* getDebugInfoEntryByName(const char *name);
-			DIE* getDebugInfoEntryByCode(uint64_t code);
+			DIE<T>* getDebugInfoEntryByName(const char *name);
+			DIE<T>* getDebugInfoEntryByCode(uint64_t code);
 
-			Segment* getDwarfSegment() { return dwarf; }
+			Seg getDwarfSegment() { return dwarf; }
 
-			Section* getDebugLine() { return __debug_line; }
-			Section* getDebugLoc() { return __debug_loc; }
-			Section* getDebugAranges() { return __debug_aranges; }
-			Section* getDebugInfo() { return __debug_info; }
-			Section* getDebugAbbrev() { return __debug_abbrev; }
-			Section* getDebugStr() { return __debug_str; }
+			Sect getDebugLine() { return __debug_line; }
+			Sect getDebugLoc() { return __debug_loc; }
+			Sect getDebugAranges() { return __debug_aranges; }
+			Sect getDebugInfo() { return __debug_info; }
+			Sect getDebugAbbrev() { return __debug_abbrev; }
+			Sect getDebugStr() { return __debug_str; }
 
-			Section* getAppleNames() { return __apple_names; }
-			Section* getAppleNamespac() { return __apple_namespac; }
-			Section* getAppleTypes() { return __apple_types; }
-			Section* getAppleObjc() { return __apple_objc; }
+			Sect getAppleNames() { return __apple_names; }
+			Sect getAppleNamespac() { return __apple_namespac; }
+			Sect getAppleTypes() { return __apple_types; }
+			Sect getAppleObjc() { return __apple_objc; }
 
-			std::vector<CompilationUnit*>* getCompilationUnits() { return &compilationUnits; }
-			std::vector<LineTable*>* getLineTables() { return &lineTables; }
+			std::vector<CompilationUnit<T>*>& getCompilationUnits() { return compilationUnits; }
+			std::vector<LineTable<T>*>& getLineTables() { return lineTables; }
 
-			LineTable* getLineTable(const char *name);
-			LineTable* getLineTable(CompilationUnit *unit);
+			LineTable<T>* getLineTable(const char *name);
+			LineTable<T>* getLineTable(CompilationUnit<T> *unit);
 
-			DIE* getUnit(const char *name);
-			DIE* getFunction(const char *name);
-			DIE* getType(const char *name);
+			DIE<T>* getUnit(const char *name);
+			DIE<T>* getFunction(const char *name);
+			DIE<T>* getType(const char *name);
 
 			void populateDebugSymbols();
 
@@ -441,35 +484,37 @@ namespace Debug
 			void parseDebugAddressRanges();
 
 			const char* getSourceFile(mach_vm_address_t instruction);
+
 			int64_t getSourceLineNumber(mach_vm_address_t instruction);
 
 		private:
-			MachO *macho;
-			MachO *machoWithDebug;
+			T binary;
 
-			std::vector<DIE*> dies;
-			std::vector<CompilationUnit*> compilationUnits;
+			T binaryWithDebugSymbols;
 
-			std::vector<LineTable*> lineTables;
+			std::vector<DIE<T>*> dies;
+			std::vector<CompilationUnit<T>*> compilationUnits;
+
+			std::vector<LineTable<T>*> lineTables;
 
 			std::vector<struct LocationTableEntry*> locationTable;
 
 			std::vector<RangeEntries*> ranges;
 			std::vector<struct AddressRangeEntry*> addressRanges;
 
-			Segment *dwarf;
+			Seg dwarf;
 
-			Section *__debug_line;
-			Section *__debug_loc;
-			Section *__debug_aranges;
-			Section *__debug_info;
-			Section *__debug_ranges;
-			Section *__debug_abbrev;
-			Section *__debug_str;
-			Section *__apple_names;
-			Section *__apple_namespac;
-			Section *__apple_types;
-			Section *__apple_objc;
+			Sect __debug_line;
+			Sect __debug_loc;
+			Sect __debug_aranges;
+			Sect __debug_info;
+			Sect __debug_ranges;
+			Sect __debug_abbrev;
+			Sect __debug_str;
+			Sect __apple_names;
+			Sect __apple_namespac;
+			Sect __apple_types;
+			Sect __apple_objc;
 
 	};
 

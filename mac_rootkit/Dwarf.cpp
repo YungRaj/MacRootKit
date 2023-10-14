@@ -1,6 +1,8 @@
 #include "Dwarf.hpp"
-#include "KernelMachO.hpp"
 #include "Kernel.hpp"
+
+#include "KernelMachO.hpp"
+#include "KextMachO.hpp"
 
 #include <string.h>
 
@@ -623,7 +625,8 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 
 using namespace Debug;
 
-DIE::DIE(Dwarf *dwarf,
+template <typename T> requires DebuggableBinary<T>
+DIE<T>::DIE(Dwarf<T> *dwarf,
 		 uint64_t code,
 		 char *name,
 		 enum DW_TAG tag,
@@ -637,7 +640,8 @@ DIE::DIE(Dwarf *dwarf,
 	
 }
 
-struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
+template <typename T> requires DebuggableBinary<T>
+struct AttrAbbrev* DIE<T>::getAttribute(enum DW_AT attr)
 {
 	for(int i = 0; i < abbreviationTable.size(); i++)
 	{
@@ -652,7 +656,8 @@ struct AttrAbbrev* DIE::getAttribute(enum DW_AT attr)
 	return NULL;
 }
 
-DwarfDIE::DwarfDIE(Dwarf *dwarf, CompilationUnit *unit, DIE *die, DwarfDIE *parent)
+template <typename T> requires DebuggableBinary<T>
+DwarfDIE<T>::DwarfDIE(Dwarf<T> *dwarf, CompilationUnit<T> *unit, DIE<T> *die, DwarfDIE<T> *parent)
 	: dwarf(dwarf),
 	  compilationUnit(unit),
 	  die(die),
@@ -661,7 +666,8 @@ DwarfDIE::DwarfDIE(Dwarf *dwarf, CompilationUnit *unit, DIE *die, DwarfDIE *pare
 
 }
 
-struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
+template <typename T> requires DebuggableBinary<T>
+struct Attribute* DwarfDIE<T>::getAttribute(enum DW_AT attr)
 {
 	for(int i = 0; i < this->attributes.size(); i++)
 	{
@@ -674,7 +680,8 @@ struct Attribute* DwarfDIE::getAttribute(enum DW_AT attr)
 	return NULL;
 }
 
-uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
+template <typename T> requires DebuggableBinary<T>
+uint64_t DwarfDIE<T>::getAttributeValue(enum DW_AT attr)
 {
 	for(int i = 0; i < this->attributes.size(); i++)
 	{
@@ -687,7 +694,8 @@ uint64_t DwarfDIE::getAttributeValue(enum DW_AT attr)
 	return 0;
 }
 
-CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DIE *die)
+template <typename T> requires DebuggableBinary<T>
+CompilationUnit<T>::CompilationUnit(Dwarf<T> *dwarf, struct CompileUnitHeader *hdr, DIE<T> *die)
 	: dwarf(dwarf),
 	  header(hdr),
 	  die(die)
@@ -695,59 +703,58 @@ CompilationUnit::CompilationUnit(Dwarf *dwarf, struct CompileUnitHeader *hdr, DI
 
 }
 
-Dwarf::Dwarf(const char *debugSymbols)
+template <typename T> requires DebuggableBinary<T>
+Dwarf<T>::Dwarf(const char *debugSymbols)
 #ifdef __USER__
-	: macho(new KernelMachO(debugSymbols)),
+	: binary(new std::remove_pointer_t<T>(debugSymbols)),
 #else
-	: macho(new KDKKernelMachO(xnu::Kernel::xnu(), debugSymbols)),
+	: binary(new std::remove_pointer_t<T>(xnu::Kernel::xnu(), debugSymbols)),
 #endif
-	  machoWithDebug(macho),
-	  dwarf(macho->getSegment("__DWARF")),
-	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
-	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
-	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges")),
-	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
-	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
-	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
-	  __debug_str(macho->getSection("__DWARF", "__debug_str")),
-	  __apple_names(macho->getSection("__DWARF", "__apple_names")),
-	  __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
-	  __apple_types(macho->getSection("__DWARF", "__apple_types")),
-	  __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
+	  binaryWithDebugSymbols(binary),
+	  dwarf(binary->getSegment("__DWARF")),
+	  __debug_line(binary->getSection("__DWARF", "__debug_line")),
+	  __debug_loc(binary->getSection("__DWARF", "__debug_loc")),
+	  __debug_aranges(binary->getSection("__DWARF", "__debug_aranges")),
+	  __debug_info(binary->getSection("__DWARF", "__debug_info")),
+	  __debug_ranges(binary->getSection("__DWARF", "__debug_ranges")),
+	  __debug_abbrev(binary->getSection("__DWARF", "__debug_abbrev")),
+	  __debug_str(binary->getSection("__DWARF", "__debug_str")),
+	  __apple_names(binary->getSection("__DWARF", "__apple_names")),
+	  __apple_namespac(binary->getSection("__DWARF", "__apple_namespac")),
+	  __apple_types(binary->getSection("__DWARF", "__apple_types")),
+	  __apple_objc(binary->getSection("__DWARF", "__apple_objc"))
 {
 	populateDebugSymbols();
 }
 
-Dwarf::Dwarf(MachO *macho, const char *debugSymbols)
-	: macho(macho),
-	  machoWithDebug(macho),
-	  dwarf(macho->getSegment("__DWARF")),
-	  __debug_line(macho->getSection("__DWARF", "__debug_line")),
-	  __debug_loc(macho->getSection("__DWARF", "__debug_loc")),
-	  __debug_aranges(macho->getSection("__DWARF", "__debug_aranges")),
-	  __debug_info(macho->getSection("__DWARF", "__debug_info")),
-	  __debug_ranges(macho->getSection("__DWARF", "__debug_ranges")),
-	  __debug_abbrev(macho->getSection("__DWARF", "__debug_abbrev")),
-	  __debug_str(macho->getSection("__DWARF", "__debug_str")),
-	  __apple_names(macho->getSection("__DWARF", "__apple_names")),
-	  __apple_namespac(macho->getSection("__DWARF", "__apple_namespac")),
-	  __apple_types(macho->getSection("__DWARF", "__apple_types")),
-	  __apple_objc(macho->getSection("__DWARF", "__apple_objc"))
+template <typename T> requires DebuggableBinary<T>
+Dwarf<T>::Dwarf(T binary, const char *debugSymbols)
+	: binary(binary),
+	  binaryWithDebugSymbols(binary),
+	  dwarf(binary->getSegment("__DWARF")),
+	  __debug_line(binary->getSection("__DWARF", "__debug_line")),
+	  __debug_loc(binary->getSection("__DWARF", "__debug_loc")),
+	  __debug_aranges(binary->getSection("__DWARF", "__debug_aranges")),
+	  __debug_info(binary->getSection("__DWARF", "__debug_info")),
+	  __debug_ranges(binary->getSection("__DWARF", "__debug_ranges")),
+	  __debug_abbrev(binary->getSection("__DWARF", "__debug_abbrev")),
+	  __debug_str(binary->getSection("__DWARF", "__debug_str")),
+	  __apple_names(binary->getSection("__DWARF", "__apple_names")),
+	  __apple_namespac(binary->getSection("__DWARF", "__apple_namespac")),
+	  __apple_types(binary->getSection("__DWARF", "__apple_types")),
+	  __apple_objc(binary->getSection("__DWARF", "__apple_objc"))
 {
 
 }
 
-DIE* Dwarf::getDebugInfoEntryByName(const char *name)
-{
-	return NULL;
-}
-
-DIE* getDebugInfoEntryByCode(uint64_t code)
+template <typename T> requires DebuggableBinary<T>
+DIE<T>* Dwarf<T>::getDebugInfoEntryByName(const char *name)
 {
 	return NULL;
 }
 
-void Dwarf::populateDebugSymbols()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::populateDebugSymbols()
 {
 	this->parseDebugAbbrev();
 	this->parseDebugInfo();
@@ -757,27 +764,28 @@ void Dwarf::populateDebugSymbols()
 	this->parseDebugAddressRanges();
 }
 
-void Dwarf::parseDebugAbbrev()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugAbbrev()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_info = this->__debug_info;
-	Section *debug_abbrev = this->__debug_abbrev;
-	Section *debug_str = this->__debug_str;
+	Sect debug_info = this->__debug_info;
+	Sect debug_abbrev = this->__debug_abbrev;
+	Sect debug_str = this->__debug_str;
 
-	uint8_t *debug_abbrev_begin = (*macho)[debug_abbrev->getOffset()];
-	uint8_t *debug_abbrev_end = (*macho)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
+	uint8_t *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
+	uint8_t *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = (*macho)[debug_str->getOffset()];
-	uint8_t *debug_str_end = (*macho)[debug_str->getOffset() + debug_str->getSize()];
+	uint8_t *debug_str_begin = (*bin)[debug_str->getOffset()];
+	uint8_t *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
 
 	size_t debug_abbrev_size = debug_abbrev->getSize();
 
 	uint32_t debug_abbrev_offset = 0;
 
-	std::vector<DIE*> stack;
+	std::vector<DIE<T>*> stack;
 
 	uint64_t code = 0;
 
@@ -797,7 +805,7 @@ void Dwarf::parseDebugAbbrev()
 
 				char *name = DWTagToString(tag);
 
-				DIE *die = new DIE(this, code, name, tag, children);
+				DIE<T> *die = new DIE<T>(this, code, name, tag, children);
 
 				stack.push_back(die);
 
@@ -843,7 +851,7 @@ void Dwarf::parseDebugAbbrev()
 
 					char *name = DWTagToString(tag);
 
-					DIE *die = new DIE(this, code, name, tag, children);
+					DIE<T> *die = new DIE<T>(this, code, name, tag, children);
 
 					MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
 
@@ -856,7 +864,7 @@ void Dwarf::parseDebugAbbrev()
 			{
 				MAC_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
 				
-				DIE *die = stack.at(stack.size() - 1);
+				DIE<T> *die = stack.at(stack.size() - 1);
 
 				struct AttrAbbrev *ab = new AttrAbbrev;
 
@@ -876,11 +884,12 @@ void Dwarf::parseDebugAbbrev()
 	MAC_RK_LOG("\n\n");
 }
 
-DIE* Dwarf::getDebugInfoEntryByCode(uint64_t code)
+template <typename T> requires DebuggableBinary<T>
+DIE<T>* Dwarf<T>::getDebugInfoEntryByCode(uint64_t code)
 {
 	for(int i = 0; i < dies.size(); i++)
 	{
-		DIE *die = dies.at(i);
+		DIE<T> *die = dies.at(i);
 
 		if(die->getCode() == code)
 		{
@@ -891,24 +900,25 @@ DIE* Dwarf::getDebugInfoEntryByCode(uint64_t code)
 	return NULL;
 }
 
-void Dwarf::parseDebugInfo()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugInfo()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_info = this->__debug_info;
-	Section *debug_abbrev = this->__debug_abbrev;
-	Section *debug_str = this->__debug_str;
+	Sect debug_info = this->__debug_info;
+	Sect debug_abbrev = this->__debug_abbrev;
+	Sect debug_str = this->__debug_str;
 
-	uint8_t *debug_info_begin = (*macho)[debug_info->getOffset()];
-	uint8_t *debug_info_end = (*macho)[debug_info->getOffset() + debug_info->getSize()];
+	uint8_t *debug_info_begin = (*bin)[debug_info->getOffset()];
+	uint8_t *debug_info_end = (*bin)[debug_info->getOffset() + debug_info->getSize()];
 
-	uint8_t *debug_abbrev_begin = (*macho)[debug_abbrev->getOffset()];
-	uint8_t *debug_abbrev_end = (*macho)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
+	uint8_t *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
+	uint8_t *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = (*macho)[debug_str->getOffset()];
-	uint8_t *debug_str_end = (*macho)[debug_str->getOffset() + debug_str->getSize()];
+	uint8_t *debug_str_begin = (*bin)[debug_str->getOffset()];
+	uint8_t *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
 
 	size_t debug_info_size = debug_info->getSize();
 	size_t debug_abbrev_size = debug_abbrev->getSize();
@@ -916,10 +926,10 @@ void Dwarf::parseDebugInfo()
 	uint32_t debug_info_offset = 0;
 	uint32_t debug_abbrev_offset = 0;
 
-	struct CompilationUnit *compilationUnit = NULL;
+	struct CompilationUnit<T> *compilationUnit = NULL;
 	struct CompileUnitHeader *header = NULL;
 
-	std::vector<DwarfDIE*> stack;
+	std::vector<DwarfDIE<T>*> stack;
 
 	uint32_t next_unit = 0;
 	uint32_t consecutive_zeroes = 0;
@@ -953,15 +963,15 @@ void Dwarf::parseDebugInfo()
 			continue;
 		}
 
-		DIE *die = getDebugInfoEntryByCode(code);
+		DIE<T> *die = getDebugInfoEntryByCode(code);
 
-		DwarfDIE *parent = stack.size() > 0 ? stack.at(stack.size() - 1) : NULL;
+		DwarfDIE<T> *parent = stack.size() > 0 ? stack.at(stack.size() - 1) : NULL;
 
-		DwarfDIE *dwarfDIE = new DwarfDIE(this, compilationUnit, die, parent);
+		DwarfDIE<T> *dwarfDIE = new DwarfDIE(this, compilationUnit, die, parent);
 
 		if(new_compile_unit)
 		{
-			compilationUnit = new CompilationUnit(this, header, die);
+			compilationUnit = new CompilationUnit<T>(this, header, die);
 
 			this->compilationUnits.push_back(compilationUnit);
 
@@ -1118,22 +1128,23 @@ void Dwarf::parseDebugInfo()
 	}
 }
 
-void Dwarf::parseDebugLines()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugLines()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_line = this->__debug_line;
+	Sect debug_line = this->__debug_line;
 
-	uint8_t *debug_line_begin = (*macho)[debug_line->getOffset()];
-	uint8_t *debug_line_end = (*macho)[debug_line->getOffset() + debug_line->getSize()];
+	uint8_t *debug_line_begin = (*bin)[debug_line->getOffset()];
+	uint8_t *debug_line_end = (*bin)[debug_line->getOffset() + debug_line->getSize()];
 
 	uint32_t debug_line_offset = 0;
 	
 	while(debug_line_offset < debug_line->getSize())
 	{
-		LineTable *lineTable = new LineTable(this->macho, this);
+		LineTable<T> *lineTable = new LineTable<T>(this->binary, this);
 
 		struct LTPrologue prologue;
 		struct LTStandardOpcodeLengths opcodes;
@@ -1486,16 +1497,17 @@ void Dwarf::parseDebugLines()
 	}
 }
 
-void Dwarf::parseDebugLocations()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugLocations()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_loc = this->__debug_loc;
+	Sect debug_loc = this->__debug_loc;
 
-	uint8_t *debug_loc_begin = (*macho)[debug_loc->getOffset()];
-	uint8_t *debug_loc_end = (*macho)[debug_loc->getOffset() + debug_loc->getSize()];
+	uint8_t *debug_loc_begin = (*bin)[debug_loc->getOffset()];
+	uint8_t *debug_loc_end = (*bin)[debug_loc->getOffset() + debug_loc->getSize()];
 
 	uint32_t debug_loc_offset = 0;
 
@@ -1558,16 +1570,17 @@ void Dwarf::parseDebugLocations()
 	}
 }
 
-void Dwarf::parseDebugRanges()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugRanges()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_ranges = this->__debug_ranges;
+	Sect debug_ranges = this->__debug_ranges;
 
-	uint8_t *debug_ranges_begin = (*macho)[debug_ranges->getOffset()];
-	uint8_t *debug_ranges_end = (*macho)[debug_ranges->getOffset() + debug_ranges->getSize()];
+	uint8_t *debug_ranges_begin = (*bin)[debug_ranges->getOffset()];
+	uint8_t *debug_ranges_end = (*bin)[debug_ranges->getOffset() + debug_ranges->getSize()];
 
 	uint32_t debug_ranges_offset = 0;
 
@@ -1607,16 +1620,17 @@ void Dwarf::parseDebugRanges()
 	}
 }
 
-void Dwarf::parseDebugAddressRanges()
+template <typename T> requires DebuggableBinary<T>
+void Dwarf<T>::parseDebugAddressRanges()
 {
-	MachO *macho = this->macho;
+	T bin = this->binary;
 
-	Segment *dwarf = this->dwarf;
+	Seg dwarf = this->dwarf;
 
-	Section *debug_aranges = this->__debug_aranges;
+	Sect debug_aranges = this->__debug_aranges;
 
-	uint8_t *debug_aranges_begin = (*macho)[debug_aranges->getOffset()];
-	uint8_t *debug_aranges_end = (*macho)[debug_aranges->getOffset() + debug_aranges->getSize()];
+	uint8_t *debug_aranges_begin = (*bin)[debug_aranges->getOffset()];
+	uint8_t *debug_aranges_end = (*bin)[debug_aranges->getOffset() + debug_aranges->getSize()];
 
 	uint32_t debug_aranges_offset = 0;
 
@@ -1671,4 +1685,6 @@ void Dwarf::parseDebugAddressRanges()
 	}
 }
 
+template class Debug::Dwarf<KernelMachO*>;
+template class Debug::Dwarf<KextMachO*>;
 

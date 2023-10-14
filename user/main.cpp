@@ -577,7 +577,7 @@ int main(int argc, char **argv)
 
 	using namespace Debug;
 
-	Dwarf *dwarf = new Dwarf("/Library/Developer/KDKs/KDK_12.5_21G72.kdk/System/Library/Kernels/kernel.development.t8020.dSYM/Contents/Resources/DWARF/kernel.development.t8020");
+	Dwarf<xnu::KernelMachO*> dwarf("/Library/Developer/KDKs/KDK_12.5_21G72.kdk/System/Library/Kernels/kernel.development.t8020.dSYM/Contents/Resources/DWARF/kernel.development.t8020");
 
 
 	return 0;
