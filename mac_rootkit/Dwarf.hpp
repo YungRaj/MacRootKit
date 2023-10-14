@@ -27,7 +27,7 @@ namespace Debug
 	};
 
 	template <typename T>
-	concept HasOperatorBracket = requires(T t, uint64_t index)
+	concept HasIndexingOperator = requires(T t, uint64_t index)
 	{
 	    { (*t) [index] } -> std::same_as<uint8_t*>;
 	};
@@ -42,7 +42,7 @@ namespace Debug
 	concept HasCompatibleSect = std::is_same_v<Sect, decltype(std::declval<T>()->getSection(nullptr))>;
 
 	template<typename T, typename Sym = typename BinaryFormatAttributes<T>::SymbolType, typename Seg = typename BinaryFormatAttributes<T>::SegmentType, typename Sect = typename BinaryFormatAttributes<T>::SectionType>
-	concept DebuggableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasOperatorBracket<T>;
+	concept DebuggableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasIndexingOperator<T>;
 
 	template<typename T> requires DebuggableBinary<T>
 	class Dwarf;
