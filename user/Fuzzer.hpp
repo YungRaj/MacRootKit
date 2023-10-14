@@ -77,13 +77,16 @@ namespace Fuzzer
 	template <typename T, typename Seg>
 	concept HasCompatibleSegment = std::is_same_v<Seg, decltype(std::declval<T>()->getSegment(nullptr))>;
 
-	template <typename T, typename Sym, typename Seg>
-	concept MappableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasCompatibleSymbol<T, Sym> && HasCompatibleSegment<T, Seg>;
+	template <typename T, typename Sect>
+	concept HasCompatibleSection = std::is_same_v<Sect, decltype(std::declval<T>()->getSection(nullptr))>;
 
-	template<typename T, typename Sym, typename Seg>
+	template <typename T, typename Sym, typename Seg>
+	concept MappableBinary = std::is_base_of_v<Binary::BinaryFormat, std::remove_pointer_t<T>> && HasCompatibleSymbol<T, Sym> && (HasCompatibleSegment<T, Seg> || HasCompatibleSection<T, Seg>);
+
+	template<typename T, typename Sym, typename Sect>
 	struct LinkerMap
 	{
-		static_assert(MappableBinary<T, Sym, Seg>);
+		static_assert(MappableBinary<T, Sym, Sect>);
 
 		public:
 			explicit LinkerMap(T binary, char *map)
@@ -96,11 +99,11 @@ namespace Fuzzer
 			char* getMapFile() const { return mapFile; }
 
 			std::vector<Sym>& getSymbols() { return symbols; }
-			std::vector<Seg>& getSegments() { return segments; }
+			std::vector<Sect>& getSections() { return sections; }
 
 			size_t getSymbolCount() { return symbols.size(); }
 
-			size_t getSegmentCount() { return segments.size(); }
+			size_t getSectionCount() { return sections.size(); }
 
 			void read();
 
@@ -108,7 +111,7 @@ namespace Fuzzer
 			T binary;
 
 			std::vector<Sym> symbols;
-			std::vector<Seg> segments;
+			std::vector<Sect> sections;
 
 			char *mapFilePath;
 			char *mapFile;
@@ -117,10 +120,10 @@ namespace Fuzzer
 	struct RawBinary : public Binary::BinaryFormat
 	{
 
-		struct SegmentRaw
+		struct SectionRaw
 		{
 			public:
-				explicit SegmentRaw(char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
+				explicit SectionRaw(char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
 
 				char* getName() const { return name; }
 
@@ -206,7 +209,7 @@ namespace Fuzzer
 
 		public:
 
-			explicit RawBinary(char *path, const char *mapFile);
+			explicit RawBinary(char *path, char *mapFile) : path(path), mapFile(mapFile) { }
 
 			template<typename T>
 			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
@@ -238,30 +241,32 @@ namespace Fuzzer
 				return NULL;
 			}
 
-			SegmentRaw* getSegment(const char *name)
+			SectionRaw* getSection(const char *name)
 			{
-				std::vector<SegmentRaw*> &segments = linkerMap->getSegments();
+				std::vector<SectionRaw*> &sections = linkerMap->getSections();
 
-				for(int i = 0; i < segments.size(); i++)
+				for(int i = 0; i < sections.size(); i++)
 				{
-					SegmentRaw *seg = segments.at(i);
+					SectionRaw *sect = sections.at(i);
 
-					if(strcmp(name, seg->getName()) == 0)
-						return seg;
+					if(strcmp(name, sect->getName()) == 0)
+						return sect;
 				}
 
 				return NULL;
 			}
 
 			void populateSymbols();
-			void populateSegments();
+			void populateSections();
 
 		private:
 			uintptr_t base;
 
+			char *path;
+
 			char *mapFile;
 
-			LinkerMap<RawBinary*, SymbolRaw*, SegmentRaw*> *linkerMap;
+			LinkerMap<RawBinary*, SymbolRaw*, SectionRaw*> *linkerMap;
 	};
 
 	template<typename T>
@@ -288,13 +293,16 @@ namespace Fuzzer
 	static_assert(RawBinaryFormat<RawBinary*>);
 
 	using SymbolRaw = RawBinary::SymbolRaw;
-	using SegmentRaw = RawBinary::SegmentRaw;
+	using SectionRaw = RawBinary::SectionRaw;
 
 	template <typename T>
 	using GetSymbolReturnType = decltype(std::declval<T>()->getSymbol(nullptr));
 
 	template <typename T>
 	using GetSegmentReturnType = decltype(std::declval<T>()->getSegment(nullptr));
+
+	template <typename T>
+	using GetSectionReturnType = decltype(std::declval<T>()->getSection(nullptr));
 
 	static_assert(std::is_same_v<GetSymbolReturnType<MachO*>, Symbol*>);
 	static_assert(std::is_same_v<GetSymbolReturnType<RawBinary*>, SymbolRaw*>);
@@ -408,7 +416,7 @@ namespace Fuzzer
 		{
 			seg->getName();
 			seg->getAddress();
-			std::is_same_v<GetSegmentReturnType<Binary>, Seg>;
+			std::is_same_v<GetSegmentReturnType<Binary>, Seg> || std::is_same_v<GetSectionReturnType<Binary>, Seg>;
 		}
 		{
 			static_assert(BinaryFormat<Binary>,
@@ -426,7 +434,7 @@ namespace Fuzzer
 
 		    if constexpr (std::is_same_v<Binary, RawBinary*>)
 		    {
-		        return binary.raw->getSegment(segname);
+		        return binary.raw->getSection(segname);
 		    }
 
 		    return NULL;
@@ -434,7 +442,7 @@ namespace Fuzzer
 	};
 
 	static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
-	static_assert(std::is_same_v<GetSegmentReturnType<RawBinary*>, SegmentRaw*>);
+	static_assert(std::is_same_v<GetSectionReturnType<RawBinary*>, SectionRaw*>);
 
 	static_assert(BinaryFormat<decltype(FuzzBinary::binary.macho)> &&
 				  BinaryFormat<decltype(FuzzBinary::binary.elf)>&&
