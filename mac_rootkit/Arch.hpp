@@ -67,7 +67,6 @@ namespace Arch
 	template<enum Architectures ArchType>
 	concept IsCurrentArchitecture = ArchType == current_architecture;
 
-
 	template<enum Architectures ArchType>
 	concept IsValidArchitecture = ArchType != ARCH_unsupported && ArchType != ARCH_none;
 
@@ -319,7 +318,7 @@ namespace Arch
 
 		if constexpr(ArchType == ARCH_x86_64)
 		{
-			struct x86_64_register_state *state_x86_64;
+			struct x86_64_register_state *state_x86_64 = &state_x86_64;
 
 			asm volatile(
 				"movq %%rsp, %0\n"
