@@ -64,6 +64,9 @@ namespace Arch
 
 	constexpr enum Architectures current_architecture = Arch::getCurrentArchitecture();
 
+	template<enum Architectures ArchType>
+	concept IsCurrentArchitecture = ArchType == current_architecture;
+
 	constexpr bool isValidArchitecture()
 	{
 		return Arch::getCurrentArchitecture() != ARCH_unsupported && Arch::getCurrentArchitecture() != ARCH_none;
@@ -256,6 +259,93 @@ namespace Arch
 	}
 
 	static_assert(Arch::getPageSize<Arch::getCurrentArchitecture()>() % 0x1000 == 0);
+
+	template<enum Architectures ArchType> requires IsCurrentArchitecture<ArchType>
+	static inline void getThreadState(union ThreadState *state)
+	{
+		if constexpr(ArchType == ARCH_arm64)
+		{
+			struct arm64_register_state *state_arm64 = &state->state_arm64;
+
+			asm volatile(
+				"mov %0, x0\n"
+				"mov %1, x1\n"
+				"mov %2, x2\n"
+				"mov %3, x3\n"
+				"mov %4, x4\n"
+				"mov %5, x5\n"
+				"mov %6, x6\n"
+				"mov %7, x7\n"
+				"mov %8, x8\n"
+				"mov %9, x9\n"
+				"mov %10, x10\n"
+				"mov %11, x11\n"
+				"mov %12, x12\n"
+				"mov %13, x13\n"
+				"mov %14, x14\n"
+				"mov %15, x15\n"
+				"mov %16, x16\n"
+				"mov %17, x17\n"
+				"mov %18, x18\n"
+				"mov %19, x19\n"
+				"mov %20, x20\n"
+				"mov %21, x21\n"
+				"mov %22, x22\n"
+				"mov %23, x23\n"
+				"mov %24, x24\n"
+				"mov %25, x25\n"
+				"mov %26, x26\n"
+				"mov %27, x27\n"
+				"mov %28, x28\n"
+				: "=r" (state_arm64->x[0]), "=r" (state_arm64->x[1]), "=r" (state_arm64->x[2]), "=r" (state_arm64->x[3]),
+				  "=r" (state_arm64->x[4]), "=r" (state_arm64->x[5]), "=r" (state_arm64->x[6]), "=r" (state_arm64->x[7]),
+				  "=r" (state_arm64->x[8]), "=r" (state_arm64->x[9]), "=r" (state_arm64->x[10]), "=r" (state_arm64->x[11]),
+				  "=r" (state_arm64->x[12]), "=r" (state_arm64->x[13]), "=r" (state_arm64->x[14]), "=r" (state_arm64->x[15]),
+				  "=r" (state_arm64->x[16]), "=r" (state_arm64->x[17]), "=r" (state_arm64->x[18]), "=r" (state_arm64->x[19]),
+				  "=r" (state_arm64->x[20]), "=r" (state_arm64->x[21]), "=r" (state_arm64->x[22]), "=r" (state_arm64->x[23]),
+				  "=r" (state_arm64->x[24]), "=r" (state_arm64->x[25]), "=r" (state_arm64->x[26]), "=r" (state_arm64->x[27]),
+				  "=r" (state_arm64->x[28])
+				);
+
+			asm volatile(
+				"str %0, [%1]\n"
+				"mrs %0, lr\n"
+				"mov %1, sp\n"
+				"adr %2, 1f\n"
+				"mrs %3, cpsr\n"
+				"1:\n"
+				: "=r" (state_arm64->fp), "=r" (state_arm64->lr), "=r" (state_arm64->sp), "=r" (state_arm64->pc), "=r" (state_arm64->cpsr)
+				);
+		}
+
+		if constexpr(ArchType == ARCH_x86_64)
+		{
+			struct x86_64_register_state *state_x86_64;
+
+			asm volatile(
+				"movq %%rsp, %0\n"
+				"movq %%rbp, %1\n"
+				"movq %%rax, %2\n"
+				"movq %%rbx, %3\n"
+				"movq %%rcx, %4\n"
+				"movq %%rdx, %5\n"
+				"movq %%rdi, %6\n"
+				"movq %%rsi, %7\n"
+				"movq %%r8, %8\n"
+				"movq %%r9, %9\n"
+				"movq %%r10, %10\n"
+				"movq %%r11, %11\n"
+				"movq %%r12, %12\n"
+				"movq %%r13, %13\n"
+				"movq %%r14, %14\n"
+				"movq %%r15, %15\n"
+				: "=m" (state_x86_64->rsp), "=m" (state_x86_64->rbp), "=m" (state_x86_64->rax), "=m" (state_x86_64->rbx),
+				"=m" (state_x86_64->rcx), "=m" (state_x86_64->rdx), "=m" (state_x86_64->rdi), "=m" (state_x86_64->rsi),
+				"=m" (state_x86_64->r8), "=m" (state_x86_64->r9), "=m" (state_x86_64->r10), "=m" (state_x86_64->r11),
+				"=m" (state_x86_64->r12), "=m" (state_x86_64->r13), "=m" (state_x86_64->r14), "=m" (state_x86_64->r15)
+			);
+		}
+	}
 
 	template <enum Architectures ArchType> requires SupportedProcessor<ArchType>
 	class Instructions

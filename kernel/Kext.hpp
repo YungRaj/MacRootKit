@@ -46,6 +46,8 @@ namespace xnu
 			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
 			kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
 
+			std::vector<Symbol*>& getAllSymbols() { return macho->getAllSymbols(); }
+
 			Symbol* getSymbolByName(char *symname) { return macho->getSymbolByName(symname); }
 			Symbol* getSymbolByAddress(mach_vm_address_t address) { return macho->getSymbolByAddress(address); }
 

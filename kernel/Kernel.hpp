@@ -171,6 +171,8 @@ namespace xnu
 
 			virtual char* readString(mach_vm_address_t address);
 
+			virtual std::vector<Symbol*>& getAllSymbols() { return macho->getAllSymbols(); }
+
 			virtual Symbol* getSymbolByName(char *symbolname);
 			virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
 

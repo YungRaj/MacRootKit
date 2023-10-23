@@ -32,6 +32,7 @@ namespace Debug
 	    { (*t) [index] } -> std::same_as<uint8_t*>;
 	};
 
+
 	template <typename T, typename Sym>
 	concept HasCompatibleSymbol = std::is_same_v<Sym, decltype(std::declval<T>()->getSymbol(nullptr))>;
 
