@@ -67,12 +67,11 @@ namespace Arch
 	template<enum Architectures ArchType>
 	concept IsCurrentArchitecture = ArchType == current_architecture;
 
-	constexpr bool isValidArchitecture()
-	{
-		return Arch::getCurrentArchitecture() != ARCH_unsupported && Arch::getCurrentArchitecture() != ARCH_none;
-	}
 
-	static_assert(Arch::isValidArchitecture());
+	template<enum Architectures ArchType>
+	concept IsValidArchitecture = ArchType != ARCH_unsupported && ArchType != ARCH_none;
+
+	static_assert(IsValidArchitecture<current_architecture>);
 
 	Architecture* initArchitecture();
 
