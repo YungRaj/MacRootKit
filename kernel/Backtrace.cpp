@@ -19,19 +19,24 @@ void Debug::Symbolicate::lookForAddressInsideKexts(mach_vm_address_t address, st
 	{
 		xnu::Kext *kext = kexts.at(i);
 
+		xnu::KextMachO *macho = kext->getMachO();
+
+		if(!macho->addressInSegment(address, "__TEXT"))
+			continue;
+
 		std::vector<Symbol*> &kextSymbols = kext->getAllSymbols();
 
 		for(int j = 0; j < kextSymbols.size(); i++)
 		{
 			Symbol *symbol = kextSymbols.at(j);
 
-			if(symbol->getAddress() > address)
+			if(address > symbol->getAddress())
 			{
 				if(sym)
 				{
-					off_t delta = sym->getAddress() - address;
+					off_t delta = address - sym->getAddress();
 
-					off_t new_delta = symbol->getAddress() - address;
+					off_t new_delta = address - symbol->getAddress();
 
 					if(new_delta < delta)
 					{
@@ -58,13 +63,13 @@ void Debug::Symbolicate::lookForAddressInsideKernel(mach_vm_address_t address, x
 	{
 		Symbol *symbol = kernelSymbols.at(i);
 
-		if(symbol->getAddress() > address)
+		if(address > symbol->getAddress())
 		{
 			if(sym)
 			{
-				off_t delta = sym->getAddress() - address;
+				off_t delta = address - sym->getAddress();
 
-				off_t new_delta = symbol->getAddress() - address;
+				off_t new_delta = address - symbol->getAddress();
 
 				if(new_delta < delta)
 				{

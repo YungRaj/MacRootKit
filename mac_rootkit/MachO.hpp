@@ -77,6 +77,9 @@ class MachO : public Binary::BinaryFormat
 		Segment* segmentForOffset(off_t offset);
 		Section* sectionForOffset(off_t offset);
 
+		bool addressInSegment(mach_vm_address_t address, char *segmentname);
+		bool addressInSection(mach_vm_address_t address, char *segmentname, char *sectname);
+
 		uint8_t* operator[](uint64_t index) { return this->getOffset(index); }
 
 		virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);

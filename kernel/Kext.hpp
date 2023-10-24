@@ -33,6 +33,8 @@ namespace xnu
 
 			char* getName() { return identifier; }
 
+			xnu::KextMachO* getMachO() { return macho; }
+
 			mach_vm_address_t getBase() { return address; }
 
 			mach_vm_address_t getAddress() { return address; }

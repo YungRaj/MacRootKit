@@ -288,6 +288,45 @@ Section* MachO::sectionForOffset(off_t offset)
 	return this->sectionForAddress(address);
 }
 
+bool MachO::addressInSegment(mach_vm_address_t address, char *segmentname)
+{
+	Segment *segment = this->segmentForAddress(address);
+
+	if(segment && strcmp(segment->getSegmentName(), segmentname) == 0)
+	{
+		mach_vm_address_t segmentAddress = segment->getAddress();
+
+		size_t segmentSize = segment->getSize();
+
+		return address >= segmentAddress && address < segmentAddress + segmentSize;
+	}
+
+	return false;
+}
+
+bool MachO::addressInSection(mach_vm_address_t address, char *segmentname, char *sectname)
+{
+	Section *section;
+
+	if(this->addressInSegment(address, segmentname))
+	{
+		section = this->sectionForAddress(address);
+
+		if(section && strcmp(section->getSectionName(), sectname) == 0)
+		{
+			mach_vm_address_t sectionAddress = section->getAddress();
+
+			size_t sectionSize = section->getSize();
+
+			return address >= sectionAddress && address < sectionAddress + sectionSize;
+		}
+
+		return false;
+	}
+
+	return false;
+}
+
 void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
 {
 	for(int i = 0; i < nsyms; i++)
