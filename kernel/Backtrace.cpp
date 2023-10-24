@@ -57,31 +57,38 @@ void Debug::Symbolicate::lookForAddressInsideKexts(mach_vm_address_t address, st
 
 void Debug::Symbolicate::lookForAddressInsideKernel(mach_vm_address_t address, xnu::Kernel *kernel, Symbol *&sym)
 {
+	MachO *macho = kernel->getMachO();
+
 	std::vector<Symbol*> &kernelSymbols = kernel->getAllSymbols();
 
-	for(int i = 0; i < kernelSymbols.size(); i++)
+	if(macho->addressInSegment(address, "__TEXT") ||
+	   macho->addressInSegment(address, "__PRELINK_TEXT") ||
+	   macho->addressInSegment(address, "__KLD"))
 	{
-		Symbol *symbol = kernelSymbols.at(i);
-
-		if(address > symbol->getAddress())
+		for(int i = 0; i < kernelSymbols.size(); i++)
 		{
-			if(sym)
+			Symbol *symbol = kernelSymbols.at(i);
+
+			if(address > symbol->getAddress())
 			{
-				off_t delta = address - sym->getAddress();
-
-				off_t new_delta = address - symbol->getAddress();
-
-				if(new_delta < delta)
+				if(sym)
 				{
-					if(new_delta <= Arch::getPageSize<Arch::getCurrentArchitecture()>() * 3)
-					{
-						sym = symbol;
-					}
-				}
+					off_t delta = address - sym->getAddress();
 
-			} else
-			{
-				sym = symbol;
+					off_t new_delta = address - symbol->getAddress();
+
+					if(new_delta < delta)
+					{
+						if(new_delta <= Arch::getPageSize<Arch::getCurrentArchitecture()>() * 3)
+						{
+							sym = symbol;
+						}
+					}
+
+				} else
+				{
+					sym = symbol;
+				}
 			}
 		}
 	}
