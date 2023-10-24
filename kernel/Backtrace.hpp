@@ -15,12 +15,21 @@ namespace mrk
 	class MacRootKit;
 };
 
+namespace xnu
+{
+	class Kext;
+	class Kernel;
+}
+
 mrk::MacRootKit* mac_rootkit_get_rootkit();
 
 namespace Debug
 {
 	namespace Symbolicate
 	{
+		void lookForAddressInsideKernel(mach_vm_address_t address, xnu::Kernel *kernel, Symbol *&sym);
+		void lookForAddressInsideKexts(mach_vm_address_t address, std::vector<xnu::Kext*> &kexts, Symbol *&sym);
+
 		Symbol* getSymbolFromAddress(mach_vm_address_t address, off_t *delta);
 	};
 
