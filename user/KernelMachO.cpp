@@ -5,9 +5,9 @@ extern "C"
 	#include <fcntl.h>
 };
 
-KernelMachO::KernelMachO(uintptr_t base)
+KernelMachO::KernelMachO(uintptr_t address)
 {
-	buffer = reinterpret_cast<char*>(base),
+	buffer = reinterpret_cast<char*>(address),
 	header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	base = reinterpret_cast<mach_vm_address_t>(this->buffer);
 	symbolTable = new SymbolTable();
@@ -16,9 +16,9 @@ KernelMachO::KernelMachO(uintptr_t base)
     this->parseMachO();
 }
 
-KernelMachO::KernelMachO(uintptr_t base, off_t slide)
+KernelMachO::KernelMachO(uintptr_t address, off_t slide)
 {
-	buffer = reinterpret_cast<char*>(base),
+	buffer = reinterpret_cast<char*>(address),
 	header = reinterpret_cast<struct mach_header_64*>(this->buffer);
 	base = reinterpret_cast<mach_vm_address_t>(this->buffer);
 	symbolTable = new SymbolTable();

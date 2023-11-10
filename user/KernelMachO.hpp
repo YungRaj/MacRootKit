@@ -12,8 +12,8 @@ namespace xnu
 		public:
 			KernelMachO() { }
 
-			KernelMachO(uintptr_t base);
-			KernelMachO(uintptr_t base, off_t slide);
+			KernelMachO(uintptr_t address);
+			KernelMachO(uintptr_t address, off_t slide);
 
 			KernelMachO(const char *path, off_t slide);
 			KernelMachO(const char *path);

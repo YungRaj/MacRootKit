@@ -112,13 +112,15 @@ Symbol* SymbolTable::getSymbolByOffset(off_t offset)
 
 void SymbolTable::replaceSymbol(Symbol *symbol)
 {
-	for(size_t i = symbolTable.size() - 1; i >= 0; i--)
+	for(int i = ((int) symbolTable.size()) - 1; i >= 0; i--)
 	{
 		Symbol *sym = symbolTable.at(i);
 
 		if(strcmp(sym->getName(), symbol->getName()) == 0)
 		{
 			symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), sym), symbolTable.end());
+
+			i--;
 		}
 	}
 

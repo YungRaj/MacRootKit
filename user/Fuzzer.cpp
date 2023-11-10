@@ -30,6 +30,8 @@ Harness::Harness(xnu::Kernel *kernel)
     addDebugSymbolsFromKernel(kdkInfo->kernelDebugSymbolsPath);
 
     loader = new Fuzzer::Loader(this, this->fuzzBinary);
+
+    startKernel();
 }
 
 Harness::Harness(const char *binary)
@@ -192,7 +194,7 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
     free(file_data);
 }
 
-template<typename Binary> requires BinaryFormat<Binary>
+template<typename Binary> requires AnyBinaryFormat<Binary>
 void Harness::getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr)
 {
     if constexpr (std::is_same_v<Binary, MachO>)
@@ -267,6 +269,7 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoad
 
                     address = (nl->n_value - oldLoadAddress) + newLoadAddress;
 
+
                     printf("Symbol %s = 0x%llx\n", name, address);
 
                     nl->n_value = address;
@@ -335,10 +338,10 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintpt
     }
 }
 
-template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+template<typename Binary, typename Seg> requires AnyBinaryFormat<Binary>
 bool Harness::mapSegments(char *file_data, char *mapFile)
 {
-    if constexpr (std::is_same_v<Binary, MachO>)
+    if constexpr (std::is_same_v<Binary, MachO> || std::is_same_v<Binary, KernelMachO>)
     {
         struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
@@ -355,10 +358,10 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
             {
                 struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-                printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
+                printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx %u\n", segment_command->fileoff,
                                               segment_command->segname,
                                               segment_command->vmaddr,
-                                              segment_command->vmaddr + segment_command->vmsize);
+                                              segment_command->vmaddr + segment_command->vmsize, segment_command->maxprot);
 
                 if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
                 {
@@ -396,9 +399,9 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
             }
 
             q += cmdsize;
+        }
 
-            return true;
-    }
+        return true;
     }
 
     if constexpr (std::is_same_v<Binary, RawBinary>)
@@ -409,7 +412,7 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
     return false;
 }
 
-template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+template<typename Binary, typename Seg> requires AnyBinaryFormat<Binary>
 bool Harness::unmapSegments()
 {
 
@@ -531,10 +534,35 @@ fail:
     printf("Load Kernel MachO failed!\n");
 }
 
-template<typename Binary> requires (BinaryFormat<Binary> && !MachOFormat<Binary>)
+
+
+template<typename Binary> requires (AnyBinaryFormat<Binary> && !MachOFormat<Binary>)
 void Harness::loadBinary(const char *path, const char *mapFile)
 {
 
+}
+
+void Harness::startKernel()
+{
+    xnu::KernelMachO *kernelMachO = this->fuzzBinary->getBinary<xnu::KernelMachO*>();
+
+    Symbol *symbol = kernelMachO->getSymbolByName("__start");
+
+    mach_vm_address_t start_kernel  = symbol->getAddress();
+
+    printf("MacRK::Starting XNU kernel at address = 0x%llx\n", start_kernel);
+
+    #ifdef __arm64__
+
+    __asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (start_kernel));
+
+    #endif
+
+    typedef void (*XnuKernelEntryPoint)();
+
+    XnuKernelEntryPoint start = reinterpret_cast<XnuKernelEntryPoint>(start_kernel);
+
+    (void)(*start)();
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)
@@ -559,7 +587,7 @@ void Harness::loadKernelExtension(const char *path)
 	this->loader->loadModuleFromKext(path);
 }
 
-template<typename Binary> requires BinaryFormat<Binary>
+template<typename Binary> requires AnyBinaryFormat<Binary>
 void Harness::populateSymbolsFromMapFile(const char *mapFile)
 {
 

@@ -270,6 +270,9 @@ namespace Fuzzer
 	};
 
 	template<typename T>
+	concept BinaryFmt = std::is_same_v<T, Binary::BinaryFormat*>;
+
+	template<typename T>
 	concept MachOFormat = std::is_base_of_v<MachO, std::remove_pointer_t<T>> || std::is_same_v<T, MachO*>;
 
 	template<typename T>
@@ -285,7 +288,7 @@ namespace Fuzzer
 	concept RawBinaryFormat = std::is_same_v<T, RawBinary*>;
 
 	template<typename T>
-	concept BinaryFormat = MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T> || VoidPointerType<T>;
+	concept AnyBinaryFormat = BinaryFmt<T> || MachOFormat<T> || ELFFormat<T> || PEFormat<T> || TEFormat<T> || RawBinaryFormat<T> || VoidPointerType<T>;
 
 	static_assert(MachOFormat<xnu::KernelMachO*>, "KernelMachO does not satisfy MachOFormat constraint");
 	static_assert(MachOFormat<xnu::KextMachO*>, "KextMachO does not satisfy MachOFormat constraint");
@@ -316,11 +319,14 @@ namespace Fuzzer
 
 		size_t size;
 
-		template <PointerToClassType T> requires BinaryFormat<T>
-		union Binary
+		template <PointerToClassType T> requires AnyBinaryFormat<T>
+		union Bin
 		{
 			/* We know the binary is a any of the below BinaryFormats */
 			T bin;
+
+			/* Support BinaryFormat */
+			Binary::BinaryFormat *binFmt;
 
 			/* Support MachO */
 			MachO *macho;
@@ -342,12 +348,12 @@ namespace Fuzzer
 			/* This union constrains the Binary Format types */
 			/* The following binary formats are supported but may not be implemented */
 
-			Binary() : binPtr(nullptr) {}
+			Bin() : binPtr(nullptr) {}
 
-			Binary(T ptr) : bin(ptr) {}
+			Bin(T ptr) : bin(ptr) {}
 
-			template <typename U> requires BinaryFormat<U>
-			Binary(const Binary<U>& other)
+			template <typename U> requires AnyBinaryFormat<U>
+			Bin(const Bin<U>& other)
 			{
 				static_assert(std::is_convertible_v<U, T>, "Incompatible BinaryFormat types for type punning");
 				
@@ -355,15 +361,18 @@ namespace Fuzzer
 			}
 		};
 
-		template<PointerToClassType T> requires BinaryFormat<T>
-		static constexpr Binary<T> MakeBinary(T ptr)
+		template<PointerToClassType T> requires AnyBinaryFormat<T>
+		static constexpr Bin<T> MakeBinary(T ptr)
 		{
-		    return Binary<T>(ptr);
+		    return Bin<T>(ptr);
 		}
 
-		using AnyBinary = Binary<void*>;
+		using AnyBinary = Bin<void*>;
 
 		AnyBinary binary;
+
+		template<PointerToClassType B> requires AnyBinaryFormat<B>
+		B getBinary() { return reinterpret_cast<B>(binary.binFmt); }
 
 		template<typename T> requires CastableType<T>
 		T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
@@ -390,7 +399,7 @@ namespace Fuzzer
 			std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 		}
 		{
-			static_assert(BinaryFormat<Binary>,
+			static_assert(AnyBinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSymbol()");
 
 		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
@@ -419,7 +428,7 @@ namespace Fuzzer
 			std::is_same_v<GetSegmentReturnType<Binary>, Seg> || std::is_same_v<GetSectionReturnType<Binary>, Seg>;
 		}
 		{
-			static_assert(BinaryFormat<Binary>,
+			static_assert(AnyBinaryFormat<Binary>,
 		                  "Unsupported type for FuzzBinary:getSegment()");
 
 		    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<Binary>>)
@@ -444,11 +453,11 @@ namespace Fuzzer
 	static_assert(std::is_same_v<GetSegmentReturnType<MachO*>, Segment*>);
 	static_assert(std::is_same_v<GetSectionReturnType<RawBinary*>, SectionRaw*>);
 
-	static_assert(BinaryFormat<decltype(FuzzBinary::binary.macho)> &&
-				  BinaryFormat<decltype(FuzzBinary::binary.elf)>&&
-				  BinaryFormat<decltype(FuzzBinary::binary.portableExecutable)> &&
-				  BinaryFormat<decltype(FuzzBinary::binary.terseExecutable)> &&
-				  BinaryFormat<decltype(FuzzBinary::binary.raw)>,
+	static_assert(AnyBinaryFormat<decltype(FuzzBinary::binary.macho)> &&
+				  AnyBinaryFormat<decltype(FuzzBinary::binary.elf)>&&
+				  AnyBinaryFormat<decltype(FuzzBinary::binary.portableExecutable)> &&
+				  AnyBinaryFormat<decltype(FuzzBinary::binary.terseExecutable)> &&
+				  AnyBinaryFormat<decltype(FuzzBinary::binary.raw)>,
 				  "All types in the union must satisfy the BinaryFormat concept");
 
 	template <typename T>
@@ -473,10 +482,10 @@ namespace Fuzzer
 				sym->getAddress();
 			};
 
-			template<typename T> requires BinaryFormat<T> && PointerToClassType<T>
+			template<typename T> requires AnyBinaryFormat<T> && PointerToClassType<T>
 			T getBinary()
 			{
-			    static_assert(BinaryFormat<T>,
+			    static_assert(AnyBinaryFormat<T>,
 			                  "Unsupported type for Harness::getBinary()");
 
 			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
@@ -504,22 +513,24 @@ namespace Fuzzer
 			template <int CpuType>
 			char* getMachOFromFatHeader(char *file_data);
 
-			template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+			template<typename Binary, typename Seg> requires AnyBinaryFormat<Binary>
 			bool mapSegments(char *file_data, char *mapFile);
 
-			template<typename Binary, typename Seg> requires BinaryFormat<Binary>
+			template<typename Binary, typename Seg> requires AnyBinaryFormat<Binary>
 			bool unmapSegments();
 
-			template<typename Binary> requires BinaryFormat<Binary>
+			template<typename Binary> requires AnyBinaryFormat<Binary>
 			void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
 
 			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 			void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
 
-			template<typename Binary = RawBinary> requires (BinaryFormat<Binary> && !MachOFormat<Binary>)
+			template<typename Binary = RawBinary> requires (AnyBinaryFormat<Binary> && !MachOFormat<Binary>)
 			void loadBinary(const char *path, const char *mapFile);
 
 			void loadMachO(const char *path);
+
+			void startKernel();
 
 			void loadKernel(const char *path, off_t slide);
 			void loadKernelExtension(const char *path);
@@ -527,7 +538,7 @@ namespace Fuzzer
 
 			void addDebugSymbolsFromKernel(const char *debugSymbols);
 
-			template<typename Binary = RawBinary> requires BinaryFormat<Binary>
+			template<typename Binary = RawBinary> requires AnyBinaryFormat<Binary>
 			void populateSymbolsFromMapFile(const char *mapFile);
 
 			template <typename T>

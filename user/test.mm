@@ -556,6 +556,310 @@ void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLo
     }
 }
 
+void callFunction(char *macho, char *symbolname, uint64_t *arguments, size_t argCount)
+{
+    uint64_t ret = 0;
+
+    struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(macho);
+
+    uint8_t *q = reinterpret_cast<uint8_t*>(macho + sizeof(struct mach_header_64));
+
+    for(int i = 0; i < header->ncmds; i++)
+    {
+        struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
+
+        uint32_t cmdtype = load_cmd->cmd;
+        uint32_t cmdsize = load_cmd->cmdsize;
+
+        if(cmdtype == LC_SYMTAB)
+        {
+            struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_cmd);
+
+            struct nlist_64 *symtab = reinterpret_cast<struct nlist_64*>(macho + symtab_command->symoff);
+            uint32_t nsyms = symtab_command->nsyms;
+
+            char *strtab = reinterpret_cast<char*>(macho + symtab_command->stroff);
+            uint32_t strsize = symtab_command->strsize;
+
+            if(nsyms > 0)
+            {
+                for(int i = 0; i < nsyms; i++)
+                {
+                    struct nlist_64 *nl = &symtab[i];
+
+                    char *name;
+
+                    uint8_t type;
+
+                    mach_vm_address_t address;
+
+                    name = &strtab[nl->n_strx];
+
+                    type = nl->n_type;
+
+                    address = nl->n_value;
+
+                    if(address && strcmp(name, symbolname) == 0)
+                    {
+                        printf("Calling function at 0x%llx\n", address);
+
+                        mach_vm_address_t function = address;
+
+                        #ifdef __arm64__
+
+                            __asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (function));
+
+                        #endif
+
+                        switch(argCount)
+                        {
+                            case 0:
+                            {
+                                typedef uint64_t (*function0)(void);
+
+                                function0 funk = reinterpret_cast<function0>(function);
+
+                                ret = (uint64_t)(*funk)();
+
+                                break;
+                            }
+
+                            case 1:
+                            {
+                                typedef uint64_t (*function1)(uint64_t);
+
+                                function1 funk = reinterpret_cast<function1>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0]);
+
+                                break;
+                            }
+
+                            case 2:
+                            {
+                                typedef uint64_t (*function2)(uint64_t, uint64_t);
+
+                                function2 funk = reinterpret_cast<function2>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1]);
+
+                                break;
+                            }
+
+                            case 3:
+                            {
+                                typedef uint64_t (*function3)(uint64_t, uint64_t, uint64_t);
+
+                                function3 funk = reinterpret_cast<function3>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2]);
+
+                                break;
+                            }
+
+                            case 4:
+                            {
+                                typedef uint64_t (*function4)(uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function4 funk = reinterpret_cast<function4>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3]);
+
+                                break;
+                            }
+
+                            case 5:
+                            {
+                                typedef uint64_t (*function5)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function5 funk = reinterpret_cast<function5>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+
+                                break;
+                            }
+
+                            case 6:
+                            {
+                                typedef uint64_t (*function6)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function6 funk = reinterpret_cast<function6>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+
+                                break;
+                            }
+
+                            case 7:
+                            {
+                                typedef uint64_t (*function7)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function7 funk = reinterpret_cast<function7>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
+
+                                break;
+                            }
+
+                            case 8:
+                            {
+                                typedef uint64_t (*function8)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function8 funk = reinterpret_cast<function8>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7]);
+
+                                break;
+                            }
+
+                            case 9:
+                            {
+                                typedef uint64_t (*function9)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function9 funk = reinterpret_cast<function9>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8]);
+
+                                break;
+                            }
+
+                            case 10:
+                            {
+                                typedef uint64_t (*function10)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function10 funk = reinterpret_cast<function10>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9]);
+
+                                break;
+                            }
+
+                            case 11:
+                            {
+                                typedef uint64_t (*function11)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function11 funk = reinterpret_cast<function11>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10]);
+
+                                break;
+                            }
+
+                            case 12:
+                            {
+                                typedef uint64_t (*function12)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function12 funk = reinterpret_cast<function12>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11]);
+
+                                break;
+                            }
+
+                            case 13:
+                            {
+                                typedef uint64_t (*function13)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function13 funk = reinterpret_cast<function13>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12]);
+                                
+                                break;
+                            }
+
+                            case 14:
+                            {
+                                typedef uint64_t (*function14)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function14 funk = reinterpret_cast<function14>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13]);
+
+                                break;
+                            }
+
+                            case 15:
+                            {
+                                typedef uint64_t (*function15)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function15 funk = reinterpret_cast<function15>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14]);
+
+                                break;
+                            }
+
+                            case 16:
+                            {
+                                typedef uint64_t (*function16)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function16 funk = reinterpret_cast<function16>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15]);
+
+                                break;
+                            }
+
+                            case 17:
+                            {
+                                typedef uint64_t (*function17)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function17 funk = reinterpret_cast<function17>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16]);
+
+                                break;
+                            }
+
+                            case 18:
+                            {
+                                typedef uint64_t (*function18)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function18 funk = reinterpret_cast<function18>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17]);
+
+                                break;
+                            }
+
+                            case 19:
+                            {
+                                typedef uint64_t (*function19)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function19 funk = reinterpret_cast<function19>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17], arguments[18]);
+
+                                break;
+                            }
+
+                            case 20:
+                            {
+                                typedef uint64_t (*function20)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+                                function20 funk = reinterpret_cast<function20>(function);
+
+                                ret = (uint64_t)(*funk)(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6], arguments[7], arguments[8], arguments[9], arguments[10], arguments[11], arguments[12], arguments[13], arguments[14], arguments[15], arguments[16], arguments[17], arguments[18], arguments[19]);
+
+                                break;
+                            }
+
+                            default:
+                                break;
+                        }
+
+                        break;
+                    }
+
+                   // printf("Symbol %s = 0x%llx type = 0x%llx\n", name, address, type);
+                }
+            }
+        }
+
+        q += cmdsize;
+    };
+}
+
 bool mapSegmentsFromMachO(char *file_data)
 {
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
@@ -704,12 +1008,18 @@ void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loa
 
     success = mapSegmentsFromMachO(file_data);
 
+    char *zone_name = "myzone";
+
+    uint64_t args[] = {(uint64_t) zone_name, 16, 0};
+
     if(!success)
     {
         printf("Map Segments failed!\n");
 
         goto fail;
     }
+
+    callFunction((char*) file_data, "_zone_create", args, 3);
 
     *loadAddress = (uintptr_t) baseAddress;
 

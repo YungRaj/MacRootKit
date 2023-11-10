@@ -543,9 +543,15 @@ void print_usage()
 	exit(-1);
 }
 
+#include "Fuzzer.hpp"
+
 int main(int argc, char **argv)
 {
-	int err;
+	Fuzzer::Harness *harness = new Fuzzer::Harness(new xnu::Kernel());
+
+	return 0;
+
+	/* int err;
 
 	char *wait_for_process_name = NULL;
 
@@ -558,6 +564,8 @@ int main(int argc, char **argv)
 	kernel = new Kernel();
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
+
+	*/
 
 	/*
 	task = new Task(kernel, 614);
@@ -575,6 +583,7 @@ int main(int argc, char **argv)
 	return 0;
 	*/
 
+	/*
 	using namespace Debug;
 
 	Dwarf<xnu::KernelMachO*> dwarf("/Library/Developer/KDKs/KDK_12.5_21G72.kdk/System/Library/Kernels/kernel.development.t8020.dSYM/Contents/Resources/DWARF/kernel.development.t8020");
@@ -636,7 +645,6 @@ int main(int argc, char **argv)
 		{
 			if(wait_for_process_name)
 			{
-				/*
 				es_client_t *client = NULL;
 
 				ensure(es_new_client(&client, ^(es_client_t *client, const es_message_t *message)
@@ -680,7 +688,7 @@ int main(int argc, char **argv)
 				
 				ensure(es_subscribe(client, events, sizeof(events) / sizeof(*events)) == ES_RETURN_SUCCESS);
 				
-				dispatch_main(); */
+				dispatch_main();
 			} else
 			{
 				err = injectLibrary(library);
@@ -704,4 +712,5 @@ int main(int argc, char **argv)
 	delete kernel;
 
 	return err;
+	*/
 }

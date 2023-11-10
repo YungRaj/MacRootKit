@@ -40,7 +40,7 @@ Loader::Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary)
     
 }
 
-template<typename Binary> requires BinaryFormat<Binary>
+template<typename Binary> requires AnyBinaryFormat<Binary>
 void Loader::loadModule(Module *module)
 {
     if constexpr (MachOFormat<Binary>)
@@ -206,7 +206,7 @@ fail:
     printf("Load Kext MachO failed!\n");
 }
 
-template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 void Loader::linkSymbols(Module *module) requires requires (Sym sym)
 {
     sym->getName();
@@ -217,7 +217,7 @@ void Loader::linkSymbols(Module *module) requires requires (Sym sym)
 
 }
 
-template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 void Loader::linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
 {
     sym->getName();
@@ -228,7 +228,7 @@ void Loader::linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
 
 }
 
-template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 void Loader::stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) 
 {
     sym->getName();
@@ -239,7 +239,7 @@ void Loader::stubFunction(Module *module, Sym sym, uintptr_t stub) requires requ
 
 }
 
-template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 void Loader::shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym)
 {
     sym->getName();

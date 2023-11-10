@@ -10,6 +10,7 @@ class Segment;
 class Section;
 
 #include "vector.hpp"
+
 #include "MachO.hpp"
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"

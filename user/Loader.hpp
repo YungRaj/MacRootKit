@@ -41,7 +41,7 @@ namespace Fuzzer
 
 			uintptr_t getEntryPoint();
 
-			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
 			std::vector<Sym>& getSymbols() const requires requires (Binary bin, Sym sym)
 			{
 				sym->getName();
@@ -52,7 +52,7 @@ namespace Fuzzer
 				return this->getBinary<Binary>()->getAllSymbols();
 			}
 
-			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
 			std::vector<Sym>* getUndefinedSymbols() const requires requires (Binary bin, Sym sym)
 			{
 				sym->getName();
@@ -77,7 +77,7 @@ namespace Fuzzer
 				return syms;
 			}
 
-			template<typename Binary, typename Sym> requires BinaryFormat<Binary>
+			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
 			std::vector<Sym>* getExternalSymbols() const requires requires (Sym sym)
 			{
 				sym->getName();
@@ -107,9 +107,9 @@ namespace Fuzzer
 			struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
 
 			template<typename T>
-			T getBinary() const requires BinaryFormat<T> && PointerToClassType<T>
+			T getBinary() const requires AnyBinaryFormat<T> && PointerToClassType<T>
 			{
-			    static_assert(BinaryFormat<T>,
+			    static_assert(AnyBinaryFormat<T>,
 			                  "Unsupported type for Module::getBinary()");
 
 			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
@@ -199,14 +199,14 @@ namespace Fuzzer
 				return NULL;
 			}
 
-			template<typename Binary> requires BinaryFormat<Binary>
+			template<typename Binary> requires AnyBinaryFormat<Binary>
 			void loadModule(Module *module);
 
 			void loadModuleFromKext(const char *kextPath);
 
 			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
 
-			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void linkSymbols(Module *module) requires requires (Sym sym)
 			{
 				sym->getName();
@@ -214,7 +214,7 @@ namespace Fuzzer
 				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
-			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
 			{
 				sym->getName();
@@ -222,7 +222,7 @@ namespace Fuzzer
 				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
-			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) 
 			{
 				sym->getName();
@@ -230,7 +230,7 @@ namespace Fuzzer
 				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
-			template<typename Sym, typename Binary> requires BinaryFormat<Binary>
+			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym)
 			{
 				sym->getName();
