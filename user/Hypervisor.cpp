@@ -15,8 +15,12 @@ Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address
 
 	ret = prepareSystemMemory();
 
-	if(!ret)
+	if(ret != 0)
+	{
+		printf("Failed to prepare Hypervisor's System Memory!\n");
+
 		exit(-1);
+	}
 
 	configure();
 
@@ -31,6 +35,8 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 
 	if (g_pResetTrampolineMemory == NULL)
 	{
+		printf("Failed to posix_memalign() g_pMainMemory!\n");
+
 		return -ENOMEM;
 	}
 
@@ -51,6 +57,8 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 
 	if (g_pMainMemory == NULL) 
 	{
+		printf("Failed to posix_memalign() g_pMainMemory!\n");
+
 		return -ENOMEM;
 	}
 

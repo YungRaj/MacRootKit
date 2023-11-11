@@ -52,3 +52,5 @@ export LDFLAGS="-target $1-apple-macos -arch $1 --sysroot=$SYSROOT -isysroot $SY
 make -f make_inject.mk clean
 
 make -f make_inject.mk
+
+codesign -fs - --entitlements entitlements.xml --deep build/mrk_inject
