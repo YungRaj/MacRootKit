@@ -53,7 +53,7 @@ endif
 
 CFLAGS += -fobjc-arc -Wno-shadow -Wno-unused-variable -g -D__USER__ -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
-LDFLAGS += -std=c++20 -fobjc-arc -lstdc++ -framework IOKit -framework CoreFoundation /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
+LDFLAGS += -std=c++20 -fobjc-arc -lstdc++ -framework Hypervisor -framework IOKit -framework CoreFoundation /usr/local/lib/libcapstone.a /usr/local/lib/libkeystone.a -std=c++11  -Wc++11-extensions -DCAPSTONE_HAS_X86=1 -DCAPSTONE_HAS_ARM64=1 -I./keystone/include -I./capstone/include -I./user -I./mac_rootkit -I./
 
 CXXFLAGS += -std=c++20 -fobjc-arc -D__USER__ -Wno-sign-conversion -Wno-writable-strings
 
@@ -89,7 +89,7 @@ $(OBJ):
 	rm $(OBJ)/*.o
 
 $(BUILD)/$(TARGET):  $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
-	$(CXX)  $(LDFLAGS) -framework CoreFoundation -framework IOKit -o $@ $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
+	$(CXX)  $(LDFLAGS) -framework Hypervisor -framework CoreFoundation -framework IOKit -o $@ $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
 	# libtool -o $(BUILD)/libMacRootKit.a -static $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(USER_COBJECTS) $(USER_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS)
 
 clean:

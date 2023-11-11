@@ -54,6 +54,11 @@ concept IntegralOrPointerType = IntegralType<T> || PointerType<T>;
 template<typename T>
 concept CastableType = FundamentalType<T> || PodType<T> || IntegralType<T> || PointerType<T>;
 
+namespace Virtualization
+{
+	class Hypervisor;
+};
+
 namespace Fuzzer
 {
 	class Loader;
@@ -555,6 +560,8 @@ namespace Fuzzer
 			} std::invoke_result_t<Func, Args...> execute(const char *name, Func func, Args... args);
 
 		private:
+			Virtualization::Hypervisor *hypervisor;
+
 			xnu::Kernel *kernel;
 
 			xnu::KDKInfo *kdkInfo;

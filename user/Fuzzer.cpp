@@ -1,4 +1,5 @@
 #include "Fuzzer.hpp"
+#include "Hypervisor.hpp"
 #include "Loader.hpp"
 #include "Log.hpp"
 
@@ -268,7 +269,6 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoad
                     name = &strtab[nl->n_strx];
 
                     address = (nl->n_value - oldLoadAddress) + newLoadAddress;
-
 
                     printf("Symbol %s = 0x%llx\n", name, address);
 
@@ -550,6 +550,9 @@ void Harness::startKernel()
 
     mach_vm_address_t start_kernel  = symbol->getAddress();
 
+    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start_kernel);
+
+    /*
     printf("MacRK::Starting XNU kernel at address = 0x%llx\n", start_kernel);
 
     #ifdef __arm64__
@@ -563,6 +566,7 @@ void Harness::startKernel()
     XnuKernelEntryPoint start = reinterpret_cast<XnuKernelEntryPoint>(start_kernel);
 
     (void)(*start)();
+    */
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)
