@@ -2,6 +2,14 @@
 
 #include "KernelMachO.hpp"
 
+static inline int64_t get_clock(void)
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000LL + ts.tv_nsec;
+}
+
+
 Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t base, size_t size, mach_vm_address_t entryPoint)
 : harness(harness),
   base(base),
@@ -25,6 +33,135 @@ Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address
 	configure();
 
 	start();
+}
+
+int Virtualization::Hypervisor::sysregRead(uint32_t reg, uint32_t rt)
+{
+	HvfArm64State *env = &state;
+
+    uint64_t val = 0;
+
+    switch (reg)
+    {
+    case SYSREG_CNTPCT_EL0:
+    	uint64_t gt_cntfrq_hz;
+
+    	 asm volatile("mrs %0, cntfrq_el0" : "=r"(gt_cntfrq_hz));
+
+    	#define NANOSECONDS_PER_SECOND 1000000000LL
+
+        val = get_clock() / (NANOSECONDS_PER_SECOND > gt_cntfrq_hz ?
+      NANOSECONDS_PER_SECOND / gt_cntfrq_hz : 1);
+        break;
+    case SYSREG_PMCR_EL0:
+        val = env->cp15.c9_pmcr;
+        break;
+    case SYSREG_PMCCNTR_EL0:
+        // pmu_op_start(env);
+        val = env->cp15.c15_ccnt;
+        // pmu_op_finish(env);
+        break;
+    case SYSREG_PMCNTENCLR_EL0:
+        val = env->cp15.c9_pmcnten;
+        break;
+    case SYSREG_PMOVSCLR_EL0:
+        val = env->cp15.c9_pmovsr;
+        break;
+    case SYSREG_PMSELR_EL0:
+        val = env->cp15.c9_pmselr;
+        break;
+    case SYSREG_PMINTENCLR_EL1:
+        val = env->cp15.c9_pminten;
+        break;
+    case SYSREG_PMCCFILTR_EL0:
+        val = env->cp15.pmccfiltr_el0;
+        break;
+    case SYSREG_PMCNTENSET_EL0:
+        val = env->cp15.c9_pmcnten;
+        break;
+    case SYSREG_PMUSERENR_EL0:
+        val = env->cp15.c9_pmuserenr;
+        break;
+    case SYSREG_PMCEID0_EL0:
+    case SYSREG_PMCEID1_EL0:
+        /* We can't really count anything yet, declare all events invalid */
+        val = 0;
+        break;
+    case SYSREG_OSLSR_EL1:
+        val = env->cp15.oslsr_el1;
+        break;
+    case SYSREG_OSDLR_EL1:
+        /* Dummy register */
+        break;
+    default:
+        break;
+    }
+
+    HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, (hv_reg_t) (HV_REG_X0 + rt), val));
+
+    return 0;
+}
+
+int Virtualization::Hypervisor::sysregWrite(uint32_t reg, uint64_t val)
+{
+	HvfArm64State *env = &state;
+
+    switch (reg)
+    {
+    case SYSREG_PMCCNTR_EL0:
+        env->cp15.c15_ccnt = val;
+        break;
+    case SYSREG_PMCR_EL0:
+        if (val & PMCRC) {
+            /* The counter has been reset */
+            env->cp15.c15_ccnt = 0;
+        }
+
+        if (val & PMCRP) {
+            unsigned int i;
+            for (i = 0; i < pmu_num_counters(env); i++) {
+                env->cp15.c14_pmevcntr[i] = 0;
+            }
+        }
+
+        env->cp15.c9_pmcr &= ~PMCR_WRITABLE_MASK;
+        env->cp15.c9_pmcr |= (val & PMCR_WRITABLE_MASK);
+
+        break;
+    case SYSREG_PMUSERENR_EL0:
+        env->cp15.c9_pmuserenr = val & 0xf;
+        break;
+    case SYSREG_PMCNTENSET_EL0:
+        env->cp15.c9_pmcnten |= (val & pmu_counter_mask(env));
+        break;
+    case SYSREG_PMCNTENCLR_EL0:
+        env->cp15.c9_pmcnten &= ~(val & pmu_counter_mask(env));
+        break;
+    case SYSREG_PMINTENCLR_EL1:
+        env->cp15.c9_pminten |= val;
+        break;
+    case SYSREG_PMOVSCLR_EL0:
+        env->cp15.c9_pmovsr &= ~val;
+        break;
+    case SYSREG_PMSWINC_EL0:
+        break;
+    case SYSREG_PMSELR_EL0:
+        env->cp15.c9_pmselr = val & 0x1f;
+        break;
+    case SYSREG_PMCCFILTR_EL0:
+        env->cp15.pmccfiltr_el0 = val & PMCCFILTR_EL0;
+        break;
+    case SYSREG_OSLAR_EL1:
+        env->cp15.oslsr_el1 = val & 1;
+        break;
+    case SYSREG_OSDLR_EL1:
+        /* Dummy register */
+        break;
+    default:
+        break;
+    }
+
+    return 0;
 }
 
 int Virtualization::Hypervisor::prepareSystemMemory()
@@ -116,7 +253,8 @@ void Virtualization::Hypervisor::start()
 			uint64_t syndrome = vcpu_exit->exception.syndrome;
 			uint8_t ec = (syndrome >> 26) & 0x3f;
 			// check Exception Class
-			if (ec == 0x16)
+
+			if (ec == EC_AA32_HVC)
 			{
 				// Exception Class 0x16 is
 				// "HVC instruction execution in AArch64 state, when HVC is not disabled."
@@ -124,7 +262,7 @@ void Virtualization::Hypervisor::start()
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_X0, &x0));
 				printf("VM made an HVC call! x0 register holds 0x%llx\n", x0);
 				break;
-			} else if (ec == 0x17)
+			} else if (ec == EC_AA64_SMC)
 			{
 				// Exception Class 0x17 is
 				// "SMC instruction execution in AArch64 state, when SMC is not disabled."
@@ -141,10 +279,34 @@ void Virtualization::Hypervisor::start()
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 				pc += 4;
 				HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, pc));
-			} else if(ec == 0x18)
-			{
 
-			} else if (ec == 0x3C)
+			} else if(ec == EC_SYSTEMREGISTERTRAP)
+			{
+				uint64_t pc;
+
+				bool isread = (syndrome >> 0) & 1;
+				uint32_t rt = (syndrome >> 5) & 0x1f;
+				uint32_t reg = syndrome & SYSREG_MASK;
+				
+				uint64_t val;
+
+				int ret = 0;
+
+				if (isread)
+				{
+					ret = sysregRead(reg, rt);
+				} else
+				{
+					HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, (hv_reg_t) rt, &val));
+
+					ret = sysregWrite(reg, val);
+				}
+
+				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
+				pc += 4;
+				HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, pc));
+
+			} else if (ec == EC_AA64_BKPT)
 			{
 				// Exception Class 0x3C is BRK in AArch64 state
 				uint64_t x0;
@@ -166,7 +328,7 @@ void Virtualization::Hypervisor::start()
 			{
 				uint64_t pc;
 
-				hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc);
+				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 
 				fprintf(stderr, "Unexpected VM exception: 0x%llx, EC 0x%x, VirtAddr 0x%llx, IPA 0x%llx Reason 0x%x PC 0x%llx\n",
 						syndrome,
