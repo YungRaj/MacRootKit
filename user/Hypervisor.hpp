@@ -62,7 +62,7 @@ namespace Virtualization
 
 			hv_vcpu_exit_t* getVirtualCpuExit() {  return vcpu_exit; }
 
-			void* getVirtualMainMemory() { return g_pMainMemory; }
+			void* getPhysicalMainMemory() { return g_pMainMemory; }
 
 			int prepareSystemMemory();
 

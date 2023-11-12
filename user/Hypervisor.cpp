@@ -74,6 +74,10 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 
 void Virtualization::Hypervisor::configure()
 {
+	mach_vm_address_t __start = (entryPoint - base) + g_kAdrMainMemory;
+
+	printf("__start physical address = 0x%llx\n", __start);
+
 	// Add a virtual CPU to our VM
 	HYP_ASSERT_SUCCESS(hv_vcpu_create(&vcpu, &vcpu_exit, NULL));
 
@@ -86,12 +90,12 @@ void Virtualization::Hypervisor::configure()
 	#else
 	// Or explicitly set CPSR
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_CPSR, 0x3c4));
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, 0x80000000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, __start));
 	#endif
 
 	// Configure misc
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL0, g_kAdrMainMemory + 0x4000));
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL1, g_kAdrMainMemory + 0x8000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL0, g_kAdrMainMemory + size + 0x4000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL1, g_kAdrMainMemory + size + 0x8000));
 
 	// Trap debug access (BRK)
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
@@ -137,6 +141,9 @@ void Virtualization::Hypervisor::start()
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 				pc += 4;
 				HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, pc));
+			} else if(ec == 0x18)
+			{
+
 			} else if (ec == 0x3C)
 			{
 				// Exception Class 0x3C is BRK in AArch64 state
@@ -157,11 +164,17 @@ void Virtualization::Hypervisor::start()
 				break;
 			} else
 			{
-				fprintf(stderr, "Unexpected VM exception: 0x%llx, EC 0x%x, VirtAddr 0x%llx, IPA 0x%llx\n",
+				uint64_t pc;
+
+				hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc);
+
+				fprintf(stderr, "Unexpected VM exception: 0x%llx, EC 0x%x, VirtAddr 0x%llx, IPA 0x%llx Reason 0x%x PC 0x%llx\n",
 						syndrome,
 						ec,
 						vcpu_exit->exception.virtual_address,
-						vcpu_exit->exception.physical_address
+						vcpu_exit->exception.physical_address,
+						vcpu_exit->reason,
+						pc
 				);
 				
 				break;
