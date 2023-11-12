@@ -169,10 +169,12 @@ namespace xnu
 			static KDK* KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
 			
 			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion);
+			static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion, bool vm);
 
 			static void getKDKPathFromBuildInfo(const char *buildVersion, char *outPath);
 
 			static void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath);
+			static void getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath, bool vm);
 
 			char* getPath() const { return path; }
 

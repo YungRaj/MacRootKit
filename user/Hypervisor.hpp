@@ -16,6 +16,63 @@
 
 namespace Virtualization
 {
+	#define BOOT_LINE_LENGTH        256
+
+	#define FRAMEBUFFER_WIDTH	640
+	#define FRAMEBUFFER_HEIGHT	960
+	#define FRAMEBUFFER_DEPTH_BITS	32
+	#define FRAMEBUFFER_STRIDE_BYTES \
+			(FRAMEBUFFER_WIDTH * FRAMEBUFFER_DEPTH_BITS / 8)
+	#define FRAMEBUFFER_SIZE_BYTES \
+			(FRAMEBUFFER_STRIDE_BYTES * FRAMEBUFFER_HEIGHT * 3)
+
+	/*
+	 * Video information..
+	 */
+
+	struct Boot_Video {
+		unsigned long   v_baseAddr;     /* Base address of video memory */
+		unsigned long   v_display;      /* Display Code (if Applicable */
+		unsigned long   v_rowBytes;     /* Number of bytes per pixel row */
+		unsigned long   v_width;        /* Width */
+		unsigned long   v_height;       /* Height */
+		unsigned long   v_depth;        /* Pixel Depth and other parameters */
+	};
+
+	#define kBootVideoDepthMask             (0xFF)
+	#define kBootVideoDepthDepthShift       (0)
+	#define kBootVideoDepthRotateShift      (8)
+	#define kBootVideoDepthScaleShift       (16)
+	#define kBootVideoDepthBootRotateShift  (24)
+
+	#define kBootFlagsDarkBoot              (1 << 0)
+
+	typedef struct Boot_Video       Boot_Video;
+
+	/* Boot argument structure - passed into Mach kernel at boot time.
+	 */
+	#define kBootArgsRevision               1
+	#define kBootArgsRevision2              2       /* added boot_args->bootFlags */
+	#define kBootArgsVersion1               1
+	#define kBootArgsVersion2               2
+
+	
+	typedef struct boot_args {
+		uint16_t                Revision;                       /* Revision of boot_args structure */
+		uint16_t                Version;                        /* Version of boot_args structure */
+		uint64_t                virtBase;                       /* Virtual base of memory */
+		uint64_t                physBase;                       /* Physical base of memory */
+		uint64_t                memSize;                        /* Size of memory */
+		uint64_t                topOfKernelData;        /* Highest physical address used in kernel data area */
+		Boot_Video              Video;                          /* Video Information */
+		uint32_t                machineType;            /* Machine Type */
+		void                    *deviceTreeP;           /* Base of flattened device tree */
+		uint32_t                deviceTreeLength;       /* Length of flattened tree */
+		char                    CommandLine[BOOT_LINE_LENGTH];  /* Passed in command line */
+		uint64_t                bootFlags;              /* Additional flags specified by the bootloader */
+		uint64_t                memSizeActual;          /* Actual size of memory */
+	} boot_args;
+
 	/* Valid Syndrome Register EC field values */
 	enum arm_exception_class
 	{
@@ -91,12 +148,12 @@ namespace Virtualization
 	const uint64_t gResetTrampolineMemorySize = 0x10000;
 
 	const uint64_t gMainMemory = 0x80000000;
-	const uint64_t gMainMemSize = 0x1000000;
+	const uint64_t gMainMemSize = 0x40000000;
 
 	class Hypervisor
 	{
 		public:
-			explicit Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t base, size_t size, mach_vm_address_t entryPoint);
+			explicit Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, mach_vm_address_t base, size_t size, mach_vm_address_t entryPoint);
 
 			Fuzzer::Harness* getHarness() { return harness; }
 
@@ -110,12 +167,18 @@ namespace Virtualization
 
 			hv_vcpu_exit_t* getVirtualCpuExit() {  return vcpu_exit; }
 
+			void synchronizeCpuState();
+
+			void flushCpuState();
+
 			int sysregRead(uint32_t reg, uint32_t rt);
 			int sysregWrite(uint32_t reg, uint64_t val);
 
 			void* getPhysicalMainMemory() { return mainMemory; }
 
 			int prepareSystemMemory();
+
+			void prepareBootArgs();
 
 			void configure();
 
@@ -128,7 +191,10 @@ namespace Virtualization
 
 			HvfArm64State state;
 
+			struct boot_args boot_args;
+
 			mach_vm_address_t base;
+			mach_vm_address_t virtualBase;
 
 			size_t size;
 
@@ -140,6 +206,9 @@ namespace Virtualization
 
 			void* resetTrampolineMemory;
 			void* mainMemory;
+
+			uint64_t framebufferOffset;
+			uint64_t bootArgsOffset;
 
 	};
 }

@@ -25,7 +25,8 @@ Harness::Harness(xnu::Kernel *kernel)
     : fuzzBinary(new FuzzBinary),
       kdkInfo(xnu::KDK::KDKInfoFromBuildInfo(kernel,
       									xnu::getOSBuildVersion(),
-      									xnu::getKernelVersion()))
+      									xnu::getKernelVersion(),
+                                        true))
 {
     loadKernel(kdkInfo->kernelPath, 0);
     addDebugSymbolsFromKernel(kdkInfo->kernelDebugSymbolsPath);
@@ -178,9 +179,11 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 
 					name = &strtab[nl->n_strx];
 
-					address = (nl->n_value - oldLoadAddress) + loadAddress;
+                    address = nl->n_value;
 
-					nl->n_value = address;
+					// address = (nl->n_value - oldLoadAddress) + loadAddress;
+
+					// nl->n_value = address;
 
 				 	symbol = new Symbol(macho, nl->n_type & N_TYPE, name, address, macho->addressToOffset(address), macho->segmentForAddress(address), macho->sectionForAddress(address));
 
@@ -268,11 +271,11 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoad
 
                     name = &strtab[nl->n_strx];
 
-                    address = (nl->n_value - oldLoadAddress) + newLoadAddress;
+                    address = nl->n_value;
 
                     printf("Symbol %s = 0x%llx\n", name, address);
 
-                    nl->n_value = address;
+                    // nl->n_value = address;
                 }
             }
         }
@@ -300,9 +303,9 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintpt
 
             mach_vm_address_t vmaddr = segment_command->vmaddr;
 
-            mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
+            // mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
 
-            segment_command->vmaddr = segment_adjusted_address;
+            // segment_command->vmaddr = segment_adjusted_address;
 
             printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
                                           segment_command->segname,
@@ -319,8 +322,8 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintpt
 
                 mach_vm_address_t sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
 
-                section->addr = sect_adjusted_address;
-                section->offset = (sect_addr - vmaddr) + segment_command->fileoff;
+                // section->addr = sect_adjusted_address;
+                // section->offset = (sect_addr - vmaddr) + segment_command->fileoff;
 
                 printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
                                                 section->addr,
@@ -363,7 +366,7 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
                                               segment_command->vmaddr,
                                               segment_command->vmaddr + segment_command->vmsize, segment_command->maxprot);
 
-                if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
+                /*if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
                 {
                     printf("mprotect(R/W) failed!\n");
 
@@ -395,7 +398,7 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
                     printf("mprotect(maxprot) failed!\n");
 
                     return false;
-                }
+                }*/
             }
 
             q += cmdsize;
@@ -550,7 +553,7 @@ void Harness::startKernel()
 
     mach_vm_address_t start_kernel  = symbol->getAddress();
 
-    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start_kernel);
+    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start_kernel);
 
     /*
     printf("MacRK::Starting XNU kernel at address = 0x%llx\n", start_kernel);

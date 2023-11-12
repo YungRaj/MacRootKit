@@ -336,6 +336,46 @@ void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKK
 	}
 }
 
+void KDK::getKDKKernelFromPath(const char *path, const char *kernelVersion, KDKKernelType *outType, char *outKernelPath, bool vm)
+{
+	if(vm)
+	{
+		KDKKernelType type = KdkKernelTypeNone;
+
+		if(strstr(kernelVersion, "RELEASE"))
+		{
+			type = KdkKernelTypeReleaseVmApple;
+		}
+
+		if(strstr(kernelVersion, "DEVELOPMENT"))
+		{
+			type = KdkKernelTypeDevelopmentVmApple;
+		}
+		
+		if(strstr(kernelVersion, "KASAN"))
+		{
+			type = KdkKernelTypeKasanVmApple;
+		}
+
+		if(type == KdkKernelTypeNone)
+		{
+			*outType = KdkKernelTypeNone;
+			*outKernelPath = '\0';
+
+		} else
+		{
+			*outType = type;
+
+			snprintf(outKernelPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s", path, getKDKKernelNameFromType(type));
+		}
+
+		printf("%s\n", outKernelPath);
+	} else
+	{
+		KDK::getKDKKernelFromPath(path, kernelVersion, outType, outKernelPath);
+	}
+}
+
 KDK* KDK::KDKFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion)
 {
 	return new KDK(kernel, KDK::KDKInfoFromBuildInfo(kernel, buildVersion, kernelVersion));
@@ -360,6 +400,44 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion
 
 	KDK::getKDKPathFromBuildInfo(buildVersion, kdkInfo->path);
 	KDK::getKDKKernelFromPath(kdkInfo->path, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath);
+
+	if(kdkInfo->path[0] == '\0' ||
+	   kdkInfo->type == KdkKernelTypeNone ||
+	   kdkInfo->kernelPath[0] == '\0')
+	{
+		delete kdkInfo;
+
+		MAC_RK_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s", buildVersion, kernelVersion);
+
+		return NULL;
+	}
+
+	kdkInfo->kernelName = getKDKKernelNameFromType(kdkInfo->type);
+
+	snprintf(kdkInfo->kernelDebugSymbolsPath, KDK_PATH_SIZE, "%s/System/Library/Kernels/%s.dSYM/Contents/Resources/DWARF/%s", kdkInfo->path, kdkInfo->kernelName, kdkInfo->kernelName);
+
+	return kdkInfo;
+}
+
+KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel *kernel, const char *buildVersion, const char *kernelVersion, bool vm)
+{
+	struct KDKInfo *kdkInfo;
+
+	if(!buildVersion || !kernelVersion)
+	{
+		if(!buildVersion)
+			MAC_RK_LOG("MacRK::macOS Build Version not found!");
+
+		if(!kernelVersion)
+			MAC_RK_LOG("MacRK::macOS Kernel Version not found!");
+
+		return NULL;
+	}
+
+	kdkInfo = new KDKInfo;
+
+	KDK::getKDKPathFromBuildInfo(buildVersion, kdkInfo->path);
+	KDK::getKDKKernelFromPath(kdkInfo->path, kernelVersion, &kdkInfo->type, kdkInfo->kernelPath, vm);
 
 	if(kdkInfo->path[0] == '\0' ||
 	   kdkInfo->type == KdkKernelTypeNone ||
