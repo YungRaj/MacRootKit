@@ -66,14 +66,14 @@ namespace Virtualization
 	// I don't know why the CPU resets at EL0, so this is a trampoline
 	// that takes you to EL1.
 	// UPDATE: See CPSR below
-	const uint8_t s_cArm64ResetVector[] = {
+	const uint8_t sArm64ResetVector[] = {
 	    0x01, 0x00, 0x00, 0xD4, // svc #0
 	    // If BRK is caught by host (configured)
 	    // Something happened badly
 	    0x00, 0x00, 0x20, 0xD4, // brk #0
 	};
 
-	const uint8_t s_cArm64ResetTramp[] = {
+	const uint8_t sArm64ResetTrampoline[] = {
 	    0x00, 0x00, 0xB0, 0xD2, // mov x0, #0x80000000
 	    0x00, 0x00, 0x1F, 0xD6, // br  x0
 	    // If BRK is caught by host (configured)
@@ -87,11 +87,11 @@ namespace Virtualization
 	// Main memory starts at 0x80000000
 	// Reset VBAR_EL1 at 0xF0000000 - 0xF0010000;
 	// Reset trampoline code at 0xF0000800
-	const uint64_t g_kAdrResetTrampoline = 0xF0000000;
-	const uint64_t g_szResetTrampolineMemory = 0x10000;
+	const uint64_t gAdrResetTrampoline = 0xF0000000;
+	const uint64_t gResetTrampolineMemorySize = 0x10000;
 
-	const uint64_t g_kAdrMainMemory = 0x80000000;
-	const uint64_t g_szMainMemSize = 0x1000000;
+	const uint64_t gMainMemory = 0x80000000;
+	const uint64_t gMainMemSize = 0x1000000;
 
 	class Hypervisor
 	{
@@ -113,7 +113,7 @@ namespace Virtualization
 			int sysregRead(uint32_t reg, uint32_t rt);
 			int sysregWrite(uint32_t reg, uint64_t val);
 
-			void* getPhysicalMainMemory() { return g_pMainMemory; }
+			void* getPhysicalMainMemory() { return mainMemory; }
 
 			int prepareSystemMemory();
 
@@ -136,10 +136,10 @@ namespace Virtualization
 
 			hv_vcpu_t vcpu;
 
-    		hv_vcpu_exit_t *vcpu_exit;
+			hv_vcpu_exit_t *vcpu_exit;
 
-    		void* g_pResetTrampolineMemory;
-			void* g_pMainMemory;
+			void* resetTrampolineMemory;
+			void* mainMemory;
 
 	};
 }

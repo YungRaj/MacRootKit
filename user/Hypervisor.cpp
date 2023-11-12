@@ -168,31 +168,31 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 {
 	// Reset trampoline
 	// Well, dear Apple, why you reset the CPU at EL0
-	posix_memalign(&g_pResetTrampolineMemory, 0x10000, g_szResetTrampolineMemory);
+	posix_memalign(&resetTrampolineMemory, 0x10000, gResetTrampolineMemorySize);
 
-	if (g_pResetTrampolineMemory == NULL)
+	if (resetTrampolineMemory == NULL)
 	{
 		printf("Failed to posix_memalign() g_pMainMemory!\n");
 
 		return -ENOMEM;
 	}
 
-	memset(g_pResetTrampolineMemory, 0, g_szResetTrampolineMemory);
+	memset(resetTrampolineMemory, 0, gResetTrampolineMemorySize);
 
 	for (uint64_t offset = 0; offset < 0x780; offset += 0x80)
 	{
-		memcpy((void*) ((uint64_t) g_pResetTrampolineMemory + offset), s_cArm64ResetTramp, sizeof(s_cArm64ResetTramp));
+		memcpy((void*) ((uint64_t) resetTrampolineMemory + offset), sArm64ResetTrampoline, sizeof(sArm64ResetTrampoline));
 	}
 
-	memcpy((void*) ((uint64_t) g_pResetTrampolineMemory + 0x800), s_cArm64ResetVector, sizeof(s_cArm64ResetVector));
+	memcpy((void*) ((uint64_t) resetTrampolineMemory + 0x800), sArm64ResetVector, sizeof(sArm64ResetVector));
 
 	// Map the RAM into the VM
-	HYP_ASSERT_SUCCESS(hv_vm_map(g_pResetTrampolineMemory, g_kAdrResetTrampoline, g_szResetTrampolineMemory, HV_MEMORY_READ | HV_MEMORY_EXEC));
+	HYP_ASSERT_SUCCESS(hv_vm_map(resetTrampolineMemory, gAdrResetTrampoline, gResetTrampolineMemorySize, HV_MEMORY_READ | HV_MEMORY_EXEC));
 
 	// Main memory.
-	posix_memalign(&g_pMainMemory, 0x1000, g_szMainMemSize);
+	posix_memalign(&mainMemory, 0x1000, gMainMemSize);
 
-	if (g_pMainMemory == NULL) 
+	if (mainMemory == NULL) 
 	{
 		printf("Failed to posix_memalign() g_pMainMemory!\n");
 
@@ -200,18 +200,18 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 	}
 
 	// Copy our code into the VM's RAM
-	memset(g_pMainMemory, 0, g_szMainMemSize);
-	memcpy(g_pMainMemory, (void*) base, size);
+	memset(mainMemory, 0, gMainMemSize);
+	memcpy(mainMemory, (void*) base, size);
 
 	// Map the RAM into the VM
-	HYP_ASSERT_SUCCESS(hv_vm_map(g_pMainMemory, g_kAdrMainMemory, g_szMainMemSize, HV_MEMORY_READ | HV_MEMORY_WRITE | HV_MEMORY_EXEC));
+	HYP_ASSERT_SUCCESS(hv_vm_map(mainMemory, gMainMemory, gMainMemSize, HV_MEMORY_READ | HV_MEMORY_WRITE | HV_MEMORY_EXEC));
 
 	return 0;
 }
 
 void Virtualization::Hypervisor::configure()
 {
-	mach_vm_address_t __start = (entryPoint - base) + g_kAdrMainMemory;
+	mach_vm_address_t __start = (entryPoint - base) + gMainMemory;
 
 	printf("__start physical address = 0x%llx\n", __start);
 
@@ -219,11 +219,11 @@ void Virtualization::Hypervisor::configure()
 	HYP_ASSERT_SUCCESS(hv_vcpu_create(&vcpu, &vcpu_exit, NULL));
 
 	// Configure initial VBAR_EL1 to the trampoline
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_VBAR_EL1, g_kAdrResetTrampoline));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_VBAR_EL1, gAdrResetTrampoline));
 
 	#if USE_EL0_TRAMPOILNE
 	// Set the CPU's PC to execute from the trampoline
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, g_kAdrResetTrampoline + 0x800));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, gAdrResetTrampoline + 0x800));
 	#else
 	// Or explicitly set CPSR
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_CPSR, 0x3c4));
@@ -231,8 +231,8 @@ void Virtualization::Hypervisor::configure()
 	#endif
 
 	// Configure misc
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL0, g_kAdrMainMemory + size + 0x4000));
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL1, g_kAdrMainMemory + size + 0x8000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL0, gMainMemory + size + 0x4000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL1, gMainMemory + size + 0x8000));
 
 	// Trap debug access (BRK)
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
@@ -359,6 +359,6 @@ void Virtualization::Hypervisor::destroy()
     hv_vm_destroy();
 
     // Free memory
-    free(g_pResetTrampolineMemory);
-    free(g_pMainMemory);
+    free(resetTrampolineMemory);
+    free(mainMemory);
 }
