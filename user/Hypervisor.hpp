@@ -178,7 +178,7 @@ namespace Virtualization
 
 			int prepareSystemMemory();
 
-			void prepareBootArgs();
+			void prepareBootArgs(const char *deviceTreePath);
 
 			void configure();
 
@@ -207,8 +207,10 @@ namespace Virtualization
 			void* resetTrampolineMemory;
 			void* mainMemory;
 
-			uint64_t framebufferOffset;
 			uint64_t bootArgsOffset;
+			uint64_t deviceTreeOffset;
+
+			uint64_t framebufferOffset;
 
 	};
 }

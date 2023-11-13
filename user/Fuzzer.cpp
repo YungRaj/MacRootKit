@@ -188,6 +188,8 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 				 	symbol = new Symbol(macho, nl->n_type & N_TYPE, name, address, macho->addressToOffset(address), macho->segmentForAddress(address), macho->sectionForAddress(address));
 
 				 	symbolTable->replaceSymbol(symbol);
+
+                    printf("Symbol %s = 0x%llx\n", name, address);
 				}
             }
         }
@@ -273,7 +275,7 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoad
 
                     address = nl->n_value;
 
-                    printf("Symbol %s = 0x%llx\n", name, address);
+                    // printf("Symbol %s = 0x%llx\n", name, address);
 
                     // nl->n_value = address;
                 }
@@ -517,7 +519,8 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
         goto fail;
     }
 
-    *loadAddress = (uintptr_t) baseAddress;
+    *loadAddress = (uintptr_t) file_data;
+    *loadSize = file_size;
 
     // writeToFile((char*) baseAddress, *loadSize);
 

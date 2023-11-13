@@ -22,8 +22,6 @@ Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address
 	// Create the VM
 	HYP_ASSERT_SUCCESS(hv_vm_create(NULL));
 
-	prepareBootArgs();
-
 	ret = prepareSystemMemory();
 
 	if(ret != 0)
@@ -32,6 +30,8 @@ Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address
 
 		exit(-1);
 	}
+
+	prepareBootArgs("/Users/ilhanraja/Downloads/DeviceTree_vma2");
 
 	configure();
 
@@ -726,10 +726,35 @@ int Virtualization::Hypervisor::sysregWrite(uint32_t reg, uint64_t val)
     return 0;
 }
 
-void Virtualization::Hypervisor::prepareBootArgs()
+void Virtualization::Hypervisor::prepareBootArgs(const char *deviceTreePath)
 {
-	bootArgsOffset = size + 0x4000;
-	framebufferOffset = size + 0x4000 * 4;
+	int fd = open(deviceTreePath, O_RDONLY);
+
+	if(!fd)
+	{
+		fprintf(stderr, "Failed to open DeviceTree at path %s\n", deviceTreePath);
+
+		exit(-1);
+	}
+
+	size_t deviceTreeSize = lseek(fd, 0, SEEK_END);
+
+	lseek(fd, 0, SEEK_SET);
+
+	char *deviceTree = reinterpret_cast<char*>(malloc(deviceTreeSize));
+
+	ssize_t bytes_read;
+
+	bytes_read = read(fd, deviceTree, size);
+
+	close(fd);
+
+	printf("deviceTree = 0x%llx\n", (uint64_t) deviceTree);
+	printf("deviceTreeSize = 0x%llx\n", (uint64_t) deviceTreeSize);
+
+	bootArgsOffset = size + 0x10000;
+	framebufferOffset = size + 0x10000 * 4;
+	deviceTreeOffset = size + 0x10000 * 32;
 
 	boot_args.Revision = kBootArgsRevision2;
 	boot_args.Version = kBootArgsVersion2;
@@ -744,12 +769,17 @@ void Virtualization::Hypervisor::prepareBootArgs()
     boot_args.Video.v_height = FRAMEBUFFER_HEIGHT;
     boot_args.Video.v_depth = FRAMEBUFFER_DEPTH_BITS;
 	boot_args.machineType = 0;
-	boot_args.deviceTreeP = 0;
-	boot_args.deviceTreeLength = 0;
+	boot_args.deviceTreeP = (void*) (gMainMemory + deviceTreeOffset);
+	boot_args.deviceTreeLength = deviceTreeSize;
+	strlcpy(boot_args.CommandLine, "-s", sizeof(boot_args.CommandLine) / sizeof(boot_args.CommandLine[0]));
 	boot_args.bootFlags = 0;
-	boot_args.deviceTreeP = NULL;
-	boot_args.deviceTreeLength = 0;
 	boot_args.memSizeActual = gMainMemSize;
+
+	memcpy((void*) ((uint64_t) mainMemory + deviceTreeOffset), (void*) deviceTree, deviceTreeSize);
+	memcpy((void*) ((uint64_t) mainMemory + bootArgsOffset), (void*) &boot_args, sizeof(struct boot_args));
+
+	printf("deviceTreeP = 0x%llx\n", (uint64_t) boot_args.deviceTreeP);
+	printf("deviceTreeLength = 0x%llx\n", (uint64_t) boot_args.deviceTreeLength);
 
 	printf("virtBase = 0x%llx\n", boot_args.virtBase);
 	printf("physBase = 0x%llx\n", boot_args.physBase);
@@ -793,7 +823,6 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 	// Copy our code into the VM's RAM
 	memset(mainMemory, 0, gMainMemSize);
 	memcpy(mainMemory, (void*) base, size);
-	memcpy((void*) ((uint64_t) mainMemory + bootArgsOffset), (void*) &boot_args, sizeof(struct boot_args));
 
 	// Map the RAM into the VM
 	HYP_ASSERT_SUCCESS(hv_vm_map(mainMemory, gMainMemory, gMainMemSize, HV_MEMORY_READ | HV_MEMORY_WRITE | HV_MEMORY_EXEC));
@@ -828,7 +857,7 @@ void Virtualization::Hypervisor::configure()
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL0, gMainMemory + size + 0x4000));
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_SP_EL1, gMainMemory + size + 0x8000));
 
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_FP, gMainMemory + size + 0x4000));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_FP, gMainMemory + size + 0xC000));
 
 	// Trap debug access (BRK)
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
@@ -921,6 +950,12 @@ void Virtualization::Hypervisor::start()
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, pc));
 
+				uint64_t ttbr;
+
+				HYP_ASSERT_SUCCESS(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_TTBR0_EL1, &ttbr));
+
+				printf("TTBR0_EL1 0x%llx\n", ttbr);
+
 			} else if (ec == EC_AA64_BKPT)
 			{
 				// Exception Class 0x3C is BRK in AArch64 state
@@ -963,7 +998,7 @@ void Virtualization::Hypervisor::start()
 					HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, (hv_reg_t) (HV_REG_X0 + i), &x[i]));
 				}
 
-				fprintf(stderr, "Unexpected VM exception: 0x%llx, EC 0x%x, VirtAddr 0x%llx, IPA 0x%llx Reason 0x%x PC 0x%llx FP 0x%llx LP 0x%llx X0 0x%llx X1 0x%llx X2 0x%llx X3 0x%llx X4 0x%llx X5 0x%llx X6 0x%llx X7 0x%llx X8 0x%llx X9 0x%llx X10 0x%llx X11 0x%llx X12 0x%llx X13 0x%llx X14 0x%llx X15 0x%llx X16 0x%llx X17 0x%llx X18 0x%llx X19 0x%llx X20 0x%llx X21 0x%llx X22 0x%llx X23 0x%llx X24 0x%llx X25 0x%llx X26 0x%llx X27 0x%llx X28 0x%llx X29 0x%llx",
+				fprintf(stderr, "Unexpected VM exception: 0x%llx, EC 0x%x, VirtAddr 0x%llx, IPA 0x%llx Reason 0x%x\nPC 0x%llx\nFP 0x%llx\nLR 0x%llx\nX0 0x%llx\nX1 0x%llx\nX2 0x%llx\nX3 0x%llx\nX4 0x%llx\nX5 0x%llx\nX6 0x%llx\nX7 0x%llx\nX8 0x%llx\nX9 0x%llx\nX10 0x%llx\nX11 0x%llx\nX12 0x%llx\nX13 0x%llx\nX14 0x%llx\nX15 0x%llx\nX16 0x%llx\nX17 0x%llx\nX18 0x%llx\nX19 0x%llx\nX20 0x%llx\nX21 0x%llx\nX22 0x%llx\nX23 0x%llx\nX24 0x%llx\nX25 0x%llx\nX26 0x%llx\nX27 0x%llx\nX28 0x%llx\nX29 0x%llx\n",
 						syndrome,
 						ec,
 						vcpu_exit->exception.virtual_address,
@@ -976,6 +1011,12 @@ void Virtualization::Hypervisor::start()
 						x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24],
 						x[25], x[26], x[27], x[28], x[29]
 				);
+
+				uint64_t ttbr;
+
+				HYP_ASSERT_SUCCESS(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_TTBR0_EL1, &ttbr));
+
+				printf("TTBR0_EL1 0x%llx\n", ttbr);
 				
 				break;
 			}
