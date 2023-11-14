@@ -423,6 +423,47 @@ bool Harness::unmapSegments()
 
 }
 
+void Harness::getEntryPointFromKC(mach_vm_address_t kc, mach_vm_address_t *entryPoint)
+{
+    struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
+
+    uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
+
+    for(uint32_t i = 0; i < mh->ncmds; i++)
+    {
+        struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
+
+        if(load_command->cmd == LC_UNIXTHREAD)
+        {
+            struct unixthread_command *thread_command = reinterpret_cast<struct unixthread_command*>(load_command);
+
+            MAC_RK_LOG("MacRK::LC_UNIXTHREAD\n");
+
+            if(thread_command->flavor == ARM_THREAD_STATE64)
+            {
+                struct arm_thread_state64
+                {
+                    __uint64_t    x[29];    /* General purpose registers x0-x28 */
+                    __uint64_t    fp;               /* Frame pointer x29 */
+                    __uint64_t    lr;               /* Link register x30 */
+                    __uint64_t    sp;               /* Stack pointer x31 */
+                    __uint64_t    pc;               /* Program counter */
+                    __uint32_t    cpsr;             /* Current program status register */
+                    __uint32_t    flags;    /* Flags describing structure format */
+                } *state;
+
+                state = (struct arm_thread_state64*) (thread_command + 1);
+
+                MAC_RK_LOG("MacRK::\tstate->pc = 0x%llx\n", state->pc);
+
+                *entryPoint = state->pc;
+            }
+        }
+
+        q += load_command->cmdsize;
+    }
+}
+
 void Harness::getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *kernelBase, off_t *kernelFileOffset)
 {
     struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
@@ -523,30 +564,30 @@ void Harness::startKernel()
 {
     xnu::KernelMachO *kernelMachO = this->fuzzBinary->getBinary<xnu::KernelMachO*>();
 
-    mach_vm_address_t start = (kernelMachO->getEntryPoint() - kernelMachO->getBase());
+    mach_vm_address_t entryPoint;
+    
+    this->getEntryPointFromKC((mach_vm_address_t) this->fuzzBinary->base, &entryPoint);
 
-    printf("start = 0x%llx 0x%llx\n", kernelMachO->getEntryPoint(), kernelMachO->getBase());
+    printf("start = 0x%llx\n", entryPoint);
 
-    exit(-1);
-
-    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start);
+    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, entryPoint);
 }
 
 void Harness::callFunctionInKernel(const char *funcname)
 {
-    printf("MacRK::Starting XNU kernel at address = 0x%llx\n", start_kernel);
+    printf("MacRK::Calling function %s in XNU kernel at address = 0x%llx\n", funcname);
 
     #ifdef __arm64__
 
-    __asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (start_kernel));
+    // __asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (start_kernel));
 
     #endif
 
     typedef void (*XnuKernelEntryPoint)();
 
-    XnuKernelEntryPoint start = reinterpret_cast<XnuKernelEntryPoint>(start_kernel);
+    // XnuKernelEntryPoint start = reinterpret_cast<XnuKernelEntryPoint>(start_kernel);
 
-    (void)(*start)();
+    // (void)(*start)();
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)

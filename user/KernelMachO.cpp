@@ -593,8 +593,25 @@ bool KernelCacheMachO::parseLoadCommands()
 				;
 				struct unixthread_command *thread_command = reinterpret_cast<struct unixthread_command*>(load_command);
 
-				// if(thread_command->flavor != ARM_THREAD_STATE64)
-					//return false;
+				MAC_RK_LOG("MacRK::LC_UNIXTHREAD\n");
+
+				if(thread_command->flavor == ARM_THREAD_STATE64)
+				{
+					struct arm_thread_state64
+					{
+						__uint64_t    x[29];    /* General purpose registers x0-x28 */
+						__uint64_t    fp;               /* Frame pointer x29 */
+						__uint64_t    lr;               /* Link register x30 */
+						__uint64_t    sp;               /* Stack pointer x31 */
+						__uint64_t    pc;               /* Program counter */
+						__uint32_t    cpsr;             /* Current program status register */
+						__uint32_t    flags;    /* Flags describing structure format */
+					} *state;
+
+					state = (struct arm_thread_state64*) (thread_command + 1);
+
+					MAC_RK_LOG("MacRK::\tstate->pc = 0x%llx\n", state->pc);
+				}
 
 				break;
 			}

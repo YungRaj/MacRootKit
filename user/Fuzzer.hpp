@@ -540,6 +540,8 @@ namespace Fuzzer
 			void callFunctionInKernel(const char *funcname);
 			void callFunctionInKernelUsingHypervisor(const char *funcname);
 
+			void getEntryPointFromKC(mach_vm_address_t kc, mach_vm_address_t *entryPoint);
+
 			void getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *loadAddress, off_t *loadOffset);
 
 			void loadKernel(const char *path, off_t slide);
