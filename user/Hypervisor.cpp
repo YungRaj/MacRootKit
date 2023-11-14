@@ -752,6 +752,8 @@ void Virtualization::Hypervisor::prepareBootArgs(const char *deviceTreePath)
 	printf("deviceTree = 0x%llx\n", (uint64_t) deviceTree);
 	printf("deviceTreeSize = 0x%llx\n", (uint64_t) deviceTreeSize);
 
+	char *CommandLineArguments = "-s";
+
 	bootArgsOffset = size + 0x10000;
 	framebufferOffset = size + 0x10000 * 4;
 	deviceTreeOffset = size + 0x10000 * 32;
@@ -771,7 +773,7 @@ void Virtualization::Hypervisor::prepareBootArgs(const char *deviceTreePath)
 	boot_args.machineType = 0;
 	boot_args.deviceTreeP = (void*) (gMainMemory + deviceTreeOffset);
 	boot_args.deviceTreeLength = deviceTreeSize;
-	strlcpy(boot_args.CommandLine, "-s", sizeof(boot_args.CommandLine) / sizeof(boot_args.CommandLine[0]));
+	strlcpy(boot_args.CommandLine, CommandLineArguments, strlen(CommandLineArguments));
 	boot_args.bootFlags = 0;
 	boot_args.memSizeActual = gMainMemSize;
 
@@ -805,7 +807,7 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 		memcpy((void*) ((uint64_t) resetTrampolineMemory + offset), sArm64ResetTrampoline, sizeof(sArm64ResetTrampoline));
 	}
 
-	memcpy((void*) ((uint64_t) resetTrampolineMemory + 0x800), sArm64ResetVector, sizeof(sArm64ResetVector));
+	// memcpy((void*) ((uint64_t) resetTrampolineMemory + 0x800), sArm64ResetVector, sizeof(sArm64ResetVector));
 
 	// Map the RAM into the VM
 	HYP_ASSERT_SUCCESS(hv_vm_map(resetTrampolineMemory, gAdrResetTrampoline, gResetTrampolineMemorySize, HV_MEMORY_READ | HV_MEMORY_EXEC));
@@ -861,6 +863,7 @@ void Virtualization::Hypervisor::configure()
 
 	// Trap debug access (BRK)
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_reg_accesses(hv_vcpu_t vcpu, true));
 
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_X0, (uint64_t) gMainMemory + bootArgsOffset));
 }
