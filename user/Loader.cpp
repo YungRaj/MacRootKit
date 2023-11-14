@@ -68,8 +68,8 @@ void Loader::loadModuleFromKext(const char *kextPath)
 
     struct FuzzBinary *fuzzBinary = new FuzzBinary;
 
-    uintptr_t loadAddress = 0;
-    uintptr_t oldLoadAddress = 0;
+    mach_vm_address_t loadAddress = 0;
+    mach_vm_address_t oldLoadAddress = 0;
 
     char *file_data = NULL;
 
@@ -90,7 +90,7 @@ void Loader::loadModuleFromKext(const char *kextPath)
     this->loadModule<xnu::KextMachO*>(module);
 }
 
-void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)
+void Loader::loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress, size_t *loadSize, mach_vm_address_t *oldLoadAddress)
 {
     bool success;
 
@@ -135,15 +135,15 @@ void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t 
     if(reinterpret_cast<struct mach_header_64*>(file_data)->magic == FAT_CIGAM)
     {
     #ifdef __arm64__
-        file_data = this->harness->getMachOFromFatHeader<CPU_TYPE_ARM64>(file_data);
+    //    file_data = this->harness->getMachOFromFatHeader<CPU_TYPE_ARM64>(file_data);
     #elif __x86_64__
-        file_data = this-->harness->getMachOFromFatHeader<CPU_TYPE_X86_64>(file_data);
+    //     file_data = this-->harness->getMachOFromFatHeader<CPU_TYPE_X86_64>(file_data);
     #endif
     }
 
     *oldLoadAddress = UINT64_MAX;
 
-    this->harness->getMappingInfo<MachO>(file_data, loadSize, oldLoadAddress);
+    // this->harness->getMappingInfo<MachO>(file_data, loadSize, oldLoadAddress);
 
     if(*oldLoadAddress == UINT64_MAX)
     {
@@ -173,11 +173,11 @@ void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t 
         return;
     }
 
-    this->harness->updateSymbolTableForMappedMachO(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
+    this->harness->updateSymbolTableForMappedMachO(file_data, (mach_vm_address_t) baseAddress, *oldLoadAddress);
 
-    this->harness->updateSegmentLoadCommandsForNewLoadAddress(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
+    this->harness->updateSegmentLoadCommandsForNewLoadAddress(file_data, (mach_vm_address_t) baseAddress, *oldLoadAddress);
 
-    success = this->harness->mapSegments<MachO, Segment>(file_data, NULL);
+    // success = this->harness->mapSegments<MachO, Segment>(file_data, NULL);
 
     if(!success)
     {
@@ -186,7 +186,7 @@ void Loader::loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t 
         goto fail;
     }
 
-    *loadAddress = (uintptr_t) baseAddress;
+    *loadAddress = (mach_vm_address_t) baseAddress;
 
     // writeToFile((char*) baseAddress, *loadSize);
 
@@ -229,7 +229,7 @@ void Loader::linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
 }
 
 template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-void Loader::stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) 
+void Loader::stubFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym) 
 {
     sym->getName();
     sym->getAddress();
@@ -240,7 +240,7 @@ void Loader::stubFunction(Module *module, Sym sym, uintptr_t stub) requires requ
 }
 
 template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-void Loader::shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym)
+void Loader::shimFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym)
 {
     sym->getName();
     sym->getAddress();

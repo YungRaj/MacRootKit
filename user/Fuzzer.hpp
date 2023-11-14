@@ -128,14 +128,14 @@ namespace Fuzzer
 		struct SectionRaw
 		{
 			public:
-				explicit SectionRaw(char *name, uintptr_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
+				explicit SectionRaw(char *name, mach_vm_address_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
 
 				char* getName() const { return name; }
 
 				template<typename T>
 				T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) address + index); }
 
-				uintptr_t getAddress() const { return address; }
+				mach_vm_address_t getAddress() const { return address; }
 
 				template<typename T>
 				T getAddressAs() const
@@ -152,7 +152,7 @@ namespace Fuzzer
 			private:
 				char *name;
 
-				uintptr_t address;
+				mach_vm_address_t address;
 
 				size_t size;
 
@@ -164,7 +164,7 @@ namespace Fuzzer
 		struct SymbolRaw
 		{
 			public:
-				explicit SymbolRaw(char *name, uintptr_t address, int type) : name(name), address(address), type(type) { }
+				explicit SymbolRaw(char *name, mach_vm_address_t address, int type) : name(name), address(address), type(type) { }
 
 				char* getName() const { return name; }
 
@@ -194,7 +194,7 @@ namespace Fuzzer
 					return empty;
 				}
 
-				uintptr_t getAddress() const { return address; }
+				mach_vm_address_t getAddress() const { return address; }
 
 				int getType() const { return type; }
 
@@ -207,7 +207,7 @@ namespace Fuzzer
 			private:
 				char *name;
 
-				uintptr_t address;
+				mach_vm_address_t address;
 
 				int type;
 		};
@@ -219,7 +219,7 @@ namespace Fuzzer
 			template<typename T>
 			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
 
-			uintptr_t getBase() const { return base; }
+			mach_vm_address_t getBase() const { return base; }
 
 			template<typename T>
 			T getBaseAs() const
@@ -265,7 +265,7 @@ namespace Fuzzer
 			void populateSections();
 
 		private:
-			uintptr_t base;
+			mach_vm_address_t base;
 
 			char *path;
 
@@ -525,10 +525,10 @@ namespace Fuzzer
 			bool unmapSegments();
 
 			template<typename Binary> requires AnyBinaryFormat<Binary>
-			void getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr);
+			void getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *load_addr);
 
-			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
-			void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress);
+			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress);
+			void updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress);
 
 			template<typename Binary = RawBinary> requires (AnyBinaryFormat<Binary> && !MachOFormat<Binary>)
 			void loadBinary(const char *path, const char *mapFile);
@@ -537,9 +537,14 @@ namespace Fuzzer
 
 			void startKernel();
 
+			void callFunctionInKernel(const char *funcname);
+			void callFunctionInKernelUsingHypervisor(const char *funcname);
+
+			void getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *loadAddress, off_t *loadOffset);
+
 			void loadKernel(const char *path, off_t slide);
 			void loadKernelExtension(const char *path);
-			void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
+			bool loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelCache, size_t *kernelCacheSize, off_t *loadOffset, mach_vm_address_t *loadAddress);
 
 			void addDebugSymbolsFromKernel(const char *debugSymbols);
 

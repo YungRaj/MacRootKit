@@ -863,7 +863,7 @@ void Virtualization::Hypervisor::configure()
 
 	// Trap debug access (BRK)
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_reg_accesses(hv_vcpu_t vcpu, true));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_reg_accesses(vcpu, true));
 
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_X0, (uint64_t) gMainMemory + bootArgsOffset));
 }

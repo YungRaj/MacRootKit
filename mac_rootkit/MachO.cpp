@@ -346,6 +346,8 @@ void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strt
 		symbol = new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address), this->segmentForAddress(address), this->sectionForAddress(address));
 
 		this->symbolTable->addSymbol(symbol);
+
+		MAC_RK_LOG("MacRK::Symbol %s 0x%llx\n", name, address);
 	}
 
 	MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);

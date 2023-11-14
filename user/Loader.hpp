@@ -29,7 +29,7 @@ namespace Fuzzer
 			explicit Module(Fuzzer::Loader *loader, const char *path, struct FuzzBinary *binary) 
 				: loader(loader), path(path), mainBinary(binary) { }
 
-			explicit Module(const char *path, uintptr_t base, off_t slide) : path(path), base(base), slide(slide) { }
+			explicit Module(const char *path, mach_vm_address_t base, off_t slide) : path(path), base(base), slide(slide) { }
 
 			~Module();
 
@@ -39,7 +39,7 @@ namespace Fuzzer
 
 			const char* getPath() const { return path; }
 
-			uintptr_t getEntryPoint();
+			mach_vm_address_t getEntryPoint();
 
 			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
 			std::vector<Sym>& getSymbols() const requires requires (Binary bin, Sym sym)
@@ -164,7 +164,7 @@ namespace Fuzzer
 			struct FuzzBinary *mainBinary;
 			struct FuzzBinary *moduleBinary;
 
-			uintptr_t base;
+			mach_vm_address_t base;
 
 			size_t size;
 
@@ -204,7 +204,7 @@ namespace Fuzzer
 
 			void loadModuleFromKext(const char *kextPath);
 
-			void loadKextMachO(const char *kextPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress);
+			void loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress, size_t *loadSize, mach_vm_address_t *oldLoadAddress);
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void linkSymbols(Module *module) requires requires (Sym sym)
@@ -223,7 +223,7 @@ namespace Fuzzer
 			};
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void stubFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym) 
+			void stubFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym) 
 			{
 				sym->getName();
 				sym->getAddress();
@@ -231,7 +231,7 @@ namespace Fuzzer
 			};
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void shimFunction(Module *module, Sym sym, uintptr_t stub) requires requires (Sym sym)
+			void shimFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();

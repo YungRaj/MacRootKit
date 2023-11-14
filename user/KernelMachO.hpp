@@ -29,11 +29,24 @@ namespace xnu
 		private:
 			xnu::Kernel *kernel;
 
+		protected:
 			uint8_t *linkedit;
 
 			mach_vm_address_t linkedit_off;
 			
 			size_t linkedit_size;
+	};
+
+	class KernelCacheMachO : public KernelMachO
+	{
+		public:
+			KernelCacheMachO(mach_vm_address_t kc, uintptr_t address);
+			KernelCacheMachO(mach_vm_address_t kc, uintptr_t address, off_t slide);
+
+			virtual bool parseLoadCommands();
+
+		private:
+			mach_vm_address_t kernel_cache;
 	};
 
 }

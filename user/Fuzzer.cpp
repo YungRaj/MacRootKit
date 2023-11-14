@@ -28,8 +28,8 @@ Harness::Harness(xnu::Kernel *kernel)
       									xnu::getKernelVersion(),
                                         true))
 {
-    loadKernel(kdkInfo->kernelPath, 0);
-    addDebugSymbolsFromKernel(kdkInfo->kernelDebugSymbolsPath);
+    loadKernel("/Users/ilhanraja/Downloads/Files/Code/projects/MacRootKit/kernelcache.release.vma2.dec", 0);
+    // addDebugSymbolsFromKernel(kdkInfo->kernelDebugSymbolsPath);
 
     loader = new Fuzzer::Loader(this, this->fuzzBinary);
 
@@ -107,8 +107,8 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 {
 	KernelMachO *macho = this->getBinary<KernelMachO*>();
 
-	uintptr_t loadAddress = reinterpret_cast<uintptr_t>(this->fuzzBinary->base);
-	uintptr_t oldLoadAddress = reinterpret_cast<uintptr_t>(this->fuzzBinary->originalBase);
+	mach_vm_address_t loadAddress = reinterpret_cast<mach_vm_address_t>(this->fuzzBinary->base);
+	mach_vm_address_t oldLoadAddress = reinterpret_cast<mach_vm_address_t>(this->fuzzBinary->originalBase);
 
 	char *file_data;
 
@@ -201,7 +201,7 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 }
 
 template<typename Binary> requires AnyBinaryFormat<Binary>
-void Harness::getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr)
+void Harness::getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *load_addr)
 {
     if constexpr (std::is_same_v<Binary, MachO>)
     {
@@ -238,7 +238,7 @@ void Harness::getMappingInfo(char *file_data, size_t *size, uintptr_t *load_addr
     }    
 }
 
-void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress)
+void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
 {
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
@@ -286,7 +286,7 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoad
     };
 }
 
-void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLoadAddress, uintptr_t oldLoadAddress)
+void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
 {
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
@@ -423,7 +423,38 @@ bool Harness::unmapSegments()
 
 }
 
-void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loadSize, uintptr_t *oldLoadAddress)
+void Harness::getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *kernelBase, off_t *kernelFileOffset)
+{
+    struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
+
+    uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
+
+    for(uint32_t i = 0; i < mh->ncmds; i++)
+    {
+        struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
+
+        if(load_command->cmd == LC_FILESET_ENTRY)
+        {
+            struct fileset_entry_command *fileset_entry_command = reinterpret_cast<struct fileset_entry_command*>(load_command);
+
+            char *entry_id = reinterpret_cast<char*>(fileset_entry_command) + fileset_entry_command->entry_id;
+
+            if(strcmp(entry_id, "com.apple.kernel") == 0)
+            {
+                *kernelBase = fileset_entry_command->vmaddr;
+                *kernelFileOffset = fileset_entry_command->fileoff;
+
+                MAC_RK_LOG("MacRK::Kernel found in kernelcache 0x%llx!\n", *kernelBase);
+
+                return;
+            }
+        }
+
+        q += load_command->cmdsize;
+    }
+}
+
+bool Harness::loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelCache, size_t *kernelCacheSize, off_t *loadOffset, mach_vm_address_t *loadAddress)
 {
     bool success;
 
@@ -433,13 +464,9 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
     if(fd == -1)
     {
-        printf("Error opening kernel Mach-O %s", kernelPath);
+        printf("Error opening kernelcache %s", kernelPath);
 
-        *loadAddress = 0;
-        *loadSize = 0;
-        *oldLoadAddress = 0;
-
-        return;
+        return false;
     }
 
     off_t file_size = lseek(fd, 0, SEEK_END);
@@ -458,86 +485,30 @@ void Harness::loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, si
 
         close(fd);
 
-        *loadAddress = 0;
-        *loadSize = 0;
-        *oldLoadAddress = 0;
-
-        return;
+        return false;
     }
 
-    if(reinterpret_cast<struct mach_header_64*>(file_data)->magic == FAT_CIGAM)
-    {
-    #ifdef __arm64__
-        file_data = this->getMachOFromFatHeader<CPU_TYPE_ARM64>(file_data);
-    #elif __x86_64__
-        file_data = this->getMachOFromFatHeader<CPU_TYPE_X86_64>(file_data);
-    #endif
-    }
+    this->getKernelFromKC((mach_vm_address_t) file_data, loadAddress, loadOffset);
 
-    *oldLoadAddress = UINT64_MAX;
+    size_t size = 0;
 
-    getMappingInfo<MachO>(file_data, loadSize, oldLoadAddress);
+    getMappingInfo<MachO>((char*) file_data + *loadOffset, &size, loadAddress);
 
-    if(*oldLoadAddress == UINT64_MAX)
-    {
-        printf("oldLoadAddress == UINT64_MAX");
-
-        close(fd);
-
-        *loadAddress = 0;
-        *loadSize = 0;
-        *oldLoadAddress = 0;
-
-        return;
-    }
-
-    void* baseAddress = mmap(NULL, *loadSize, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    
-    if(baseAddress == MAP_FAILED)
-    {
-        printf("mmap() failed!\n");
-
-        close(fd);
-
-        *loadAddress = 0;
-        *loadSize = 0;
-        *oldLoadAddress = 0;
-
-        return;
-    }
-
-    this->updateSymbolTableForMappedMachO(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
-
-    this->updateSegmentLoadCommandsForNewLoadAddress(file_data, (uintptr_t) baseAddress, *oldLoadAddress);
-
-    success = this->mapSegments<MachO, Segment>(file_data, NULL);
-
-    if(!success)
-    {
-        printf("Map Segments failed!\n");
-
-        goto fail;
-    }
-
-    *loadAddress = (uintptr_t) file_data;
-    *loadSize = file_size;
-
-    // writeToFile((char*) baseAddress, *loadSize);
+    *kernelCache = (mach_vm_address_t) file_data;
+    *kernelCacheSize = file_size;
 
     free(file_data);
 
     close(fd);
 
-    return;
+    return true;
 
 fail:
     close(fd);
 
-    *loadAddress = 0;
-    *loadSize = 0;
-    *oldLoadAddress = 0;
-
     printf("Load Kernel MachO failed!\n");
+
+    return false;
 }
 
 
@@ -552,13 +523,17 @@ void Harness::startKernel()
 {
     xnu::KernelMachO *kernelMachO = this->fuzzBinary->getBinary<xnu::KernelMachO*>();
 
-    Symbol *symbol = kernelMachO->getSymbolByName("__start");
+    mach_vm_address_t start = (kernelMachO->getEntryPoint() - kernelMachO->getBase());
 
-    mach_vm_address_t start_kernel  = symbol->getAddress();
+    printf("start = 0x%llx 0x%llx\n", kernelMachO->getEntryPoint(), kernelMachO->getBase());
 
-    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start_kernel);
+    exit(-1);
 
-    /*
+    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, start);
+}
+
+void Harness::callFunctionInKernel(const char *funcname)
+{
     printf("MacRK::Starting XNU kernel at address = 0x%llx\n", start_kernel);
 
     #ifdef __arm64__
@@ -572,23 +547,31 @@ void Harness::startKernel()
     XnuKernelEntryPoint start = reinterpret_cast<XnuKernelEntryPoint>(start_kernel);
 
     (void)(*start)();
-    */
 }
 
 void Harness::loadKernel(const char *kernelPath, off_t slide)
 {
-    uintptr_t loadAddress = 0;
-    uintptr_t oldLoadAddress = 0;
+    mach_vm_address_t kernelCache = 0;
 
-    size_t loadSize = 0;
+    size_t kernelCacheSize = 0;
 
-    this->loadKernelMachO(kernelPath, &loadAddress, &loadSize, &oldLoadAddress);
+    off_t loadOffset = 0;
 
-    this->fuzzBinary->path = kernelPath;
-    this->fuzzBinary->base = reinterpret_cast<void*>(loadAddress);
-    this->fuzzBinary->originalBase = reinterpret_cast<void*>(oldLoadAddress);
-    this->fuzzBinary->size = loadSize;
-    this->fuzzBinary->binary = FuzzBinary::MakeBinary<KernelMachO*>(new KernelMachO(loadAddress));
+    mach_vm_address_t loadAddress = 0;
+
+    if(this->loadKernelCache(kernelPath, &kernelCache, &kernelCacheSize, &loadOffset, &loadAddress))
+    {
+        this->fuzzBinary->path = kernelPath;
+        this->fuzzBinary->base = reinterpret_cast<void*>(kernelCache);
+        this->fuzzBinary->originalBase = reinterpret_cast<void*>(loadAddress);
+        this->fuzzBinary->size = kernelCacheSize;
+        this->fuzzBinary->binary = FuzzBinary::MakeBinary<KernelMachO*>(new KernelCacheMachO(kernelCache, (uint64_t) kernelCache + loadOffset));
+    } else
+    {
+        fprintf(stderr, "Failed to load kernelcache!\n");
+
+        exit(-1);
+    }
 }
 
 
