@@ -122,33 +122,27 @@ namespace Virtualization
 	// ARM64 reset tramp
 	// I don't know why the CPU resets at EL0, so this is a trampoline
 	// that takes you to EL1.
+
 	// UPDATE: See CPSR below
+	
 	const uint8_t sArm64ResetVector[] = {
-	    0x01, 0x00, 0x00, 0xD4, // svc #0
-	    // If BRK is caught by host (configured)
-	    // Something happened badly
-	    0x00, 0x00, 0x20, 0xD4, // brk #0
+	    0x01, 0x00, 0x00, 0xD4, // SVC #0
+	    0x00, 0x00, 0x20, 0xD4, // BRK #0
 	};
 
 	const uint8_t sArm64ResetTrampoline[] = {
-	    0x00, 0x00, 0xB0, 0xD2, // mov x0, #0x80000000
-	    0x00, 0x00, 0x1F, 0xD6, // br  x0
-	    // If BRK is caught by host (configured)
-	    // Something happened badly
-	    0x00, 0x00, 0x20, 0xD4, // brk #0
+	    0x00, 0x00, 0xB0, 0xD2, // MOV X0, #0x80000000
+	    0x00, 0x00, 0x1F, 0xD6, // BR  X0
+	    0x00, 0x00, 0x20, 0xD4, // BRK #0
 	};
 
 	#define HYP_ASSERT_SUCCESS(ret) assert((hv_return_t) (ret) == HV_SUCCESS)
 
-	// Overview of this memory layout:
-	// Main memory starts at 0x80000000
-	// Reset VBAR_EL1 at 0xF0000000 - 0xF0010000;
-	// Reset trampoline code at 0xF0000800
-	const uint64_t gAdrResetTrampoline = 0xF0000000;
-	const uint64_t gResetTrampolineMemorySize = 0x10000;
+	static constexpr uint64_t gAdrResetTrampoline = 0xF0000000;
+	static constexpr uint64_t gResetTrampolineMemorySize = 0x10000;
 
-	const uint64_t gMainMemory = 0x80000000;
-	const uint64_t gMainMemSize = 0x40000000;
+	static constexpr uint64_t gMainMemory = 0x80000000;
+	static constexpr uint64_t gMainMemSize = 0x40000000;
 
 	class Hypervisor
 	{

@@ -546,6 +546,7 @@ namespace Fuzzer
 
 			void loadKernel(const char *path, off_t slide);
 			void loadKernelExtension(const char *path);
+			
 			bool loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelCache, size_t *kernelCacheSize, off_t *loadOffset, mach_vm_address_t *loadAddress);
 
 			void addDebugSymbolsFromKernel(const char *debugSymbols);
