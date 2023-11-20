@@ -181,9 +181,13 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 
                     address = nl->n_value;
 
-					// address = (nl->n_value - oldLoadAddress) + loadAddress;
+                #ifdef __EXECUTE_IN_SAME_PROCESS__
 
-					// nl->n_value = address;
+					address = (nl->n_value - oldLoadAddress) + loadAddress;
+
+					nl->n_value = address;
+
+                #endif
 
 				 	symbol = new Symbol(macho, nl->n_type & N_TYPE, name, address, macho->addressToOffset(address), macho->segmentForAddress(address), macho->sectionForAddress(address));
 
@@ -240,6 +244,9 @@ void Harness::getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *l
 
 void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
 {
+
+#ifdef __EXECUTE_IN_SAME_PROCESS__
+
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
     uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
@@ -275,15 +282,18 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t
 
                     address = nl->n_value;
 
-                    // printf("Symbol %s = 0x%llx\n", name, address);
+                    printf("Symbol %s = 0x%llx\n", name, address);
 
-                    // nl->n_value = address;
+                    nl->n_value = address;
                 }
             }
         }
 
         q += cmdsize;
     };
+
+#endif
+
 }
 
 void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
@@ -305,9 +315,13 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_v
 
             mach_vm_address_t vmaddr = segment_command->vmaddr;
 
-            // mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
+        #ifdef __EXECUTE_IN_SAME_PROCESS__
 
-            // segment_command->vmaddr = segment_adjusted_address;
+            mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
+
+            segment_command->vmaddr = segment_adjusted_address;
+
+        #endif
 
             printf("LC_SEGMENT_64 at 0x%llx - %s 0x%08llx to 0x%08llx \n", segment_command->fileoff,
                                           segment_command->segname,
@@ -324,8 +338,12 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_v
 
                 mach_vm_address_t sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
 
-                // section->addr = sect_adjusted_address;
-                // section->offset = (sect_addr - vmaddr) + segment_command->fileoff;
+            #ifdef __EXECUTE_IN_SAME_PROCESS__
+
+                section->addr = sect_adjusted_address;
+                section->offset = (sect_addr - vmaddr) + segment_command->fileoff;
+
+            #endif
 
                 printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
                                                 section->addr,
@@ -368,7 +386,10 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
                                               segment_command->vmaddr,
                                               segment_command->vmaddr + segment_command->vmsize, segment_command->maxprot);
 
-                /*if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
+                
+            #ifdef __EXECUTE_IN_SAME_PROCESS__
+
+                if (mprotect((void*) segment_command->vmaddr, segment_command->vmsize, PROT_READ | PROT_WRITE) == -1)
                 {
                     printf("mprotect(R/W) failed!\n");
 
@@ -400,7 +421,9 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
                     printf("mprotect(maxprot) failed!\n");
 
                     return false;
-                }*/
+                }
+            #endif
+
             }
 
             q += cmdsize;

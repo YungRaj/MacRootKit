@@ -10,7 +10,7 @@ static inline int64_t get_clock(void)
 }
 
 
-Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, mach_vm_address_t base, size_t size, mach_vm_address_t entryPoint)
+Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, uint64_t base, size_t size, mach_vm_address_t entryPoint)
 : harness(harness),
   virtualBase(virtualBase),
   base(base),

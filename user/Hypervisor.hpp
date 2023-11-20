@@ -124,7 +124,7 @@ namespace Virtualization
 	// that takes you to EL1.
 
 	// UPDATE: See CPSR below
-	
+
 	const uint8_t sArm64ResetVector[] = {
 	    0x01, 0x00, 0x00, 0xD4, // SVC #0
 	    0x00, 0x00, 0x20, 0xD4, // BRK #0
@@ -147,19 +147,21 @@ namespace Virtualization
 	class Hypervisor
 	{
 		public:
-			explicit Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, mach_vm_address_t base, size_t size, mach_vm_address_t entryPoint);
+			explicit Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, uint64_t base, size_t size, mach_vm_address_t entryPoint);
 
 			Fuzzer::Harness* getHarness() { return harness; }
 
-			mach_vm_address_t getBase() { return base; }
-
-			size_t getSize() { return size; }
-
-			mach_vm_address_t getEntryPoint() { return entryPoint; }
+			void* getPhysicalMainMemory() { return mainMemory; }
 
 			hv_vcpu_t getVirtualCpu() { return vcpu; }
 
 			hv_vcpu_exit_t* getVirtualCpuExit() {  return vcpu_exit; }
+
+			uint64_t getBase() { return base; }
+
+			size_t getSize() { return size; }
+
+			mach_vm_address_t getEntryPoint() { return entryPoint; }
 
 			void synchronizeCpuState();
 
@@ -167,8 +169,6 @@ namespace Virtualization
 
 			int sysregRead(uint32_t reg, uint32_t rt);
 			int sysregWrite(uint32_t reg, uint64_t val);
-
-			void* getPhysicalMainMemory() { return mainMemory; }
 
 			int prepareSystemMemory();
 
@@ -187,7 +187,8 @@ namespace Virtualization
 
 			struct boot_args boot_args;
 
-			mach_vm_address_t base;
+			uint64_t base;
+
 			mach_vm_address_t virtualBase;
 
 			size_t size;
