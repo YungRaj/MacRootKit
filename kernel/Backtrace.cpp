@@ -113,5 +113,51 @@ Symbol* Debug::Symbolicate::getSymbolFromAddress(mach_vm_address_t address, off_
 
 void Debug::printBacktrace(union ThreadState *thread_state)
 {
+	Arch::Architecture arch = Arch::getCurrentArchitecture();
 
+	if constexpr(Arch::_arm64<arch>)
+	{
+		uint64_t fp = thread_state->state_arm64.fp;
+
+		uint32_t frame = 0;
+
+		while(fp)
+		{
+			Symbol *symbol;
+
+			off_t delta;
+
+			uint64_t lr = *(uint64_t*) (fp - sizeof(uint64_t));
+
+			symbol = Debug::Symbolicate::getSymbolFromAddress(lr, &delta);
+
+			MAC_RK_LOG("frame %u: 0x%x %s + %llu", frame, rip, symbol->getName(), delta);
+
+			fp = *(uint64_t*) fp;
+		}
+	}
+
+	if constexpr(Arch::_x86_64<arch>)
+	{
+		uint64_t rbp = thread_state->state_x86_64.rbp;
+
+		uint32_t frame = 0;
+
+		while(rbp)
+		{
+			Symbol *symbol;
+
+			off_t delta;
+
+			uint64_t rip = *(uint64_t*) (rbp - sizeof(uint64_t));
+
+			symbol = Debug::Symbolicate::getSymbolFromAddress(lr, &delta);
+
+			MAC_RK_LOG("frame %u: 0x%x %s + %llu", frame, rip, symbol->getName(), delta);
+
+			rbp = *(uint64_t*) rbp;
+
+			frame++;
+		}
+	}
 }

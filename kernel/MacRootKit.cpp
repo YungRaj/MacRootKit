@@ -6,7 +6,7 @@ using namespace xnu;
 namespace mrk
 {
 
-MacRootKit::MacRootKit(Kernel *kernel)
+MacRootKit::MacRootKit(xnu::Kernel *kernel)
 	: kernel(kernel),
 	  kextKmods(reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"))),
 	  platformArchitecture(Arch::getCurrentArchitecture()),
@@ -112,10 +112,10 @@ void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
 
 	if(loaded_kext && kmod_info->size)
 	{
-		kext = new Kext(this->getKernel(), loaded_kext, kmod_info);
+		kext = new xnu::Kext(this->getKernel(), loaded_kext, kmod_info);
 	} else
 	{
-		kext = new Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));
+		kext = new xnu::Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));
 	}
 
 	kexts.push_back(kext);
