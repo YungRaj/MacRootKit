@@ -2,21 +2,21 @@
 
 #ifdef __arm64__
 
-uint64_t PAC::signPointerWithAKey(uint64_t pointer)
+uint64_t Arch::arm64::PAC::signPointerWithAKey(uint64_t pointer)
 {
 	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (pointer));
 
 	return pointer;
 }
 
-uint64_t PAC::signPointerWithBKey(uint64_t pointer)
+uint64_t Arch::arm64::PAC::signPointerWithBKey(uint64_t pointer)
 {
 	__asm__ volatile("PACIZB %[pac]" : [pac] "+rm" (pointer));
 
 	return pointer;
 }
 
-void PAC::stripPointerAuthenticationCode(uint64_t pointer)
+void Arch::arm64::PAC::stripPointerAuthenticationCode(uint64_t pointer)
 {
 
 }

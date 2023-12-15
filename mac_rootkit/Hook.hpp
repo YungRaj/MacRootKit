@@ -72,11 +72,8 @@ namespace mrk
 	class Hook
 	{
 		public:
-			Hook(mrk::Patcher *patcher, enum HookType hooktype);
-			Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, mach_vm_address_t from);
-
-			void withHookParams(xnu::Task *task, mach_vm_address_t from);
-			void withBreakpointParams(xnu::Task *task, mach_vm_address_t breakpoint);
+			explicit Hook(mrk::Patcher *patcher, enum HookType hooktype);
+			explicit Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, mach_vm_address_t from);
 
 			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
 			static Hook* hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
@@ -123,6 +120,9 @@ namespace mrk
 			void setTrampoline(mach_vm_address_t trampoline) { this->trampoline = trampoline; }
 
 			void setHookType(enum HookType hooktype) { this->hooktype = hooktype; }
+
+			void prepareHook(xnu::Task *task, mach_vm_address_t from);
+			void prepareBreakpoint(xnu::Task *task, mach_vm_address_t breakpoint);
 
 			mrk::Payload* prepareTrampoline();
 

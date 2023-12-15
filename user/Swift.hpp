@@ -320,8 +320,8 @@ namespace Swift
 	class SwiftMetadata
 	{
 		public:
-			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc) { this->macho = macho; this->objc = objc; this->populateSections(); this->parseSwift(); }
-			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : SwiftMetadata(macho, objc) { this->text = text; this->populateSections(); this->parseSwift(); }
+			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc) : macho(macho), objc(objc) { this->populateSections(); this->parseSwift(); }
+			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : SwiftMetadata(macho, objc), text(text) { this->populateSections(); this->parseSwift(); }
 
 			std::vector<Type*>* getAllTypes() { return &swift_types; }
 

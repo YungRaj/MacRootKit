@@ -26,7 +26,7 @@ extern "C"
 class MachO : public Binary::BinaryFormat
 {
 	public:
-		MachO();
+		explicit MachO();
 
 		~MachO();
 
