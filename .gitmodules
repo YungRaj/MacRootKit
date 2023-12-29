@@ -1,3 +1,6 @@
 [submodule "AFLplusplus"]
 	path = AFLplusplus
 	url = ./AFLplusplus
+[submodule "panda"]
+	path = panda
+	url = https://github.com/panda-re/panda
