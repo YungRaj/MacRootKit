@@ -59,11 +59,19 @@ namespace Virtualization
 	class Hypervisor;
 };
 
+namespace Emulation
+{
+	class Unicorn;
+	class Panda;
+
+	class Emulator;
+};
+
 namespace Fuzzer
 {
 	class Loader;
 	class Module;
-
+/
 	enum LanguageType
 	{
 		LANG_TYPE_C,
