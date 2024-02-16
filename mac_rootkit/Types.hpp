@@ -14,17 +14,17 @@ namespace xnu
 {
 	using Size = size_t;
 
-	using VmProtection = vm_prot_t;
-
-	using VmMap = vm_map_t;
-	using Pmap  = pmap_t;
-
 	using Task 	= task_t;
 	using Proc 	= proc_t;
 
 	namespace Mach
 	{
-		using VmAddress = mach_vm_address_t;
+		using VmMap = vm_map_t;
+		using Pmap  = pmap_t;
+
+		using VmAddress    = mach_vm_address_t;
+		using VmProtection = vm_prot_t;
+
 		using Port 		= mach_port_t;
 	};
 
