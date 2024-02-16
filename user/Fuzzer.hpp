@@ -578,6 +578,9 @@ namespace Fuzzer
 		private:
 			Virtualization::Hypervisor *hypervisor;
 
+			Emulation::Emulator<Unicorn> *unicorn;
+			Emulation::Emulator<Panda> *panda;
+
 			xnu::Kernel *kernel;
 
 			xnu::KDKInfo *kdkInfo;

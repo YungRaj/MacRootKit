@@ -12,11 +12,7 @@ class Segment;
 class Section;
 
 namespace Swift
-{
-	class SwiftMetadata;
-
-	SwiftMetadata* parseSwift(mrk::UserMachO *macho);
-	
+{	
 	const unsigned MetadataKindIsNonType = 0x400;
 
 	const unsigned MetadataKindIsNonHeap = 0x200;
@@ -391,6 +387,8 @@ namespace Swift
 			Section *capture;
 			Section *mpenum;
 	};
+
+	SwiftMetadata* parseSwift(mrk::UserMachO *macho);
 };
 
 #endif
