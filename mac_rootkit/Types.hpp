@@ -10,32 +10,35 @@
 
 #include <mach/kmod.h>
 
-namespace mach
-{
-	typedef mach_vm_address_t 		VmAddress;
-	typedef mach_port_t       		Port;
-};
-
 namespace xnu
 {
-	typedef size_t 					Size;
-	
-	typedef vm_prot_t  				VmProtection;
+	using Size = size_t;
 
-	typedef vm_map_ 				Vmap;
-	typedef pmap_t 					Pmap;
+	using VmProtection = vm_prot_t;
 
-	typedef task_t 					Task;
-	typedef proc_t 					Proc;
-};
+	using VmMap = vm_map_t;
+	using Pmap  = pmap_t;
 
-namespace macho
-{
-	typedef struct mach_header_64   Header64;
+	using Task 	= task_t;
+	using Proc 	= proc_t;
 
-	typedef struct nlist_64 		Nlist64;
+	namespace Mach
+	{
+		using VmAddress = mach_vm_address_t;
+		using Port 		= mach_port_t;
+	};
 
-	typedef char* 					SymName;
+	namespace MachO
+	{
+		using Header64 = mach_header_64;
+
+		using Nlist64 = struct nlist_64;
+
+		using SymbolName = char*;
+
+		using SegmentName = char*;
+		using SectionName = char*;
+	};
 };
 
 #endif
