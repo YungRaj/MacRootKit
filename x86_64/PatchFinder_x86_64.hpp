@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <capstone/capstone.h>
 
 #include "MachO.hpp"
@@ -61,27 +63,27 @@ namespace Arch
 				__const_,
 			};
 			
-			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,
-													  const unsigned char* needle,   size_t nlen);
+			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, Size hlen,
+													  const unsigned char* needle,   Size nlen);
 
-			mach_vm_address_t xref64(MachO *macho, mach_vm_address_t start, mach_vm_address_t end, mach_vm_address_t what);
+			xnu::Mach::VmAddress xref64(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress end, xnu::Mach::VmAddress what);
 	
-			mach_vm_address_t findInstruction64(MachO *macho, mach_vm_address_t start, size_t length, uint8_t *insn);
-			mach_vm_address_t findInstructionBack64(MachO *macho, mach_vm_address_t start, size_t length, uint8_t *insn);
-			mach_vm_address_t findInstructionNTimes64(MachO *macho, int n, mach_vm_address_t start, size_t length, uint8_t *insn, bool forward);
+			xnu::Mach::VmAddress findInstruction64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt8 *insn);
+			xnu::Mach::VmAddress findInstructionBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt8 *insn);
+			xnu::Mach::VmAddress findInstructionNTimes64(MachO *macho, int n, xnu::Mach::VmAddress start, Size length, UInt8 *insn, bool forward);
 
-			mach_vm_address_t step64(MachO *macho, mach_vm_address_t start, size_t length, char *mnemonic, char *op_string);
-			mach_vm_address_t stepBack64(MachO *macho, mach_vm_address_t start, size_t length, char *mnemonic, char *op_string);
+			xnu::Mach::VmAddress step64(MachO *macho, xnu::Mach::VmAddress start, Size length, char *mnemonic, char *op_string);
+			xnu::Mach::VmAddress stepBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, char *mnemonic, char *op_string);
 
-			mach_vm_address_t findFunctionBegin(MachO *macho, mach_vm_address_t start, mach_vm_address_t where);
+			xnu::Mach::VmAddress findFunctionBegin(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress where);
 
-			mach_vm_address_t findReference(MachO *macho, mach_vm_address_t to, int n, enum text which_text);
-			mach_vm_address_t findDataReference(MachO *macho, mach_vm_address_t to, enum data which_data, int n);
+			xnu::Mach::VmAddress findReference(MachO *macho, xnu::Mach::VmAddress to, int n, enum text which_text);
+			xnu::Mach::VmAddress findDataReference(MachO *macho, xnu::Mach::VmAddress to, enum data which_data, int n);
 
-			uint8_t* findString(MachO *macho, char *string, mach_vm_address_t base, mach_vm_address_t size, bool full_match);
-			mach_vm_address_t findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, bool full_match);
+			uint8_t* findString(MachO *macho, char *string, xnu::Mach::VmAddress base, Size size, Bool full_match);
+			xnu::Mach::VmAddress findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, Bool full_match);
 
-			void printInstruction64(MachO *macho, mach_vm_address_t start, uint32_t length, char *mnemonic, char *op_string);
+			void printInstruction64(MachO *macho, xnu::Mach::VmAddress start, UInt32 length, char *mnemonic, char *op_string);
 		}
 	}
 };

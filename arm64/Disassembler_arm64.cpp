@@ -99,7 +99,7 @@ namespace Arch
 				return true;
 			}
 
-			size_t instructionSize(mach_vm_address_t address, size_t min)
+			size_t instructionSize(xnu::Mach::VmAddress address, size_t min)
 			{
 				cs_insn *result = nullptr;
 
@@ -123,12 +123,12 @@ namespace Arch
 				return 0;
 			}
 
-			size_t quickInstructionSize(mach_vm_address_t address, size_t min)
+			size_t quickInstructionSize(xnu::Mach::VmAddress address, size_t min)
 			{
 				return instructionSize(address, min);
 			}
 
-			size_t disassemble(mach_vm_address_t address, size_t size, cs_insn **result)
+			size_t disassemble(xnu::Mach::VmAddress address, size_t size, cs_insn **result)
 			{
 				size_t insns;
 
@@ -160,7 +160,7 @@ namespace Arch
 				return cs_regs_access(handle_arm64, insn, regs_read, nread, regs_write, nwrite) == 0;
     		}
 
-			mach_vm_address_t disassembleNthBranchLink(mach_vm_address_t address, size_t num, size_t lookup_size)
+			xnu::Mach::VmAddress disassembleNthBranchLink(xnu::Mach::VmAddress address, size_t num, size_t lookup_size)
 			{
 				cs_insn *result = nullptr;
 
@@ -170,7 +170,7 @@ namespace Arch
 				{
 					size_t counter = 0;
 
-					mach_vm_address_t sub_address = 0;
+					xnu::Mach::VmAddress sub_address = 0;
 
 					for(size_t i = 0; i < disasm_size; i++)
 					{
@@ -206,7 +206,7 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t disassembleNthBranch(mach_vm_address_t address, size_t num, size_t lookup_size)
+			xnu::Mach::VmAddress disassembleNthBranch(xnu::Mach::VmAddress address, size_t num, size_t lookup_size)
 			{
 				cs_insn *result = nullptr;
 
@@ -216,7 +216,7 @@ namespace Arch
 				{
 					size_t counter = 0;
 
-					mach_vm_address_t sub_address = 0;
+					xnu::Mach::VmAddress sub_address = 0;
 
 					for(size_t i = 0; i < disasm_size; i++)
 					{
@@ -252,7 +252,7 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, arm64_insn insn, size_t num, size_t lookup_size)
+			xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address, arm64_insn insn, size_t num, size_t lookup_size)
 			{
 				cs_insn *result = nullptr;
 
@@ -275,7 +275,7 @@ namespace Arch
 
 					if(result && disassembled > 0)
 					{
-						mach_vm_address_t sub_address = 0;
+						xnu::Mach::VmAddress sub_address = 0;
 
 						for(size_t i = 0; i < disassembled; i++)
 						{
@@ -309,7 +309,7 @@ namespace Arch
 				return 0;
 			}
 
-			mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::vector<DisasmSig*> *signature, size_t num, size_t lookup_size)
+			xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address, std::vector<DisasmSig*> *signature, size_t num, size_t lookup_size)
 			{
 				return 0;
 			}
