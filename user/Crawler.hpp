@@ -25,6 +25,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <SpriteKit/SpriteKit.h>
 
+#include <Types.h>
+
 /* iOS App Crawler */
 
 extern NSString *kNSDarwinAppCrawlerCrawledViews;

@@ -69,20 +69,20 @@ void SwiftMetadata::enumerateTypes()
 {
 	Section *types = this->getTypes();
 
-	uint8_t *swift_types_begin = (*macho)[types->getOffset()];
-	uint8_t *swift_types_end = (*macho)[types->getOffset() + types->getSize()];
+	UInt8 *swift_types_begin = (*macho)[types->getOffset()];
+	UInt8 *swift_types_end = (*macho)[types->getOffset() + types->getSize()];
 
-	uint32_t swift_types_offset = 0;
+	UInt32 swift_types_offset = 0;
 
 	while(swift_types_offset < types->getSize())
 	{
 		struct Type *type;
 
-		mach_vm_address_t type_address;
+		UInt64 type_address;
 
-		int64_t type_offset;
+		Int64 type_offset;
 
-		type_offset = *reinterpret_cast<int32_t*>((*macho)[swift_types_offset]);
+		type_offset = *reinterpret_cast<Int32*>((*macho)[swift_types_offset]);
 
 		type_address += type_offset;
 
@@ -90,7 +90,7 @@ void SwiftMetadata::enumerateTypes()
 
 		type = this->parseTypeDescriptor(descriptor);
 
-		swift_types_offset += sizeof(int32_t);
+		swift_types_offset += sizeof(Int32);
 	}
 }
 
@@ -104,9 +104,9 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 	descriptor = typeDescriptor;
 
-	int32_t field_descriptor_offset = *reinterpret_cast<int32_t*>(&typeDescriptor->field_descriptor);
+	Int32 field_descriptor_offset = *reinterpret_cast<Int32*>(&typeDescriptor->field_descriptor);
 
-	mach_vm_address_t field_descriptor_address = reinterpret_cast<mach_vm_address_t>(&typeDescriptor->field_descriptor) + field_descriptor_offset;
+	UInt64 field_descriptor_address = reinterpret_cast<UInt64>(&typeDescriptor->field_descriptor) + field_descriptor_offset;
 
 	fieldDescriptor = reinterpret_cast<struct FieldDescriptor*>(field_descriptor_address);
 
@@ -132,7 +132,7 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 
 				type = dynamic_cast<struct Type*>(cls);
 
-				mach_vm_address_t typeMetadata = this->getTypeMetadata(typeDescriptor);
+				UInt64 typeMetadata = this->getTypeMetadata(typeDescriptor);
 
 				if(typeMetadata)
 				{
@@ -186,17 +186,17 @@ struct Type* SwiftMetadata::parseTypeDescriptor(struct TypeDescriptor *typeDescr
 	return type;
 }
 
-mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDescriptor)
+UInt64 SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDescriptor)
 {
-	mach_vm_address_t typeMetadata;
+	UInt64 typeMetadata;
 
-	mach_vm_address_t accessFunction = typeDescriptor->access_function;
+	UInt64 accessFunction = typeDescriptor->access_function;
 
 #ifdef __arm64__
 
 	using namespace Arch::arm64;
 
-	mach_vm_address_t xref = Arch::arm64::PatchFinder::step64(macho, accessFunction, 0x100,(bool (*)(uint32_t*))is_adrp, -1, -1);
+	UInt64 xref = Arch::arm64::PatchFinder::step64(macho, accessFunction, 0x100,(bool (*)(UInt32*))is_adrp, -1, -1);
 
 	adr_t adrp = *reinterpret_cast<adr_t*>(xref);
 
@@ -212,7 +212,7 @@ mach_vm_address_t SwiftMetadata::getTypeMetadata(struct TypeDescriptor *typeDesc
 
 	cs_insn insn;
 
-	mach_vm_address_t mov = Arch::x86_64::PatchFinder::step64(macho, accessFunction, add, 0x100, "mov", NULL);
+	UInt64 mov = Arch::x86_64::PatchFinder::step64(macho, accessFunction, add, 0x100, "mov", NULL);
 
 	Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
 
@@ -227,7 +227,7 @@ void SwiftMetadata::parseFieldDescriptor(struct Type *type, struct FieldDescript
 {
 	struct Fields *fields = new Fields;
 
-	mach_vm_address_t field_start = reinterpret_cast<mach_vm_address_t>(fieldDescriptor) + sizeof(struct FieldDescriptor);
+	UInt64 field_start = reinterpret_cast<UInt64>(fieldDescriptor) + sizeof(struct FieldDescriptor);
 
 	fields->descriptor = fieldDescriptor;
 

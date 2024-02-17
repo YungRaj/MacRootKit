@@ -33,7 +33,7 @@ CodeSignature* CodeSignature::codeSignatureWithLinkedit(UserMachO *macho, struct
 	return new CodeSignature(macho, cmd);
 }
 
-bool CodeSignature::verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char *signature, size_t signature_size)
+bool CodeSignature::verifyCodeSlot(UInt8 *blob, Size size, bool sha256, char *signature, Size signature_size)
 {
 	bool verified = false;
 
@@ -41,14 +41,14 @@ bool CodeSignature::verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char
 	{
 		unsigned char result[CC_SHA256_DIGEST_LENGTH];
 
-		CC_SHA256(blob, static_cast<uint32_t> (size), result);
+		CC_SHA256(blob, static_cast<UInt32> (size), result);
 
 		verified = (memcmp(result, signature, min(CC_SHA256_DIGEST_LENGTH, signature_size)));
 	} else
 	{
 		unsigned char result[CC_SHA1_DIGEST_LENGTH];
 
-		CC_SHA1(blob, static_cast<uint32_t> (size), result);
+		CC_SHA1(blob, static_cast<UInt32> (size), result);
 
 		verified = (memcmp(result, signature, min(CC_SHA1_DIGEST_LENGTH, signature_size)));
 	}
@@ -56,7 +56,7 @@ bool CodeSignature::verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char
 	return verified;
 }
 	
-bool CodeSignature::compareHash(uint8_t *hash1, uint8_t *hash2, size_t hashSize)
+bool CodeSignature::compareHash(UInt8 *hash1, UInt8 *hash2, Size hashSize)
 {
 	const char *h1 = reinterpret_cast<const char*>(hash1);
 	const char *h2 = reinterpret_cast<const char*>(hash2);
@@ -64,20 +64,20 @@ bool CodeSignature::compareHash(uint8_t *hash1, uint8_t *hash2, size_t hashSize)
 	return (memcmp(h1, h2, hashSize) == 0);
 }
 
-uint8_t* CodeSignature::computeHash(bool sha256, uint8_t *blob, size_t size)
+UInt8* CodeSignature::computeHash(bool sha256, UInt8 *blob, Size size)
 {
-	uint8_t *result;
+	UInt8 *result;
 
 	if(sha256)
 	{
-		result = static_cast<uint8_t*>(malloc(CC_SHA256_DIGEST_LENGTH));
+		result = static_cast<UInt8*>(malloc(CC_SHA256_DIGEST_LENGTH));
 
-		CC_SHA256(blob, static_cast<uint32_t> (size), result);
+		CC_SHA256(blob, static_cast<UInt32> (size), result);
 	} else
 	{
-		result =  static_cast<uint8_t*>(malloc(CC_SHA1_DIGEST_LENGTH));
+		result =  static_cast<UInt8*>(malloc(CC_SHA1_DIGEST_LENGTH));
 
-		CC_SHA1(blob, static_cast<uint32_t> (size), result);
+		CC_SHA1(blob, static_cast<UInt32> (size), result);
 	}
 
 	return result;
@@ -88,25 +88,25 @@ bool CodeSignature::parseCodeSignature()
 {
 	SuperBlob *superblob;
 
-	uint32_t blobcount = swap32(superblob->count);
+	UInt32 blobcount = swap32(superblob->count);
 
-	uint32_t offset = this->cmd->dataoff;
-	uint32_t size = this->cmd->datasize;
+	UInt32 offset = this->cmd->dataoff;
+	UInt32 size = this->cmd->datasize;
     
     MAC_RK_LOG("\t%u blobs\n",blobcount);
     
-    for(uint32_t blobidx = 0; blobidx < blobcount; blobidx++)
+    for(UInt32 blobidx = 0; blobidx < blobcount; blobidx++)
     {
         BlobIndex index = superblob->index[blobidx];
         
-        uint32_t blobtype = swap32(index.type);
-        uint32_t bloboffset = swap32(index.offset);
-        uint32_t begin = offset + bloboffset;
+        UInt32 blobtype = swap32(index.type);
+        UInt32 bloboffset = swap32(index.offset);
+        UInt32 begin = offset + bloboffset;
         
         Blob *blob = (Blob*) (*macho)[begin];
         
-        uint32_t magic = swap32(blob->magic);
-        uint32_t length = swap32(blob->length);
+        UInt32 magic = swap32(blob->magic);
+        UInt32 length = swap32(blob->length);
         
         switch(magic)
         {
@@ -114,13 +114,13 @@ bool CodeSignature::parseCodeSignature()
                 {
 	                code_directory_t directory = (code_directory_t) (*macho)[begin];
 	                
-	                uint32_t hashOffset = swap32(directory->hashOffset);
-	                uint32_t identOffset = swap32(directory->identOffset);
-	                uint32_t nSpecialSlots = swap32(directory->nSpecialSlots);
-	                uint32_t nCodeSlots = swap32(directory->nCodeSlots);
-	                uint32_t hashSize = directory->hashSize;
-	                uint32_t hashType = directory->hashType;
-	                uint32_t pageSize = directory->pageSize;
+	                UInt32 hashOffset = swap32(directory->hashOffset);
+	                UInt32 identOffset = swap32(directory->identOffset);
+	                UInt32 nSpecialSlots = swap32(directory->nSpecialSlots);
+	                UInt32 nCodeSlots = swap32(directory->nCodeSlots);
+	                UInt32 hashSize = directory->hashSize;
+	                UInt32 hashType = directory->hashType;
+	                UInt32 pageSize = directory->pageSize;
 	                
 	                bool sha256 = false;
 	                
@@ -144,17 +144,17 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                for(int i = 0; i < nCodeSlots; i++)
 	                {
-	                    uint32_t pages = nCodeSlots;
+	                    UInt32 pages = nCodeSlots;
 	                    
 	                    if(pages)
 	                        MAC_RK_LOG("\t\tPage %2u ",i);
 	                    
-	                    uint8_t *hash = (uint8_t*) (*macho)[begin + hashOffset + i * hashSize];
+	                    UInt8 *hash = (UInt8*) (*macho)[begin + hashOffset + i * hashSize];
 	                    
 	                    for(int j = 0; j < hashSize; j++)
 	                        MAC_RK_LOG("%.2x",hash[j]);
 
-	                    uint8_t *blob = (uint8_t*) (*macho)[i * (1 << pageSize)];
+	                    UInt8 *blob = (UInt8*) (*macho)[i * (1 << pageSize)];
 	                    
 	                    if(i + 1 != nCodeSlots)
 	                    {
@@ -181,7 +181,7 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                for(int i = 0; i < nSpecialSlots; i++)
 	                {
-	                    uint8_t *hash = (uint8_t*) (*macho)[begin + hashOffset + i * hashSize];
+	                    UInt8 *hash = (UInt8*) (*macho)[begin + hashOffset + i * hashSize];
 
 	                    if(i < 5)
 	                        MAC_RK_LOG("\t\t%s ", special_slots[i].name);
@@ -196,7 +196,7 @@ bool CodeSignature::parseCodeSignature()
 	                    special_slots[i].hash = hash;
 	                    special_slots[i].hashSize = hashSize;
 	                    
-	                    uint8_t *zerobuf = new uint8_t[hashSize];
+	                    UInt8 *zerobuf = new UInt8[hashSize];
 
 	                    memset(zerobuf, 0x0, hashSize);
 	                    
@@ -209,8 +209,8 @@ bool CodeSignature::parseCodeSignature()
 	                            char **res = NULL;
 	                            bool found = false;
 	                            
-	                            uint32_t num_tokens = 0;
-	                            uint32_t new_length = 0;
+	                            UInt32 num_tokens = 0;
+	                            UInt32 new_length = 0;
 	                            
 	                            char *app_dir = strtok(path, "/");
 	                            
@@ -281,16 +281,16 @@ bool CodeSignature::parseCodeSignature()
 	                            if(info)
 	                            {
 	                            	fseek(info, 0, SEEK_END);
-		                            size_t info_size = ftell(info);
+		                            Size info_size = ftell(info);
 		                            fseek(info, 0, SEEK_SET);
 		                            
-		                            uint8_t *info_buf = new uint8_t[info_size];
+		                            UInt8 *info_buf = new UInt8[info_size];
 		                            fseek(info, 0, SEEK_SET);
 		                            fread(info_buf, 1, size,info);
 		                            
 		                            fclose(info);
 		                            
-		                            uint8_t *info_hash = this->computeHash(special_slots[i].sha256, info_buf, (uint32_t)info_size);
+		                            UInt8 *info_hash = this->computeHash(special_slots[i].sha256, info_buf, (UInt32)info_size);
 		                            
 		                            if(memcmp(info_hash, special_slots[i].hash, special_slots[i].hashSize) == 0)
 		                                MAC_RK_LOG(" OK...");
@@ -315,8 +315,8 @@ bool CodeSignature::parseCodeSignature()
                 break;
             case CSMAGIC_EMBEDDED_ENTITLEMENTS:
                 {
-	                uint8_t *blob_raw;
-	                uint8_t *blob_hash;
+	                UInt8 *blob_raw;
+	                UInt8 *blob_hash;
 	                
 	                char *entitlements;
 	                
@@ -324,7 +324,7 @@ bool CodeSignature::parseCodeSignature()
 	                
 	                memcpy(entitlements, (*macho)[begin + sizeof(struct Blob)], length - sizeof(struct Blob));
 	                
-	                blob_raw = (uint8_t*) (*macho)[begin];
+	                blob_raw = (UInt8*) (*macho)[begin];
 	                blob_hash = this->computeHash(special_slots[ENTITLEMENTS].sha256, blob_raw, length);
 	                
 	                MAC_RK_LOG("\nEntitlements ");

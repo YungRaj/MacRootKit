@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <mach/mach_types.h>
 
+#include <Types.h>
+
 #include <Arch.hpp>
 
 namespace xnu
@@ -41,10 +43,10 @@ namespace xnu
 
 			Task* getTask() { return task; }
 
-			mach_port_t getPortHandle() { return handle; }
+			xnu::Mach::Port getPortHandle() { return handle; }
 
-			mach_vm_address_t getThread() { return thread; }
-			mach_vm_address_t  getUThread() { return uthread; }
+			xnu::Mach::VmAddress getThread() { return thread; }
+			xnu::Mach::VmAddress  getUThread() { return uthread; }
 
 			union ThreadState* getThreadState() { return &state; }
 
@@ -60,9 +62,9 @@ namespace xnu
 
 			void convertThreadState(Task *task, union ThreadState *thread_state);
 
-			void setEntryPoint(mach_vm_address_t address);
+			void setEntryPoint(xnu::Mach::VmAddress address);
 
-			void setReturnAddress(mach_vm_address_t address);
+			void setReturnAddress(xnu::Mach::VmAddress address);
 
 			void createPosixThreadFromMachThread(thread_t thread);
 
@@ -73,14 +75,14 @@ namespace xnu
 
 			thread_t thread;
 
-			mach_port_t handle;
+			xnu::Mach::Port handle;
 
-			mach_vm_address_t thread;
-			mach_vm_address_t uthread;
+			xnu::Mach::VmAddress thread;
+			xnu::Mach::VmAddress uthread;
 
-			mach_vm_address_t stack;
-			mach_vm_address_t code;
-			mach_vm_address_t data;
+			xnu::Mach::VmAddress stack;
+			xnu::Mach::VmAddress code;
+			xnu::Mach::VmAddress data;
 
 			union ThreadState state;
 	};

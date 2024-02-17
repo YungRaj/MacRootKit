@@ -19,7 +19,7 @@
 #include "Kernel.hpp"
 #include "MachO.hpp"
 #include "Task.hpp"
-#include "Offset.hpp"
+#include "Offsets.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,8 +34,8 @@ static int EndsWith(const char *str, const char *suffix)
 	if (!str || !suffix)
 		return 0;
 	
-	size_t lenstr = strlen(str);
-	size_t lensuffix = strlen(suffix);
+	Size lenstr = strlen(str);
+	Size lensuffix = strlen(suffix);
 	
 	if (lensuffix >  lenstr)
 		return 0;
@@ -77,23 +77,23 @@ void Dyld::iterateAllImages()
 
 	char *task_name = task->getName();
 
-	for(uint32_t i = 0; i < all_image_infos->infoArrayCount; i++)
+	for(UInt32 i = 0; i < all_image_infos->infoArrayCount; i++)
 	{
 		struct dyld_image_info *image_info = (struct dyld_image_info*) malloc(sizeof(struct dyld_image_info));
 
-		mach_vm_address_t image_info_addr;
+		xnu::Mach::VmAddress image_info_addr;
 
-		mach_vm_address_t image_load_addr;
-		mach_vm_address_t image_file_path;
+		xnu::Mach::VmAddress image_load_addr;
+		xnu::Mach::VmAddress image_file_path;
 
 		char *image_file;
 
-		image_info_addr = (mach_vm_address_t) (all_images.infoArray + i);
+		image_info_addr = (xnu::Mach::VmAddress) (all_images.infoArray + i);
 
-		task->read(image_info_addr, image_info, sizeof(image_info));
+		task->read(image_info_addr, image_info, sizeof(*image_info));
 
-		image_load_addr = (mach_vm_address_t) image_info->imageLoadAddress;
-		image_file_path = (mach_vm_address_t) image_info->imageFilePath;
+		image_load_addr = (xnu::Mach::VmAddress) image_info->imageLoadAddress;
+		image_file_path = (xnu::Mach::VmAddress) image_info->imageFilePath;
 
 		image_file = task->readString(image_file_path);
 
@@ -140,8 +140,8 @@ void Dyld::iterateAllImages()
 
 void Dyld::getImageInfos()
 {
-	this->all_image_info_addr = kernel->read64(task->getTask() + Offset::task_all_image_info_addr);
-	this->all_image_info_size = kernel->read64(task->getTask() + Offset::task_all_image_info_size);
+	this->all_image_info_addr = kernel->read64(task->getTask() + Offsets::task_all_image_info_addr);
+	this->all_image_info_size = kernel->read64(task->getTask() + Offsets::task_all_image_info_size);
 
 	if(!all_image_info_addr || !all_image_info_size)
 	{
@@ -162,11 +162,11 @@ void Dyld::getImageInfos()
 	}
 }
 
-mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
+xnu::Mach::VmAddress Dyld::getImageLoadedAt(char *image_name, char **image_path)
 {
 	struct mach_header_64 hdr;
 
-	mach_vm_address_t where = 0;
+	xnu::Mach::VmAddress where = 0;
 
 	struct dyld_all_image_infos all_images;
 
@@ -183,23 +183,23 @@ mach_vm_address_t Dyld::getImageLoadedAt(char *image_name, char **image_path)
 
 	memcpy(this->all_image_infos, &all_images, sizeof(struct dyld_all_image_infos));
 
-	for(uint32_t i = 0; i < all_image_infos->infoArrayCount; i++)
+	for(UInt32 i = 0; i < all_image_infos->infoArrayCount; i++)
 	{
 		struct dyld_image_info image_info;
 
-		mach_vm_address_t image_info_addr;
+		xnu::Mach::VmAddress image_info_addr;
 
-		mach_vm_address_t image_load_addr;
-		mach_vm_address_t image_file_path;
+		xnu::Mach::VmAddress image_load_addr;
+		xnu::Mach::VmAddress image_file_path;
 
 		char *image_file;
 
-		image_info_addr = (mach_vm_address_t) (all_image_infos->infoArray + i);
+		image_info_addr = (xnu::Mach::VmAddress) (all_image_infos->infoArray + i);
 
 		task->read(image_info_addr, &image_info, sizeof(image_info));
 
-		image_load_addr = (mach_vm_address_t) image_info.imageLoadAddress;
-		image_file_path = (mach_vm_address_t) image_info.imageFilePath;
+		image_load_addr = (xnu::Mach::VmAddress) image_info.imageLoadAddress;
+		image_file_path = (xnu::Mach::VmAddress) image_info.imageFilePath;
 
 		image_file = task->readString(image_file_path);
 
@@ -236,7 +236,7 @@ struct dyld_cache_header* Dyld::cacheGetHeader()
 {
 	struct dyld_cache_header *cache_header;
 
-	mach_vm_address_t shared_cache_rx_base;
+	xnu::Mach::VmAddress shared_cache_rx_base;
 
 	shared_cache_rx_base = this->dyld_shared_cache;
 
@@ -258,9 +258,9 @@ struct dyld_cache_mapping_info* Dyld::cacheGetMappings(struct dyld_cache_header 
 	return mappings;
 }
 
-struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header *cache_header, vm_prot_t prot)
+struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header *cache_header, xnu::Mach::VmProtection prot)
 {
-	for(uint32_t i = 0; i < cache_header->mappingCount; ++i)
+	for(UInt32 i = 0; i < cache_header->mappingCount; ++i)
 	{
 		struct dyld_cache_mapping_info *mapping = (struct dyld_cache_mapping_info*) malloc(sizeof(struct dyld_cache_mapping_info));
 
@@ -277,13 +277,13 @@ struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header *
 	return NULL;
 }
 
-void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *address, off_t *aslr)
+void Dyld::cacheOffsetToAddress(UInt64 dyld_cache_offset, xnu::Mach::VmAddress *address, Offset *aslr)
 {
 	struct dyld_cache_header *cache_header;
 
 	struct dyld_cache_mapping_info *mappings;
 
-	mach_vm_address_t shared_cache_rx_base;
+	xnu::Mach::VmAddress shared_cache_rx_base;
 
 	shared_cache_rx_base = this->dyld_shared_cache;
 
@@ -291,27 +291,27 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 
 	mappings = this->cacheGetMappings(cache_header);
 
-	size_t rx_size = 0;
-	size_t rw_size = 0;
-	size_t ro_size = 0;
+	Size rx_size = 0;
+	Size rw_size = 0;
+	Size ro_size = 0;
 
-	mach_vm_address_t rx_addr = 0;
-	mach_vm_address_t rw_addr = 0;
-	mach_vm_address_t ro_addr = 0;
+	xnu::Mach::VmAddress rx_addr = 0;
+	xnu::Mach::VmAddress rw_addr = 0;
+	xnu::Mach::VmAddress ro_addr = 0;
 
-	mach_vm_address_t dyld_cache_address = 0;
+	xnu::Mach::VmAddress dyld_cache_address = 0;
 
-	for(uint32_t i = 0; i < cache_header->mappingCount; i++)
+	for(UInt32 i = 0; i < cache_header->mappingCount; i++)
 	{
 		struct dyld_cache_mapping_info *mapping = &mappings[i];
 
-		off_t low_bound = mapping->fileOffset;
-		off_t high_bound = mapping->fileOffset + mapping->size;
+		Offset low_bound = mapping->fileOffset;
+		Offset high_bound = mapping->fileOffset + mapping->size;
 
 		if(dyld_cache_offset >= low_bound &&
 		   dyld_cache_offset < high_bound)
 		{
-			mach_vm_address_t mappingAddr = dyld_cache_offset - low_bound;
+			xnu::Mach::VmAddress mappingAddr = dyld_cache_offset - low_bound;
 
 			dyld_cache_address = mappingAddr + mapping->address;
 		}
@@ -335,14 +335,14 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 		}
 	}
 
-	off_t aslr_slide = (off_t) (this->dyld_shared_cache - rx_addr);
+	Offset aslr_slide = (Offset) (this->dyld_shared_cache - rx_addr);
 
-	char *shared_cache_ro = (char*)((mach_vm_address_t) ro_addr + aslr_slide);
+	char *shared_cache_ro = (char*)((xnu::Mach::VmAddress) ro_addr + aslr_slide);
 
-	off_t offset_from_ro = (off_t) (dyld_cache_offset - rx_size - rw_size);
+	Offset offset_from_ro = (Offset) (dyld_cache_offset - rx_size - rw_size);
 
 	if(address)
-		*address = ((mach_vm_address_t) dyld_cache_address + aslr_slide);
+		*address = ((xnu::Mach::VmAddress) dyld_cache_address + aslr_slide);
 
 	if(aslr_slide)
 		*aslr = aslr_slide;
@@ -352,7 +352,7 @@ void Dyld::cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *a
 	free(mappings);
 }
 
-void Dyld::cacheGetSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t *symtab, mach_vm_address_t *strtab, off_t *slide)
+void Dyld::cacheGetSymtabStrtab(struct symtab_command *symtab_command, xnu::Mach::VmAddress *symtab, xnu::Mach::VmAddress *strtab, Offset *slide)
 {
 	 this->cacheOffsetToAddress(symtab_command->symoff,
 									symtab,
@@ -365,7 +365,7 @@ void Dyld::cacheGetSymtabStrtab(struct symtab_command *symtab_command, mach_vm_a
 	this->slide = *slide;
 }
 
-mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
+xnu::Mach::VmAddress Dyld::getImageSlide(xnu::Mach::VmAddress address)
 {
 	bool ok;
 
@@ -373,17 +373,17 @@ mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
 
 	struct mach_header_64 *hdr;
 
-	mach_vm_address_t symtab;
-	mach_vm_address_t strtab;
+	xnu::Mach::VmAddress symtab;
+	xnu::Mach::VmAddress strtab;
 
-	off_t slide;
+	Offset slide;
 
-	uint8_t *cmds;
+	UInt8 *cmds;
 
-	uint32_t ncmds;
-	size_t sizeofcmds;
+	UInt32 ncmds;
+	Size sizeofcmds;
 
-	uint64_t cmd_offset;
+	UInt64 cmd_offset;
 
 	hdr = reinterpret_cast<struct mach_header_64*>(malloc(sizeof(struct mach_header_64)));
 
@@ -394,7 +394,7 @@ mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
 	ncmds = hdr->ncmds;
 	sizeofcmds = hdr->sizeofcmds;
 
-	cmds = reinterpret_cast<uint8_t*>(malloc(sizeofcmds));
+	cmds = reinterpret_cast<UInt8*>(malloc(sizeofcmds));
 
 	ok = this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
 
@@ -406,8 +406,8 @@ mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
 	{
 		struct load_command *load_cmd = reinterpret_cast<struct load_command*>(cmds + cmd_offset);
 
-		uint32_t cmdtype = load_cmd->cmd;
-		uint32_t cmdsize = load_cmd->cmdsize;
+		UInt32 cmdtype = load_cmd->cmd;
+		UInt32 cmdsize = load_cmd->cmdsize;
 
 		switch(cmdtype)
 		{
@@ -434,16 +434,16 @@ mach_vm_address_t Dyld::getImageSlide(mach_vm_address_t address)
 	return slide;
 }
 
-size_t Dyld::getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_vm_address_t linkedit, off_t linkedit_fileoff)
+Size Dyld::getAdjustedStrtabSize(struct symtab_command *symtab_command, xnu::Mach::VmAddress linkedit, Offset linkedit_fileoff)
 {
-	mach_vm_address_t symtab;
-	mach_vm_address_t strtab;
+	xnu::Mach::VmAddress symtab;
+	xnu::Mach::VmAddress strtab;
 
-	size_t symsize;
-	size_t new_strsize;
+	Size symsize;
+	Size new_strsize;
 
-	off_t symoff;
-	off_t stroff;
+	Offset symoff;
+	Offset stroff;
 
 	struct nlist_64 *syms;
 
@@ -477,37 +477,37 @@ size_t Dyld::getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_v
 	return new_strsize;
 }
 
-size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
+Size Dyld::getAdjustedLinkeditSize(xnu::Mach::VmAddress address)
 {
 	struct mach_header_64 *hdr;
 
-	size_t linkedit_new_sz;
+	Size linkedit_new_sz;
 
-	mach_vm_address_t symtab;
-	mach_vm_address_t strtab;
+	xnu::Mach::VmAddress symtab;
+	xnu::Mach::VmAddress strtab;
 
-	mach_vm_address_t linkedit_vmaddr;
-	mach_vm_address_t text_vmaddr;
+	xnu::Mach::VmAddress linkedit_vmaddr;
+	xnu::Mach::VmAddress text_vmaddr;
 
-	mach_vm_address_t linkedit_begin_off;
+	xnu::Mach::VmAddress linkedit_begin_off;
 
-	mach_vm_address_t linkedit_old_off;
-	mach_vm_address_t linkedit_new_off;
+	xnu::Mach::VmAddress linkedit_old_off;
+	xnu::Mach::VmAddress linkedit_new_off;
 
-	off_t aslr_slide;
+	Offset aslr_slide;
 
-	mach_vm_address_t align;
-	mach_vm_address_t current_offset;
+	xnu::Mach::VmAddress align;
+	xnu::Mach::VmAddress current_offset;
 
-	uint64_t cmd_offset;
+	UInt64 cmd_offset;
 
-	uint8_t *cmds;
-	uint8_t *q;
+	UInt8 *cmds;
+	UInt8 *q;
 
-	uint32_t ncmds;
-	size_t sizeofcmds;
+	UInt32 ncmds;
+	Size sizeofcmds;
 
-	size_t filesz = 0;
+	Size filesz = 0;
 
 	aslr_slide = this->getImageSlide(address);
 
@@ -522,7 +522,7 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 	ncmds = hdr->ncmds;
 	sizeofcmds = hdr->sizeofcmds;
 
-	cmds = reinterpret_cast<uint8_t*>(malloc(sizeofcmds));
+	cmds = reinterpret_cast<UInt8*>(malloc(sizeofcmds));
 
 	ok = this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
 
@@ -536,8 +536,8 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 	{
 		struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-		uint32_t cmdtype = load_cmd->cmd;
-		uint32_t cmdsize = load_cmd->cmdsize;
+		UInt32 cmdtype = load_cmd->cmd;
+		UInt32 cmdsize = load_cmd->cmdsize;
 
 		if(load_cmd->cmd == LC_SEGMENT_64)
 		{
@@ -562,11 +562,11 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 		                                  segment_command->vmaddr,
 		                                  segment_command->vmaddr + segment_command->vmsize);
 
-			uint64_t sect_offset = 0;
+			UInt64 sect_offset = 0;
 
 			for(int j = 0; j < segment_command->nsects; j++)
 			{
-				struct section_64 *section = (struct section_64*) ((uint64_t) load_cmd + sizeof(struct segment_command_64) + sect_offset);
+				struct section_64 *section = (struct section_64*) ((UInt64) load_cmd + sizeof(struct segment_command_64) + sect_offset);
 
 				printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
 				                            section->addr,
@@ -581,49 +581,49 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 
 			this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
 
-			uint32_t new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr + aslr_slide, linkedit_old_off);
+			UInt32 new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr + aslr_slide, linkedit_old_off);
 
-			uint64_t symsize = symtab_command->nsyms * sizeof(struct nlist_64);
-			uint64_t strsize = symtab_command->strsize;
+			UInt64 symsize = symtab_command->nsyms * sizeof(struct nlist_64);
+			UInt64 strsize = symtab_command->strsize;
 
-			uint64_t old_symoff = symtab_command->symoff;
-			uint64_t old_stroff = symtab_command->stroff;
+			UInt64 old_symoff = symtab_command->symoff;
+			UInt64 old_stroff = symtab_command->stroff;
 
-			uint64_t new_symoff = (old_symoff - linkedit_old_off);
-			uint64_t new_stroff = (old_stroff - linkedit_old_off);
+			UInt64 new_symoff = (old_symoff - linkedit_old_off);
+			UInt64 new_stroff = (old_stroff - linkedit_old_off);
 
-			symtab_command->symoff = (uint32_t) new_symoff;
-			symtab_command->stroff = (uint32_t) new_stroff;
+			symtab_command->symoff = (UInt32) new_symoff;
+			symtab_command->stroff = (UInt32) new_stroff;
 
 			linkedit_new_sz += (symsize + new_strsize);
 
 			new_symoff = (old_symoff - linkedit_old_off) + linkedit_new_off;
 			new_stroff = (old_stroff - linkedit_old_off) + linkedit_new_off;
 
-			symtab_command->symoff = (uint32_t) new_symoff;
-			symtab_command->stroff = (uint32_t) new_stroff;
+			symtab_command->symoff = (UInt32) new_symoff;
+			symtab_command->stroff = (UInt32) new_stroff;
 
 		} else if(load_cmd->cmd == LC_DYSYMTAB)
 		{
 			struct dysymtab_command *dysymtab_command = (struct dysymtab_command*) q;
 
-			uint32_t tocoff = dysymtab_command->tocoff;
-			uint32_t tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
+			UInt32 tocoff = dysymtab_command->tocoff;
+			UInt32 tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
 
-			uint32_t modtaboff = dysymtab_command->modtaboff;
-			uint32_t modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
+			UInt32 modtaboff = dysymtab_command->modtaboff;
+			UInt32 modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
 
-			uint32_t extrefsymoff = dysymtab_command->extrefsymoff;
-			uint32_t extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
+			UInt32 extrefsymoff = dysymtab_command->extrefsymoff;
+			UInt32 extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
 
-			uint32_t indirectsymoff = dysymtab_command->indirectsymoff;
-			uint32_t indirectsize = dysymtab_command->nindirectsyms * sizeof(uint32_t);
+			UInt32 indirectsymoff = dysymtab_command->indirectsymoff;
+			UInt32 indirectsize = dysymtab_command->nindirectsyms * sizeof(UInt32);
 
-			uint32_t extreloff = dysymtab_command->extreloff;
-			uint32_t extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
+			UInt32 extreloff = dysymtab_command->extreloff;
+			UInt32 extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
 
-			uint32_t locreloff = dysymtab_command->locreloff;
-			uint32_t locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
+			UInt32 locreloff = dysymtab_command->locreloff;
+			UInt32 locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
 
 			dysymtab_command->tocoff = (tocoff - linkedit_old_off) + linkedit_new_off;
 			dysymtab_command->modtaboff = (modtaboff - linkedit_old_off) + linkedit_new_off;
@@ -638,20 +638,20 @@ size_t Dyld::getAdjustedLinkeditSize(mach_vm_address_t address)
 		{
 			struct dyld_info_command *dyld_info_command = (struct dyld_info_command*) q;
 
-			uint32_t rebase_off = dyld_info_command->rebase_off;
-			uint32_t rebase_size = dyld_info_command->rebase_size;
+			UInt32 rebase_off = dyld_info_command->rebase_off;
+			UInt32 rebase_size = dyld_info_command->rebase_size;
 
-			uint32_t bind_off = dyld_info_command->bind_off;
-			uint32_t bind_size = dyld_info_command->bind_size;
+			UInt32 bind_off = dyld_info_command->bind_off;
+			UInt32 bind_size = dyld_info_command->bind_size;
 
-			uint32_t weak_bind_off = dyld_info_command->weak_bind_off;
-			uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
+			UInt32 weak_bind_off = dyld_info_command->weak_bind_off;
+			UInt32 weak_bind_size = dyld_info_command->weak_bind_size;
 
-			uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off;
-			uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
+			UInt32 lazy_bind_off = dyld_info_command->lazy_bind_off;
+			UInt32 lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-			uint32_t export_off = dyld_info_command->export_off;
-			uint32_t export_size = dyld_info_command->export_size;
+			UInt32 export_off = dyld_info_command->export_off;
+			UInt32 export_size = dyld_info_command->export_size;
 
 			dyld_info_command->rebase_off = (rebase_off - linkedit_old_off) + linkedit_new_off;
 			dyld_info_command->bind_off = (bind_off - linkedit_old_off) + linkedit_new_off;
@@ -701,17 +701,17 @@ exit:
 	return 0;
 }
 
-void Dyld::rebuildSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, off_t linkedit_fileoff)
+void Dyld::rebuildSymtabStrtab(struct symtab_command *symtab_command, xnu::Mach::VmAddress symtab_, xnu::Mach::VmAddress strtab_, xnu::Mach::VmAddress linkedit, Offset linkedit_fileoff)
 {
 	struct nlist_64 *symtab;
 
 	char *strtab;
 
-	mach_vm_address_t symoff;
-	mach_vm_address_t stroff;
+	xnu::Mach::VmAddress symoff;
+	xnu::Mach::VmAddress stroff;
 	
-	size_t symsize;
-	size_t strsize;
+	Size symsize;
+	Size strsize;
 
 	int idx = 0;
 
@@ -752,7 +752,7 @@ void Dyld::fixupDyldRebaseBindOpcodes(MachO *macho, Segment *linkedit)
 
 }
 
-size_t Dyld::getImageSize(mach_vm_address_t address)
+Size Dyld::getImageSize(xnu::Mach::VmAddress address)
 {
 	bool ok;
 
@@ -760,15 +760,15 @@ size_t Dyld::getImageSize(mach_vm_address_t address)
 
 	struct mach_header_64 *hdr;
 
-	mach_vm_address_t align;
+	xnu::Mach::VmAddress align;
 
-	uint64_t ncmds;
-	size_t sizeofcmds;
+	UInt64 ncmds;
+	Size sizeofcmds;
 
-	uint8_t *cmds;
-	uint8_t *q;
+	UInt8 *cmds;
+	UInt8 *q;
 
-	size_t filesz = 0;
+	Size filesz = 0;
 
 	hdr = NULL;
 	cmds = NULL;
@@ -784,7 +784,7 @@ size_t Dyld::getImageSize(mach_vm_address_t address)
 	ncmds = hdr->ncmds;
 	sizeofcmds = hdr->sizeofcmds;
 
-	cmds = reinterpret_cast<uint8_t*>(malloc(sizeofcmds));
+	cmds = reinterpret_cast<UInt8*>(malloc(sizeofcmds));
 
 	ok = this->task->read(address + sizeof(struct mach_header_64), cmds, sizeofcmds);
 
@@ -800,15 +800,15 @@ size_t Dyld::getImageSize(mach_vm_address_t address)
 	{
 		struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-		uint32_t cmdtype = load_cmd->cmd;
-		uint32_t cmdsize = load_cmd->cmdsize;
+		UInt32 cmdtype = load_cmd->cmd;
+		UInt32 cmdsize = load_cmd->cmdsize;
 
 		if(load_cmd->cmd == LC_SEGMENT_64)
 		{
 			struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
 
-			uint64_t fileoff = segment->fileoff;
-			uint64_t filesize = segment->filesize;
+			UInt64 fileoff = segment->fileoff;
+			UInt64 filesize = segment->filesize;
 
 			if(this->task->getPid() == getpid())
 			{
@@ -859,28 +859,28 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	bool dylibInSharedCache;
 
-	uint8_t *cmds;
+	UInt8 *cmds;
 
-	mach_vm_address_t symtab;
-	mach_vm_address_t strtab;
+	xnu::Mach::VmAddress symtab;
+	xnu::Mach::VmAddress strtab;
 
-	mach_vm_address_t linkedit_vmaddr;
-	mach_vm_address_t linkedit_off;
+	xnu::Mach::VmAddress linkedit_vmaddr;
+	xnu::Mach::VmAddress linkedit_off;
 
-	mach_vm_address_t linkedit_old_off;
-	mach_vm_address_t linkedit_new_off;
+	xnu::Mach::VmAddress linkedit_old_off;
+	xnu::Mach::VmAddress linkedit_new_off;
 
-	size_t linkedit_new_sz;
+	Size linkedit_new_sz;
 
 	char *image_dump;
 
-	size_t image_size;
+	Size image_size;
 
-	mach_vm_address_t address = this->getImageLoadedAt(image, NULL);
+	xnu::Mach::VmAddress address = this->getImageLoadedAt(image, NULL);
 
-	size_t size = this->getImageSize(address);
+	Size size = this->getImageSize(address);
 
-	off_t aslr_slide = this->getImageSlide(address);
+	Offset aslr_slide = this->getImageSlide(address);
 
 	FILE *fp;
 
@@ -888,11 +888,11 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 	if(size)
 	{
-		uint8_t *q;
+		UInt8 *q;
 
-		uint64_t align;
+		UInt64 align;
 
-		uint64_t current_offset = 0;
+		UInt64 current_offset = 0;
 
 		image_size = this->getImageSize(address);
 
@@ -900,7 +900,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		memset(image_dump, 0x0, size);
 
-		// printf("Dumping image at 0x%llx with size 0x%zx\n", (uint64_t) image, size);
+		// printf("Dumping image at 0x%llx with size 0x%zx\n", (UInt64) image, size);
 
 		this->task->read(address, image_dump, sizeof(struct mach_header_64));
 
@@ -919,7 +919,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 		current_offset = (align % 0x1000 > 0 ? align / 0x1000 + 1 : align / 0x1000) * 0x1000;
 
-		cmds = reinterpret_cast<uint8_t*>(hdr)+ sizeof(struct mach_header_64);
+		cmds = reinterpret_cast<UInt8*>(hdr)+ sizeof(struct mach_header_64);
 
 		q = cmds;
 
@@ -927,18 +927,18 @@ MachO* Dyld::cacheDumpImage(char *image)
 		{
 			struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-			uint32_t cmdtype = load_cmd->cmd;
-			uint32_t cmdsize = load_cmd->cmdsize;
+			UInt32 cmdtype = load_cmd->cmd;
+			UInt32 cmdsize = load_cmd->cmdsize;
 
 			if(load_cmd->cmd == LC_SEGMENT_64)
 			{
 				struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
 
-				uint64_t vmaddr = segment->vmaddr;
-				uint64_t vmsize = segment->vmsize;
+				UInt64 vmaddr = segment->vmaddr;
+				UInt64 vmsize = segment->vmsize;
 
-				uint64_t fileoffset = segment->fileoff;
-				uint64_t filesize = segment->filesize;
+				UInt64 fileoffset = segment->fileoff;
+				UInt64 filesize = segment->filesize;
 
 				if(dylibInSharedCache && strcmp(segment->segname, "__LINKEDIT") == 0)
 				{
@@ -961,7 +961,7 @@ MachO* Dyld::cacheDumpImage(char *image)
 					segment->fileoff = current_offset;
 					segment->filesize = filesize;
 
-					printf("Dumping %s at 0x%llx with size 0x%llx at 0x%llx\n", segment->segname, vmaddr + aslr_slide, filesize, (uint64_t) (image_dump + current_offset));
+					printf("Dumping %s at 0x%llx with size 0x%llx at 0x%llx\n", segment->segname, vmaddr + aslr_slide, filesize, (UInt64) (image_dump + current_offset));
 
 					if(dylibInSharedCache && !this->task->read(vmaddr + aslr_slide, image_dump + current_offset, filesize))
 					{
@@ -1002,19 +1002,19 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint64_t symsize = symtab_command->nsyms * sizeof(struct nlist_64);
-					uint64_t strsize = symtab_command->strsize;
+					UInt64 symsize = symtab_command->nsyms * sizeof(struct nlist_64);
+					UInt64 strsize = symtab_command->strsize;
 
-					uint64_t old_symoff = symtab_command->symoff;
-					uint64_t old_stroff = symtab_command->stroff;
+					UInt64 old_symoff = symtab_command->symoff;
+					UInt64 old_stroff = symtab_command->stroff;
 
-					uint64_t symoff = old_symoff - linkedit_new_off;
-					uint64_t stroff = old_stroff - linkedit_new_off;
+					UInt64 symoff = old_symoff - linkedit_new_off;
+					UInt64 stroff = old_stroff - linkedit_new_off;
 
-					uint32_t new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr + aslr_slide, linkedit_old_off);
+					UInt32 new_strsize = this->getAdjustedStrtabSize(symtab_command, linkedit_vmaddr + aslr_slide, linkedit_old_off);
 					
-					uint64_t symtab = (uint64_t) (image_dump + linkedit_new_off + linkedit_off);
-					uint64_t strtab = (uint64_t) (image_dump + linkedit_new_off + linkedit_off + symsize);
+					UInt64 symtab = (UInt64) (image_dump + linkedit_new_off + linkedit_off);
+					UInt64 strtab = (UInt64) (image_dump + linkedit_new_off + linkedit_off + symsize);
 
 					this->task->read(linkedit_vmaddr + aslr_slide + (symtab_command->symoff - linkedit_old_off), image_dump + linkedit_new_off + linkedit_off, symsize);
 
@@ -1028,11 +1028,11 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += (symsize + new_strsize);
 				} else
 				{
-					uint64_t symsize = symtab_command->nsyms * sizeof(struct nlist_64);
-					uint64_t strsize = symtab_command->strsize;
+					UInt64 symsize = symtab_command->nsyms * sizeof(struct nlist_64);
+					UInt64 strsize = symtab_command->strsize;
 
-					uint64_t symoff = symtab_command->symoff;
-					uint64_t stroff = symtab_command->stroff;
+					UInt64 symoff = symtab_command->symoff;
+					UInt64 stroff = symtab_command->stroff;
 
 					this->task->read(address + aslr_slide + symoff, image_dump + current_offset, symsize);
 
@@ -1053,23 +1053,23 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint32_t tocoff = dysymtab_command->tocoff - linkedit_old_off;
-					uint32_t tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
+					UInt32 tocoff = dysymtab_command->tocoff - linkedit_old_off;
+					UInt32 tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
 
-					uint32_t modtaboff = dysymtab_command->modtaboff - linkedit_old_off;
-					uint32_t modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
+					UInt32 modtaboff = dysymtab_command->modtaboff - linkedit_old_off;
+					UInt32 modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
 
-					uint32_t extrefsymoff = dysymtab_command->extrefsymoff - linkedit_old_off;
-					uint32_t extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
+					UInt32 extrefsymoff = dysymtab_command->extrefsymoff - linkedit_old_off;
+					UInt32 extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
 
-					uint32_t indirectsymoff = dysymtab_command->indirectsymoff - linkedit_old_off;
-					uint32_t indirectsize = dysymtab_command->nindirectsyms * sizeof(uint32_t);
+					UInt32 indirectsymoff = dysymtab_command->indirectsymoff - linkedit_old_off;
+					UInt32 indirectsize = dysymtab_command->nindirectsyms * sizeof(UInt32);
 
-					uint32_t extreloff = dysymtab_command->extreloff - linkedit_old_off;
-					uint32_t extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
+					UInt32 extreloff = dysymtab_command->extreloff - linkedit_old_off;
+					UInt32 extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
 
-					uint32_t locreloff = dysymtab_command->locreloff - linkedit_old_off;
-					uint32_t locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
+					UInt32 locreloff = dysymtab_command->locreloff - linkedit_old_off;
+					UInt32 locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
 
 					this->task->read(linkedit_vmaddr + aslr_slide + tocoff, image_dump + linkedit_new_off + linkedit_off, tocsize);
 
@@ -1108,23 +1108,23 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += locrelsize;
 				} else
 				{
-					uint32_t tocoff = dysymtab_command->tocoff;
-					uint32_t tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
+					UInt32 tocoff = dysymtab_command->tocoff;
+					UInt32 tocsize = dysymtab_command->ntoc * sizeof(struct dylib_table_of_contents);
 
-					uint32_t modtaboff = dysymtab_command->modtaboff;
-					uint32_t modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
+					UInt32 modtaboff = dysymtab_command->modtaboff;
+					UInt32 modtabsize = dysymtab_command->nmodtab * sizeof(struct dylib_module_64);
 
-					uint32_t extrefsymoff = dysymtab_command->extrefsymoff;
-					uint32_t extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
+					UInt32 extrefsymoff = dysymtab_command->extrefsymoff;
+					UInt32 extrefsize = dysymtab_command->nextrefsyms * sizeof(struct dylib_reference);
 
-					uint32_t indirectsymoff = dysymtab_command->indirectsymoff;
-					uint32_t indirectsize = dysymtab_command->nindirectsyms * sizeof(uint32_t);
+					UInt32 indirectsymoff = dysymtab_command->indirectsymoff;
+					UInt32 indirectsize = dysymtab_command->nindirectsyms * sizeof(UInt32);
 
-					uint32_t extreloff = dysymtab_command->extreloff;
-					uint32_t extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
+					UInt32 extreloff = dysymtab_command->extreloff;
+					UInt32 extrelsize = dysymtab_command->nextrel * sizeof(struct relocation_info);
 
-					uint32_t locreloff = dysymtab_command->locreloff;
-					uint32_t locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
+					UInt32 locreloff = dysymtab_command->locreloff;
+					UInt32 locrelsize = dysymtab_command->nlocrel * sizeof(struct relocation_info);
 
 					this->task->read(address + aslr_slide + tocoff, image_dump + current_offset, tocsize);
 
@@ -1169,20 +1169,20 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint32_t rebase_off = dyld_info_command->rebase_off - linkedit_old_off;
-					uint32_t rebase_size = dyld_info_command->rebase_size;
+					UInt32 rebase_off = dyld_info_command->rebase_off - linkedit_old_off;
+					UInt32 rebase_size = dyld_info_command->rebase_size;
 
-					uint32_t bind_off = dyld_info_command->bind_off - linkedit_old_off;
-					uint32_t bind_size = dyld_info_command->bind_size;
+					UInt32 bind_off = dyld_info_command->bind_off - linkedit_old_off;
+					UInt32 bind_size = dyld_info_command->bind_size;
 
-					uint32_t weak_bind_off = dyld_info_command->weak_bind_off - linkedit_old_off;
-					uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
+					UInt32 weak_bind_off = dyld_info_command->weak_bind_off - linkedit_old_off;
+					UInt32 weak_bind_size = dyld_info_command->weak_bind_size;
 
-					uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_old_off;
-					uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
+					UInt32 lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_old_off;
+					UInt32 lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-					uint32_t export_off = dyld_info_command->export_off - linkedit_old_off;
-					uint32_t export_size = dyld_info_command->export_size;
+					UInt32 export_off = dyld_info_command->export_off - linkedit_old_off;
+					UInt32 export_size = dyld_info_command->export_size;
 
 					this->task->read(linkedit_vmaddr + aslr_slide + rebase_off, image_dump + linkedit_new_off + linkedit_off, rebase_size);
 
@@ -1215,20 +1215,20 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += export_size;
 				} else
 				{
-					uint32_t rebase_off = dyld_info_command->rebase_off;
-					uint32_t rebase_size = dyld_info_command->rebase_size;
+					UInt32 rebase_off = dyld_info_command->rebase_off;
+					UInt32 rebase_size = dyld_info_command->rebase_size;
 
-					uint32_t bind_off = dyld_info_command->bind_off;
-					uint32_t bind_size = dyld_info_command->bind_size;
+					UInt32 bind_off = dyld_info_command->bind_off;
+					UInt32 bind_size = dyld_info_command->bind_size;
 
-					uint32_t weak_bind_off = dyld_info_command->weak_bind_off;
-					uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
+					UInt32 weak_bind_off = dyld_info_command->weak_bind_off;
+					UInt32 weak_bind_size = dyld_info_command->weak_bind_size;
 
-					uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_old_off;
-					uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
+					UInt32 lazy_bind_off = dyld_info_command->lazy_bind_off - linkedit_old_off;
+					UInt32 lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-					uint32_t export_off = dyld_info_command->export_off - linkedit_old_off;
-					uint32_t export_size = dyld_info_command->export_size;
+					UInt32 export_off = dyld_info_command->export_off - linkedit_old_off;
+					UInt32 export_size = dyld_info_command->export_size;
 
 					this->task->read(address + aslr_slide + rebase_off, image_dump + current_offset, rebase_size);
 
@@ -1268,8 +1268,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff - linkedit_old_off;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
 
@@ -1278,8 +1278,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += datasize;
 				} else
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(address + aslr_slide + dataoff, image_dump + current_offset, datasize);
 
@@ -1294,8 +1294,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff - linkedit_old_off;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
 
@@ -1304,8 +1304,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += datasize;
 				} else
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(address + aslr_slide + dataoff, image_dump + current_offset, datasize);
 
@@ -1320,8 +1320,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 
 				if(dylibInSharedCache)
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff - linkedit_old_off;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff - linkedit_old_off;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(linkedit_vmaddr + aslr_slide + dataoff, image_dump + linkedit_new_off + linkedit_off, datasize);
 
@@ -1330,8 +1330,8 @@ MachO* Dyld::cacheDumpImage(char *image)
 					linkedit_off += datasize;
 				} else
 				{
-					uint32_t dataoff = linkedit_data_command->dataoff;
-					uint32_t datasize = linkedit_data_command->datasize;
+					UInt32 dataoff = linkedit_data_command->dataoff;
+					UInt32 datasize = linkedit_data_command->datasize;
 
 					this->task->read(address + aslr_slide + dataoff, image_dump + current_offset, datasize);
 

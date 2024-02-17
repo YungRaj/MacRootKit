@@ -28,6 +28,8 @@ extern "C"
 
 #include <vector>
 
+#include <Types.h>
+
 class MachO;
 class Segment;
 class Section;
@@ -55,15 +57,15 @@ namespace dyld
 
 			xnu::Task* getTask() { return task; }
 
-			mach_vm_address_t getMainImageLoadBase() { return main_image_load_base; }
-			mach_vm_address_t getAllImageInfoAddr() { return all_image_info_addr; }
+			xnu::Mach::VmAddress getMainImageLoadBase() { return main_image_load_base; }
+			xnu::Mach::VmAddress getAllImageInfoAddr() { return all_image_info_addr; }
 
-			mach_vm_address_t getDyld() { return dyld; }
-			mach_vm_address_t getDyldSharedCache() { return dyld_shared_cache; }
+			xnu::Mach::VmAddress getDyld() { return dyld; }
+			xnu::Mach::VmAddress getDyldSharedCache() { return dyld_shared_cache; }
 
 			struct dyld_image_info* getMainImageInfo() { return main_image_info; }
 
-			off_t getSlide() { return slide; }
+			Offset getSlide() { return slide; }
 
 			void getImageInfos();
 
@@ -72,24 +74,24 @@ namespace dyld
 			struct dyld_cache_header* cacheGetHeader();
 
 			struct dyld_cache_mapping_info* cacheGetMappings(struct dyld_cache_header *cache_header);
-			struct dyld_cache_mapping_info* cacheGetMapping(struct dyld_cache_header *cache_header, vm_prot_t prot);
+			struct dyld_cache_mapping_info* cacheGetMapping(struct dyld_cache_header *cache_header, xnu::Mach::VmProtection prot);
 
-			void cacheOffsetToAddress(uint64_t dyld_cache_offset, mach_vm_address_t *address, off_t *slide);
+			void cacheOffsetToAddress(UInt64 dyld_cache_offset, xnu::Mach::VmAddress *address, Offset *slide);
 
-			void cacheGetSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t *symtab, mach_vm_address_t *strtab, off_t *slide);
+			void cacheGetSymtabStrtab(struct symtab_command *symtab_command, xnu::Mach::VmAddress *symtab, xnu::Mach::VmAddress *strtab, Offset *slide);
 
-			mach_vm_address_t getImageLoadedAt(char *image_name, char **image_path);
-			mach_vm_address_t getImageSlide(mach_vm_address_t address);
+			xnu::Mach::VmAddress getImageLoadedAt(char *image_name, char **image_path);
+			xnu::Mach::VmAddress getImageSlide(xnu::Mach::VmAddress address);
 
-			size_t getAdjustedLinkeditSize(mach_vm_address_t address);
-			size_t getAdjustedStrtabSize(struct symtab_command *symtab_command, mach_vm_address_t linkedit, off_t linkedit_fileoff);
+			Size getAdjustedLinkeditSize(xnu::Mach::VmAddress address);
+			Size getAdjustedStrtabSize(struct symtab_command *symtab_command, xnu::Mach::VmAddress linkedit, Offset linkedit_fileoff);
 
-			void rebuildSymtabStrtab(struct symtab_command *symtab_command, mach_vm_address_t symtab_, mach_vm_address_t strtab_, mach_vm_address_t linkedit, off_t linkedit_fileoff);
+			void rebuildSymtabStrtab(struct symtab_command *symtab_command, xnu::Mach::VmAddress symtab_, xnu::Mach::VmAddress strtab_, xnu::Mach::VmAddress linkedit, Offset linkedit_fileoff);
 
 			void fixupObjectiveC(MachO *macho);
 			void fixupDyldRebaseBindOpcodes(MachO *macho, Segment *linkedit);
 
-			size_t getImageSize(mach_vm_address_t address);
+			Size getImageSize(xnu::Mach::VmAddress address);
 
 			MachO* cacheDumpImage(char *image);
 			MachO* cacheDumpImageToFile(char *image, char *path);
@@ -105,16 +107,16 @@ namespace dyld
 
 			std::vector<Library*> libraries;
 
-			mach_vm_address_t main_image_load_base;
+			xnu::Mach::VmAddress main_image_load_base;
 
-			mach_vm_address_t dyld;
-			mach_vm_address_t dyld_shared_cache;
+			xnu::Mach::VmAddress dyld;
+			xnu::Mach::VmAddress dyld_shared_cache;
 
-			off_t slide;
+			Offset slide;
 
-			mach_vm_address_t all_image_info_addr;
+			xnu::Mach::VmAddress all_image_info_addr;
 			
-			size_t all_image_info_size;
+			Size all_image_info_size;
 
 			struct dyld_all_image_infos *all_image_infos;
 			struct dyld_image_info *main_image_info;

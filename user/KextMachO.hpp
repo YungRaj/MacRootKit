@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "MachO.hpp"
 
 class MachO;
@@ -28,9 +30,9 @@ namespace xnu
 	{
 		public:
 			KextMachO(uintptr_t base);
-			KextMachO(uintptr_t base, off_t slide);
+			KextMachO(uintptr_t base, Offset slide);
 			
-			KextMachO(const char *path, off_t slide);
+			KextMachO(const char *path, Offset slide);
 			KextMachO(const char *path);
 
 			~KextMachO();
@@ -46,5 +48,3 @@ namespace xnu
 	};
 
 };
-
-#endif

@@ -44,26 +44,26 @@ void parseClassList(ObjCData *data, std::vector<ObjCClass*> &classes)
 	Section *ivars = data->getIvars();
 	Section *objc_data = data->getObjcData();
 	
-	size_t classlist_size = classlist->getSize();
+	Size classlist_size = classlist->getSize();
 
-	mach_vm_address_t address = classlist->getAddress();
+	UInt64 address = classlist->getAddress();
 
-	mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+	UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
 
-	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
+	UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
 
-	uint64_t *clslist = reinterpret_cast<uint64_t*>(header + classlist->getOffset());
+	UInt64 *clslist = reinterpret_cast<UInt64*>(header + classlist->getOffset());
 
-	for(uint64_t off = 0; off < classlist_size; off = off + sizeof(uint64_t))
+	for(UInt64 off = 0; off < classlist_size; off = off + sizeof(UInt64))
 	{
 		ObjCClass *c;
 		ObjCClass *metac;
 
-		uint64_t cls = macho->getBufferAddress(((*(clslist + off / sizeof(uint64_t))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+		UInt64 cls = macho->getBufferAddress(((*(clslist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
 
 		if(!cls)
 		{
-			cls = header + *(clslist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF;
+			cls = header + *(clslist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
 		}
 
 		struct _objc_2_class *objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
@@ -98,25 +98,25 @@ void parseCategoryList(ObjCData *data, std::vector<Category*> &categories)
 
 	Section *catlist = data->getCategoryList();
 
-	size_t catlist_size = catlist->getSize();
+	Size catlist_size = catlist->getSize();
 
-	mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+	UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
 
-	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
+	UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
 
-	mach_vm_address_t address = catlist->getAddress();
+	UInt64 address = catlist->getAddress();
 
-	uint64_t *categorylist = reinterpret_cast<uint64_t*>(header + catlist->getOffset());
+	UInt64 *categorylist = reinterpret_cast<UInt64*>(header + catlist->getOffset());
 
-	for(uint64_t off = 0; off < catlist_size; off = off + sizeof(uint64_t))
+	for(UInt64 off = 0; off < catlist_size; off = off + sizeof(UInt64))
 	{
 		Category *cat;
 
-		uint64_t category = macho->getBufferAddress((*(categorylist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+		UInt64 category = macho->getBufferAddress((*(categorylist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
 
 		if(!category)
 		{
-			category = header + (*(categorylist + off / sizeof(uint64_t))  & 0xFFFFFFFFFFF);
+			category = header + (*(categorylist + off / sizeof(UInt64))  & 0xFFFFFFFFFFF);
 		}
 
 		struct _objc_2_category *objc_category = reinterpret_cast<struct _objc_2_category*>(category);
@@ -141,25 +141,25 @@ void parseProtocolList(ObjCData *data, std::vector<Protocol*> &protocols)
 
 	Section *protrefs = data->getProtoRefs();
 
-	size_t protolist_size = protlist->getSize();
+	Size protolist_size = protlist->getSize();
 
-	mach_vm_address_t base = macho->getBase() - data->getMachO()->getAslrSlide();
+	UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
 
-	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader());
+	UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
 
-	mach_vm_address_t address = protlist->getAddress();
+	UInt64 address = protlist->getAddress();
 
-	uint64_t *protolist = reinterpret_cast<uint64_t*>(header + protlist->getOffset());
+	UInt64 *protolist = reinterpret_cast<UInt64*>(header + protlist->getOffset());
 
-	for(uint64_t off = 0; off < protolist_size; off = off + sizeof(uint64_t))
+	for(UInt64 off = 0; off < protolist_size; off = off + sizeof(UInt64))
 	{
 		Protocol *p;
 
-		uint64_t proto = macho->getBufferAddress(((*(protolist + off / sizeof(uint64_t))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+		UInt64 proto = macho->getBufferAddress(((*(protolist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
 
 		if(!proto)
 		{
-			proto = header + *(protolist + off / sizeof(uint64_t)) & 0xFFFFFFFFFFF;
+			proto = header + *(protolist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
 		}
 
 		struct _objc_2_class_protocol *objc_protocol = reinterpret_cast<struct _objc_2_class_protocol*>(proto);
@@ -179,9 +179,9 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> &met
 
 	struct _objc_2_class_method_info *methods;
 
-	off_t off;
+	Offset off;
 
-	mach_vm_address_t selectors = macho->isDyldCache() ? ObjectiveC::findSelectorsBase(macho) : 0;
+	UInt64 selectors = macho->isDyldCache() ? ObjectiveC::findSelectorsBase(macho) : 0;
 
 	if(!methodInfo)
 	{
@@ -225,10 +225,10 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> &met
 
 	for(int i = 0; i < methods->count; i++)
 	{
-		mach_vm_address_t pointer_to_name;
-		mach_vm_address_t offset_to_name;
+		UInt64 pointer_to_name;
+		UInt64 offset_to_name;
 
-		uint8_t *q = reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(methods) + off);
+		UInt8 *q = reinterpret_cast<UInt8*>(reinterpret_cast<UInt8*>(methods) + off);
 
 		if(macho->isDyldCache() && dynamic_cast<Protocol*>(object))
 		{
@@ -262,9 +262,9 @@ void parseMethodList(ObjCData *metadata, ObjC *object, std::vector<Method*> &met
 		{
 			struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(q);
 
-			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + reinterpret_cast<uint32_t>(method->name & 0xFFFFFF);
+			pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) + reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
 
-			offset_to_name = ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
+			offset_to_name = ((*(UInt64*) pointer_to_name) & 0xFFFFFF);
 
 			Method *meth = new Method(object, method);
 
@@ -281,7 +281,7 @@ void parsePropertyList(ObjCData *metadata, ObjC *object, std::vector<Property*> 
 {
 	struct _objc_2_class_property_info *properties;
 
-	off_t off;
+	Offset off;
 
 	if(!propertyInfo)
 	{
@@ -296,7 +296,7 @@ void parsePropertyList(ObjCData *metadata, ObjC *object, std::vector<Property*> 
 
 	for(int i = 0; i < properties->count; i++)
 	{
-		struct _objc_2_class_property *property = reinterpret_cast<struct _objc_2_class_property*>(reinterpret_cast<uint8_t*>(properties) + off);
+		struct _objc_2_class_property *property = reinterpret_cast<struct _objc_2_class_property*>(reinterpret_cast<UInt8*>(properties) + off);
 
 		Property *prop = new Property(object, property);
 
@@ -320,33 +320,33 @@ ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass
 	cls = c;
 	super = NULL;
 
-	data = reinterpret_cast<struct _objc_2_class_data*>((uint64_t)c->data & 0xFFFFFFF8);
+	data = reinterpret_cast<struct _objc_2_class_data*>((UInt64)c->data & 0xFFFFFFF8);
 
-	if(macho->sectionForOffset(reinterpret_cast<mach_vm_address_t>(this->data)))
+	if(macho->sectionForOffset(reinterpret_cast<UInt64>(this->data)))
 	{
-		data = reinterpret_cast<struct _objc_2_class_data*>((uint64_t) this->data + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
-		name = reinterpret_cast<char*>((data->name & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+		data = reinterpret_cast<struct _objc_2_class_data*>((UInt64) this->data + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
+		name = reinterpret_cast<char*>((data->name & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
 
-		if(macho->sectionForOffset(reinterpret_cast<mach_vm_address_t>((data->name & 0xFFFFFFFF))))
+		if(macho->sectionForOffset(reinterpret_cast<UInt64>((data->name & 0xFFFFFFFF))))
 		{
 			if(metaclass)
 				printf("\t\t$OBJC_METACLASS_%s\n",name);
 			else
 				printf("\t\t$OBJC_CLASS_%s\n",name);
 
-			isa = reinterpret_cast<mach_vm_address_t>(c->isa);
-			superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
-			cache = reinterpret_cast<mach_vm_address_t>(c->cache);
-			vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+			isa = reinterpret_cast<UInt64>(c->isa);
+			superclass = reinterpret_cast<UInt64>(c->superclass);
+			cache = reinterpret_cast<UInt64>(c->cache);
+			vtable = reinterpret_cast<UInt64>(c->vtable);
 
 			this->parseMethods();
 			this->parseIvars();
 			this->parseProperties();
 		}
 
-	} else if(macho->sectionForAddress(reinterpret_cast<mach_vm_address_t>(((uint64_t) c->data & 0xFFFFFFFFF) - this->macho->getAslrSlide())))
+	} else if(macho->sectionForAddress(reinterpret_cast<UInt64>(((UInt64) c->data & 0xFFFFFFFFF) - this->macho->getAslrSlide())))
 	{
-		data = reinterpret_cast<struct _objc_2_class_data*>(this->macho->getBufferAddress(((uint64_t)c->data & 0xFFFFFFFFF) - macho->getAslrSlide()));
+		data = reinterpret_cast<struct _objc_2_class_data*>(this->macho->getBufferAddress(((UInt64)c->data & 0xFFFFFFFFF) - macho->getAslrSlide()));
 
 		name = reinterpret_cast<char*>(macho->getBufferAddress(data->name - macho->getAslrSlide()));
 
@@ -355,10 +355,10 @@ ObjCClass::ObjCClass(ObjCData *metadata, struct _objc_2_class *c, bool metaclass
 		else
 			printf("\t\t$OBJC_CLASS_%s\n",name);
 
-		isa = reinterpret_cast<mach_vm_address_t>(c->isa);
-		superclass = reinterpret_cast<mach_vm_address_t>(c->superclass);
-		cache = reinterpret_cast<mach_vm_address_t>(c->cache);
-		vtable = reinterpret_cast<mach_vm_address_t>(c->vtable);
+		isa = reinterpret_cast<UInt64>(c->isa);
+		superclass = reinterpret_cast<UInt64>(c->superclass);
+		cache = reinterpret_cast<UInt64>(c->cache);
+		vtable = reinterpret_cast<UInt64>(c->vtable);
 
 		this->parseMethods();
 		this->parseIvars();
@@ -434,41 +434,41 @@ Protocol::Protocol(ObjCData *data, struct _objc_2_class_protocol *prot)
 		}
 	} else
 	{
-		this->name = reinterpret_cast<char*>((prot->name & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		this->name = reinterpret_cast<char*>((prot->name & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 		printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
 
 		if(prot->instance_methods)
 		{
-			instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->instance_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->instance_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(), INSTANCE_METHOD, instanceMethods);
 		}
 
 		if(prot->class_methods)
 		{
-			classMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->class_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			classMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->class_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD, classMethods);
 		}
 
 		if(prot->opt_instance_methods)
 		{
-			optionalInstanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_instance_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			optionalInstanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_instance_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 				
 			ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalInstanceMethods(), OPT_INSTANCE_METHOD, optionalInstanceMethods);
 		}
 		
 		if(prot->opt_class_methods)
 		{
-			optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_class_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->protocol->opt_class_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(), OPT_CLASS_METHOD, optionalClassMethods);
 		}
 
 		if(prot->instance_properties)
 		{
-			instanceProperties = reinterpret_cast<struct _objc_2_class_property_info*>((this->protocol->instance_properties & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			instanceProperties = reinterpret_cast<struct _objc_2_class_property_info*>((this->protocol->instance_properties & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parsePropertyList(this->metadata, this, this->getInstanceProperties(), instanceProperties);
 		}
@@ -531,13 +531,13 @@ Category::Category(ObjCData *data, struct _objc_2_category *cat)
 
 	} else
 	{
-		name = reinterpret_cast<char*>((cat->category_name & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		name = reinterpret_cast<char*>((cat->category_name & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 		if(!(cat->class_name & 0x4000000000000000))
 		{
-			mach_vm_address_t cls = ((cat->class_name & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			UInt64 cls = ((cat->class_name & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 		
-			ObjCClass *isa = data->getClassByIsa((mach_vm_address_t) cls);
+			ObjCClass *isa = data->getClassByIsa((UInt64) cls);
 
 			if(isa)
 			{
@@ -555,21 +555,21 @@ Category::Category(ObjCData *data, struct _objc_2_category *cat)
 
 		if(cat->instance_methods)
 		{
-			instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->category->instance_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->category->instance_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(), INSTANCE_METHOD, instanceMethods);
 		}
 
 		if(cat->class_methods)
 		{
-			classMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->category->class_methods & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			classMethods = reinterpret_cast<struct _objc_2_class_method_info*>((this->category->class_methods & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD, classMethods);
 		}
 
 		if(cat->properties)
 		{
-			catProperties = reinterpret_cast<struct _objc_2_class_property_info*>((this->category->properties & 0xFFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+			catProperties = reinterpret_cast<struct _objc_2_class_property_info*>((this->category->properties & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 			ObjectiveC::parsePropertyList(this->metadata, this, this->getProperties(), catProperties);
 		}
@@ -599,7 +599,7 @@ Ivar::Ivar(ObjC *object, struct _objc_2_class_ivar *ivar)
 	{
 		object = object;
 		ivar = ivar;
-		offset = reinterpret_cast<mach_vm_address_t>((ivar->offset & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		offset = reinterpret_cast<UInt64>((ivar->offset & 0xFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 		name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) + reinterpret_cast<char*>(macho->getMachHeader()));
 		type = ivar->type;
 		size = ivar->size;
@@ -641,11 +641,11 @@ Method::Method(ObjC *object, struct _objc_2_class_method *method)
 {
 	mrk::UserMachO *macho = object->getMetadata()->getMachO();
 
-	mach_vm_address_t selectors;
+	UInt64 selectors;
 
-	mach_vm_address_t pointer_to_type;
+	UInt64 pointer_to_type;
 
-	mach_vm_address_t pointer_to_name;
+	UInt64 pointer_to_name;
 
 	object = object;
 	method = method;
@@ -660,7 +660,7 @@ Method::Method(ObjC *object, struct _objc_2_class_method *method)
 
 		name = reinterpret_cast<char*>(pointer_to_name);
 
-		pointer_to_type = macho->offsetToAddress((mach_vm_address_t) &method->type - reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		pointer_to_type = macho->offsetToAddress((UInt64) &method->type - reinterpret_cast<UInt64>(macho->getMachHeader()));
 
 		pointer_to_type += method->type;
 
@@ -673,21 +673,21 @@ Method::Method(ObjC *object, struct _objc_2_class_method *method)
 
 		type = pointer_to_type;
 
-		impl = reinterpret_cast<mach_vm_address_t>(method->imp + macho->offsetToAddress(reinterpret_cast<mach_vm_address_t>(&method->imp) - reinterpret_cast<mach_vm_address_t>(macho->getMachHeader())));
+		impl = reinterpret_cast<UInt64>(method->imp + macho->offsetToAddress(reinterpret_cast<UInt64>(&method->imp) - reinterpret_cast<UInt64>(macho->getMachHeader())));
 	} else
 	{
 		if(dynamic_cast<ObjCClass*>(this->object) || dynamic_cast<Category*>(this->object))
 		{
-			pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint32_t>(method->name & 0xFFFFFF);
+			pointer_to_name = reinterpret_cast<UInt64>(&method->name) + reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
 
-			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + ((*(uint64_t*) pointer_to_name) & 0xFFFFFF);
+			pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) + ((*(UInt64*) pointer_to_name) & 0xFFFFFF);
 		} else
 		{
-			pointer_to_name = reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()) + reinterpret_cast<uint32_t>(method->name & 0xFFFFFF);
+			pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) + reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
 		}
 
 		name = reinterpret_cast<char*>(pointer_to_name);
-		impl = reinterpret_cast<mach_vm_address_t>((method->imp & 0xFFFFFF) + reinterpret_cast<mach_vm_address_t>(macho->getMachHeader()));
+		impl = reinterpret_cast<UInt64>((method->imp & 0xFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
 		type = method->type;
 	}
 }
@@ -725,11 +725,11 @@ Method::Method(ObjC *object, struct _objc_2_method *method)
 namespace ObjectiveC
 {
 	
-mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
+UInt64 findSelectorsBase(mrk::UserMachO *macho)
 {
-	mach_vm_address_t selectors;
+	UInt64 selectors;
 
-	mach_vm_address_t method_getName;
+	UInt64 method_getName;
 
 	mrk::UserMachO *libobjc;
 
@@ -756,15 +756,15 @@ mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 		return 0;
 	}
 
-	mach_vm_address_t start = libobjc->getBufferAddress(method_getName);
+	UInt64 start = libobjc->getBufferAddress(method_getName);
 
 #ifdef __arm64__
 
 	using namespace Arch::arm64;
 
-	mach_vm_address_t add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,(bool (*)(uint32_t*))is_add_reg, -1, -1);
+	UInt64 add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,(bool (*)(UInt32*))is_add_reg, -1, -1);
 
-	mach_vm_address_t xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,(bool (*)(uint32_t*))is_adrp, -1, -1);
+	UInt64 xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,(bool (*)(UInt32*))is_adrp, -1, -1);
 
 	adr_t adrp = *reinterpret_cast<adr_t*>(xref);
 
@@ -780,13 +780,13 @@ mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho)
 
 	cs_insn insn;
 
-	mach_vm_address_t add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
+	UInt64 add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
 
-	mach_vm_address_t mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
+	UInt64 mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
 
 	Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
 
-	mach_vm_address_t selectors = insn.detail.x86->operands[1].mem.disp + mov;
+	UInt64 selectors = insn.detail.x86->operands[1].mem.disp + mov;
 
 	return selectors;
 
@@ -861,9 +861,9 @@ void ObjCClass::parseMethods()
 
 	struct _objc_2_class_method_info *methods;
 
-	mach_vm_address_t selectors = 0;
+	UInt64 selectors = 0;
 
-	off_t off;
+	Offset off;
 
 	c = this->cls;
 
@@ -886,7 +886,7 @@ void ObjCClass::parseMethods()
 		methods = reinterpret_cast<struct _objc_2_class_method_info*>(this->macho->getBufferAddress((d->methods & 0xFFFFFFFFFF)  - this->macho->getAslrSlide()));
 	} else
 	{
-		methods = reinterpret_cast<struct _objc_2_class_method_info*>((d->methods & 0xFFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+		methods = reinterpret_cast<struct _objc_2_class_method_info*>((d->methods & 0xFFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
 	}
 
 	if(!methods)
@@ -900,10 +900,10 @@ void ObjCClass::parseMethods()
 
 	for(int i = 0; i < methods->count; i++)
 	{
-		struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<uint8_t*>(methods) + off);
+		struct _objc_2_class_method *method = reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<UInt8*>(methods) + off);
 
-		mach_vm_address_t pointer_to_name;
-		mach_vm_address_t offset_to_name;
+		UInt64 pointer_to_name;
+		UInt64 offset_to_name;
 
 		if(selectors)
 		{
@@ -926,9 +926,9 @@ void ObjCClass::parseMethods()
 
 		} else
 		{
-			pointer_to_name = reinterpret_cast<mach_vm_address_t>(&method->name) + reinterpret_cast<uint32_t>(method->name & 0xFFFFFFFF);
+			pointer_to_name = reinterpret_cast<UInt64>(&method->name) + reinterpret_cast<UInt32>(method->name & 0xFFFFFFFF);
 
-			offset_to_name = ((*(uint64_t*) pointer_to_name));
+			offset_to_name = ((*(UInt64*) pointer_to_name));
 
 			if(offset_to_name)
 			{
@@ -963,7 +963,7 @@ void ObjCClass::parseProtocols()
 
 	struct _objc_2_class_protocol_info *protocols;
 
-	off_t off;
+	Offset off;
 
 	c = this->cls;
 
@@ -982,7 +982,7 @@ void ObjCClass::parseIvars()
 
 	struct _objc_2_class_ivar_info *ivars;
 
-	off_t off;
+	Offset off;
 
 	c = this->cls;
 
@@ -1000,7 +1000,7 @@ void ObjCClass::parseIvars()
 		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(this->macho->getBufferAddress(d->ivars  - this->macho->getAslrSlide()));
 	} else
 	{
-		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>((d->ivars & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+		ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>((d->ivars & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
 	}
 
 	if(!ivars)
@@ -1014,7 +1014,7 @@ void ObjCClass::parseIvars()
 	
 	for(int i = 0; i < ivars->count; i++)
 	{
-		struct _objc_2_class_ivar *ivar = reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<uint8_t*>(ivars) + off);
+		struct _objc_2_class_ivar *ivar = reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<UInt8*>(ivars) + off);
 
 		Ivar *iv = new Ivar(this, ivar);
 
@@ -1034,7 +1034,7 @@ void ObjCClass::parseProperties()
 
 	struct _objc_2_class_property_info *properties;
 
-	off_t off;
+	Offset off;
 
 	c = this->cls;
 
@@ -1052,7 +1052,7 @@ void ObjCClass::parseProperties()
 		properties = reinterpret_cast<struct _objc_2_class_property_info*>(this->macho->getBufferAddress(d->properties  - this->macho->getAslrSlide()));
 	} else
 	{
-		properties = reinterpret_cast<struct _objc_2_class_property_info*>((d->properties & 0xFFFFFFFF) + reinterpret_cast<mach_vm_address_t>(this->macho->getMachHeader()));
+		properties = reinterpret_cast<struct _objc_2_class_property_info*>((d->properties & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
 	}
 
 	if(!properties)
@@ -1066,7 +1066,7 @@ void ObjCClass::parseProperties()
 
 	for(int i = 0; i < properties->count; i++)
 	{
-		struct _objc_2_class_property *property = reinterpret_cast<struct _objc_2_class_property*>(reinterpret_cast<uint8_t*>(properties) + off);
+		struct _objc_2_class_property *property = reinterpret_cast<struct _objc_2_class_property*>(reinterpret_cast<UInt8*>(properties) + off);
 
 		Property *prop = new Property(this, property);
 
@@ -1139,13 +1139,13 @@ ObjCClass* ObjCData::getClassByName(char *classname)
 	return NULL;
 }
 
-ObjCClass* ObjCData::getClassByIsa(mach_vm_address_t isa)
+ObjCClass* ObjCData::getClassByIsa(UInt64 isa)
 {
 	for(int i = 0; i < this->classes.size(); i++)
 	{
 		ObjCClass *cls = this->classes.at(i);
 
-		if(reinterpret_cast<mach_vm_address_t>(cls->getClass()) == isa)
+		if(reinterpret_cast<UInt64>(cls->getClass()) == isa)
 		{
 			return cls;
 		}

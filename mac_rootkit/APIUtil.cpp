@@ -20,7 +20,7 @@
 
 namespace API
 {
-	void dump(Kernel *kernel, xnu::Mach::VmAddress address)
+	void dump(Kernel *kernel, uint64_t address)
 	{
 
 	}

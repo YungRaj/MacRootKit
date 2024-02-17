@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <sys/mman.h>
 
+#include <Types.h>
+
 #include <Hypervisor/Hypervisor.h>
 
 #include "Fuzzer.hpp"
@@ -73,19 +75,19 @@ namespace Virtualization
 
 	
 	typedef struct boot_args {
-		uint16_t                Revision;                       /* Revision of boot_args structure */
-		uint16_t                Version;                        /* Version of boot_args structure */
-		uint64_t                virtBase;                       /* Virtual base of memory */
-		uint64_t                physBase;                       /* Physical base of memory */
-		uint64_t                memSize;                        /* Size of memory */
-		uint64_t                topOfKernelData;        /* Highest physical address used in kernel data area */
+		UInt16                Revision;                       /* Revision of boot_args structure */
+		UInt16                Version;                        /* Version of boot_args structure */
+		UInt64                virtBase;                       /* Virtual base of memory */
+		UInt64                physBase;                       /* Physical base of memory */
+		UInt64                memSize;                        /* Size of memory */
+		UInt64                topOfKernelData;        /* Highest physical address used in kernel data area */
 		Boot_Video              Video;                          /* Video Information */
-		uint32_t                machineType;            /* Machine Type */
+		UInt32                machineType;            /* Machine Type */
 		void                    *deviceTreeP;           /* Base of flattened device tree */
-		uint32_t                deviceTreeLength;       /* Length of flattened tree */
+		UInt32                deviceTreeLength;       /* Length of flattened tree */
 		char                    CommandLine[BOOT_LINE_LENGTH];  /* Passed in command line */
-		uint64_t                bootFlags;              /* Additional flags specified by the bootloader */
-		uint64_t                memSizeActual;          /* Actual size of memory */
+		UInt64                bootFlags;              /* Additional flags specified by the bootloader */
+		UInt64                memSizeActual;          /* Actual size of memory */
 	} boot_args;
 
 	/* Valid Syndrome Register EC field values */
@@ -140,12 +142,12 @@ namespace Virtualization
 
 	// UPDATE: See CPSR below
 
-	const uint8_t sArm64ResetVector[] = {
+	const UInt8 sArm64ResetVector[] = {
 	    0x01, 0x00, 0x00, 0xD4, // SVC #0
 	    0x00, 0x00, 0x20, 0xD4, // BRK #0
 	};
 
-	const uint8_t sArm64ResetTrampoline[] = {
+	const UInt8 sArm64ResetTrampoline[] = {
 	    0x00, 0x00, 0xB0, 0xD2, // MOV X0, #0x80000000
 	    0x00, 0x00, 0x1F, 0xD6, // BR  X0
 	    0x00, 0x00, 0x20, 0xD4, // BRK #0
@@ -153,16 +155,16 @@ namespace Virtualization
 
 	#define HYP_ASSERT_SUCCESS(ret) assert((hv_return_t) (ret) == HV_SUCCESS)
 
-	static constexpr uint64_t gAdrResetTrampoline = 0xF0000000;
-	static constexpr uint64_t gResetTrampolineMemorySize = 0x10000;
+	static constexpr UInt64 gAdrResetTrampoline = 0xF0000000;
+	static constexpr UInt64 gResetTrampolineMemorySize = 0x10000;
 
-	static constexpr uint64_t gMainMemory = 0x80000000;
-	static constexpr uint64_t gMainMemSize = 0x40000000;
+	static constexpr UInt64 gMainMemory = 0x80000000;
+	static constexpr UInt64 gMainMemSize = 0x40000000;
 
 	class Hypervisor
 	{
 		public:
-			explicit Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, uint64_t base, size_t size, mach_vm_address_t entryPoint);
+			explicit Hypervisor(Fuzzer::Harness *harness, xnu::Mach::VmAddress virtualBase, UInt64 base, Size size, xnu::Mach::VmAddress entryPoint);
 
 			Fuzzer::Harness* getHarness() { return harness; }
 
@@ -172,18 +174,18 @@ namespace Virtualization
 
 			hv_vcpu_exit_t* getVirtualCpuExit() {  return vcpu_exit; }
 
-			uint64_t getBase() { return base; }
+			UInt64 getBase() { return base; }
 
-			size_t getSize() { return size; }
+			Size getSize() { return size; }
 
-			mach_vm_address_t getEntryPoint() { return entryPoint; }
+			xnu::Mach::VmAddress getEntryPoint() { return entryPoint; }
 
 			void synchronizeCpuState();
 
 			void flushCpuState();
 
-			int sysregRead(uint32_t reg, uint32_t rt);
-			int sysregWrite(uint32_t reg, uint64_t val);
+			int sysregRead(UInt32 reg, UInt32 rt);
+			int sysregWrite(UInt32 reg, UInt64 val);
 
 			int prepareSystemMemory();
 
@@ -202,13 +204,13 @@ namespace Virtualization
 
 			struct boot_args boot_args;
 
-			uint64_t base;
+			UInt64 base;
 
-			mach_vm_address_t virtualBase;
+			xnu::Mach::VmAddress virtualBase;
 
-			size_t size;
+			Size size;
 
-			mach_vm_address_t entryPoint;
+			xnu::Mach::VmAddress entryPoint;
 
 			hv_vcpu_t vcpu;
 
@@ -217,10 +219,10 @@ namespace Virtualization
 			void* resetTrampolineMemory;
 			void* mainMemory;
 
-			uint64_t bootArgsOffset;
-			uint64_t deviceTreeOffset;
+			UInt64 bootArgsOffset;
+			UInt64 deviceTreeOffset;
 
-			uint64_t framebufferOffset;
+			UInt64 framebufferOffset;
 
 	};
 }

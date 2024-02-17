@@ -26,6 +26,8 @@ extern "C"
 
 #include <vector>
 
+#include <Types.h>
+
 #include "Kernel.hpp"
 
 #include "BinaryFormat.hpp"
@@ -38,6 +40,8 @@ extern "C"
 #include "TerseExecutable.hpp"
 
 #include "ELF.hpp"
+
+// #include "Emulator.hpp"
 
 template <typename T>
 concept ClassType = std::is_class_v<T>;
@@ -86,7 +90,7 @@ namespace Fuzzer
 {
 	class Loader;
 	class Module;
-/
+
 	enum LanguageType
 	{
 		LANG_TYPE_C,
@@ -129,9 +133,9 @@ namespace Fuzzer
 			std::vector<Sym>& getSymbols() { return symbols; }
 			std::vector<Sect>& getSections() { return sections; }
 
-			size_t getSymbolCount() { return symbols.size(); }
+			Size getSymbolCount() { return symbols.size(); }
 
-			size_t getSectionCount() { return sections.size(); }
+			Size getSectionCount() { return sections.size(); }
 
 			void read();
 
@@ -151,14 +155,14 @@ namespace Fuzzer
 		struct SectionRaw
 		{
 			public:
-				explicit SectionRaw(char *name, mach_vm_address_t address, size_t size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
+				explicit SectionRaw(char *name, xnu::Mach::VmAddress address, Size size, int prot, int idx) : name(name), address(address), size(size), prot(prot), idx(idx) { }
 
 				char* getName() const { return name; }
 
 				template<typename T>
-				T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) address + index); }
+				T operator[](UInt64 index) const { return reinterpret_cast<T>((UInt8*) address + index); }
 
-				mach_vm_address_t getAddress() const { return address; }
+				xnu::Mach::VmAddress getAddress() const { return address; }
 
 				template<typename T>
 				T getAddressAs() const
@@ -166,7 +170,7 @@ namespace Fuzzer
 					return reinterpret_cast<T>(address);
 				}
 
-				size_t getSize() const { return size; }
+				Size getSize() const { return size; }
 
 				int getProt() const { return prot; }
 
@@ -175,9 +179,9 @@ namespace Fuzzer
 			private:
 				char *name;
 
-				mach_vm_address_t address;
+				xnu::Mach::VmAddress address;
 
-				size_t size;
+				Size size;
 
 				int prot;
 				int idx;
@@ -187,7 +191,7 @@ namespace Fuzzer
 		struct SymbolRaw
 		{
 			public:
-				explicit SymbolRaw(char *name, mach_vm_address_t address, int type) : name(name), address(address), type(type) { }
+				explicit SymbolRaw(char *name, xnu::Mach::VmAddress address, int type) : name(name), address(address), type(type) { }
 
 				char* getName() const { return name; }
 
@@ -217,7 +221,7 @@ namespace Fuzzer
 					return empty;
 				}
 
-				mach_vm_address_t getAddress() const { return address; }
+				xnu::Mach::VmAddress getAddress() const { return address; }
 
 				int getType() const { return type; }
 
@@ -230,7 +234,7 @@ namespace Fuzzer
 			private:
 				char *name;
 
-				mach_vm_address_t address;
+				xnu::Mach::VmAddress address;
 
 				int type;
 		};
@@ -240,9 +244,9 @@ namespace Fuzzer
 			explicit RawBinary(char *path, char *mapFile) : path(path), mapFile(mapFile) { }
 
 			template<typename T>
-			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+			T operator[](UInt64 index) const { return reinterpret_cast<T>((UInt8*) base + index); }
 
-			mach_vm_address_t getBase() const { return base; }
+			xnu::Mach::VmAddress getBase() const { return base; }
 
 			template<typename T>
 			T getBaseAs() const
@@ -288,7 +292,7 @@ namespace Fuzzer
 			void populateSections();
 
 		private:
-			mach_vm_address_t base;
+			xnu::Mach::VmAddress base;
 
 			char *path;
 
@@ -345,7 +349,7 @@ namespace Fuzzer
 		void *base;
 		void *originalBase;
 
-		size_t size;
+		Size size;
 
 		template <PointerToClassType T> requires AnyBinaryFormat<T>
 		union Bin
@@ -403,7 +407,7 @@ namespace Fuzzer
 		B getBinary() { return reinterpret_cast<B>(binary.binFmt); }
 
 		template<typename T> requires CastableType<T>
-		T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+		T operator[](UInt64 index) const { return reinterpret_cast<T>((UInt8*) base + index); }
 		
 		const char* getPath() const { return path; }
 
@@ -548,10 +552,10 @@ namespace Fuzzer
 			bool unmapSegments();
 
 			template<typename Binary> requires AnyBinaryFormat<Binary>
-			void getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *load_addr);
+			void getMappingInfo(char *file_data, Size *size, xnu::Mach::VmAddress *load_addr);
 
-			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress);
-			void updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress);
+			void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, xnu::Mach::VmAddress newLoadAddress, xnu::Mach::VmAddress oldLoadAddress);
+			void updateSymbolTableForMappedMachO(char *file_data, xnu::Mach::VmAddress newLoadAddress, xnu::Mach::VmAddress oldLoadAddress);
 
 			template<typename Binary = RawBinary> requires (AnyBinaryFormat<Binary> && !MachOFormat<Binary>)
 			void loadBinary(const char *path, const char *mapFile);
@@ -563,14 +567,14 @@ namespace Fuzzer
 			void callFunctionInKernel(const char *funcname);
 			void callFunctionInKernelUsingHypervisor(const char *funcname);
 
-			void getEntryPointFromKC(mach_vm_address_t kc, mach_vm_address_t *entryPoint);
+			void getEntryPointFromKC(xnu::Mach::VmAddress kc, xnu::Mach::VmAddress *entryPoint);
 
-			void getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *loadAddress, off_t *loadOffset);
+			void getKernelFromKC(xnu::Mach::VmAddress kc, xnu::Mach::VmAddress *loadAddress, Offset *loadOffset);
 
-			void loadKernel(const char *path, off_t slide);
+			void loadKernel(const char *path, Offset slide);
 			void loadKernelExtension(const char *path);
 			
-			bool loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelCache, size_t *kernelCacheSize, off_t *loadOffset, mach_vm_address_t *loadAddress);
+			bool loadKernelCache(const char *kernelPath, xnu::Mach::VmAddress *kernelCache, Size *kernelCacheSize, Offset *loadOffset, xnu::Mach::VmAddress *loadAddress);
 
 			void addDebugSymbolsFromKernel(const char *debugSymbols);
 
@@ -593,8 +597,8 @@ namespace Fuzzer
 		private:
 			Virtualization::Hypervisor *hypervisor;
 
-			Emulation::Emulator<Unicorn> *unicorn;
-			Emulation::Emulator<Panda> *panda;
+			// Emulation::Emulator<Unicorn> *unicorn;
+			// Emulation::Emulator<Panda> *panda;
 
 			xnu::Kernel *kernel;
 

@@ -77,176 +77,176 @@ Kernel::~Kernel()
 	delete this->macho;
 }
 
-mach_vm_address_t Kernel::getBase()
+xnu::Mach::VmAddress Kernel::getBase()
 {
 	return get_kernel_base();
 }
 
-off_t Kernel::getSlide()
+Offset Kernel::getSlide()
 {
 	return get_kernel_slide();
 }
 
-uint64_t Kernel::call(char *symbolname, uint64_t *arguments, size_t argCount)
+UInt64 Kernel::call(char *symbolname, UInt64 *arguments, Size argCount)
 {
 	return kernel_call_function(symbolname, arguments, argCount);
 }
 
-uint64_t Kernel::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
+UInt64 Kernel::call(xnu::Mach::VmAddress func, UInt64 *arguments, Size argCount)
 {
 	return kernel_call(func, arguments, argCount);
 }
 
-mach_vm_address_t Kernel::vmAllocate(size_t size)
+xnu::Mach::VmAddress Kernel::vmAllocate(Size size)
 {
 	return kernel_vm_allocate(size);
 }
 
-mach_vm_address_t Kernel::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot)
+xnu::Mach::VmAddress Kernel::vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot)
 {
 	return 0;
 }
 
-void Kernel::vmDeallocate(mach_vm_address_t address, size_t size)
+void Kernel::vmDeallocate(xnu::Mach::VmAddress address, Size size)
 {
 	kernel_vm_deallocate(address, size);
 }
 
-bool Kernel::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
+bool Kernel::vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot)
 {
 	return kernel_vm_protect(address, size, prot);
 }
 
-void* Kernel::vmRemap(mach_vm_address_t address, size_t size)
+void* Kernel::vmRemap(xnu::Mach::VmAddress address, Size size)
 {
 	return kernel_vm_remap(address, size);
 }
 
-uint64_t Kernel::virtualToPhysical(mach_vm_address_t address)
+UInt64 Kernel::virtualToPhysical(xnu::Mach::VmAddress address)
 {
 	return kernel_virtual_to_physical(address);
 }
 
-bool Kernel::physicalRead(uint64_t paddr, void *data, size_t size)
+bool Kernel::physicalRead(UInt64 paddr, void *data, Size size)
 {
 	return false;
 }
 
-uint64_t Kernel::physicalRead64(uint64_t paddr)
+UInt64 Kernel::physicalRead64(UInt64 paddr)
 {
 	return phys_read64(paddr);
 }
 
-uint32_t Kernel::physicalRead32(uint64_t paddr)
+UInt32 Kernel::physicalRead32(UInt64 paddr)
 {
 	return phys_read32(paddr);
 }
 
-uint16_t Kernel::physicalRead16(uint64_t paddr)
+UInt16 Kernel::physicalRead16(UInt64 paddr)
 {
 	return phys_read16(paddr);
 }
 
-uint8_t  Kernel::physicalRead8(uint64_t paddr)
+UInt8  Kernel::physicalRead8(UInt64 paddr)
 {
 	return phys_read64(paddr);
 }
 
-bool Kernel::physicalWrite(uint64_t paddr, void *data, size_t size)
+bool Kernel::physicalWrite(UInt64 paddr, void *data, Size size)
 {
 	return false;
 }
 
-void Kernel::physicalWrite64(uint64_t paddr, uint64_t value)
+void Kernel::physicalWrite64(UInt64 paddr, UInt64 value)
 {
 	phys_write64(paddr, value);
 }
 
-void Kernel::physicalWrite32(uint64_t paddr, uint32_t value)
+void Kernel::physicalWrite32(UInt64 paddr, UInt32 value)
 {
 	phys_write32(paddr, value);
 }
 
-void Kernel::physicalWrite16(uint64_t paddr, uint16_t value)
+void Kernel::physicalWrite16(UInt64 paddr, UInt16 value)
 {
 	phys_write16(paddr, value);
 }
 
-void  Kernel::physicalWrite8(uint64_t paddr, uint8_t value)
+void  Kernel::physicalWrite8(UInt64 paddr, UInt8 value)
 {
 	phys_write8(paddr, value);
 }
 
 
-bool Kernel::read(mach_vm_address_t address, void *data, size_t size)
+bool Kernel::read(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return kernel_read(address, data, size);
 }
 
-bool Kernel::readUnsafe(mach_vm_address_t address, void *data, size_t size)
+bool Kernel::readUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return false;
 }
 
 
-uint8_t Kernel::read8(mach_vm_address_t address)
+UInt8 Kernel::read8(xnu::Mach::VmAddress address)
 {
 	return kernel_read8(address);
 }
 
-uint16_t Kernel::read16(mach_vm_address_t address)
+UInt16 Kernel::read16(xnu::Mach::VmAddress address)
 {
 	return kernel_read16(address);
 }
 
-uint32_t Kernel::read32(mach_vm_address_t address)
+UInt32 Kernel::read32(xnu::Mach::VmAddress address)
 {
 	return kernel_read32(address);
 }
 
-uint64_t Kernel::read64(mach_vm_address_t address)
+UInt64 Kernel::read64(xnu::Mach::VmAddress address)
 {
 	return kernel_read64(address);
 }
 
 
-bool Kernel::write(mach_vm_address_t address, void *data, size_t size)
+bool Kernel::write(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return kernel_write(address, data, size);
 }
 
-bool Kernel::writeUnsafe(mach_vm_address_t address, void *data, size_t size)
+bool Kernel::writeUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return false;
 }
 
 
-void Kernel::write8(mach_vm_address_t address, uint8_t value)
+void Kernel::write8(xnu::Mach::VmAddress address, UInt8 value)
 {
 	kernel_write8(address, value);
 }
 
-void Kernel::write16(mach_vm_address_t address, uint16_t value)
+void Kernel::write16(xnu::Mach::VmAddress address, UInt16 value)
 {
 	kernel_write16(address, value);
 }
 
-void Kernel::write32(mach_vm_address_t address, uint32_t value)
+void Kernel::write32(xnu::Mach::VmAddress address, UInt32 value)
 {
 	kernel_write32(address, value);
 }
 
-void Kernel::write64(mach_vm_address_t address, uint64_t value)
+void Kernel::write64(xnu::Mach::VmAddress address, UInt64 value)
 {
 	kernel_write64(address, value);
 }
 
-bool Kernel::hookFunction(char *symname, mach_vm_address_t hook, size_t hook_size)
+bool Kernel::hookFunction(char *symname, xnu::Mach::VmAddress hook, Size hook_size)
 {
 	return false;
 }
 
-bool Kernel::hookFunction(mach_vm_address_t address, mach_vm_address_t hook, size_t hook_size)
+bool Kernel::hookFunction(xnu::Mach::VmAddress address, xnu::Mach::VmAddress hook, Size hook_size)
 {
 	return false;
 }
@@ -256,24 +256,24 @@ bool Kernel::setBreakpoint(char *symname)
 	return false;
 }
 
-bool Kernel::setBreakpoint(char *symname, mach_vm_address_t hook, size_t hook_size)
+bool Kernel::setBreakpoint(char *symname, xnu::Mach::VmAddress hook, Size hook_size)
 {
 	return false;
 }
 
-bool Kernel::setBreakpoint(mach_vm_address_t address)
+bool Kernel::setBreakpoint(xnu::Mach::VmAddress address)
 {
 	return false;
 }
 
-bool Kernel::setBreakpoint(mach_vm_address_t address, mach_vm_address_t breakpoint_hook, size_t breakpoint_hook_size)
+bool Kernel::setBreakpoint(xnu::Mach::VmAddress address, xnu::Mach::VmAddress breakpoint_hook, Size breakpoint_hook_size)
 {
 	return false;
 }
 
 #define MAX_LENGTH 0x100
 
-char* Kernel::readString(mach_vm_address_t address)
+char* Kernel::readString(xnu::Mach::VmAddress address)
 {
 	char *s;
 
@@ -303,12 +303,12 @@ Symbol* Kernel::getSymbolByName(char *symname)
 	return NULL;
 }
 
-Symbol* Kernel::getSymbolByAddress(mach_vm_address_t address)
+Symbol* Kernel::getSymbolByAddress(xnu::Mach::VmAddress address)
 {
 	return NULL;
 }
 
-mach_vm_address_t Kernel::getSymbolAddressByName(char *symbolname)
+xnu::Mach::VmAddress Kernel::getSymbolAddressByName(char *symbolname)
 {
 	return get_kernel_symbol(symbolname);
 }

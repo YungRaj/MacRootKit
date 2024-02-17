@@ -16,9 +16,12 @@
 
 #pragma once
 
+#include <vector>
+
+#include <Types.h>
+
 #include "ObjC.hpp"
 
-#include <vector>
 #include "Dictionary.hpp"
 
 class MachO;
@@ -34,7 +37,7 @@ namespace Swift
 
 	const unsigned MetadataKindIsRuntimePrivate = 0x100;
 
-	enum class ContextDescriptorKind : uint8_t
+	enum class ContextDescriptorKind : UInt8
 	{
 		Module 					= 0,
 		Extension 				= 1,
@@ -48,7 +51,7 @@ namespace Swift
 		Type_Last 				= 31,
 	};
 
-	enum MetadataKind : uint16_t
+	enum MetadataKind : UInt16
 	{
 		MK_Class 						 = 0x0,
 		MK_Struct						 = 0x200,
@@ -72,7 +75,7 @@ namespace Swift
 		MK_LastEnumerated				 = 0x7FF,
 	};
 
-	enum FieldDescriptorKind : uint16_t
+	enum FieldDescriptorKind : UInt16
 	{
 		FDK_Struct				 = 0,
 		FDK_Class 				 = 1,
@@ -88,26 +91,26 @@ namespace Swift
 
 	struct ValueMetadata
 	{
-		uint64_t kind;
-		uint64_t description;
+		UInt64 kind;
+		UInt64 description;
 	};
 
 	struct ValueWitnessTable
 	{
-		mach_vm_address_t initializeBufferWithCopyOfBuffer;
-		mach_vm_address_t destroy;
-		mach_vm_address_t initializeWithCopy;
-		mach_vm_address_t assignWithCopy;
-		mach_vm_address_t initializeWithTake;
-		mach_vm_address_t assignWithTake;
-		mach_vm_address_t getEnumTagSinglePayload;
-		mach_vm_address_t storeEnumTagSinglePayload;
+		UInt64 initializeBufferWithCopyOfBuffer;
+		UInt64 destroy;
+		UInt64 initializeWithCopy;
+		UInt64 assignWithCopy;
+		UInt64 initializeWithTake;
+		UInt64 assignWithTake;
+		UInt64 getEnumTagSinglePayload;
+		UInt64 storeEnumTagSinglePayload;
 
-		size_t size;
-		size_t stride;
+		Size size;
+		Size stride;
 		
-		uint64_t flags;
-		uint64_t extra_inhabitant_count;
+		UInt64 flags;
+		UInt64 extra_inhabitant_count;
 	};
 
 	struct Type
@@ -123,41 +126,41 @@ namespace Swift
 
 	struct TypeDescriptor
 	{
-		uint32_t flags;
-		int32_t parent;
-		int32_t name;
-		int32_t access_function;
-		uint32_t field_descriptor;
+		UInt32 flags;
+		Int32 parent;
+		Int32 name;
+		Int32 access_function;
+		UInt32 field_descriptor;
 	};
 
 	struct AnonymousContextDescriptor
 	{
-		uint32_t flags;
-		uint32_t parent;
+		UInt32 flags;
+		UInt32 parent;
 	};
 
 	struct ModuleDescriptor
 	{
-		uint32_t flags;
-		int32_t parent;
-		int32_t name;
+		UInt32 flags;
+		Int32 parent;
+		Int32 name;
 	};
 
 	struct ProtocolDescriptor
 	{
-		uint32_t flags;
-		int32_t name;
-		uint32_t num_requirements_in_signature;
-		uint32_t num_requirements;
-		int32_t associated_type_names;
+		UInt32 flags;
+		Int32 name;
+		UInt32 num_requirements_in_signature;
+		UInt32 num_requirements;
+		Int32 associated_type_names;
 	};
 
 	struct ProtocolConformanceDescriptor
 	{
-		int32_t protocol_descriptor;
-		int32_t nominal_type_descriptor;
-		int32_t protocol_witness_table;
-		uint32_t conformance_flags;
+		Int32 protocol_descriptor;
+		Int32 nominal_type_descriptor;
+		Int32 protocol_witness_table;
+		UInt32 conformance_flags;
 	};
 
 	struct Protocol : Type
@@ -171,48 +174,48 @@ namespace Swift
 	{
 		struct TypeDescriptor type;
 
-		uint32_t super_class_type;
+		UInt32 super_class_type;
 
-		uint32_t metadata_negative_size_in_words;
-		uint32_t metadata_positive_size_in_words;
+		UInt32 metadata_negative_size_in_words;
+		UInt32 metadata_positive_size_in_words;
 
-		uint32_t num_immediate_members;
-		uint32_t num_fields;
+		UInt32 num_immediate_members;
+		UInt32 num_fields;
 
-		uint32_t field_offset_vector_offset;
+		UInt32 field_offset_vector_offset;
 	};
 
 	struct MethodDescriptor
 	{
-		uint32_t flags;
-		int32_t impl;
+		UInt32 flags;
+		Int32 impl;
 	};
 
 	struct Method
 	{
 		struct MethodDescriptor *descriptor;
 
-		mach_vm_address_t impl;
+		UInt64 impl;
 
 		char *name;
 	};
 
 	struct ClassMetadata
 	{
-		mach_vm_address_t destructor;
-		mach_vm_address_t value_witness_table;
+		UInt64 destructor;
+		UInt64 value_witness_table;
 
 		struct ObjectiveC::_objc_2_class objc;
 
-		uint32_t flags;
-		uint32_t instance_address_point;
-		uint32_t instance_size;
-		uint16_t instance_alignment_mask;
-		uint16_t reserved;
-		uint32_t class_object_size;
-		uint32_t class_address_point;
+		UInt32 flags;
+		UInt32 instance_address_point;
+		UInt32 instance_size;
+		UInt16 instance_alignment_mask;
+		UInt16 reserved;
+		UInt32 class_object_size;
+		UInt32 class_address_point;
 		
-		mach_vm_address_t type_descriptor;
+		UInt64 type_descriptor;
 	};
 
 	struct Class : Type
@@ -230,8 +233,8 @@ namespace Swift
 	{
 		struct TypeDescriptor type;
 
-		uint32_t num_fields;
-		uint32_t field_offset_vector_offset;
+		UInt32 num_fields;
+		UInt32 field_offset_vector_offset;
 	};
 
 	struct Struct : Type
@@ -243,8 +246,8 @@ namespace Swift
 	{
 		struct TypeDescriptor type;
 
-		uint32_t num_payload_cases_and_payload_size_offset;
-		uint32_t num_empty_cases;
+		UInt32 num_payload_cases_and_payload_size_offset;
+		UInt32 num_empty_cases;
 	};
 
 	struct Enum : Type
@@ -254,18 +257,18 @@ namespace Swift
 
 	struct FieldDescriptor
 	{
-		uint32_t type_ref;
-		uint32_t mangled_type_name;
-		uint16_t kind;
-		uint16_t field_record_size;
-		uint32_t num_fields;
+		UInt32 type_ref;
+		UInt32 mangled_type_name;
+		UInt16 kind;
+		UInt16 field_record_size;
+		UInt32 num_fields;
 	};
 
 	struct FieldRecord
 	{
-		uint32_t flags;
-		uint32_t mangled_type_name;
-		uint32_t field_name;
+		UInt32 flags;
+		UInt32 mangled_type_name;
+		UInt32 field_name;
 	};
 
 	struct Field
@@ -287,43 +290,43 @@ namespace Swift
 
 	struct AssociatedTypeRecord
 	{
-		int32_t name;
-		int32_t substituted_type_name;
+		Int32 name;
+		Int32 substituted_type_name;
 	};
 
 	struct AssociatedTypeDescriptor
 	{
-		int32_t conforming_type_name;
-		int32_t protocol_type_name;
-		uint32_t num_associated_types;
-		uint32_t associated_type_record_size;
+		Int32 conforming_type_name;
+		Int32 protocol_type_name;
+		UInt32 num_associated_types;
+		UInt32 associated_type_record_size;
 	};
 
 	struct BuiltinTypeDescriptor
 	{
-		int32_t type_name;
-		uint32_t size;
-		uint32_t alignment_and_flags;
-		uint32_t stride;
-		uint32_t num_extra_inhabitants;
+		Int32 type_name;
+		UInt32 size;
+		UInt32 alignment_and_flags;
+		UInt32 stride;
+		UInt32 num_extra_inhabitants;
 	};
 
 	struct CaptureTypeRecord
 	{
-		int32_t mangled_type_name;
+		Int32 mangled_type_name;
 	};
 
 	struct MetadataSourceRecord
 	{
-		int32_t mangled_type_name;
-		int32_t mangled_metadata_source;
+		Int32 mangled_type_name;
+		Int32 mangled_metadata_source;
 	};
 
 	struct CaptureDescriptor
 	{
-		uint32_t num_capture_types;
-		uint32_t num_metadata_sources;
-		uint32_t num_bindings;
+		UInt32 num_capture_types;
+		UInt32 num_metadata_sources;
+		UInt32 num_bindings;
 	};
 
 	#pragma options align=reset
@@ -332,7 +335,7 @@ namespace Swift
 	{
 		public:
 			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc) : macho(macho), objc(objc) { this->populateSections(); this->parseSwift(); }
-			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : SwiftMetadata(macho, objc), text(text) { this->populateSections(); this->parseSwift(); }
+			explicit SwiftMetadata(MachO *macho, ObjectiveC::ObjCData *objc, Segment *text) : macho(macho), objc(objc), text(text) { this->populateSections(); this->parseSwift(); }
 
 			std::vector<Type*>* getAllTypes() { return &swift_types; }
 
@@ -366,7 +369,7 @@ namespace Swift
 
 			void enumerateTypes();
 
-			mach_vm_address_t getTypeMetadata(struct TypeDescriptor *typeDescriptor);
+			UInt64 getTypeMetadata(struct TypeDescriptor *typeDescriptor);
 
 			struct Type* parseTypeDescriptor(struct TypeDescriptor *typeDescriptor);
 

@@ -19,6 +19,9 @@
 #include <mach/mach_types.h>
 
 #include <vector>
+
+#include <Types.h>
+
 #include "PAC.hpp"
 
 class Segment;
@@ -43,9 +46,9 @@ namespace ObjectiveC
 
 	#endif
 
-	static const uint32_t smallMethodListFlag = 0x80000000;
+	static const UInt32 smallMethodListFlag = 0x80000000;
 
-	static const uint32_t relativeMethodSelectorsAreDirectFlag = 0x40000000;
+	static const UInt32 relativeMethodSelectorsAreDirectFlag = 0x40000000;
 
 	#define RO_META               (1<<0)
 	#define RO_ROOT               (1<<1)
@@ -120,10 +123,10 @@ namespace ObjectiveC
 
 	struct _objc_ivar
 	{
-		uint64_t offset;
-		uint64_t name;
-		uint64_t type;
-		uint8_t size;
+		UInt64 offset;
+		UInt64 name;
+		UInt64 type;
+		UInt8 size;
 	};
 
 	enum _objc_method_type
@@ -135,17 +138,17 @@ namespace ObjectiveC
 
 	struct _objc_method
 	{
-		uint32_t name;
-		uint32_t type;
-		uint32_t offset;
+		UInt32 name;
+		UInt32 type;
+		UInt32 offset;
 	};
 
 	struct _objc_protocol
 	{
 		char *name;
-		uint64_t offset;
+		UInt64 offset;
 		struct _objc_method *method;
-		uint32_t methodCount;
+		UInt32 methodCount;
 	};
 
 	struct objc_category
@@ -163,11 +166,11 @@ namespace ObjectiveC
 		struct _objc_class *superCls;
 		char *className;
 		struct _objc_ivar *ivar;
-		uint32_t ivarCount;
+		UInt32 ivarCount;
 		struct _objc_method *method;
-		uint32_t methodCount;
+		UInt32 methodCount;
 		struct _objc_protocol *protocol;
-		uint32_t protocolCount;
+		UInt32 protocolCount;
 	};
 
 	struct _objc_module
@@ -178,10 +181,10 @@ namespace ObjectiveC
 
 	struct _objc_module_raw
 	{
-		uint32_t version;
-		uint32_t size;
-		uint32_t name;
-		uint32_t symtab;
+		UInt32 version;
+		UInt32 size;
+		UInt32 name;
+		UInt32 symtab;
 	};
 
 	enum _objc_2_class_type
@@ -204,134 +207,134 @@ namespace ObjectiveC
 
 	struct _objc_2_class_method_info
 	{
-		uint32_t entrySize;
-		uint32_t count;
+		UInt32 entrySize;
+		UInt32 count;
 	};
 
 	struct _objc_2_class_protocol_info
 	{
-		uint64_t count;
+		UInt64 count;
 	};
 
 	struct _objc_2_class_ivar_info
 	{
-		uint32_t entrySize;
-		uint32_t count;
+		UInt32 entrySize;
+		UInt32 count;
 	};
 
 	struct _objc_2_class_property_info
 	{
-		uint32_t entrySize;
-		uint32_t count;
+		UInt32 entrySize;
+		UInt32 count;
 	};
 
 	struct _objc_2_class_method
 	{
-		uint32_t name;
-		uint32_t type;
-		int32_t imp;
+		UInt32 name;
+		UInt32 type;
+		Int32 imp;
 	};
 
 	struct _objc_2_method
 	{
-		mach_vm_address_t name;
-		uint64_t type;
-		mach_vm_address_t imp;
+		UInt64 name;
+		UInt64 type;
+		UInt64 imp;
 	};
 
 	struct _objc_2_class_protocol
 	{
-		mach_vm_address_t isa;
-		mach_vm_address_t name;
+		UInt64 isa;
+		UInt64 name;
 
-		mach_vm_address_t protocols;
-		mach_vm_address_t instance_methods;
-		mach_vm_address_t class_methods;
-		mach_vm_address_t opt_instance_methods;
-		mach_vm_address_t opt_class_methods;
-		mach_vm_address_t instance_properties;
+		UInt64 protocols;
+		UInt64 instance_methods;
+		UInt64 class_methods;
+		UInt64 opt_instance_methods;
+		UInt64 opt_class_methods;
+		UInt64 instance_properties;
 
-		uint32_t cb;
-		uint32_t flags;
+		UInt32 cb;
+		UInt32 flags;
 	};
 
 	struct _objc_2_category
 	{
-		uint64_t category_name;
-		uint64_t class_name;
+		UInt64 category_name;
+		UInt64 class_name;
 
-		mach_vm_address_t instance_methods;
-		mach_vm_address_t class_methods;
-		mach_vm_address_t protocols;
-		mach_vm_address_t properties;
+		UInt64 instance_methods;
+		UInt64 class_methods;
+		UInt64 protocols;
+		UInt64 properties;
 	};
 
 	struct _objc_2_class_ivar
 	{
-		mach_vm_address_t offset;
-		mach_vm_address_t name;
+		UInt64 offset;
+		UInt64 name;
 
-		uint64_t type;
-		uint32_t align;
-		uint32_t size;
+		UInt64 type;
+		UInt32 align;
+		UInt32 size;
 	};
 
 	struct _objc_2_class_property
 	{
-		mach_vm_address_t name;
+		UInt64 name;
 
-		uint64_t attributes;
+		UInt64 attributes;
 	};
 
 	struct _objc_2_class_data
 	{
-		uint32_t flags;
-		uint32_t instanceStart;
-		uint32_t instanceSize;
-		uint32_t reserved;
-		uint64_t iVarLayout;
-		uint64_t name;
+		UInt32 flags;
+		UInt32 instanceStart;
+		UInt32 instanceSize;
+		UInt32 reserved;
+		UInt64 iVarLayout;
+		UInt64 name;
 
-		mach_vm_address_t methods;
-		mach_vm_address_t protocols;
-		mach_vm_address_t ivars;
+		UInt64 methods;
+		UInt64 protocols;
+		UInt64 ivars;
 
-		mach_vm_address_t weakIVarLayout;
-		mach_vm_address_t properties;
+		UInt64 weakIVarLayout;
+		UInt64 properties;
 	};
 
 	struct _objc_2_class
 	{
-		mach_vm_address_t isa;
-		mach_vm_address_t superclass;
-		mach_vm_address_t cache;
-		mach_vm_address_t vtable;
+		UInt64 isa;
+		UInt64 superclass;
+		UInt64 cache;
+		UInt64 vtable;
 
 		struct _objc_2_class_data *data;
 	};
 
 	struct _objc_2_class_rw_t 
 	{
-	    uint32_t flags;
-	    uint16_t witness;
+	    UInt32 flags;
+	    UInt16 witness;
 
-	    mach_vm_address_t ro_or_rw_ext;
+	    UInt64 ro_or_rw_ext;
 
-	    mach_vm_address_t firstSubclass;
-	    mach_vm_address_t nextSiblingClass;
+	    UInt64 firstSubclass;
+	    UInt64 nextSiblingClass;
 	};
 
 	struct _objc_2_class_rw_ext_t
 	{
-	    mach_vm_address_t ro;
+	    UInt64 ro;
 	    
-	    mach_vm_address_t methods;
-	 	mach_vm_address_t properties;
-	    mach_vm_address_t protocols;
+	    UInt64 methods;
+	 	UInt64 properties;
+	    UInt64 protocols;
 
-	    mach_vm_address_t demangledName;
+	    UInt64 demangledName;
 
-	    uint32_t version;
+	    UInt32 version;
 	};
 };
 
@@ -339,38 +342,38 @@ typedef void* id;
 
 namespace ObjectiveC
 {
-	mach_vm_address_t getClass(const char *name);
+	UInt64 getClass(const char *name);
 
-	const char*	   class_getName(mach_vm_address_t cls);
-	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls);
-	mach_vm_address_t class_getSuperClass(mach_vm_address_t cls, mach_vm_address_t new_super);
-	bool			  class_isMetaClass(mach_vm_address_t cls);
-	mach_vm_address_t class_getInstanceVariable(mach_vm_address_t cls, const char *name);
-	mach_vm_address_t class_getClassVariable(mach_vm_address_t cls, const char *name);
-	bool			  class_addIvar(mach_vm_address_t cls, const char *name, size_t size, uint8_t alignment, const char *types);
-	mach_vm_address_t class_getProperty(mach_vm_address_t cls, const char *name);
-	bool			  class_addMethod(mach_vm_address_t cls, char *name, mach_vm_address_t mach_vm_address_t, const char *types);
-	mach_vm_address_t class_getInstanceMethod(mach_vm_address_t cls, char *name);
-	mach_vm_address_t class_getClassMethod(mach_vm_address_t cls, char *name);
-	mach_vm_address_t class_getMethodImplementation(mach_vm_address_t cls, char * name);
-	bool			  class_addProtocol(mach_vm_address_t cls, mach_vm_address_t protocol);
-	bool			  class_addProperty(mach_vm_address_t cls, const char *name, mach_vm_address_t attributes, unsigned int attributeCount);
+	const char*	   	  class_getName(UInt64 cls);
+	UInt64 		  class_getSuperClass(UInt64 cls);
+	UInt64 		  class_getSuperClass(UInt64 cls, UInt64 new_super);
+	bool			  class_isMetaClass(UInt64 cls);
+	UInt64 		  class_getInstanceVariable(UInt64 cls, const char *name);
+	UInt64 		  class_getClassVariable(UInt64 cls, const char *name);
+	bool			  class_addIvar(UInt64 cls, const char *name, Size size, UInt8 alignment, const char *types);
+	UInt64 		  class_getProperty(UInt64 cls, const char *name);
+	bool			  class_addMethod(UInt64 cls, char *name, UInt64 UInt64, const char *types);
+	UInt64 		  class_getInstanceMethod(UInt64 cls, char *name);
+	UInt64 	   	  class_getClassMethod(UInt64 cls, char *name);
+	UInt64 		  class_getMethodImplementation(UInt64 cls, char * name);
+	bool			  class_addProtocol(UInt64 cls, UInt64 protocol);
+	bool			  class_addProperty(UInt64 cls, const char *name, UInt64 attributes, unsigned int attributeCount);
 
-	mach_vm_address_t object_getClass(id obj);
+	UInt64 		  object_getClass(id obj);
 	void			  object_setInstanceVariable(id obj, const char *name, void *value);
-	mach_vm_address_t object_getInstanceVariable(id obj, const char *name);
+	UInt64 		  object_getInstanceVariable(id obj, const char *name);
 	void			  object_setIvar(id obj, const char *name, id value);
-	mach_vm_address_t object_getIvar(id obj, mach_vm_address_t ivar);
+	UInt64 		  object_getIvar(id obj, UInt64 ivar);
 	const char *	  object_getClassName(id obj);
-	mach_vm_address_t object_getClass(id obj);
-	mach_vm_address_t object_setClass(id obj, mach_vm_address_t cls);
+	UInt64 		  object_getClass(id obj);
+	UInt64 		  object_setClass(id obj, UInt64 cls);
 
-	char*			 method_getName(mach_vm_address_t m);
-	mach_vm_address_t method_getImplementation(mach_vm_address_t m);
-	mach_vm_address_t method_setImplementation(mach_vm_address_t m, mach_vm_address_t mach_vm_address_t);
-	void			  method_exchangeImplementations(mach_vm_address_t m1, mach_vm_address_t m2);
+	char*			  method_getName(UInt64 m);
+	UInt64 		  method_getImplementation(UInt64 m);
+	UInt64 		  method_setImplementation(UInt64 m, UInt64 UInt64);
+	void			  method_exchangeImplementations(UInt64 m1, UInt64 m2);
 
-	uint64_t 		  object_getDataBits(id obj);
+	UInt64 		  object_getDataBits(id obj);
 	bool  			  object_isObjectiveC(id obj);
 	bool 			  object_isSwift(id obj);
 
@@ -402,7 +405,7 @@ namespace ObjectiveC
 
 	void parsePropertyList(ObjCData *metadata, ObjC *object, std::vector<Property*> *propertyList, struct _objc_2_class_property_info *propertyInfo);
 
-	mach_vm_address_t findSelectorsBase(mrk::UserMachO *macho);
+	UInt64 findSelectorsBase(mrk::UserMachO *macho);
 
 	class Protocol : public ObjC
 	{
@@ -419,14 +422,14 @@ namespace ObjectiveC
 
 			std::vector<Property*>& getInstanceProperties() { return instance_properties; }
 
-			mach_vm_address_t getOffset() { return offset; }
+			UInt64 getOffset() { return offset; }
 
 		private:
 			struct _objc_2_class_protocol *protocol;
 
 			char *name;
 
-			mach_vm_address_t offset;
+			UInt64 offset;
 
 			std::vector<Method*> instance_methods;
 			std::vector<Method*> class_methods;
@@ -470,11 +473,11 @@ namespace ObjectiveC
 
 			char* getName() { return name; }
 
-			mach_vm_address_t getOffset() { return offset; }
+			UInt64 getOffset() { return offset; }
 			
-			uint64_t getType() { return type; }
+			UInt64 getType() { return type; }
 
-			size_t getSize() { return size; }
+			Size getSize() { return size; }
 
 		private:
 			ObjC *object;
@@ -483,11 +486,11 @@ namespace ObjectiveC
 
 			char *name;
 
-			mach_vm_address_t offset;
+			UInt64 offset;
 			
-			uint64_t type;
+			UInt64 type;
 			
-			size_t size;
+			Size size;
 	};
 
 	class Property
@@ -517,9 +520,9 @@ namespace ObjectiveC
 
 			char* getName() { return name; }
 
-			uint64_t getType() { return type; }
+			UInt64 getType() { return type; }
 
-			mach_vm_address_t getImpl() { return impl; }
+			UInt64 getImpl() { return impl; }
 
 		private:
 			ObjC *object;
@@ -528,9 +531,9 @@ namespace ObjectiveC
 
 			char *name;
 
-			uint64_t type;
+			UInt64 type;
 
-			mach_vm_address_t impl;
+			UInt64 impl;
 	};
 
 	class ObjCClass : public ObjC
@@ -548,11 +551,11 @@ namespace ObjectiveC
 
 			ObjCClass* getSuperClass() { return super; }
 
-			mach_vm_address_t getIsa() { return isa; }
+			UInt64 getIsa() { return isa; }
 
-			mach_vm_address_t getCache() { return cache; }
+			UInt64 getCache() { return cache; }
 
-			mach_vm_address_t getVtable() { return vtable; }
+			UInt64 getVtable() { return vtable; }
 
 			Method* getMethod(char *methodname);
 
@@ -593,10 +596,10 @@ namespace ObjectiveC
 
 			ObjCClass *super;
 
-			mach_vm_address_t isa;
-			mach_vm_address_t superclass;
-			mach_vm_address_t cache;
-			mach_vm_address_t vtable;
+			UInt64 isa;
+			UInt64 superclass;
+			UInt64 cache;
+			UInt64 vtable;
 
 			std::vector<Method*> methods;
 
@@ -637,7 +640,7 @@ namespace ObjectiveC
 			void parseObjC();
 
 			ObjCClass* getClassByName(char *classname);
-			ObjCClass* getClassByIsa(mach_vm_address_t isa);
+			ObjCClass* getClassByIsa(UInt64 isa);
 
 			Protocol* getProtocol(char *protoname);
 

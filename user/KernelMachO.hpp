@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "MachO.hpp"
 
 namespace xnu
@@ -28,9 +30,9 @@ namespace xnu
 			KernelMachO() { }
 
 			KernelMachO(uintptr_t address);
-			KernelMachO(uintptr_t address, off_t slide);
+			KernelMachO(uintptr_t address, Offset slide);
 
-			KernelMachO(const char *path, off_t slide);
+			KernelMachO(const char *path, Offset slide);
 			KernelMachO(const char *path);
 
 			~KernelMachO();
@@ -45,23 +47,23 @@ namespace xnu
 			xnu::Kernel *kernel;
 
 		protected:
-			uint8_t *linkedit;
+			UInt8 *linkedit;
 
-			mach_vm_address_t linkedit_off;
+			xnu::Mach::VmAddress linkedit_off;
 			
-			size_t linkedit_size;
+			Size linkedit_size;
 	};
 
 	class KernelCacheMachO : public KernelMachO
 	{
 		public:
-			KernelCacheMachO(mach_vm_address_t kc, uintptr_t address);
-			KernelCacheMachO(mach_vm_address_t kc, uintptr_t address, off_t slide);
+			KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address);
+			KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address, Offset slide);
 
 			virtual bool parseLoadCommands();
 
 		private:
-			mach_vm_address_t kernel_cache;
+			xnu::Mach::VmAddress kernel_cache;
 	};
 
 }

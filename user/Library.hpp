@@ -39,6 +39,4 @@ namespace dyld
 
 			struct dyld_image_info *image_info;
 	};
-};
-
-#endif
+}

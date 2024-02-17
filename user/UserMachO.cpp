@@ -47,18 +47,18 @@ void UserMachO::withFilePath(const char *path)
 {
 	int fd = open(path, O_RDONLY);
 
-	size_t size = lseek(fd, 0, SEEK_END);
+	Size size = lseek(fd, 0, SEEK_END);
 
 	lseek(fd, 0, SEEK_SET);
 
 	this->buffer = reinterpret_cast<char*>(malloc(size));
 
-	ssize_t bytes_read;
+	Size bytes_read;
 
 	bytes_read = read(fd, this->buffer, size);
 
 	this->header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-	this->base = reinterpret_cast<mach_vm_address_t>(this->buffer);
+	this->base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
 
 	this->symbolTable = new SymbolTable();
 
@@ -90,7 +90,7 @@ void UserMachO::withBuffer(char *buf, off_t slide)
 	this->parseMachO();
 }
 
-void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide)
+void UserMachO::withBuffer(xnu::Mach::VmAddress base_, char *buf, off_t slide)
 {
 	buffer = buf;
 	base = base_;
@@ -105,7 +105,7 @@ void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide)
 	this->parseMachO();
 }
 
-void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide, bool is_dyld_cache)
+void UserMachO::withBuffer(xnu::Mach::VmAddress base_, char *buf, off_t slide, bool is_dyld_cache)
 {
 	buffer = buf;
 	base = base_;
@@ -120,7 +120,7 @@ void UserMachO::withBuffer(mach_vm_address_t base_, char *buf, off_t slide, bool
 	this->parseMachO();
 }
 
-void UserMachO::withBuffer(UserMachO *libobjc, mach_vm_address_t base_, char *buf, off_t slide)
+void UserMachO::withBuffer(UserMachO *libobjc, xnu::Mach::VmAddress base_, char *buf, off_t slide)
 {
 	buffer = buf;
 	base = base_;
@@ -136,18 +136,18 @@ void UserMachO::withBuffer(UserMachO *libobjc, mach_vm_address_t base_, char *bu
 	this->parseMachO();
 }
 
-void UserMachO::withBuffer(char *buffer, uint64_t size)
+void UserMachO::withBuffer(char *buffer, UInt64 size)
 {
 
 }
 
-MachO* UserMachO::libraryLoadedAt(mach_port_t task_port, char *library)
+MachO* UserMachO::libraryLoadedAt(xnu::Mach::Port task_port, char *library)
 {
 	return NULL;
 }
 
 
-uint64_t UserMachO::untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fixupKind, uint64_t ptr, bool *bind, bool *auth, uint16_t *pac, size_t *skip)
+UInt64 UserMachO::untagPacPointer(xnu::Mach::VmAddress base, enum dyld_fixup_t fixupKind, UInt64 ptr, bool *bind, bool *auth, UInt16 *pac, Size *skip)
 {
 	pacptr_t pp;
 
@@ -158,7 +158,7 @@ uint64_t UserMachO::untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fi
 		if(bind) *bind = false;
 		if(auth) *auth = !!(pp.cache.auth && pp.cache.tag);
 		if(pac)  *pac  = pp.cache.div;
-		if(skip) *skip = pp.cache.next * sizeof(uint32_t);
+		if(skip) *skip = pp.cache.next * sizeof(UInt32);
 
 		return base + pp.cache.target;
 	}
@@ -175,7 +175,7 @@ uint64_t UserMachO::untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fi
 
 		if(auth) *auth = false;
 		if(pac)  *pac  = 0;
-		if(skip) *skip = pp.pac.next * sizeof(uint32_t);
+		if(skip) *skip = pp.pac.next * sizeof(UInt32);
 		if(pp.pac.auth)
 		{
 			if(auth) *auth = !!pp.pac.tag;
@@ -184,7 +184,7 @@ uint64_t UserMachO::untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fi
 		if(pp.pac.bind) return pp.pac.off & 0xffff;
 		if(pp.pac.auth) return base + pp.pac.off;
 
-		return (uint64_t)pp.raw.lo;
+		return (UInt64)pp.raw.lo;
 	}
 
 	if(bind) *bind = false;
@@ -195,15 +195,15 @@ uint64_t UserMachO::untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fi
 	return pp.ptr;
 }
 
-bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
+bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr)
 {
 	struct mach_header_64 *header;
 
-	uint8_t *q;
+	UInt8 *q;
 
-	uint64_t ncmds;
+	UInt64 ncmds;
 
-	uint64_t cmd_offset;
+	UInt64 cmd_offset;
 
 	bool bind;
 
@@ -213,14 +213,14 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 
 	cmd_offset = sizeof(struct mach_header_64);
 
-	q = (uint8_t*) header + cmd_offset;
+	q = (UInt8*) header + cmd_offset;
 
 	for(int n = 0; n < ncmds; n++)
 	{
 		struct load_command *load_cmd = (struct load_command*) q;
 
-		uint32_t cmdtype = load_cmd->cmd;
-		uint32_t cmdsize = load_cmd->cmdsize;
+		UInt32 cmdtype = load_cmd->cmd;
+		UInt32 cmdsize = load_cmd->cmdsize;
 
 		if(cmdtype == LC_SEGMENT_64)
 		{
@@ -228,7 +228,7 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 
 			if(strcmp("__TEXT", segcmd->segname) == 0)
 			{
-				uint64_t sect_offset = cmd_offset + sizeof(struct segment_command_64);
+				UInt64 sect_offset = cmd_offset + sizeof(struct segment_command_64);
 
 				for(int j = 0; j < segcmd->nsects; j++)
 				{
@@ -236,8 +236,8 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 
 					if(strcmp("__thread_starts", section->sectname) == 0)
 					{
-						uint32_t *start = (uint32_t*) ((uintptr_t) ((uint8_t*) header + section->offset));
-						uint32_t *end = (uint32_t*) ((uintptr_t) start + section->size);
+						UInt32 *start = (UInt32*) ((uintptr_t) ((UInt8*) header + section->offset));
+						UInt32 *end = (UInt32*) ((uintptr_t) start + section->size);
 
 						if(end > start)
 						{
@@ -248,14 +248,14 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 								if(*start == 0xffffffff)
 									break;
 
-								uint64_t *mem = (uint64_t*) ((uint8_t*) header + *start);
+								UInt64 *mem = (UInt64*) ((UInt8*) header + *start);
 
-								size_t skip = 0;
+								Size skip = 0;
 
 								do
 								{
-									uint64_t ptr_tag = *mem;
-									uint64_t ptr_tag_ptr = ((uint64_t) mem - (uint64_t) header) + this->getBase();
+									UInt64 ptr_tag = *mem;
+									UInt64 ptr_tag_ptr = ((UInt64) mem - (UInt64) header) + this->getBase();
 
 									ptr_tag = this->untagPacPointer(this->getBase(), DYLD_CHAINED_PTR_ARM64E, ptr_tag, &bind, NULL, NULL, &skip);
 								
@@ -264,7 +264,7 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 										return true;
 									}
 
-									mem = (uint64_t*) ((uint64_t) mem + skip);
+									mem = (UInt64*) ((UInt64) mem + skip);
 
 								} while(skip > 0);
 
@@ -282,10 +282,10 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 		{
 			struct linkedit_data_command *data = (struct linkedit_data_command*) q;
 
-			struct dyld_chained_fixups_header *fixup = (struct dyld_chained_fixups_header*) (uint8_t*) header + data->dataoff;
+			struct dyld_chained_fixups_header *fixup = (struct dyld_chained_fixups_header*) (UInt8*) header + data->dataoff;
 			struct dyld_chained_starts_in_image *segs = (struct dyld_chained_starts_in_image*)((uintptr_t)fixup + fixup->starts_offset);
 
-			for(uint32_t i = 0; i < segs->seg_count; ++i)
+			for(UInt32 i = 0; i < segs->seg_count; ++i)
 			{
 				if(segs->seg_info_offset[i] == 0)
 				{
@@ -294,7 +294,7 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 
 				struct dyld_chained_starts_in_segment *starts = (struct dyld_chained_starts_in_segment*)((uintptr_t)segs + segs->seg_info_offset[i]);
 				
-				uint64_t off = (uintptr_t)ptr - (uintptr_t)this->buffer;
+				UInt64 off = (uintptr_t)ptr - (uintptr_t)this->buffer;
 
 				if(starts->pointer_format == DYLD_CHAINED_PTR_ARM64E_KERNEL)
 				{
@@ -306,24 +306,24 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 					continue;
 				}
 
-				uint16_t j = (off - starts->segment_offset) / starts->page_size;
-				uint16_t idx = starts->page_start[j];
+				UInt16 j = (off - starts->segment_offset) / starts->page_size;
+				UInt16 idx = starts->page_start[j];
 
 				if(idx == 0xffff)
 				{
 					continue;
 				}
 
-				size_t where = (size_t)starts->segment_offset + (size_t)j * (size_t)starts->page_size + (size_t)idx;
-				size_t skip = 0;
+				Size where = (Size)starts->segment_offset + (Size)j * (Size)starts->page_size + (Size)idx;
+				Size skip = 0;
 
-				uint64_t *mem = starts->pointer_format == DYLD_CHAINED_PTR_ARM64E_KERNEL ? reinterpret_cast<uint64_t*>(this->addressToPointer(this->base + where))
-																						 : reinterpret_cast<uint64_t*>((reinterpret_cast<uintptr_t>(this->buffer) + where));
+				UInt64 *mem = starts->pointer_format == DYLD_CHAINED_PTR_ARM64E_KERNEL ? reinterpret_cast<UInt64*>(this->addressToPointer(this->base + where))
+																						 : reinterpret_cast<UInt64*>((reinterpret_cast<uintptr_t>(this->buffer) + where));
 				
 				do
 				{
-					uint64_t ptr_tag = *mem;
-					uint64_t ptr_tag_ptr = ((uint64_t) mem - (uint64_t) this->buffer) + this->base;
+					UInt64 ptr_tag = *mem;
+					UInt64 ptr_tag_ptr = ((UInt64) mem - (UInt64) this->buffer) + this->base;
 
 					ptr_tag = this->untagPacPointer(this->base, DYLD_CHAINED_PTR_ARM64E, ptr_tag, &bind, NULL, NULL, &skip);
 
@@ -332,7 +332,7 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 						return true;
 					}
 
-					mem = (uint64_t*)((uintptr_t)mem + skip);
+					mem = (UInt64*)((uintptr_t)mem + skip);
 
 				} while(skip > 0);
 			}
@@ -346,9 +346,9 @@ bool UserMachO::isPointerInPacFixupChain(mach_vm_address_t ptr)
 	return false;
 }
 
-mach_vm_address_t UserMachO::getBufferAddress(mach_vm_address_t address)
+xnu::Mach::VmAddress UserMachO::getBufferAddress(xnu::Mach::VmAddress address)
 {
-	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(this->getMachHeader());
+	xnu::Mach::VmAddress header = reinterpret_cast<xnu::Mach::VmAddress>(this->getMachHeader());
 
 	Segment *segment = this->segmentForAddress(address);
 
@@ -370,7 +370,7 @@ mach_vm_address_t UserMachO::getBufferAddress(mach_vm_address_t address)
 	return segment && section ? header + section->getOffset() + (address - section->getAddress()) : 0;
 }
 
-void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+void UserMachO::parseSymbolTable(struct nlist_64 *symtab, UInt32 nsyms, char *strtab, Size strsize)
 {
 	for(int i = 0; i < nsyms; i++)
 	{
@@ -380,7 +380,7 @@ void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *
 
 		char *name;
 
-		mach_vm_address_t address;
+		xnu::Mach::VmAddress address;
 
 		name = &strtab[nl->n_strx];
 
@@ -394,11 +394,11 @@ void UserMachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *
 	}
 }
 
-uint64_t UserMachO::readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx)
+UInt64 UserMachO::readUleb128(UInt8 *start, UInt8 *end, UInt32 *idx)
 {
-	uint64_t result = 0;
+	UInt64 result = 0;
 
-	uint8_t *p = start;
+	UInt8 *p = start;
 
 	int bit = 0;
 
@@ -409,7 +409,7 @@ uint64_t UserMachO::readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx)
 			break;
 		}
 
-		uint64_t slice = *p & 0x7F;
+		UInt64 slice = *p & 0x7F;
 
 		if(bit > 63)
 			break;
@@ -429,15 +429,15 @@ uint64_t UserMachO::readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx)
 	return result;
 }
 
-int64_t UserMachO::readSleb128(uint8_t *start, uint8_t *end, uint32_t *idx)
+Int64 UserMachO::readSleb128(UInt8 *start, UInt8 *end, UInt32 *idx)
 {
-	int64_t result = 0;
+	Int64 result = 0;
 
-	uint8_t *p = start;
+	UInt8 *p = start;
 
 	int bit = 0;
 
-	uint8_t byte = 0;
+	UInt8 byte = 0;
 
 	do
 	{
@@ -448,7 +448,7 @@ int64_t UserMachO::readSleb128(uint8_t *start, uint8_t *end, uint32_t *idx)
 
 		*idx = *idx + 1;
 
-		result |= (((int64_t) (byte & 0x7F)) << bit);
+		result |= (((Int64) (byte & 0x7F)) << bit);
 
 		bit += 0x7;
 
@@ -471,22 +471,22 @@ bool UserMachO::parseLoadCommands()
 {
 	struct mach_header_64 *mh = this->getMachHeader();
 
-	size_t file_size;
+	Size file_size;
 
 	this->size = this->getSize();
 
 	file_size = this->size;
 
-	uint8_t *q = (uint8_t*) mh + sizeof(struct mach_header_64);
+	UInt8 *q = (UInt8*) mh + sizeof(struct mach_header_64);
 
-	uint32_t current_offset = sizeof(struct mach_header_64);
+	UInt32 current_offset = sizeof(struct mach_header_64);
 
-	for(uint32_t i = 0; i < mh->ncmds; i++)
+	for(UInt32 i = 0; i < mh->ncmds; i++)
 	{
 		struct load_command *load_cmd = (struct load_command*) (*this)[current_offset];
 
-		uint32_t cmdtype = load_cmd->cmd;
-		uint32_t cmdsize = load_cmd->cmdsize;
+		UInt32 cmdtype = load_cmd->cmd;
+		UInt32 cmdsize = load_cmd->cmdsize;
 
 		if(cmdsize > mh->sizeofcmds - ((uintptr_t) load_cmd - (uintptr_t)(mh + 1)))
 			return false;
@@ -500,7 +500,7 @@ bool UserMachO::parseLoadCommands()
 				struct dylib dylib = dylib_command->dylib;
 
 				off_t dylib_name_offset = current_offset  + reinterpret_cast<off_t>(dylib.name);
-				size_t dylib_name_len = cmdsize - sizeof(dylib_command);
+				Size dylib_name_len = cmdsize - sizeof(dylib_command);
 
 				char *name = (char*) (*this)[dylib_name_offset];
 
@@ -515,8 +515,8 @@ bool UserMachO::parseLoadCommands()
 				;
 				struct segment_command_64 *segment_command = (struct segment_command_64*) load_cmd;
 
-				uint32_t nsects = segment_command->nsects;
-				uint32_t sect_offset = current_offset + sizeof(struct segment_command_64);
+				UInt32 nsects = segment_command->nsects;
+				UInt32 sect_offset = current_offset + sizeof(struct segment_command_64);
 
 				if(segment_command->fileoff > this->size || segment_command->filesize > this->size - segment_command->fileoff)
 					return false;
@@ -567,10 +567,10 @@ bool UserMachO::parseLoadCommands()
 				// printf("\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
 
 				struct nlist_64 *symtab = (struct nlist_64*) (*this)[symtab_command->symoff];
-				uint32_t nsyms = symtab_command->nsyms;
+				UInt32 nsyms = symtab_command->nsyms;
 
 				char *strtab = (char*) (*this)[symtab_command->stroff];
-				uint32_t strsize = symtab_command->strsize;
+				UInt32 strsize = symtab_command->strsize;
 
 				if(nsyms > 0)
 					this->parseSymbolTable(symtab, nsyms, strtab, strsize);
@@ -621,8 +621,8 @@ bool UserMachO::parseLoadCommands()
 				;
 				struct linkedit_data_command *linkedit = (struct linkedit_data_command*) load_cmd;
 
-				uint32_t dataoff = linkedit->dataoff;
-				uint32_t datasize = linkedit->datasize;
+				UInt32 dataoff = linkedit->dataoff;
+				UInt32 datasize = linkedit->datasize;
 
 				// printf("LC_FUNCTION_STARTS\n");
 				// printf("\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
@@ -659,20 +659,20 @@ bool UserMachO::parseLoadCommands()
 				;
 				struct dyld_info_command *dyld_info_command = (struct dyld_info_command*) load_cmd;
 
-				uint32_t rebase_off = dyld_info_command->rebase_off;
-				uint32_t rebase_size = dyld_info_command->rebase_size;
+				UInt32 rebase_off = dyld_info_command->rebase_off;
+				UInt32 rebase_size = dyld_info_command->rebase_size;
 
-				uint32_t bind_off = dyld_info_command->bind_off;
-				uint32_t bind_size = dyld_info_command->bind_size;
+				UInt32 bind_off = dyld_info_command->bind_off;
+				UInt32 bind_size = dyld_info_command->bind_size;
 
-				uint32_t weak_bind_off = dyld_info_command->weak_bind_off;
-				uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
+				UInt32 weak_bind_off = dyld_info_command->weak_bind_off;
+				UInt32 weak_bind_size = dyld_info_command->weak_bind_size;
 
-				uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off;
-				uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
+				UInt32 lazy_bind_off = dyld_info_command->lazy_bind_off;
+				UInt32 lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-				uint32_t export_off = dyld_info_command->export_off;
-				uint32_t export_size = dyld_info_command->export_size;
+				UInt32 export_off = dyld_info_command->export_off;
+				UInt32 export_size = dyld_info_command->export_size;
 
 				/* printf("LC_DYLD_INFO\n");
 
@@ -710,20 +710,20 @@ bool UserMachO::parseLoadCommands()
 				;
 				struct dyld_info_command *dyld_info_command = (struct dyld_info_command*) load_cmd;
 
-				uint32_t rebase_off = dyld_info_command->rebase_off;
-				uint32_t rebase_size = dyld_info_command->rebase_size;
+				UInt32 rebase_off = dyld_info_command->rebase_off;
+				UInt32 rebase_size = dyld_info_command->rebase_size;
 
-				uint32_t bind_off = dyld_info_command->bind_off;
-				uint32_t bind_size = dyld_info_command->bind_size;
+				UInt32 bind_off = dyld_info_command->bind_off;
+				UInt32 bind_size = dyld_info_command->bind_size;
 
-				uint32_t weak_bind_off = dyld_info_command->weak_bind_off;
-				uint32_t weak_bind_size = dyld_info_command->weak_bind_size;
+				UInt32 weak_bind_off = dyld_info_command->weak_bind_off;
+				UInt32 weak_bind_size = dyld_info_command->weak_bind_size;
 
-				uint32_t lazy_bind_off = dyld_info_command->lazy_bind_off;
-				uint32_t lazy_bind_size = dyld_info_command->lazy_bind_size;
+				UInt32 lazy_bind_off = dyld_info_command->lazy_bind_off;
+				UInt32 lazy_bind_size = dyld_info_command->lazy_bind_size;
 
-				uint32_t export_off = dyld_info_command->export_off;
-				uint32_t export_size = dyld_info_command->export_size;
+				UInt32 export_off = dyld_info_command->export_off;
+				UInt32 export_size = dyld_info_command->export_size;
 
 				/*
 				printf("LC_DYLD_INFO_ONLY\n");
@@ -777,8 +777,8 @@ bool UserMachO::parseLoadCommands()
 			{
 				struct linkedit_data_command *linkedit = (struct linkedit_data_command*) load_cmd;
 
-				uint32_t dataoff = linkedit->dataoff;
-				uint32_t datasize = linkedit->datasize;
+				UInt32 dataoff = linkedit->dataoff;
+				UInt32 datasize = linkedit->datasize;
 
 				// printf("LC_CODE_SIGNATURE\n");
 
@@ -792,8 +792,8 @@ bool UserMachO::parseLoadCommands()
 				;
 				struct linkedit_data_command *linkedit = (struct linkedit_data_command*) load_cmd;
 
-				uint32_t dataoff = linkedit->dataoff;
-				uint32_t datasize = linkedit->datasize;
+				UInt32 dataoff = linkedit->dataoff;
+				UInt32 datasize = linkedit->datasize;
 
 				// printf("LC_DATA_IN_CODE\n");
 				// printf("\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
@@ -817,16 +817,16 @@ void UserMachO::parseFatHeader()
 {
 	struct fat_header *fat_header = (struct fat_header*) this->getMachHeader();
 
-	struct fat_arch *arch = (struct fat_arch*) ((uint8_t*) fat_header + sizeof(struct fat_header));
+	struct fat_arch *arch = (struct fat_arch*) ((UInt8*) fat_header + sizeof(struct fat_header));
 
-	uint32_t nfat_arch = OSSwapBigToHostInt32(fat_header->nfat_arch);
+	UInt32 nfat_arch = OSSwapBigToHostInt32(fat_header->nfat_arch);
 
-	for(uint32_t i = 0; i < fat_header->nfat_arch; i++)
+	for(UInt32 i = 0; i < fat_header->nfat_arch; i++)
 	{
-		uint32_t cputype;
-		uint32_t cpusubtype;
+		UInt32 cputype;
+		UInt32 cpusubtype;
 
-		uint64_t offset;
+		UInt64 offset;
 
 		cputype = OSSwapBigToHostInt32(arch->cputype);
 		cpusubtype = OSSwapBigToHostInt32(arch->cpusubtype);
@@ -843,7 +843,7 @@ void UserMachO::parseFatHeader()
 
 		if(cputype == NATIVE_CPU_TYPE)
 		{
-			struct mach_header_64 *mh = (struct mach_header_64*) ((uint8_t*) fat_header + offset);
+			struct mach_header_64 *mh = (struct mach_header_64*) ((UInt8*) fat_header + offset);
 
 			this->buffer = reinterpret_cast<char*>(mh);
 			this->header = mh;
@@ -860,7 +860,7 @@ void UserMachO::parseHeader()
 {
 	struct mach_header_64 *mh = (struct mach_header_64*) this->getMachHeader();
 
-	uint32_t magic = mh->magic;
+	UInt32 magic = mh->magic;
 
 	if(magic == FAT_CIGAM)
 	{

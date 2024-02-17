@@ -77,10 +77,10 @@ char* Harness::getMachOFromFatHeader(char *file_data)
 
     for(int i = 0; i < header->nfat_arch; i++)
     {
-        uint32_t cputype;
-        uint32_t cpusubtype;
+        UInt32 cputype;
+        UInt32 cpusubtype;
 
-        uint32_t offset;
+        UInt32 offset;
 
         cputype = arch->cputype;
         cpusubtype = arch->cpusubtype;
@@ -123,8 +123,8 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 {
 	KernelMachO *macho = this->getBinary<KernelMachO*>();
 
-	mach_vm_address_t loadAddress = reinterpret_cast<mach_vm_address_t>(this->fuzzBinary->base);
-	mach_vm_address_t oldLoadAddress = reinterpret_cast<mach_vm_address_t>(this->fuzzBinary->originalBase);
+	xnu::Mach::VmAddress loadAddress = reinterpret_cast<xnu::Mach::VmAddress>(this->fuzzBinary->base);
+	xnu::Mach::VmAddress oldLoadAddress = reinterpret_cast<xnu::Mach::VmAddress>(this->fuzzBinary->originalBase);
 
 	char *file_data;
 
@@ -137,7 +137,7 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
         return;
     }
 
-    off_t file_size = lseek(fd, 0, SEEK_END);
+    Offset file_size = lseek(fd, 0, SEEK_END);
     
     lseek(fd, 0, SEEK_SET);
 
@@ -160,24 +160,24 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-    uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
+    UInt8 *q = reinterpret_cast<UInt8*>(file_data + sizeof(struct mach_header_64));
 
     for(int i = 0; i < header->ncmds; i++)
     {
         struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-        uint32_t cmdtype = load_cmd->cmd;
-        uint32_t cmdsize = load_cmd->cmdsize;
+        UInt32 cmdtype = load_cmd->cmd;
+        UInt32 cmdsize = load_cmd->cmdsize;
 
         if(cmdtype == LC_SYMTAB)
         {
             struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_cmd);
 
             struct nlist_64 *symtab = reinterpret_cast<struct nlist_64*>(file_data + symtab_command->symoff);
-            uint32_t nsyms = symtab_command->nsyms;
+            UInt32 nsyms = symtab_command->nsyms;
 
             char *strtab = reinterpret_cast<char*>(file_data + symtab_command->stroff);
-            uint32_t strsize = symtab_command->strsize;
+            UInt32 strsize = symtab_command->strsize;
 
             if(nsyms > 0)
             {
@@ -191,7 +191,7 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 
 					char *name;
 
-					mach_vm_address_t address;
+					xnu::Mach::VmAddress address;
 
 					name = &strtab[nl->n_strx];
 
@@ -221,26 +221,26 @@ void Harness::addDebugSymbolsFromKernel(const char *kernelPath)
 }
 
 template<typename Binary> requires AnyBinaryFormat<Binary>
-void Harness::getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *load_addr)
+void Harness::getMappingInfo(char *file_data, Size *size, xnu::Mach::VmAddress *load_addr)
 {
     if constexpr (std::is_same_v<Binary, MachO>)
     {
         struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-        uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
+        UInt8 *q = reinterpret_cast<UInt8*>(file_data + sizeof(struct mach_header_64));
 
         for(int i = 0; i < header->ncmds; i++)
         {
             struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-            uint32_t cmdtype = load_cmd->cmd;
-            uint32_t cmdsize = load_cmd->cmdsize;
+            UInt32 cmdtype = load_cmd->cmd;
+            UInt32 cmdsize = load_cmd->cmdsize;
 
             if(cmdtype == LC_SEGMENT_64)
             {
                 struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-                mach_vm_address_t vmaddr = segment_command->vmaddr;
+                xnu::Mach::VmAddress vmaddr = segment_command->vmaddr;
 
                 if(vmaddr < *load_addr && strcmp(segment_command->segname, "__TEXT") == 0)
                     *load_addr = vmaddr;
@@ -258,31 +258,31 @@ void Harness::getMappingInfo(char *file_data, size_t *size, mach_vm_address_t *l
     }    
 }
 
-void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
+void Harness::updateSymbolTableForMappedMachO(char *file_data, xnu::Mach::VmAddress newLoadAddress, xnu::Mach::VmAddress oldLoadAddress)
 {
 
 #ifdef __EXECUTE_IN_SAME_PROCESS__
 
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-    uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
+    UInt8 *q = reinterpret_cast<UInt8*>(file_data + sizeof(struct mach_header_64));
 
     for(int i = 0; i < header->ncmds; i++)
     {
         struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-        uint32_t cmdtype = load_cmd->cmd;
-        uint32_t cmdsize = load_cmd->cmdsize;
+        UInt32 cmdtype = load_cmd->cmd;
+        UInt32 cmdsize = load_cmd->cmdsize;
 
         if(cmdtype == LC_SYMTAB)
         {
             struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_cmd);
 
             struct nlist_64 *symtab = reinterpret_cast<struct nlist_64*>(file_data + symtab_command->symoff);
-            uint32_t nsyms = symtab_command->nsyms;
+            UInt32 nsyms = symtab_command->nsyms;
 
             char *strtab = reinterpret_cast<char*>(file_data + symtab_command->stroff);
-            uint32_t strsize = symtab_command->strsize;
+            UInt32 strsize = symtab_command->strsize;
 
             if(nsyms > 0)
             {
@@ -292,7 +292,7 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t
 
                     char *name;
 
-                    mach_vm_address_t address;
+                    xnu::Mach::VmAddress address;
 
                     name = &strtab[nl->n_strx];
 
@@ -312,28 +312,28 @@ void Harness::updateSymbolTableForMappedMachO(char *file_data, mach_vm_address_t
 
 }
 
-void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_vm_address_t newLoadAddress, mach_vm_address_t oldLoadAddress)
+void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, xnu::Mach::VmAddress newLoadAddress, xnu::Mach::VmAddress oldLoadAddress)
 {
     struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-    uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
+    UInt8 *q = reinterpret_cast<UInt8*>(file_data + sizeof(struct mach_header_64));
 
     for(int i = 0; i < header->ncmds; i++)
     {
         struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-        uint32_t cmdtype = load_cmd->cmd;
-        uint32_t cmdsize = load_cmd->cmdsize;
+        UInt32 cmdtype = load_cmd->cmd;
+        UInt32 cmdsize = load_cmd->cmdsize;
 
         if(cmdtype == LC_SEGMENT_64)
         {
             struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-            mach_vm_address_t vmaddr = segment_command->vmaddr;
+            xnu::Mach::VmAddress vmaddr = segment_command->vmaddr;
 
         #ifdef __EXECUTE_IN_SAME_PROCESS__
 
-            mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
+            xnu::Mach::VmAddress segment_adjusted_address = segment_command->fileoff + newLoadAddress;
 
             segment_command->vmaddr = segment_adjusted_address;
 
@@ -344,15 +344,15 @@ void Harness::updateSegmentLoadCommandsForNewLoadAddress(char *file_data, mach_v
                                           segment_command->vmaddr,
                                           segment_command->vmaddr + segment_command->vmsize);
 
-            uint8_t *sects  = q + sizeof(struct segment_command_64);
+            UInt8 *sects  = q + sizeof(struct segment_command_64);
 
             for(int j = 0; j < segment_command->nsects; j++)
             {
                 struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
 
-                mach_vm_address_t sect_addr = section->addr;
+                xnu::Mach::VmAddress sect_addr = section->addr;
 
-                mach_vm_address_t sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
+                xnu::Mach::VmAddress sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
 
             #ifdef __EXECUTE_IN_SAME_PROCESS__
 
@@ -384,14 +384,14 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
     {
         struct mach_header_64 *header = reinterpret_cast<struct mach_header_64*>(file_data);
 
-        uint8_t *q = reinterpret_cast<uint8_t*>(file_data + sizeof(struct mach_header_64));
+        UInt8 *q = reinterpret_cast<UInt8*>(file_data + sizeof(struct mach_header_64));
 
         for(int i = 0; i < header->ncmds; i++)
         {
             struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-            uint32_t cmdtype = load_cmd->cmd;
-            uint32_t cmdsize = load_cmd->cmdsize;
+            UInt32 cmdtype = load_cmd->cmd;
+            UInt32 cmdsize = load_cmd->cmdsize;
 
             if(cmdtype == LC_SEGMENT_64)
             {
@@ -414,13 +414,13 @@ bool Harness::mapSegments(char *file_data, char *mapFile)
 
                 memcpy((void*) segment_command->vmaddr, file_data + segment_command->fileoff, segment_command->filesize);
 
-                uint8_t *sects  = q + sizeof(struct segment_command_64);
+                UInt8 *sects  = q + sizeof(struct segment_command_64);
 
                 for(int j = 0; j < segment_command->nsects; j++)
                 {
                     struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
 
-                    mach_vm_address_t sect_addr = section->addr;
+                    xnu::Mach::VmAddress sect_addr = section->addr;
 
                     printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
                                                     section->addr,
@@ -462,13 +462,13 @@ bool Harness::unmapSegments()
 
 }
 
-void Harness::getEntryPointFromKC(mach_vm_address_t kc, mach_vm_address_t *entryPoint)
+void Harness::getEntryPointFromKC(xnu::Mach::VmAddress kc, xnu::Mach::VmAddress *entryPoint)
 {
     struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
-    uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
+    UInt8 *q = reinterpret_cast<UInt8*>(kc) + sizeof(struct mach_header_64);
 
-    for(uint32_t i = 0; i < mh->ncmds; i++)
+    for(UInt32 i = 0; i < mh->ncmds; i++)
     {
         struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
 
@@ -503,13 +503,13 @@ void Harness::getEntryPointFromKC(mach_vm_address_t kc, mach_vm_address_t *entry
     }
 }
 
-void Harness::getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *kernelBase, off_t *kernelFileOffset)
+void Harness::getKernelFromKC(xnu::Mach::VmAddress kc, xnu::Mach::VmAddress *kernelBase, Offset *kernelFileOffset)
 {
     struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(kc);
 
-    uint8_t *q = reinterpret_cast<uint8_t*>(kc) + sizeof(struct mach_header_64);
+    UInt8 *q = reinterpret_cast<UInt8*>(kc) + sizeof(struct mach_header_64);
 
-    for(uint32_t i = 0; i < mh->ncmds; i++)
+    for(UInt32 i = 0; i < mh->ncmds; i++)
     {
         struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
 
@@ -534,7 +534,7 @@ void Harness::getKernelFromKC(mach_vm_address_t kc, mach_vm_address_t *kernelBas
     }
 }
 
-bool Harness::loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelCache, size_t *kernelCacheSize, off_t *loadOffset, mach_vm_address_t *loadAddress)
+bool Harness::loadKernelCache(const char *kernelPath, xnu::Mach::VmAddress *kernelCache, Size *kernelCacheSize, Offset *loadOffset, xnu::Mach::VmAddress *loadAddress)
 {
     bool success;
 
@@ -549,7 +549,7 @@ bool Harness::loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelC
         return false;
     }
 
-    off_t file_size = lseek(fd, 0, SEEK_END);
+    Offset file_size = lseek(fd, 0, SEEK_END);
     
     lseek(fd, 0, SEEK_SET);
 
@@ -568,13 +568,13 @@ bool Harness::loadKernelCache(const char *kernelPath, mach_vm_address_t *kernelC
         return false;
     }
 
-    this->getKernelFromKC((mach_vm_address_t) file_data, loadAddress, loadOffset);
+    this->getKernelFromKC((xnu::Mach::VmAddress) file_data, loadAddress, loadOffset);
 
-    size_t size = 0;
+    Size size = 0;
 
     getMappingInfo<MachO>((char*) file_data + *loadOffset, &size, loadAddress);
 
-    *kernelCache = (mach_vm_address_t) file_data;
+    *kernelCache = (xnu::Mach::VmAddress) file_data;
     *kernelCacheSize = file_size;
 
     free(file_data);
@@ -603,13 +603,13 @@ void Harness::startKernel()
 {
     xnu::KernelMachO *kernelMachO = this->fuzzBinary->getBinary<xnu::KernelMachO*>();
 
-    mach_vm_address_t entryPoint;
+    xnu::Mach::VmAddress entryPoint;
     
-    this->getEntryPointFromKC((mach_vm_address_t) this->fuzzBinary->base, &entryPoint);
+    this->getEntryPointFromKC((xnu::Mach::VmAddress) this->fuzzBinary->base, &entryPoint);
 
     printf("start = 0x%llx\n", entryPoint);
 
-    hypervisor = new Virtualization::Hypervisor(this, (mach_vm_address_t) this->fuzzBinary->originalBase, (mach_vm_address_t) this->fuzzBinary->base, this->fuzzBinary->size, entryPoint);
+    hypervisor = new Virtualization::Hypervisor(this, (xnu::Mach::VmAddress) this->fuzzBinary->originalBase, (xnu::Mach::VmAddress) this->fuzzBinary->base, this->fuzzBinary->size, entryPoint);
 }
 
 void Harness::callFunctionInKernel(const char *funcname)
@@ -629,15 +629,15 @@ void Harness::callFunctionInKernel(const char *funcname)
     // (void)(*start)();
 }
 
-void Harness::loadKernel(const char *kernelPath, off_t slide)
+void Harness::loadKernel(const char *kernelPath, Offset slide)
 {
-    mach_vm_address_t kernelCache = 0;
+    xnu::Mach::VmAddress kernelCache = 0;
 
-    size_t kernelCacheSize = 0;
+    Size kernelCacheSize = 0;
 
-    off_t loadOffset = 0;
+    Offset loadOffset = 0;
 
-    mach_vm_address_t loadAddress = 0;
+    xnu::Mach::VmAddress loadAddress = 0;
 
     if(this->loadKernelCache(kernelPath, &kernelCache, &kernelCacheSize, &loadOffset, &loadAddress))
     {
@@ -645,7 +645,7 @@ void Harness::loadKernel(const char *kernelPath, off_t slide)
         this->fuzzBinary->base = reinterpret_cast<void*>(kernelCache);
         this->fuzzBinary->originalBase = reinterpret_cast<void*>(loadAddress);
         this->fuzzBinary->size = kernelCacheSize;
-        this->fuzzBinary->binary = FuzzBinary::MakeBinary<KernelMachO*>(new KernelCacheMachO(kernelCache, (uint64_t) kernelCache + loadOffset));
+        this->fuzzBinary->binary = FuzzBinary::MakeBinary<KernelMachO*>(new KernelCacheMachO(kernelCache, (UInt64) kernelCache + loadOffset));
     } else
     {
         fprintf(stderr, "Failed to load kernelcache!\n");

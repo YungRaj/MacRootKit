@@ -84,12 +84,12 @@ void Loader::loadModuleFromKext(const char *kextPath)
 
     struct FuzzBinary *fuzzBinary = new FuzzBinary;
 
-    mach_vm_address_t loadAddress = 0;
-    mach_vm_address_t oldLoadAddress = 0;
+    xnu::Mach::VmAddress loadAddress = 0;
+    xnu::Mach::VmAddress oldLoadAddress = 0;
 
     char *file_data = NULL;
 
-    size_t file_size = 0;
+    Size file_size = 0;
 
     loadKextMachO(kextPath, &loadAddress, &file_size, &oldLoadAddress);
 
@@ -106,7 +106,7 @@ void Loader::loadModuleFromKext(const char *kextPath)
     this->loadModule<xnu::KextMachO*>(module);
 }
 
-void Loader::loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress, size_t *loadSize, mach_vm_address_t *oldLoadAddress)
+void Loader::loadKextMachO(const char *kextPath, xnu::Mach::VmAddress *loadAddress, Size *loadSize, xnu::Mach::VmAddress *oldLoadAddress)
 {
     bool success;
 
@@ -125,13 +125,13 @@ void Loader::loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress,
         return;
     }
 
-    off_t file_size = lseek(fd, 0, SEEK_END);
+    Offset file_size = lseek(fd, 0, SEEK_END);
     
     lseek(fd, 0, SEEK_SET);
 
     file_data = (char*) malloc(file_size);
 
-    ssize_t bytes_read;
+    Size bytes_read;
 
     bytes_read = read(fd, file_data, file_size);
 
@@ -189,9 +189,9 @@ void Loader::loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress,
         return;
     }
 
-    this->harness->updateSymbolTableForMappedMachO(file_data, (mach_vm_address_t) baseAddress, *oldLoadAddress);
+    this->harness->updateSymbolTableForMappedMachO(file_data, (xnu::Mach::VmAddress) baseAddress, *oldLoadAddress);
 
-    this->harness->updateSegmentLoadCommandsForNewLoadAddress(file_data, (mach_vm_address_t) baseAddress, *oldLoadAddress);
+    this->harness->updateSegmentLoadCommandsForNewLoadAddress(file_data, (xnu::Mach::VmAddress) baseAddress, *oldLoadAddress);
 
     // success = this->harness->mapSegments<MachO, Segment>(file_data, NULL);
 
@@ -202,7 +202,7 @@ void Loader::loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress,
         goto fail;
     }
 
-    *loadAddress = (mach_vm_address_t) baseAddress;
+    *loadAddress = (xnu::Mach::VmAddress) baseAddress;
 
     // writeToFile((char*) baseAddress, *loadSize);
 
@@ -245,7 +245,7 @@ void Loader::linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
 }
 
 template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-void Loader::stubFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym) 
+void Loader::stubFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym) 
 {
     sym->getName();
     sym->getAddress();
@@ -256,7 +256,7 @@ void Loader::stubFunction(Module *module, Sym sym, mach_vm_address_t stub) requi
 }
 
 template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-void Loader::shimFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym)
+void Loader::shimFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym)
 {
     sym->getName();
     sym->getAddress();
@@ -266,7 +266,7 @@ void Loader::shimFunction(Module *module, Sym sym, mach_vm_address_t stub) requi
 
 }
 
-void* Loader::allocateModuleMemory(size_t sz, int prot)
+void* Loader::allocateModuleMemory(Size sz, int prot)
 {
     void* baseAddress = mmap(NULL, sz, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 

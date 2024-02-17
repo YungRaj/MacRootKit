@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "BinaryFormat.hpp"
 
 class ELF : public Binary::BinaryFormat

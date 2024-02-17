@@ -430,7 +430,7 @@ void getMappingInfoForMachO(char *file_data, size_t *size, uintptr_t *load_addr)
         {
             struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-            mach_vm_address_t vmaddr = segment_command->vmaddr;
+            xnu::Mach::VmAddress_t vmaddr = segment_command->vmaddr;
 
             if(vmaddr < *load_addr && strcmp(segment_command->segname, "__TEXT") == 0)
                 *load_addr = vmaddr;
@@ -475,7 +475,7 @@ void updateSymbolTableForMappedMachO(char *file_data, uintptr_t newLoadAddress, 
 
                     uint8_t type;
 
-                    mach_vm_address_t address;
+                    xnu::Mach::VmAddress_t address;
 
                     name = &strtab[nl->n_strx];
 
@@ -516,9 +516,9 @@ void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLo
         {
             struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_cmd);
 
-            mach_vm_address_t vmaddr = segment_command->vmaddr;
+            xnu::Mach::VmAddress_t vmaddr = segment_command->vmaddr;
 
-            mach_vm_address_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
+            xnu::Mach::VmAddress_t segment_adjusted_address = segment_command->fileoff + newLoadAddress;
 
             segment_command->vmaddr = segment_adjusted_address;
 
@@ -533,9 +533,9 @@ void updateSegmentLoadCommandsForNewLoadAddress(char *file_data, uintptr_t newLo
             {
                 struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
 
-                mach_vm_address_t sect_addr = section->addr;
+                xnu::Mach::VmAddress_t sect_addr = section->addr;
 
-                mach_vm_address_t sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
+                xnu::Mach::VmAddress_t sect_adjusted_address = (sect_addr - vmaddr) + segment_command->fileoff + newLoadAddress;
 
                 section->addr = sect_adjusted_address;
                 section->offset = (sect_addr - vmaddr) + segment_command->fileoff;
@@ -591,7 +591,7 @@ void callFunction(char *macho, char *symbolname, uint64_t *arguments, size_t arg
 
                     uint8_t type;
 
-                    mach_vm_address_t address;
+                    xnu::Mach::VmAddress_t address;
 
                     name = &strtab[nl->n_strx];
 
@@ -603,7 +603,7 @@ void callFunction(char *macho, char *symbolname, uint64_t *arguments, size_t arg
                     {
                         printf("Calling function at 0x%llx\n", address);
 
-                        mach_vm_address_t function = address;
+                        xnu::Mach::VmAddress_t function = address;
 
                         #ifdef __arm64__
 
@@ -897,7 +897,7 @@ bool mapSegmentsFromMachO(char *file_data)
             {
                 struct section_64 *section = reinterpret_cast<struct section_64*>(sects);
 
-                mach_vm_address_t sect_addr = section->addr;
+                xnu::Mach::VmAddress_t sect_addr = section->addr;
 
                 printf("\tSection %d: 0x%08llx to 0x%08llx - %s\n", j,
                                                 section->addr,
@@ -942,7 +942,7 @@ void loadKernelMachO(const char *kernelPath, uintptr_t *loadAddress, size_t *loa
         return;
     }
 
-    off_t file_size = lseek(fd, 0, SEEK_END);
+    Offset file_size = lseek(fd, 0, SEEK_END);
     
     lseek(fd, 0, SEEK_SET);
 
@@ -1041,7 +1041,7 @@ fail:
     printf("Load Kernel MachO failed!\n");
 }
 
-void loadKernel(const char *kernelPath, off_t slide, bool debugSymbols)
+void loadKernel(const char *kernelPath, Offset slide, bool debugSymbols)
 {
     uintptr_t loadAddress = 0;
 

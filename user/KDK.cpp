@@ -64,32 +64,32 @@ class KDKKernelMachO : public KernelMachO
 			}
 		}
 
-		mach_vm_address_t getBase()
+		xnu::Mach::VmAddress getBase()
 		{
 			struct mach_header_64 *hdr = this->header;
 
-			uint8_t *cmds = reinterpret_cast<uint8_t*>(hdr)+ sizeof(struct mach_header_64);
+			UInt8 *cmds = reinterpret_cast<UInt8*>(hdr)+ sizeof(struct mach_header_64);
 
-			uint8_t *q = cmds;
+			UInt8 *q = cmds;
 
-			mach_vm_address_t base = UINT64_MAX;
+			xnu::Mach::VmAddress base = UINT64_MAX;
 
 			for(int i = 0; i < hdr->ncmds; i++)
 			{
 				struct load_command *load_cmd = reinterpret_cast<struct load_command*>(q);
 
-				uint32_t cmdtype = load_cmd->cmd;
-				uint32_t cmdsize = load_cmd->cmdsize;
+				UInt32 cmdtype = load_cmd->cmd;
+				UInt32 cmdsize = load_cmd->cmdsize;
 
 				if(load_cmd->cmd == LC_SEGMENT_64)
 				{
 					struct segment_command_64 *segment = reinterpret_cast<struct segment_command_64*>(q);
 
-					uint64_t vmaddr = segment->vmaddr;
-					uint64_t vmsize = segment->vmsize;
+					UInt64 vmaddr = segment->vmaddr;
+					UInt64 vmsize = segment->vmsize;
 
-					uint64_t fileoffset = segment->fileoff;
-					uint64_t filesize = segment->filesize;
+					UInt64 fileoffset = segment->fileoff;
+					UInt64 filesize = segment->filesize;
 
 					if(vmaddr < base)
 						base = vmaddr;
@@ -105,7 +105,7 @@ class KDKKernelMachO : public KernelMachO
 			return base;
 		}
 
-		void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+		void parseSymbolTable(struct nlist_64 *symtab, UInt32 nsyms, char *strtab, Size strsize)
 		{
 			for(int i = 0; i < nsyms; i++)
 			{
@@ -115,7 +115,7 @@ class KDKKernelMachO : public KernelMachO
 
 				char *name;
 
-				mach_vm_address_t address;
+				xnu::Mach::VmAddress address;
 
 				name = &strtab[nl->n_strx];
 
@@ -134,7 +134,7 @@ class KDKKernelMachO : public KernelMachO
 
 		const char *path;
 
-		off_t kernelSlide;
+		Offset kernelSlide;
 
 };
 
@@ -184,13 +184,13 @@ kern_return_t readKDKKernelFromPath(const char *path, char **out_buffer)
         return KERN_FAILURE;
     }
     
-    size_t size = lseek(fd, 0, SEEK_END);
+    Size size = lseek(fd, 0, SEEK_END);
 
     lseek(fd, 0, SEEK_SET);
     
     char *buffer = (char *)malloc(size);
     
-    size_t bytes_read = 0;
+    Size bytes_read = 0;
 
     bytes_read = read(fd, buffer, size);
     
@@ -483,7 +483,7 @@ KDK::KDK(xnu::Kernel *kernel, struct KDKInfo *kdkInfo)
 
 }
 
-mach_vm_address_t KDK::getKDKSymbolAddressByName(char *sym)
+xnu::Mach::VmAddress KDK::getKDKSymbolAddressByName(char *sym)
 {
 	return this->kernelWithDebugSymbols->getSymbolAddressByName(sym);
 }
@@ -493,7 +493,7 @@ Symbol* KDK::getKDKSymbolByName(char *symname)
 	return this->kernelWithDebugSymbols->getSymbolByName(symname);
 }
 
-Symbol* KDK::getKDKSymbolByAddress(mach_vm_address_t address)
+Symbol* KDK::getKDKSymbolByAddress(xnu::Mach::VmAddress address)
 {
 	return this->kernelWithDebugSymbols->getSymbolByAddress(address);
 }
@@ -504,13 +504,13 @@ char* KDK::findString(char *s)
 }
 
 template<typename T>
-std::vector<Xref<T>*> KDK::getExternalReferences(mach_vm_address_t addr)
+std::vector<Xref<T>*> KDK::getExternalReferences(xnu::Mach::VmAddress addr)
 {
 
 }
 
 template<typename T>
-std::vector<Xref<T>*> KDK::getStringReferences(mach_vm_address_t addr)
+std::vector<Xref<T>*> KDK::getStringReferences(xnu::Mach::VmAddress addr)
 {
 
 }

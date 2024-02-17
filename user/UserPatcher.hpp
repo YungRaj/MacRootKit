@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Patcher.hpp"
 
 namespace mrk
@@ -31,21 +33,21 @@ namespace mrk
 			~UserPatcher();
 
 			virtual void findAndReplace(void *data,
-										size_t data_size,
-										const void *find, size_t find_size,
-										const void *replace, size_t replace_size);
+										Size data_size,
+										const void *find, Size find_size,
+										const void *replace, Size replace_size);
 
 			virtual void routeFunction(Hook *hook);
 
-			virtual void onExec(char *name, int pid, mach_port_t port, mach_vm_address_t task, mach_vm_address_t proc);
+			virtual void onExec(char *name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task, xnu::Mach::VmAddress proc);
 
 			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
-			mach_vm_address_t injectPayload(mach_vm_address_t address, Payload *payload);
+			xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload *payload);
 
-			mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload);
+			xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload *payload);
 
-			size_t mapAddresses(const char *mapBuf);
+			Size mapAddresses(const char *mapBuf);
 
 		private:
 	};

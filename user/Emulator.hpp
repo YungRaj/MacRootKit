@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <unicorn/unicorn.h>
 
 namespace Emulation
@@ -23,7 +25,7 @@ namespace Emulation
 	class Unicorn
 	{
 		public:
-			explicit Unicorn(char *code, size_t code_size, uint64_t address);
+			explicit Unicorn(char *code, Size code_size, UInt64 address);
 
 		private:
 			uc_engine *uc;

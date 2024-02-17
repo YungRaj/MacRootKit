@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <Types.h>
-
 #include "Log.hpp"
 
 #ifdef __USER__
@@ -221,14 +219,14 @@ inline const char *safeString(const char *str)
  *  A shorter form of writing reinterpret_cast<decltype(&org)>(ptr)
  */
 template <typename T>
-inline T FunctionCast(T org, xnu::Mach::VmAddress ptr)
+inline T FunctionCast(T org, uint64_t ptr)
 {
     return reinterpret_cast<T>(ptr);
 }
 
 namespace API
 {
-	void dump(Kernel *kernel, xnu::Mach::VmAddress address);
+	void dump(Kernel *kernel, uint64_t address);
 
 	void hexdump(unsigned char *data, Size size, bool rev);
 };

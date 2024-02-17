@@ -156,7 +156,7 @@ char* DWTagToString(enum DW_TAG tag)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(tag));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<UInt32>(tag));
 
 	return ret;
 }
@@ -358,7 +358,7 @@ char* DWAttrToString(enum DW_AT attr)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(attr));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<UInt32>(attr));
 
 	return ret;
 }
@@ -421,12 +421,12 @@ char* DWFormToString(enum DW_FORM form)
 
 	char *ret = new char[1024];
 	
-	snprintf(ret, 1024, "unknown 0x%x", static_cast<uint32_t>(form));
+	snprintf(ret, 1024, "unknown 0x%x", static_cast<UInt32>(form));
 
 	return ret;
 }
 
-size_t DWFormSize(enum DW_FORM form)
+Size DWFormSize(enum DW_FORM form)
 {
 	switch(form)
 	{
@@ -494,20 +494,20 @@ char* SourceLineFlagsToString(struct LTSourceLine *sourceLine)
 	return buffer;
 }
 
-uint64_t Debug::GetStringSize(uint8_t *p)
+UInt64 Debug::GetStringSize(UInt8 *p)
 {
-	uint8_t *s = p;
+	UInt8 *s = p;
 
-	uint64_t size = 0;
+	UInt64 size = 0;
 
 	while(*s++) { size++; }
 
 	return size;
 }
 
-uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end)
+UInt64 Debug::ReadUleb128(UInt8 *p, UInt8 *end)
 {
-	uint64_t result = 0;
+	UInt64 result = 0;
 
 	int bit = 0;
 
@@ -520,7 +520,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end)
 			break;
 		}
 
-		uint64_t slice = *p & 0x7F;
+		UInt64 slice = *p & 0x7F;
 
 		if(bit > 63)
 		{
@@ -539,9 +539,9 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end)
 	return result;
 }
 
-uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
+UInt64 Debug::ReadUleb128(UInt8 *p, UInt8 *end, UInt32 *idx)
 {
-	uint64_t result = 0;
+	UInt64 result = 0;
 
 	int bit = 0;
 
@@ -554,7 +554,7 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 			break;
 		}
 
-		uint64_t slice = *p & 0x7F;
+		UInt64 slice = *p & 0x7F;
 
 		if(bit > 63)
 		{
@@ -575,13 +575,13 @@ uint64_t Debug::ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 	return result;
 }
 
-int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end)
+Int64 Debug::ReadSleb128(UInt8 *p, UInt8 *end)
 {
-	int64_t result = 0;
+	Int64 result = 0;
 
 	int bit = 0;
 
-	uint8_t byte = 0;
+	UInt8 byte = 0;
 
 	do
 	{
@@ -594,7 +594,7 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end)
 
 		byte = *p++;
 
-		result |= (((int64_t) (byte & 0x7f)) << bit);
+		result |= (((Int64) (byte & 0x7f)) << bit);
 
 		bit += 7;
 	} while (byte & 0x80);
@@ -606,13 +606,13 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end)
 	return result;
 }
 
-int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
+Int64 Debug::ReadSleb128(UInt8 *p, UInt8 *end, UInt32 *idx)
 {
-	int64_t result = 0;
+	Int64 result = 0;
 
 	int bit = 0;
 
-	uint8_t byte = 0;
+	UInt8 byte = 0;
 
 	do
 	{
@@ -627,7 +627,7 @@ int64_t Debug::ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx)
 
 		*idx = *idx + 1;
 
-		result |= (((int64_t) (byte & 0x7f)) << bit);
+		result |= (((Int64) (byte & 0x7f)) << bit);
 
 		bit += 7;
 	} while (byte & 0x80);
@@ -643,7 +643,7 @@ using namespace Debug;
 
 template <typename T> requires DebuggableBinary<T>
 DIE<T>::DIE(Dwarf<T> *dwarf,
-		 uint64_t code,
+		 UInt64 code,
 		 char *name,
 		 enum DW_TAG tag,
 		 enum DW_CHILDREN has_children)
@@ -697,7 +697,7 @@ struct Attribute* DwarfDIE<T>::getAttribute(enum DW_AT attr)
 }
 
 template <typename T> requires DebuggableBinary<T>
-uint64_t DwarfDIE<T>::getAttributeValue(enum DW_AT attr)
+UInt64 DwarfDIE<T>::getAttributeValue(enum DW_AT attr)
 {
 	for(int i = 0; i < this->attributes.size(); i++)
 	{
@@ -791,25 +791,25 @@ void Dwarf<T>::parseDebugAbbrev()
 	Sect debug_abbrev = this->__debug_abbrev;
 	Sect debug_str = this->__debug_str;
 
-	uint8_t *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
-	uint8_t *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
+	UInt8 *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
+	UInt8 *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = (*bin)[debug_str->getOffset()];
-	uint8_t *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
+	UInt8 *debug_str_begin = (*bin)[debug_str->getOffset()];
+	UInt8 *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
 
-	size_t debug_abbrev_size = debug_abbrev->getSize();
+	Size debug_abbrev_size = debug_abbrev->getSize();
 
-	uint32_t debug_abbrev_offset = 0;
+	UInt32 debug_abbrev_offset = 0;
 
 	std::vector<DIE<T>*> stack;
 
-	uint64_t code = 0;
+	UInt64 code = 0;
 
 	enum DW_TAG tag = static_cast<enum DW_TAG>(0);
 
-	while(debug_abbrev_offset < debug_abbrev->getSize() - sizeof(uint32_t))
+	while(debug_abbrev_offset < debug_abbrev->getSize() - sizeof(UInt32))
 	{
-		if(code == 0 && static_cast<uint32_t>(tag) == 0)
+		if(code == 0 && static_cast<UInt32>(tag) == 0)
 		{
 			code = Debug::ReadUleb128(debug_abbrev_begin + debug_abbrev_offset, debug_abbrev_end, &debug_abbrev_offset);
 
@@ -827,12 +827,12 @@ void Dwarf<T>::parseDebugAbbrev()
 
 				dies.push_back(die);
 
-				MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
+				MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<UInt32>(children));
 			}
 
 		} else
 		{
-			uint64_t value;
+			UInt64 value;
 
 			enum DW_AT attr = static_cast<enum DW_AT>(Debug::ReadUleb128(debug_abbrev_begin + debug_abbrev_offset, debug_abbrev_end, &debug_abbrev_offset));
 
@@ -840,7 +840,7 @@ void Dwarf<T>::parseDebugAbbrev()
 
 			if(static_cast<int>(attr) == 0 && static_cast<int>(form) == 0)
 			{
-				uint32_t tmp = debug_abbrev_offset;
+				UInt32 tmp = debug_abbrev_offset;
 
 				code = Debug::ReadUleb128(debug_abbrev_begin + debug_abbrev_offset, debug_abbrev_end, &debug_abbrev_offset);
 
@@ -869,7 +869,7 @@ void Dwarf<T>::parseDebugAbbrev()
 
 					DIE<T> *die = new DIE<T>(this, code, name, tag, children);
 
-					MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<uint32_t>(children));
+					MAC_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name, static_cast<UInt32>(children));
 
 					stack.push_back(die);
 
@@ -878,7 +878,7 @@ void Dwarf<T>::parseDebugAbbrev()
 
 			} else
 			{
-				MAC_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr), static_cast<uint32_t>(attr), DWFormToString(form));
+				MAC_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr), static_cast<UInt32>(attr), DWFormToString(form));
 				
 				DIE<T> *die = stack.at(stack.size() - 1);
 
@@ -901,7 +901,7 @@ void Dwarf<T>::parseDebugAbbrev()
 }
 
 template <typename T> requires DebuggableBinary<T>
-DIE<T>* Dwarf<T>::getDebugInfoEntryByCode(uint64_t code)
+DIE<T>* Dwarf<T>::getDebugInfoEntryByCode(UInt64 code)
 {
 	for(int i = 0; i < dies.size(); i++)
 	{
@@ -927,32 +927,32 @@ void Dwarf<T>::parseDebugInfo()
 	Sect debug_abbrev = this->__debug_abbrev;
 	Sect debug_str = this->__debug_str;
 
-	uint8_t *debug_info_begin = (*bin)[debug_info->getOffset()];
-	uint8_t *debug_info_end = (*bin)[debug_info->getOffset() + debug_info->getSize()];
+	UInt8 *debug_info_begin = (*bin)[debug_info->getOffset()];
+	UInt8 *debug_info_end = (*bin)[debug_info->getOffset() + debug_info->getSize()];
 
-	uint8_t *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
-	uint8_t *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
+	UInt8 *debug_abbrev_begin = (*bin)[debug_abbrev->getOffset()];
+	UInt8 *debug_abbrev_end = (*bin)[debug_abbrev->getOffset() + debug_abbrev->getSize()];
 
-	uint8_t *debug_str_begin = (*bin)[debug_str->getOffset()];
-	uint8_t *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
+	UInt8 *debug_str_begin = (*bin)[debug_str->getOffset()];
+	UInt8 *debug_str_end = (*bin)[debug_str->getOffset() + debug_str->getSize()];
 
-	size_t debug_info_size = debug_info->getSize();
-	size_t debug_abbrev_size = debug_abbrev->getSize();
+	Size debug_info_size = debug_info->getSize();
+	Size debug_abbrev_size = debug_abbrev->getSize();
 
-	uint32_t debug_info_offset = 0;
-	uint32_t debug_abbrev_offset = 0;
+	UInt32 debug_info_offset = 0;
+	UInt32 debug_abbrev_offset = 0;
 
 	struct CompilationUnit<T> *compilationUnit = NULL;
 	struct CompileUnitHeader *header = NULL;
 
 	std::vector<DwarfDIE<T>*> stack;
 
-	uint32_t next_unit = 0;
-	uint32_t consecutive_zeroes = 0;
+	UInt32 next_unit = 0;
+	UInt32 consecutive_zeroes = 0;
 
-	while(debug_info_offset < debug_info->getSize() - sizeof(uint32_t))
+	while(debug_info_offset < debug_info->getSize() - sizeof(UInt32))
 	{
-		uint64_t value;
+		UInt64 value;
 
 		bool new_compile_unit = false;
 
@@ -965,7 +965,7 @@ void Dwarf<T>::parseDebugInfo()
 			new_compile_unit = true;
 		}
 
-		uint64_t code = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
+		UInt64 code = Debug::ReadUleb128(debug_info_begin + debug_info_offset, debug_info_end, &debug_info_offset);
 
 		if(code == 0)
 		{
@@ -999,9 +999,9 @@ void Dwarf<T>::parseDebugInfo()
 
 		MAC_RK_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->getTag()), stack.size());
 
-		uint64_t die_code = die->getCode();
+		UInt64 die_code = die->getCode();
 
-		uint32_t attributes_count = die->getAttributesCount();
+		UInt32 attributes_count = die->getAttributesCount();
 
 		for(int i = 0; i < attributes_count; i++)
 		{
@@ -1030,27 +1030,27 @@ void Dwarf<T>::parseDebugInfo()
 				continue;
 			} else if(form == DW_FORM::block1)
 			{
-				value = *reinterpret_cast<uint8_t*>(debug_info_begin + debug_info_offset);
+				value = *reinterpret_cast<UInt8*>(debug_info_begin + debug_info_offset);
 
-				debug_info_offset += sizeof(uint8_t);
+				debug_info_offset += sizeof(UInt8);
 
 				debug_info_offset += value;
 
 				continue;
 			} else if(form == DW_FORM::block2)
 			{
-				value = *reinterpret_cast<uint16_t*>(debug_info_begin + debug_info_offset);
+				value = *reinterpret_cast<UInt16*>(debug_info_begin + debug_info_offset);
 
-				debug_info_offset += sizeof(uint16_t);
+				debug_info_offset += sizeof(UInt16);
 
 				debug_info_offset += value;
 
 				continue;
 			} else if(form == DW_FORM::block4)
 			{
-				value = *reinterpret_cast<uint32_t*>(debug_info_begin + debug_info_offset);
+				value = *reinterpret_cast<UInt32*>(debug_info_begin + debug_info_offset);
 
-				debug_info_offset += sizeof(uint32_t);
+				debug_info_offset += sizeof(UInt32);
 
 				debug_info_offset += value;
 
@@ -1077,7 +1077,7 @@ void Dwarf<T>::parseDebugInfo()
 				continue;
 			} else if(form == DW_FORM::string)
 			{
-				uint64_t string_size = GetStringSize(debug_info_begin + debug_info_offset);
+				UInt64 string_size = GetStringSize(debug_info_begin + debug_info_offset);
 
 				debug_info_offset += string_size;
 
@@ -1091,26 +1091,26 @@ void Dwarf<T>::parseDebugInfo()
 				continue;
 			} else
 			{
-				size_t form_size = DWFormSize(form);
+				Size form_size = DWFormSize(form);
 
 				switch(form_size)
 				{
 					case 0:
 						break;
 					case 1:
-						value = *reinterpret_cast<uint8_t*>(debug_info_begin + debug_info_offset);
+						value = *reinterpret_cast<UInt8*>(debug_info_begin + debug_info_offset);
 
 						break;
 					case 2:
-						value = *reinterpret_cast<uint16_t*>(debug_info_begin + debug_info_offset);
+						value = *reinterpret_cast<UInt16*>(debug_info_begin + debug_info_offset);
 
 						break;
 					case 4:
-						value = *reinterpret_cast<uint32_t*>(debug_info_begin + debug_info_offset);
+						value = *reinterpret_cast<UInt32*>(debug_info_begin + debug_info_offset);
 
 						break;
 					case 8:
-						value = *reinterpret_cast<uint64_t*>(debug_info_begin + debug_info_offset);
+						value = *reinterpret_cast<UInt64*>(debug_info_begin + debug_info_offset);
 
 						break;
 					default:
@@ -1153,10 +1153,10 @@ void Dwarf<T>::parseDebugLines()
 
 	Sect debug_line = this->__debug_line;
 
-	uint8_t *debug_line_begin = (*bin)[debug_line->getOffset()];
-	uint8_t *debug_line_end = (*bin)[debug_line->getOffset() + debug_line->getSize()];
+	UInt8 *debug_line_begin = (*bin)[debug_line->getOffset()];
+	UInt8 *debug_line_end = (*bin)[debug_line->getOffset() + debug_line->getSize()];
 
-	uint32_t debug_line_offset = 0;
+	UInt32 debug_line_offset = 0;
 	
 	while(debug_line_offset < debug_line->getSize())
 	{
@@ -1167,11 +1167,11 @@ void Dwarf<T>::parseDebugLines()
 
 		memcpy(&prologue, debug_line_begin + debug_line_offset, sizeof(struct LTPrologue));
 
-		uint32_t total_length = prologue.total_length;
-		uint32_t prologue_length = prologue.prologue_length;
+		UInt32 total_length = prologue.total_length;
+		UInt32 prologue_length = prologue.prologue_length;
 
-		uint8_t *prologue_end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + offsetof(struct LTPrologue, min_inst_length) + prologue_length);
-		uint8_t *end = reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset + total_length + sizeof(uint32_t));
+		UInt8 *prologue_end = reinterpret_cast<UInt8*>(debug_line_begin + debug_line_offset + offsetof(struct LTPrologue, min_inst_length) + prologue_length);
+		UInt8 *end = reinterpret_cast<UInt8*>(debug_line_begin + debug_line_offset + total_length + sizeof(UInt32));
 
 		debug_line_offset += sizeof(struct LTPrologue);
 
@@ -1191,7 +1191,7 @@ void Dwarf<T>::parseDebugLines()
 
 				MAC_RK_LOG("Source File Name: %s\n", source_file_name);
 
-				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
+				UInt32 string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
 				debug_line_offset += string_size + 1;
 
@@ -1214,7 +1214,7 @@ void Dwarf<T>::parseDebugLines()
 
 				MAC_RK_LOG("Include Directory: %s\n", include_directory);
 
-				uint32_t string_size = GetStringSize(debug_line_begin + debug_line_offset);
+				UInt32 string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
 				debug_line_offset += string_size + 1;
 
@@ -1245,19 +1245,19 @@ void Dwarf<T>::parseDebugLines()
 
 		sourceLine->source_file = sourceFile;
 
-		uint8_t op_index = 0;
+		UInt8 op_index = 0;
 
 		while((debug_line_begin + debug_line_offset) < end)
 		{
-			uint8_t op = *(debug_line_begin + debug_line_offset);
+			UInt8 op = *(debug_line_begin + debug_line_offset);
 
 			debug_line_offset++;
 
 			if(op == 0)
 			{
-				uint64_t num_bytes = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+				UInt64 num_bytes = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
-				op = *reinterpret_cast<uint8_t*>(debug_line_begin + debug_line_offset);
+				op = *reinterpret_cast<UInt8*>(debug_line_begin + debug_line_offset);
 
 				debug_line_offset++;
 
@@ -1293,7 +1293,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNE::set_address:
 					;
 					{
-						uint64_t program_counter = *reinterpret_cast<uint64_t*>(debug_line_begin + debug_line_offset);
+						UInt64 program_counter = *reinterpret_cast<UInt64*>(debug_line_begin + debug_line_offset);
 
 						sourceLine->state.address = program_counter;
 
@@ -1317,7 +1317,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNE::set_discriminator:
 					;
 					{
-						uint64_t discriminator = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end);
+						UInt64 discriminator = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end);
 
 						sourceLine->state.discriminator = discriminator;
 
@@ -1357,7 +1357,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::advance_pc:
 					;
 					{
-						uint64_t program_counter = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						UInt64 program_counter = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.address += program_counter;
 						sourceLine->state.prologue_end = 0;
@@ -1370,7 +1370,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::advance_line:
 					;
 					{
-						int64_t line = Debug::ReadSleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						Int64 line = Debug::ReadSleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.line += line;
 
@@ -1381,7 +1381,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::set_file:
 					;
 					{
-						uint64_t file = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						UInt64 file = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.file = file;
 
@@ -1392,7 +1392,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::set_column:
 					;
 					{
-						uint64_t column = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						UInt64 column = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.column = column;
 
@@ -1421,13 +1421,13 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::const_add_pc:
 					;
 					{
-						int64_t line_base = prologue.line_base;
-						uint8_t line_range = prologue.line_range;
+						Int64 line_base = prologue.line_base;
+						UInt8 line_range = prologue.line_range;
 
-						uint8_t opcode_base = prologue.opcode_base;
-						uint8_t min_inst_length = prologue.min_inst_length;
+						UInt8 opcode_base = prologue.opcode_base;
+						UInt8 min_inst_length = prologue.min_inst_length;
 
-						uint64_t inc = min_inst_length * ((255 - opcode_base) / line_range);
+						UInt64 inc = min_inst_length * ((255 - opcode_base) / line_range);
 
 						sourceLine->state.address += inc;
 
@@ -1436,9 +1436,9 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::fixed_advance_pc:
 					;
 					{
-						uint64_t program_counter = *reinterpret_cast<uint16_t*>(debug_line_begin + debug_line_offset);
+						UInt64 program_counter = *reinterpret_cast<UInt16*>(debug_line_begin + debug_line_offset);
 
-						debug_line_offset += sizeof(uint16_t);
+						debug_line_offset += sizeof(UInt16);
 
 						sourceLine->state.address += program_counter;
 
@@ -1469,7 +1469,7 @@ void Dwarf<T>::parseDebugLines()
 					case DW_LNS::set_isa:
 					;
 					{
-						uint64_t isa = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
+						UInt64 isa = Debug::ReadUleb128(debug_line_begin + debug_line_offset, debug_line_end, &debug_line_offset);
 
 						sourceLine->state.isa = isa;
 
@@ -1481,14 +1481,14 @@ void Dwarf<T>::parseDebugLines()
 
 			} else
 			{
-				int64_t line_base = prologue.line_base;
-				uint8_t line_range = prologue.line_range;
+				Int64 line_base = prologue.line_base;
+				UInt8 line_range = prologue.line_range;
 
-				uint8_t opcode_base = prologue.opcode_base;
-				uint8_t min_inst_length = prologue.min_inst_length;
+				UInt8 opcode_base = prologue.opcode_base;
+				UInt8 min_inst_length = prologue.min_inst_length;
 
-				int64_t address_change = ((op - opcode_base) / line_range) * min_inst_length;
-				int64_t line_change = line_base + (op - opcode_base) % line_range;
+				Int64 address_change = ((op - opcode_base) / line_range) * min_inst_length;
+				Int64 line_change = line_base + (op - opcode_base) % line_range;
 
 				sourceLine->state.address += address_change;
 				sourceLine->state.line += line_change;
@@ -1522,10 +1522,10 @@ void Dwarf<T>::parseDebugLocations()
 
 	Sect debug_loc = this->__debug_loc;
 
-	uint8_t *debug_loc_begin = (*bin)[debug_loc->getOffset()];
-	uint8_t *debug_loc_end = (*bin)[debug_loc->getOffset() + debug_loc->getSize()];
+	UInt8 *debug_loc_begin = (*bin)[debug_loc->getOffset()];
+	UInt8 *debug_loc_end = (*bin)[debug_loc->getOffset() + debug_loc->getSize()];
 
-	uint32_t debug_loc_offset = 0;
+	UInt32 debug_loc_offset = 0;
 
 	MAC_RK_LOG("0x%08x:\n", debug_loc_offset);
 
@@ -1535,23 +1535,23 @@ void Dwarf<T>::parseDebugLocations()
 
 	while(debug_loc_offset < debug_loc->getSize())
 	{
-		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset);
+		UInt64 value0 = *reinterpret_cast<UInt64*>(debug_loc_begin + debug_loc_offset);
 
-		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_loc_begin + debug_loc_offset + sizeof(uint64_t));
+		UInt64 value1 = *reinterpret_cast<UInt64*>(debug_loc_begin + debug_loc_offset + sizeof(UInt64));
 
 		if(value0 != 0 || value1 != 0)
 		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
+			debug_loc_offset += sizeof(UInt64) * 2;
 
-			uint16_t bytes = *reinterpret_cast<uint16_t*>(debug_loc_begin + debug_loc_offset);
+			UInt16 bytes = *reinterpret_cast<UInt16*>(debug_loc_begin + debug_loc_offset);
 		
-			debug_loc_offset += sizeof(uint16_t);
+			debug_loc_offset += sizeof(UInt16);
 
 			MAC_RK_LOG("\t(0x%016llx, 0x%016llx) ", value0, value1);
 
 			for(int i = 0; i < bytes; i++)
 			{
-				uint8_t byte = *reinterpret_cast<uint8_t*>(debug_loc_begin + debug_loc_offset);
+				UInt8 byte = *reinterpret_cast<UInt8*>(debug_loc_begin + debug_loc_offset);
 
 				location_entry->location_ops.push_back(static_cast<DW_OP>(byte));
 
@@ -1564,14 +1564,14 @@ void Dwarf<T>::parseDebugLocations()
 
 		} else if(value0 == -1ULL)
 		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
+			debug_loc_offset += sizeof(UInt64) * 2;
 
 			location_entry->kind = DW_LLE::base_address;
 			
 			location_entry->value0 = value1;
 		} else
 		{
-			debug_loc_offset += sizeof(uint64_t) * 2;
+			debug_loc_offset += sizeof(UInt64) * 2;
 
 			location_entry->kind = DW_LLE::end_of_list;
 
@@ -1595,22 +1595,22 @@ void Dwarf<T>::parseDebugRanges()
 
 	Sect debug_ranges = this->__debug_ranges;
 
-	uint8_t *debug_ranges_begin = (*bin)[debug_ranges->getOffset()];
-	uint8_t *debug_ranges_end = (*bin)[debug_ranges->getOffset() + debug_ranges->getSize()];
+	UInt8 *debug_ranges_begin = (*bin)[debug_ranges->getOffset()];
+	UInt8 *debug_ranges_end = (*bin)[debug_ranges->getOffset() + debug_ranges->getSize()];
 
-	uint32_t debug_ranges_offset = 0;
+	UInt32 debug_ranges_offset = 0;
 
-	uint32_t current_ranges_offset = 0;
+	UInt32 current_ranges_offset = 0;
 
 	RangeEntries *rangeEntries = new RangeEntries;
 	
 	while(debug_ranges_offset < debug_ranges->getSize())
 	{
-		uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_ranges_begin + debug_ranges_offset);
+		UInt64 value0 = *reinterpret_cast<UInt64*>(debug_ranges_begin + debug_ranges_offset);
 
-		uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_ranges_begin + debug_ranges_offset + sizeof(uint64_t));
+		UInt64 value1 = *reinterpret_cast<UInt64*>(debug_ranges_begin + debug_ranges_offset + sizeof(UInt64));
 
-		debug_ranges_offset += sizeof(uint64_t) * 2;
+		debug_ranges_offset += sizeof(UInt64) * 2;
 
 		if(value0 == 0 && value1 == 0)
 		{
@@ -1645,12 +1645,12 @@ void Dwarf<T>::parseDebugAddressRanges()
 
 	Sect debug_aranges = this->__debug_aranges;
 
-	uint8_t *debug_aranges_begin = (*bin)[debug_aranges->getOffset()];
-	uint8_t *debug_aranges_end = (*bin)[debug_aranges->getOffset() + debug_aranges->getSize()];
+	UInt8 *debug_aranges_begin = (*bin)[debug_aranges->getOffset()];
+	UInt8 *debug_aranges_end = (*bin)[debug_aranges->getOffset() + debug_aranges->getSize()];
 
-	uint32_t debug_aranges_offset = 0;
+	UInt32 debug_aranges_offset = 0;
 
-	uint32_t current_aranges_offset = 0;
+	UInt32 current_aranges_offset = 0;
 	
 	while(debug_aranges_offset < debug_aranges->getSize())
 	{
@@ -1660,13 +1660,13 @@ void Dwarf<T>::parseDebugAddressRanges()
 
 		memcpy(address_range_header, debug_aranges_begin + debug_aranges_offset, sizeof(struct AddressRangeHeader));
 
-		uint32_t length = address_range_header->length + sizeof(((struct AddressRangeHeader *)0)->length);
+		UInt32 length = address_range_header->length + sizeof(((struct AddressRangeHeader *)0)->length);
 
-		uint32_t offset = debug_aranges_offset + sizeof(struct AddressRangeHeader);
+		UInt32 offset = debug_aranges_offset + sizeof(struct AddressRangeHeader);
 
-		uint32_t segment_selector = *reinterpret_cast<uint32_t*>(debug_aranges_begin + offset);
+		UInt32 segment_selector = *reinterpret_cast<UInt32*>(debug_aranges_begin + offset);
 
-		offset += sizeof(uint32_t);
+		offset += sizeof(UInt32);
 
 		MAC_RK_LOG("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, addr_size = 0x%02x, seg_size = 0x%02x\n", address_range_header->length, address_range_header->version, address_range_header->offset, address_range_header->addr_size, address_range_header->seg_size);
 
@@ -1674,15 +1674,15 @@ void Dwarf<T>::parseDebugAddressRanges()
 		{
 			struct AddressRange *range = new AddressRange;
 
-			uint64_t value0 = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset);
+			UInt64 value0 = *reinterpret_cast<UInt64*>(debug_aranges_begin + offset);
 
-			uint64_t value1 = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint64_t));
+			UInt64 value1 = *reinterpret_cast<UInt64*>(debug_aranges_begin + offset + sizeof(UInt64));
 
 			if(value0 != 0 || value1 != 0)
 			{
-				uint64_t address = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset);
+				UInt64 address = *reinterpret_cast<UInt64*>(debug_aranges_begin + offset);
 
-				uint64_t size = *reinterpret_cast<uint64_t*>(debug_aranges_begin + offset + sizeof(uint64_t));
+				UInt64 size = *reinterpret_cast<UInt64*>(debug_aranges_begin + offset + sizeof(UInt64));
 
 				range->start = address;
 				range->end = address + size;
@@ -1692,7 +1692,7 @@ void Dwarf<T>::parseDebugAddressRanges()
 				arange_entry->ranges.push_back(range);
 			}
 
-			offset += (sizeof(uint64_t) * 2);
+			offset += (sizeof(UInt64) * 2);
 		}
 
 		this->addressRanges.push_back(arange_entry);

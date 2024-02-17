@@ -25,11 +25,11 @@ UserPatcher::~UserPatcher()
 }
 
 void UserPatcher::findAndReplace(void *data, 
-					size_t dataSize,
+					Size dataSize,
 					const void *find,
-					size_t findSize,
+					Size findSize,
 					const void* replace,
-					size_t replaceSize)
+					Size replaceSize)
 {
 
 }
@@ -44,17 +44,17 @@ void UserPatcher::onKextLoad(void *kext, kmod_info_t *kmod)
 
 }
 
-void UserPatcher::onExec(char *name, int pid, mach_port_t port, mach_vm_address_t task, mach_vm_address_t proc)
+void UserPatcher::onExec(char *name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task, xnu::Mach::VmAddress proc)
 {
 
 }
 
-mach_vm_address_t injectPayload(mach_vm_address_t address, Payload *payload)
+xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload *payload)
 {
 	return 0;
 }
 
-mach_vm_address_t injectSegment(mach_vm_address_t address, Payload *payload)
+xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload *payload)
 {
 	return 0;
 }

@@ -26,7 +26,7 @@ static inline int64_t get_clock(void)
 }
 
 
-Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, mach_vm_address_t virtualBase, uint64_t base, size_t size, mach_vm_address_t entryPoint)
+Virtualization::Hypervisor::Hypervisor(Fuzzer::Harness *harness, xnu::Mach::VmAddress virtualBase, UInt64 base, Size size, xnu::Mach::VmAddress entryPoint)
 : harness(harness),
   virtualBase(virtualBase),
   base(base),
@@ -62,7 +62,7 @@ void Virtualization::Hypervisor::synchronizeCpuState()
 
     hv_return_t ret;
 
-    uint64_t val;
+    UInt64 val;
 
     hv_simd_fp_uchar16_t fpval;
 
@@ -72,14 +72,14 @@ void Virtualization::Hypervisor::synchronizeCpuState()
     {
         HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, (hv_reg_t) hvf_reg_match[i].reg, &val));
 
-        *(uint64_t *)((void *)((uint64_t) env + hvf_reg_match[i].offset)) = val;
+        *(UInt64 *)((void *)((UInt64) env + hvf_reg_match[i].offset)) = val;
     }
 
     for (i = 0; i < ARRAY_SIZE(hvf_fpreg_match); i++)
     {
        	HYP_ASSERT_SUCCESS(hv_vcpu_get_simd_fp_reg(vcpu, (hv_simd_fp_reg_t) hvf_fpreg_match[i].reg,
                                       &fpval));
-        memcpy((void *)((uint64_t)env + hvf_fpreg_match[i].offset), &fpval, sizeof(fpval));
+        memcpy((void *)((UInt64)env + hvf_fpreg_match[i].offset), &fpval, sizeof(fpval));
     }
 
     /*
@@ -236,7 +236,7 @@ void Virtualization::Hypervisor::flushCpuState()
 
     hv_return_t ret;
 
-    uint64_t val;
+    UInt64 val;
 
     hv_simd_fp_uchar16_t fpval;
 
@@ -244,14 +244,14 @@ void Virtualization::Hypervisor::flushCpuState()
 
     for (i = 0; i < ARRAY_SIZE(hvf_reg_match); i++)
     {
-        val = *(uint64_t *)((void *)((uint64_t) env + hvf_reg_match[i].offset));
+        val = *(UInt64 *)((void *)((UInt64) env + hvf_reg_match[i].offset));
 
         HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, (hv_reg_t) hvf_reg_match[i].reg, val));
     }
 
     for (i = 0; i < ARRAY_SIZE(hvf_fpreg_match); i++)
     {
-        memcpy(&fpval, (void *)((uint64_t) env + hvf_fpreg_match[i].offset), sizeof(fpval));
+        memcpy(&fpval, (void *)((UInt64) env + hvf_fpreg_match[i].offset), sizeof(fpval));
 
         HYP_ASSERT_SUCCESS(hv_vcpu_set_simd_fp_reg(vcpu, (hv_simd_fp_reg_t) hvf_fpreg_match[i].reg,
                                       fpval));
@@ -265,7 +265,7 @@ void Virtualization::Hypervisor::flushCpuState()
 
     ZF = (env->ZF == 0);
 
-    uint32_t cpsr = (env->NF & 0x80000000) | (ZF << 30)
+    UInt32 cpsr = (env->NF & 0x80000000) | (ZF << 30)
         | (env->CF << 29) | ((env->VF & 0x80000000) >> 3)
         | env->pstate | env->daif | (env->btype << 10);
 
@@ -383,16 +383,16 @@ void Virtualization::Hypervisor::flushCpuState()
     // HYP_ASSERT_SUCCESS(hv_vcpu_set_vtimer_offset(cpu->accel->fd, hvf_state->vtimer_offset));
 }
 
-int Virtualization::Hypervisor::sysregRead(uint32_t reg, uint32_t rt)
+int Virtualization::Hypervisor::sysregRead(UInt32 reg, UInt32 rt)
 {
 	HvfArm64State *env = &state;
 
-    uint64_t val = 0;
+    UInt64 val = 0;
 
     switch (reg)
     {
     case SYSREG_CNTPCT_EL0:
-    	uint64_t gt_cntfrq_hz;
+    	UInt64 gt_cntfrq_hz;
 
     	 asm volatile("mrs %0, cntfrq_el0" : "=r"(gt_cntfrq_hz));
 
@@ -571,7 +571,7 @@ int Virtualization::Hypervisor::sysregRead(uint32_t reg, uint32_t rt)
     return 0;
 }
 
-int Virtualization::Hypervisor::sysregWrite(uint32_t reg, uint64_t val)
+int Virtualization::Hypervisor::sysregWrite(UInt32 reg, UInt64 val)
 {
 	HvfArm64State *env = &state;
 
@@ -753,20 +753,20 @@ void Virtualization::Hypervisor::prepareBootArgs(const char *deviceTreePath)
 		exit(-1);
 	}
 
-	size_t deviceTreeSize = lseek(fd, 0, SEEK_END);
+	Size deviceTreeSize = lseek(fd, 0, SEEK_END);
 
 	lseek(fd, 0, SEEK_SET);
 
 	char *deviceTree = reinterpret_cast<char*>(malloc(deviceTreeSize));
 
-	ssize_t bytes_read;
+	Size bytes_read;
 
 	bytes_read = read(fd, deviceTree, size);
 
 	close(fd);
 
-	printf("deviceTree = 0x%llx\n", (uint64_t) deviceTree);
-	printf("deviceTreeSize = 0x%llx\n", (uint64_t) deviceTreeSize);
+	printf("deviceTree = 0x%llx\n", (UInt64) deviceTree);
+	printf("deviceTreeSize = 0x%llx\n", (UInt64) deviceTreeSize);
 
 	char *CommandLineArguments = "-s";
 
@@ -793,11 +793,11 @@ void Virtualization::Hypervisor::prepareBootArgs(const char *deviceTreePath)
 	boot_args.bootFlags = 0;
 	boot_args.memSizeActual = gMainMemSize;
 
-	memcpy((void*) ((uint64_t) mainMemory + deviceTreeOffset), (void*) deviceTree, deviceTreeSize);
-	memcpy((void*) ((uint64_t) mainMemory + bootArgsOffset), (void*) &boot_args, sizeof(struct boot_args));
+	memcpy((void*) ((UInt64) mainMemory + deviceTreeOffset), (void*) deviceTree, deviceTreeSize);
+	memcpy((void*) ((UInt64) mainMemory + bootArgsOffset), (void*) &boot_args, sizeof(struct boot_args));
 
-	printf("deviceTreeP = 0x%llx\n", (uint64_t) boot_args.deviceTreeP);
-	printf("deviceTreeLength = 0x%llx\n", (uint64_t) boot_args.deviceTreeLength);
+	printf("deviceTreeP = 0x%llx\n", (UInt64) boot_args.deviceTreeP);
+	printf("deviceTreeLength = 0x%llx\n", (UInt64) boot_args.deviceTreeLength);
 
 	printf("virtBase = 0x%llx\n", boot_args.virtBase);
 	printf("physBase = 0x%llx\n", boot_args.physBase);
@@ -818,12 +818,12 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 
 	memset(resetTrampolineMemory, 0, gResetTrampolineMemorySize);
 
-	for (uint64_t offset = 0; offset < 0x780; offset += 0x80)
+	for (UInt64 offset = 0; offset < 0x780; offset += 0x80)
 	{
-		memcpy((void*) ((uint64_t) resetTrampolineMemory + offset), sArm64ResetTrampoline, sizeof(sArm64ResetTrampoline));
+		memcpy((void*) ((UInt64) resetTrampolineMemory + offset), sArm64ResetTrampoline, sizeof(sArm64ResetTrampoline));
 	}
 
-	// memcpy((void*) ((uint64_t) resetTrampolineMemory + 0x800), sArm64ResetVector, sizeof(sArm64ResetVector));
+	// memcpy((void*) ((UInt64) resetTrampolineMemory + 0x800), sArm64ResetVector, sizeof(sArm64ResetVector));
 
 	// Map the RAM into the VM
 	HYP_ASSERT_SUCCESS(hv_vm_map(resetTrampolineMemory, gAdrResetTrampoline, gResetTrampolineMemorySize, HV_MEMORY_READ | HV_MEMORY_EXEC));
@@ -850,7 +850,7 @@ int Virtualization::Hypervisor::prepareSystemMemory()
 
 void Virtualization::Hypervisor::configure()
 {
-	mach_vm_address_t __start = (entryPoint - virtualBase) + gMainMemory;
+	xnu::Mach::VmAddress __start = (entryPoint - virtualBase) + gMainMemory;
 
 	printf("entryPoint = 0x%llx\n", entryPoint);
 	printf("virtualBase = 0x%llx\n", virtualBase);
@@ -881,7 +881,7 @@ void Virtualization::Hypervisor::configure()
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_exceptions(vcpu, true));
 	HYP_ASSERT_SUCCESS(hv_vcpu_set_trap_debug_reg_accesses(vcpu, true));
 
-	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_X0, (uint64_t) gMainMemory + bootArgsOffset));
+	HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_X0, (UInt64) gMainMemory + bootArgsOffset));
 }
 
 void Virtualization::Hypervisor::start()
@@ -896,8 +896,8 @@ void Virtualization::Hypervisor::start()
 		{
 			// Check if this is an HVC call
 			// https://developer.arm.com/docs/ddi0595/e/aarch64-system-registers/esr_el2
-			uint64_t syndrome = vcpu_exit->exception.syndrome;
-			uint8_t ec = (syndrome >> 26) & 0x3f;
+			UInt64 syndrome = vcpu_exit->exception.syndrome;
+			UInt8 ec = (syndrome >> 26) & 0x3f;
 			// check Exception Class
 
 			printf("EC = %u Syndrome %llu\n", ec, syndrome);
@@ -908,7 +908,7 @@ void Virtualization::Hypervisor::start()
 			{
 				// Exception Class 0x16 is
 				// "HVC instruction execution in AArch64 state, when HVC is not disabled."
-				uint64_t x0;
+				UInt64 x0;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_X0, &x0));
 
@@ -921,7 +921,7 @@ void Virtualization::Hypervisor::start()
 				// "SMC instruction execution in AArch64 state, when SMC is not disabled."
 
 				// Yes despite M1 doesn't have EL3, it is capable to trap it too. :)
-				uint64_t x0;
+				UInt64 x0;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_X0, &x0));
 				printf("VM made an SMC call! x0 register holds 0x%llx\n", x0);
@@ -929,7 +929,7 @@ void Virtualization::Hypervisor::start()
 
 				// ARM spec says trapped SMC have different return path, so it is required
 				// to increment elr_el2 by 4 (one instruction.)
-				uint64_t pc;
+				UInt64 pc;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 
@@ -939,15 +939,15 @@ void Virtualization::Hypervisor::start()
 
 			} else if(ec == EC_SYSTEMREGISTERTRAP)
 			{
-				uint64_t pc;
+				UInt64 pc;
 
 				bool isread = (syndrome >> 0) & 1;
 
-				uint32_t rt = (syndrome >> 5) & 0x1f;
+				UInt32 rt = (syndrome >> 5) & 0x1f;
 
-				uint32_t reg = syndrome & SYSREG_MASK;
+				UInt32 reg = syndrome & SYSREG_MASK;
 
-				uint64_t val;
+				UInt64 val;
 
 				int ret = 0;
 
@@ -963,13 +963,13 @@ void Virtualization::Hypervisor::start()
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 
-				printf("EC_SYSTEMREGISTERTRAP isread = %u pc 0x%llx %u %u 0x%x!\n", isread, pc, rt, reg, *(uint32_t*) ((pc - gMainMemory) + (uint64_t) mainMemory));
+				printf("EC_SYSTEMREGISTERTRAP isread = %u pc 0x%llx %u %u 0x%x!\n", isread, pc, rt, reg, *(UInt32*) ((pc - gMainMemory) + (UInt64) mainMemory));
 
 				pc += 4;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_set_reg(vcpu, HV_REG_PC, pc));
 
-				uint64_t ttbr;
+				UInt64 ttbr;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_TTBR0_EL1, &ttbr));
 
@@ -978,7 +978,7 @@ void Virtualization::Hypervisor::start()
 			} else if (ec == EC_AA64_BKPT)
 			{
 				// Exception Class 0x3C is BRK in AArch64 state
-				uint64_t reg;
+				UInt64 reg;
 
 				printf("VM made an BRK call!\n");
 				printf("Reg dump:\n");
@@ -995,9 +995,9 @@ void Virtualization::Hypervisor::start()
 
 				printf("LR: 0x%llx\n", reg);
 
-				for (uint32_t reg = HV_REG_X0; reg <= HV_REG_FP; reg++)
+				for (UInt32 reg = HV_REG_X0; reg <= HV_REG_FP; reg++)
 				{
-					uint64_t s;
+					UInt64 s;
 					HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, (hv_reg_t) reg, &s));
 					printf("X%d: 0x%llx\n", reg, s);
 				}
@@ -1005,8 +1005,8 @@ void Virtualization::Hypervisor::start()
 				break;
 			} else
 			{
-				uint64_t pc, sp, fp, lr;
-				uint64_t x[30];
+				UInt64 pc, sp, fp, lr;
+				UInt64 x[30];
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_PC, &pc));
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_reg(vcpu, HV_REG_FP, &fp));
@@ -1031,7 +1031,7 @@ void Virtualization::Hypervisor::start()
 						x[25], x[26], x[27], x[28], x[29]
 				);
 
-				uint64_t ttbr;
+				UInt64 ttbr;
 
 				HYP_ASSERT_SUCCESS(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_TTBR0_EL1, &ttbr));
 

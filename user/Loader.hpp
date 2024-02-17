@@ -18,8 +18,11 @@
 
 #include <type_traits>
 
-#include "Arch.hpp"
 #include <vector>
+
+#include <Types.h>
+
+#include "Arch.hpp"
 
 #include "Fuzzer.hpp"
 
@@ -44,7 +47,7 @@ namespace Fuzzer
 			explicit Module(Fuzzer::Loader *loader, const char *path, struct FuzzBinary *binary) 
 				: loader(loader), path(path), mainBinary(binary) { }
 
-			explicit Module(const char *path, mach_vm_address_t base, off_t slide) : path(path), base(base), slide(slide) { }
+			explicit Module(const char *path, xnu::Mach::VmAddress base, Offset slide) : path(path), base(base), slide(slide) { }
 
 			~Module();
 
@@ -54,7 +57,7 @@ namespace Fuzzer
 
 			const char* getPath() const { return path; }
 
-			mach_vm_address_t getEntryPoint();
+			xnu::Mach::VmAddress getEntryPoint();
 
 			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
 			std::vector<Sym>& getSymbols() const requires requires (Binary bin, Sym sym)
@@ -146,7 +149,7 @@ namespace Fuzzer
 			}
 
 			template<typename T> requires CastableType<T>
-			T operator[](uint64_t index) const { return reinterpret_cast<T>((uint8_t*) base + index); }
+			T operator[](UInt64 index) const { return reinterpret_cast<T>((UInt8*) base + index); }
 
 			template<typename T> requires IntegralOrPointerType<T>
 			T getBase() const
@@ -154,9 +157,9 @@ namespace Fuzzer
 				return reinterpret_cast<T>(base);
 			}
 
-			size_t getSize() const { return size; }
+			Size getSize() const { return size; }
 
-			off_t getSlide() const { return slide; }
+			Offset getSlide() const { return slide; }
 
 		    void load();
 
@@ -179,11 +182,11 @@ namespace Fuzzer
 			struct FuzzBinary *mainBinary;
 			struct FuzzBinary *moduleBinary;
 
-			mach_vm_address_t base;
+			xnu::Mach::VmAddress base;
 
-			size_t size;
+			Size size;
 
-			off_t slide;
+			Offset slide;
 	};
 
 	class Loader
@@ -219,7 +222,7 @@ namespace Fuzzer
 
 			void loadModuleFromKext(const char *kextPath);
 
-			void loadKextMachO(const char *kextPath, mach_vm_address_t *loadAddress, size_t *loadSize, mach_vm_address_t *oldLoadAddress);
+			void loadKextMachO(const char *kextPath, xnu::Mach::VmAddress *loadAddress, Size *loadSize, xnu::Mach::VmAddress *oldLoadAddress);
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
 			void linkSymbols(Module *module) requires requires (Sym sym)
@@ -238,7 +241,7 @@ namespace Fuzzer
 			};
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void stubFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym) 
+			void stubFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym) 
 			{
 				sym->getName();
 				sym->getAddress();
@@ -246,14 +249,14 @@ namespace Fuzzer
 			};
 
 			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void shimFunction(Module *module, Sym sym, mach_vm_address_t stub) requires requires (Sym sym)
+			void shimFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym)
 			{
 				sym->getName();
 				sym->getAddress();
 				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
 			};
 
-			void* allocateModuleMemory(size_t sz, int prot);
+			void* allocateModuleMemory(Size sz, int prot);
 
 		private:
 			Fuzzer::Harness *harness;
@@ -265,5 +268,3 @@ namespace Fuzzer
 			std::vector<Module*> modules;
 	};
 };
-
-#endif

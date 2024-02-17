@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <libkern/libkern.h>
+#include <sys/types.h>
 
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
@@ -42,7 +42,12 @@ using UInt32 = uint32_t;
 using UInt64 = uint64_t;
 
 using Offset = off_t;
+
+#ifdef __KERNEL__
 using Size = size_t;
+#elif __USER__
+#include <IOKit/IOKitLib.h>
+#endif
 
 namespace xnu
 {

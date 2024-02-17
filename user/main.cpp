@@ -563,11 +563,9 @@ void print_usage()
 
 int main(int argc, char **argv)
 {
-	Fuzzer::Harness *harness = new Fuzzer::Harness(new xnu::Kernel());
+	// Fuzzer::Harness *harness = new Fuzzer::Harness(new xnu::Kernel());
 
-	return 0;
-
-	/* int err;
+	int err;
 
 	char *wait_for_process_name = NULL;
 
@@ -580,8 +578,6 @@ int main(int argc, char **argv)
 	kernel = new Kernel();
 
 	printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->getBase(), kernel->getSlide());
-
-	*/
 
 	/*
 	task = new Task(kernel, 614);
@@ -607,6 +603,7 @@ int main(int argc, char **argv)
 
 	return 0;
 
+	*/
 	while(1)
 	{
 		int option_index = 0;
@@ -661,6 +658,7 @@ int main(int argc, char **argv)
 		{
 			if(wait_for_process_name)
 			{
+				/* 
 				es_client_t *client = NULL;
 
 				ensure(es_new_client(&client, ^(es_client_t *client, const es_message_t *message)
@@ -705,6 +703,8 @@ int main(int argc, char **argv)
 				ensure(es_subscribe(client, events, sizeof(events) / sizeof(*events)) == ES_RETURN_SUCCESS);
 				
 				dispatch_main();
+
+				*/
 			} else
 			{
 				err = injectLibrary(library);
@@ -728,5 +728,4 @@ int main(int argc, char **argv)
 	delete kernel;
 
 	return err;
-	*/
 }

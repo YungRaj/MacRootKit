@@ -1,7 +1,7 @@
 #ifndef __OFFSET_HPP_
 #define __OFFSET_HPP_
 
-namespace Offset
+namespace Offsets
 {
 	uint32_t metaclass_metaclass = 0x0;
 	uint32_t metaclass_superclass = 0x8;

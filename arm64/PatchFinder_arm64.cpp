@@ -438,7 +438,7 @@ namespace Arch
 				return 0;
 			}
 
-			xnu::Mach::VmAddress stepBack64(MachO *macho, xnu::Mach::VmAddress start, size_t length, bool (*is_ins)(UInt32*), int Rt, int Rn)
+			xnu::Mach::VmAddress stepBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, bool (*is_ins)(UInt32*), int Rt, int Rn)
 			{
 				uint8_t *buffer;
 				

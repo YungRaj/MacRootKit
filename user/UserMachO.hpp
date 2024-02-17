@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <vector>
 
 #include "MachO.hpp"
@@ -69,11 +71,11 @@ namespace mrk
 
 			char* getEntitlements() { return entitlements; }
 
-			bool verifyCodeSlot(uint8_t *blob, size_t size, bool sha256, char *signature, size_t sigsize);
+			bool verifyCodeSlot(UInt8 *blob, Size size, bool sha256, char *signature, Size sigsize);
 
-			bool compareHash(uint8_t *hash1, uint8_t *hash2, size_t hashSize);
+			bool compareHash(UInt8 *hash1, UInt8 *hash2, Size hashSize);
 
-			uint8_t* computeHash(bool sha256, uint8_t *blob, size_t size);
+			UInt8* computeHash(bool sha256, UInt8 *blob, Size size);
 
 			bool parseCodeSignature();
 
@@ -101,13 +103,13 @@ namespace mrk
 			virtual void withFilePath(const char *path);
 
 			virtual void withBuffer(char *buffer);
-			virtual void withBuffer(char *buffer, off_t slide);
-			virtual void withBuffer(char *buffer, uint64_t size);
+			virtual void withBuffer(char *buffer, Offset slide);
+			virtual void withBuffer(char *buffer, UInt64 size);
 			
-			virtual void withBuffer(mach_vm_address_t base, char *buffer, off_t slide);
-			virtual void withBuffer(mach_vm_address_t base, char *buffer, off_t slide, bool is_dyld_cache);
+			virtual void withBuffer(xnu::Mach::VmAddress base, char *buffer, Offset slide);
+			virtual void withBuffer(xnu::Mach::VmAddress base, char *buffer, Offset slide, bool is_dyld_cache);
 			
-			virtual void withBuffer(mrk::UserMachO *libobjc, mach_vm_address_t base, char *buffer, off_t slide);
+			virtual void withBuffer(mrk::UserMachO *libobjc, xnu::Mach::VmAddress base, char *buffer, Offset slide);
 
 			char* getFilePath() { return this->dyld ? this->dyld->getMainImagePath() : this->file_path; }
 
@@ -125,14 +127,14 @@ namespace mrk
 
 			void setObjectiveCLibrary(UserMachO* libobjc) { this->libobjc = libobjc; }
 
-			static MachO* taskAt(mach_port_t task);
-			static MachO* libraryLoadedAt(mach_port_t task, char *library);
+			static MachO* taskAt(xnu::Mach::Port task);
+			static MachO* libraryLoadedAt(xnu::Mach::Port task, char *library);
 
-			static uint64_t untagPacPointer(mach_vm_address_t base, enum dyld_fixup_t fixupKind, uint64_t ptr, bool *bind, bool *auth, uint16_t *pac, size_t *skip);
+			static UInt64 untagPacPointer(xnu::Mach::VmAddress base, enum dyld_fixup_t fixupKind, UInt64 ptr, bool *bind, bool *auth, UInt16 *pac, Size *skip);
 
-			bool isPointerInPacFixupChain(mach_vm_address_t ptr);
+			bool isPointerInPacFixupChain(xnu::Mach::VmAddress ptr);
 
-			mach_vm_address_t getBufferAddress(mach_vm_address_t address);
+			xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
 
 			virtual void parseMachO() override;
 
@@ -140,7 +142,7 @@ namespace mrk
 
 			virtual void parseFatHeader() override;
 
-			virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize) override;
+			virtual void parseSymbolTable(struct nlist_64 *symtab, UInt32 nsyms, char *strtab, Size strsize) override;
 			
 			virtual void parseLinkedit() override;
 
@@ -158,7 +160,7 @@ namespace mrk
 				this->swift = Swift::parseSwift(this);
 			}
 
-			uint8_t* operator[](uint64_t index) { return this->getOffset(index); }
+			UInt8* operator[](UInt64 index) { return this->getOffset(index); }
 
 		private:
 			xnu::Task *task;
@@ -167,8 +169,8 @@ namespace mrk
 
 			dyld::Dyld *dyld;
 
-			mach_vm_address_t dyld_base;
-			mach_vm_address_t dyld_shared_cache;
+			xnu::Mach::VmAddress dyld_base;
+			xnu::Mach::VmAddress dyld_shared_cache;
 
 			mrk::CodeSignature *codeSignature;
 
@@ -180,8 +182,8 @@ namespace mrk
 			bool is_dyldCache;
 			bool is_libobjc;
 
-			uint64_t readUleb128(uint8_t *start, uint8_t *end, uint32_t *idx);
-			int64_t  readSleb128(uint8_t *start, uint8_t *end, uint32_t *idx);
+			UInt64 readUleb128(UInt8 *start, UInt8 *end, UInt32 *idx);
+			Int64  readSleb128(UInt8 *start, UInt8 *end, UInt32 *idx);
 	};
 }
 

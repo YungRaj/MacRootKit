@@ -32,8 +32,8 @@ static int EndsWith(const char *str, const char *suffix)
 	if (!str || !suffix)
 		return 0;
 	
-	size_t lenstr = strlen(str);
-	size_t lensuffix = strlen(suffix);
+	Size lenstr = strlen(str);
+	Size lensuffix = strlen(suffix);
 	
 	if (lensuffix >  lenstr)
 		return 0;
@@ -70,7 +70,7 @@ Task::Task(Kernel *kernel, char *name)
 	macho = new mrk::UserMachO();
 }
 		
-Task::Task(Kernel *kernel, mach_port_t task_port) : kernel(kernel), task_port(task_port)
+Task::Task(Kernel *kernel, xnu::Mach::Port task_port) : kernel(kernel), task_port(task_port)
 {
 
 }
@@ -80,11 +80,11 @@ Task::~Task()
 	
 }
 
-mach_port_t Task::getTaskForPid(int pid)
+xnu::Mach::Port Task::getTaskForPid(int pid)
 {
 	kern_return_t ret;
 
-	mach_port_t task;
+	xnu::Mach::Port task;
 
 	ret = task_for_pid(mach_task_self(), pid, &task);
 
@@ -101,7 +101,7 @@ mach_port_t Task::getTaskForPid(int pid)
 
 int Task::findPid()
 {
-	uint64_t arguments[] = { this->proc };
+	UInt64 arguments[] = { this->proc };
 
 	int pid = kernel->call("_proc_pid", arguments, 1);
 
@@ -113,19 +113,19 @@ Task* Task::getTaskInfo(Kernel *kernel, char *task_name)
 	return NULL;
 }
 
-mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
+xnu::Mach::VmAddress Task::findProcByPid(Kernel *kernel, int pid)
 {
-	mach_vm_address_t current_proc;
+	xnu::Mach::VmAddress current_proc;
 
 	int current_pid;
 
-	current_proc = (mach_vm_address_t) kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
+	current_proc = (xnu::Mach::VmAddress) kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
 
-	current_proc = (mach_vm_address_t) kernel->read64(current_proc + 0x8);
+	current_proc = (xnu::Mach::VmAddress) kernel->read64(current_proc + 0x8);
 
 	while(current_proc)
 	{
-		uint64_t arguments[] = { current_proc };
+		UInt64 arguments[] = { current_proc };
 
 		current_pid = kernel->call("_proc_pid", arguments, 1);
 
@@ -137,7 +137,7 @@ mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
 		if(current_pid == 0)
 			break;
 
-		current_proc = (mach_vm_address_t) kernel->read64(current_proc + 0x8);
+		current_proc = (xnu::Mach::VmAddress) kernel->read64(current_proc + 0x8);
 	}
 
 	current_proc = get_proc_for_pid(pid);
@@ -154,9 +154,9 @@ mach_vm_address_t Task::findProcByPid(Kernel *kernel, int pid)
 	return 0;
 }
 
-mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
+xnu::Mach::VmAddress Task::findProcByName(Kernel *kernel, char *name)
 {
-	mach_vm_address_t current_proc;
+	xnu::Mach::VmAddress current_proc;
 
 	current_proc = kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
 
@@ -164,9 +164,9 @@ mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
 
 	while(current_proc)
 	{
-		uint64_t arguments[] = { current_proc };
+		UInt64 arguments[] = { current_proc };
 
-		mach_vm_address_t proc_name;
+		xnu::Mach::VmAddress proc_name;
 
 		proc_name = kernel->call("_proc_name", arguments, 1);
 
@@ -192,16 +192,16 @@ mach_vm_address_t Task::findProcByName(Kernel *kernel, char *name)
 	return 0;
 }
 
-mach_vm_address_t Task::findTaskByPid(Kernel *kernel, int pid)
+xnu::Mach::VmAddress Task::findTaskByPid(Kernel *kernel, int pid)
 {
-	mach_vm_address_t task;
-	mach_vm_address_t proc;
+	xnu::Mach::VmAddress task;
+	xnu::Mach::VmAddress proc;
 
 	proc = Task::findProcByPid(kernel, pid);
 
 	if(proc)
 	{
-		uint64_t arguments[] = { proc };
+		UInt64 arguments[] = { proc };
 
 		task = kernel->call("_proc_task", arguments, 1);
 
@@ -222,16 +222,16 @@ mach_vm_address_t Task::findTaskByPid(Kernel *kernel, int pid)
 	return 0;
 }
 
-mach_vm_address_t Task::findTaskByName(Kernel *kernel, char *name)
+xnu::Mach::VmAddress Task::findTaskByName(Kernel *kernel, char *name)
 {
-	mach_vm_address_t task;
-	mach_vm_address_t proc;
+	xnu::Mach::VmAddress task;
+	xnu::Mach::VmAddress proc;
 
 	proc = Task::findProcByName(kernel, name);
 
 	if(proc)
 	{
-		uint64_t arguments[] = { proc };
+		UInt64 arguments[] = { proc };
 
 		task = kernel->call("_proc_task", arguments, 1);
 
@@ -252,13 +252,13 @@ mach_vm_address_t Task::findTaskByName(Kernel *kernel, char *name)
 	return 0;
 }
 
-mach_vm_address_t Task::getTaskFromProc(Kernel *kernel, mach_vm_address_t proc)
+xnu::Mach::VmAddress Task::getTaskFromProc(Kernel *kernel, xnu::Mach::VmAddress proc)
 {
-	mach_vm_address_t task;
+	xnu::Mach::VmAddress task;
 
 	if(proc)
 	{
-		uint64_t arguments[] = { proc };
+		UInt64 arguments[] = { proc };
 
 		task = kernel->call("_proc_task", arguments, 1);
 
@@ -272,56 +272,56 @@ char* Task::getTaskName()
 {
 	char *task_name;
 
-	mach_vm_address_t name;
+	xnu::Mach::VmAddress name;
 
-	uint64_t kalloc_args[] = { 256 };
+	UInt64 kalloc_args[] = { 256 };
 
-	uint64_t buffer = this->kernel->call("_kalloc", kalloc_args, 1);
+	UInt64 buffer = this->kernel->call("_kalloc", kalloc_args, 1);
 
-	uint64_t proc_name_args[] = { static_cast<uint64_t>(this->pid) , buffer, 256 };
+	UInt64 proc_name_args[] = { static_cast<UInt64>(this->pid) , buffer, 256 };
 
 	name = this->kernel->call("_proc_name", proc_name_args, 3);
 
 	task_name = this->kernel->readString(buffer);
 
-	uint64_t kfree_args[] = { buffer, 256 };
+	UInt64 kfree_args[] = { buffer, 256 };
 
 	this->kernel->call("_kfree", kfree_args, 2);
 
 	return task_name;
 }
 
-mach_vm_address_t Task::findPort(Kernel *kernel, mach_vm_address_t task, mach_port_t port)
+xnu::Mach::VmAddress Task::findPort(Kernel *kernel, xnu::Mach::VmAddress task, xnu::Mach::Port port)
 {
 	return 0;
 }
 
-mach_vm_address_t Task::getBase()
+xnu::Mach::VmAddress Task::getBase()
 {
 	return 0;
 }
 
-off_t Task::getSlide()
+Offset Task::getSlide()
 {
 	return 0;
 }
 
-uint64_t Task::call(char *symbolname, uint64_t *arguments, size_t argCount)
+UInt64 Task::call(char *symbolname, UInt64 *arguments, Size argCount)
 {
 	// return task_call(task_port, symaddr, arguments, argcount);
 	return 0;
 }
 
-uint64_t Task::call(mach_vm_address_t func, uint64_t *arguments, size_t argCount)
+UInt64 Task::call(xnu::Mach::VmAddress func, UInt64 *arguments, Size argCount)
 {
 	return task_call(task_port, func, arguments, argCount);
 }
 
-mach_vm_address_t Task::vmAllocate(size_t size)
+xnu::Mach::VmAddress Task::vmAllocate(Size size)
 {
 	kern_return_t ret;
 
-	mach_vm_address_t address;
+	xnu::Mach::VmAddress address;
 
 	ret = vm_allocate(this->task_port, (vm_address_t*) &address, size, VM_PROT_DEFAULT);
 
@@ -337,11 +337,11 @@ mach_vm_address_t Task::vmAllocate(size_t size)
 	return task_vm_allocate(task_port, size);
 }
 
-mach_vm_address_t Task::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot)
+xnu::Mach::VmAddress Task::vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot)
 {
 	kern_return_t ret;
 
-	mach_vm_address_t address;
+	xnu::Mach::VmAddress address;
 
 	ret = vm_allocate(this->task_port, (vm_address_t*) &address, size, prot);
 
@@ -357,7 +357,7 @@ mach_vm_address_t Task::vmAllocate(size_t size, uint32_t flags, vm_prot_t prot)
 	return task_vm_allocate(task_port, size);
 }
 
-void Task::vmDeallocate(mach_vm_address_t address, size_t size)
+void Task::vmDeallocate(xnu::Mach::VmAddress address, Size size)
 {
 	kern_return_t ret;
 
@@ -376,7 +376,7 @@ void Task::vmDeallocate(mach_vm_address_t address, size_t size)
 	}
 }
 
-bool Task::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
+bool Task::vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot)
 {
 	kern_return_t ret;
 
@@ -394,11 +394,11 @@ bool Task::vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot)
 	return task_vm_protect(task_port, address, size, prot);
 }
 
-void* Task::vmRemap(mach_vm_address_t address, size_t size)
+void* Task::vmRemap(xnu::Mach::VmAddress address, Size size)
 {
 	kern_return_t ret;
 
-	mach_vm_address_t remap = 0;
+	xnu::Mach::VmAddress remap = 0;
 
 	// ret = vm_remap(this->task_port, address, size, &remap);
 
@@ -414,12 +414,12 @@ void* Task::vmRemap(mach_vm_address_t address, size_t size)
 	return NULL;
 }
 
-uint64_t Task::virtualToPhysical(mach_vm_address_t address)
+UInt64 Task::virtualToPhysical(xnu::Mach::VmAddress address)
 {
 	return 0;
 }
 
-bool Task::read(mach_vm_address_t address, void *data, size_t size)
+bool Task::read(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	kern_return_t ret;
 
@@ -439,18 +439,18 @@ bool Task::read(mach_vm_address_t address, void *data, size_t size)
 	return task_vm_read(task_port, address, data, size);
 }
 
-bool Task::readUnsafe(mach_vm_address_t address, void *data, size_t size)
+bool Task::readUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return false;
 }
 
-uint8_t Task::read8(mach_vm_address_t address)
+UInt8 Task::read8(xnu::Mach::VmAddress address)
 {
 	bool success;
 
-	uint8_t read;
+	UInt8 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(uint8_t));
+	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt8));
 
 	if(!success)
 	{
@@ -462,13 +462,13 @@ uint8_t Task::read8(mach_vm_address_t address)
 	return read;
 }
 
-uint16_t Task::read16(mach_vm_address_t address)
+UInt16 Task::read16(xnu::Mach::VmAddress address)
 {
 	bool success;
 
-	uint16_t read;
+	UInt16 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(uint16_t));
+	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt16));
 
 	if(!success)
 	{
@@ -480,13 +480,13 @@ uint16_t Task::read16(mach_vm_address_t address)
 	return read;
 }
 
-uint32_t Task::read32(mach_vm_address_t address)
+UInt32 Task::read32(xnu::Mach::VmAddress address)
 {
 	bool success;
 
-	uint32_t read;
+	UInt32 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(uint32_t));
+	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt32));
 
 	if(!success)
 	{
@@ -498,13 +498,13 @@ uint32_t Task::read32(mach_vm_address_t address)
 	return read;
 }
 
-uint64_t Task::read64(mach_vm_address_t address)
+UInt64 Task::read64(xnu::Mach::VmAddress address)
 {
 	bool success;
 
-	uint64_t read;
+	UInt64 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(uint64_t));
+	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt64));
 
 	if(!success)
 	{
@@ -516,21 +516,21 @@ uint64_t Task::read64(mach_vm_address_t address)
 	return read;
 }
 
-bool Task::write(mach_vm_address_t address, void *data, size_t size)
+bool Task::write(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return task_vm_write(task_port, address, data, size);
 }
 
-bool Task::writeUnsafe(mach_vm_address_t address, void *data, size_t size)
+bool Task::writeUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
 {
 	return false;
 }
 
-void Task::write8(mach_vm_address_t address, uint8_t value)
+void Task::write8(xnu::Mach::VmAddress address, UInt8 value)
 {
 	bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(uint8_t));
+	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt8));
 
 	if(!success)
 	{
@@ -540,11 +540,11 @@ void Task::write8(mach_vm_address_t address, uint8_t value)
 	assert(success);
 }
 
-void Task::write16(mach_vm_address_t address, uint16_t value)
+void Task::write16(xnu::Mach::VmAddress address, UInt16 value)
 {
 	bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(uint16_t));
+	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt16));
 
 	if(!success)
 	{
@@ -554,11 +554,11 @@ void Task::write16(mach_vm_address_t address, uint16_t value)
 	assert(success);
 }
 
-void Task::write32(mach_vm_address_t address, uint32_t value)
+void Task::write32(xnu::Mach::VmAddress address, UInt32 value)
 {
 	bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(uint32_t));
+	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt32));
 
 	if(!success)
 	{
@@ -568,11 +568,11 @@ void Task::write32(mach_vm_address_t address, uint32_t value)
 	assert(success);
 }
 
-void Task::write64(mach_vm_address_t address, uint64_t value)
+void Task::write64(xnu::Mach::VmAddress address, UInt64 value)
 {
 	bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(uint64_t));
+	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt64));
 
 	if(!success)
 	{
@@ -582,13 +582,13 @@ void Task::write64(mach_vm_address_t address, uint64_t value)
 	assert(success);
 }
 
-char* Task::readString(mach_vm_address_t address)
+char* Task::readString(xnu::Mach::VmAddress address)
 {
 	char *string;
 
-	uint8_t value;
+	UInt8 value;
 
-	size_t size = 0;
+	Size size = 0;
 
 	do
 	{
@@ -610,12 +610,12 @@ Symbol* Task::getSymbolByName(char *symname)
 	return macho->getSymbolByName(symname);
 }
 
-Symbol* Task::getSymbolByAddress(mach_vm_address_t address)
+Symbol* Task::getSymbolByAddress(xnu::Mach::VmAddress address)
 {
 	return macho->getSymbolByAddress(address);
 }
 
-mach_vm_address_t Task::getSymbolAddressByName(char *symbolname)
+xnu::Mach::VmAddress Task::getSymbolAddressByName(char *symbolname)
 {
 	Symbol *symbol = this->macho->getSymbolByName(symbolname);
 
@@ -625,9 +625,9 @@ mach_vm_address_t Task::getSymbolAddressByName(char *symbolname)
 	return symbol->getAddress();
 }
 
-mach_vm_address_t Task::getImageLoadedAt(char *image_name, char **image_path)
+xnu::Mach::VmAddress Task::getImageLoadedAt(char *image_name, char **image_path)
 {
-	mach_vm_address_t image = this->dyld->getImageLoadedAt(image_name, image_path);
+	xnu::Mach::VmAddress image = this->dyld->getImageLoadedAt(image_name, image_path);
 
 	if(!image)
 	{
