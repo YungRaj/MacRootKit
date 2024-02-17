@@ -1,5 +1,4 @@
-#ifndef _MACHO_H__
-#define _MACHO_H__
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -628,5 +627,3 @@ static special_slot special_slots[5] = {
                                         {"Requirements Blob", NULL, NULL},
                                         {"Bound Info.plist", NULL, NULL}
                                        };
-
-#endif

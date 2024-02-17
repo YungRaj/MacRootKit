@@ -1,5 +1,4 @@
-#ifndef __ZALLOC_H_
-#define __ZALLOC_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -422,5 +421,3 @@ struct zone {
 	uint32_t            z_elems_free;   /* Number of free elements             */
 	uint32_t            z_elems_avail;  /* Number of elements available        */
 };
-
-#endif

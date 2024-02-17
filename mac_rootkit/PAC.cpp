@@ -1,6 +1,6 @@
 #include "PAC.hpp"
 
-#ifdef __arm64__
+#ifdef defined(__arm64__) || defined(__arm64e__)
 
 uint64_t Arch::arm64::PAC::signPointerWithAKey(uint64_t pointer)
 {

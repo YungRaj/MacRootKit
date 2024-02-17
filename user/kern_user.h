@@ -1,5 +1,20 @@
-#ifndef __KERN_USER_H_ 
-#define __KERN_USER_H_
+/*
+ * Copyright (c) YungRaj
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
 
 #include <IOKit/IOKitLib.h>
 
@@ -85,6 +100,3 @@ void task_vm_deallocate(mach_port_t task, mach_vm_address_t address, size_t size
 bool task_vm_protect(mach_port_t task, mach_vm_address_t address, size_t size, vm_prot_t prot);
 
 uint64_t virtual_to_physical(mach_port_t task, mach_vm_address_t vaddr);
-
-
-#endif
