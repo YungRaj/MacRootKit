@@ -8,7 +8,7 @@ namespace mrk
 
 MacRootKit::MacRootKit(xnu::Kernel *kernel)
 	: kernel(kernel),
-	  kextKmods(reinterpret_cast<kmod_info_t**>(kernel->getSymbolAddressByName("_kmod"))),
+	  kextKmods(reinterpret_cast<xnu::KmodInfo**>(kernel->getSymbolAddressByName("_kmod"))),
 	  platformArchitecture(Arch::getCurrentArchitecture()),
 	  kernelPatcher(new KernelPatcher(this->kernel)),
 	  architecture(Arch::initArchitecture())
@@ -35,7 +35,7 @@ void MacRootKit::registerCallbacks()
 		static_cast<MacRootKit*>(user)->onProcLoad(task, path, len);
 	});
 
-	this->registerKextLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
+	this->registerKextLoadCallback((void*) this, [] (void *user, void *kext, xnu::KmodInfo *kmod)
 	{
 		static_cast<MacRootKit*>(user)->onKextLoad(kext, kmod);
 	});
@@ -106,7 +106,7 @@ void MacRootKit::onProcLoad(task_t task, const char *path, Size len)
 
 }
 
-void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
+void MacRootKit::onKextLoad(void *loaded_kext, xnu::KmodInfo *kmod_info)
 {
 	Kext *kext;
 
@@ -121,9 +121,9 @@ void MacRootKit::onKextLoad(void *loaded_kext, kmod_info_t *kmod_info)
 	kexts.push_back(kext);
 }
 
-kmod_info_t* MacRootKit::findKmodInfo(const char *kextname)
+xnu::KmodInfo* MacRootKit::findKmodInfo(const char *kextname)
 {
-	kmod_info_t *kmod;
+	xnu::KmodInfo *kmod;
 
 	if(!kextKmods)
 		return NULL;

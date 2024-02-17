@@ -37,7 +37,7 @@ namespace xnu
 		public:
 			Kext(xnu::Kernel *kernel, xnu::Mach::VmAddress base, char *identifier);
 
-			Kext(xnu::Kernel *kernel, void *kext, kmod_info_t *kmod_info);
+			Kext(xnu::Kernel *kernel, void *kext, xnu::KmodInfo *kmod_info);
 
 			~Kext();
 
@@ -46,7 +46,7 @@ namespace xnu
 
 			static xnu::Kext* findKextWithId(xnu::Kernel *kernel, UInt32 kext_id);
 
-			static void onKextLoad(void *kext, kmod_info_t *kmod_info);
+			static void onKextLoad(void *kext, xnu::KmodInfo *kmod_info);
 
 			char* getName() { return identifier; }
 
@@ -60,10 +60,10 @@ namespace xnu
 
 			void* getOSKext() { return kext; }
 
-			kmod_info_t* getKmodInfo() { return kmod_info; }
+			xnu::KmodInfo* getKmodInfo() { return kmod_info; }
 
-			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
-			kmod_stop_func_t*  getKmodStop() { return kmod_info->stop; }
+			xnu::KmodStartFunc* getKmodStart() { return kmod_info->start; }
+			xnu::KmodStopFunc*  getKmodStop() { return kmod_info->stop; }
 
 			std::vector<Symbol*>& getAllSymbols() { return macho->getAllSymbols(); }
 
@@ -77,7 +77,7 @@ namespace xnu
 
 			xnu::KextMachO *macho;
 
-			kmod_info_t *kmod_info;
+			xnu::KmodInfo *kmod_info;
 
 			void *kext;
 

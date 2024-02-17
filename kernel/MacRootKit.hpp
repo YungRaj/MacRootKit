@@ -56,7 +56,7 @@ namespace mrk
 
 			using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, Size len);
 
-			using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
+			using kextload_callback_t = void (*)(void *user, void *kext, xnu::KmodInfo *kmod_info);
 
 		public:
 			MacRootKit(xnu::Kernel *kernel);
@@ -110,9 +110,9 @@ namespace mrk
 
 			void onProcLoad(task_t task, const char *path, Size len);
 
-			void onKextLoad(void *kext, kmod_info_t *kmod);
+			void onKextLoad(void *kext, xnu::KmodInfo *kmod);
 
-			kmod_info_t* findKmodInfo(const char *kextname);
+			xnu::KmodInfo* findKmodInfo(const char *kextname);
 
 			void* findOSKextByIdentifier(const char *kextidentifier);
 
@@ -129,7 +129,7 @@ namespace mrk
 
 			std::vector<xnu::Kext*> kexts;
 
-			kmod_info_t **kextKmods;
+			xnu::KmodInfo **kextKmods;
 
 			std::vector<mrk::Plugin*> plugins;
 

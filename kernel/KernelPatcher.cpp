@@ -39,7 +39,7 @@ KernelPatcher::KernelPatcher()
 
 KernelPatcher::KernelPatcher(xnu::Kernel *kernel)
 	: kernel(kernel),
-	  kextKmods(reinterpret_cast<kmod_info_t**>(this->kernel->getSymbolAddressByName("_kmod")))
+	  kextKmods(reinterpret_cast<xnu::KmodInfo**>(this->kernel->getSymbolAddressByName("_kmod")))
 {
 	that = this;
 
@@ -133,7 +133,7 @@ void KernelPatcher::onOSKextSaveLoadedKextPanicList()
 	{
 	
 	#ifdef __x86_64__
-		kmod_info_t *kmod = *that->getKextKmods();
+		xnu::KmodInfo *kmod = *that->getKextKmods();
 
 		if(kmod)
 		{
@@ -266,7 +266,7 @@ void KernelPatcher::routeFunction(Hook *hook)
 {
 }
 
-void KernelPatcher::onKextLoad(void *kext, kmod_info_t *kmod)
+void KernelPatcher::onKextLoad(void *kext, xnu::KmodInfo *kmod)
 {
 	Kext::onKextLoad(kext, kmod);
 }
@@ -359,7 +359,7 @@ void KernelPatcher::registerCallbacks()
 		static_cast<KernelPatcher*>(user)->onExec(task, path, len);
 	});
 
-	rootkit->registerKextLoadCallback((void*) this, [] (void *user, void *kext, kmod_info_t *kmod)
+	rootkit->registerKextLoadCallback((void*) this, [] (void *user, void *kext, xnu::KmodInfo *kmod)
 	{
 		static_cast<KernelPatcher*>(user)->onKextLoad(kext, kmod);
 	});
@@ -369,7 +369,7 @@ void KernelPatcher::processAlreadyLoadedKexts()
 {
 #ifdef __x86_64__
 
-	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
+	for(xnu::KmodInfo *kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
 		if(kmod->address && kmod->size)
 		{
@@ -409,15 +409,15 @@ void KernelPatcher::processAlreadyLoadedKexts()
 
 			if(base && strcmp(entry_id, "com.apple.kernel") != 0)
 			{
-				kmod_info_t *kmod = new kmod_info_t;
+				xnu::KmodInfo *kmod = new xnu::KmodInfo;
 
 				kmod->address = 0xfffffe0000000000 | base;
 				kmod->size = 0;
 
 				strlcpy(reinterpret_cast<char*>(&kmod->name), entry_id, strlen(entry_id) + 1);
 
-				kmod->start = (kmod_start_func_t*) 0;
-				kmod->stop = (kmod_stop_func_t*) 0;
+				kmod->start = (xnu::KmodStartFunc*) 0;
+				kmod->stop = (xnu::KmodStopFunc*) 0;
 
 				this->processKext(kmod, true);
 
@@ -439,7 +439,7 @@ void KernelPatcher::processAlreadyLoadedKexts()
 	this->waitingForAlreadyLoadedKexts = false;
 }
 
-void KernelPatcher::processKext(kmod_info_t *kmod, bool loaded)
+void KernelPatcher::processKext(xnu::KmodInfo *kmod, bool loaded)
 {
 	MacRootKit *rootkit;
 

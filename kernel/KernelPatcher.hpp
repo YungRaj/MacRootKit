@@ -87,7 +87,7 @@ namespace mrk
 
 			xnu::Kernel* getKernel() { return kernel; }
 
-			kmod_info_t** getKextKmods() { return kextKmods; }
+			xnu::KmodInfo** getKextKmods() { return kextKmods; }
 
 			mrk::Hook* getEntitlementHook() { return entitlementHook; }
 			mrk::Hook* getBinaryLoadHook() { return binaryLoadHook; }
@@ -111,7 +111,7 @@ namespace mrk
 
 			virtual void routeFunction(mrk::Hook *hook);
 
-			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
+			virtual void onKextLoad(void *kext, xnu::KmodInfo *kmod);
 
 			virtual void onExec(task_t task, const char *path, Size len);
 
@@ -127,7 +127,7 @@ namespace mrk
 
 			void processAlreadyLoadedKexts();
 
-			void processKext(kmod_info_t *kmod, bool loaded);
+			void processKext(xnu::KmodInfo *kmod, bool loaded);
 
 			xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, mrk::Payload *payload);
 
@@ -144,7 +144,7 @@ namespace mrk
 		private:
 			xnu::Kernel *kernel;
 
-			kmod_info_t **kextKmods;
+			xnu::KmodInfo **kextKmods;
 
 			mrk::Hook *entitlementHook;
 			mrk::Hook *binaryLoadHook;

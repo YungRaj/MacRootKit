@@ -39,7 +39,7 @@ namespace xnu
 	{
 		public:
 			KextMachO(xnu::Kernel *kernel, char *name, xnu::Mach::VmAddress base);
-			KextMachO(xnu::Kernel *kernel, char *name, kmod_info_t *kmod_info);
+			KextMachO(xnu::Kernel *kernel, char *name, xnu::KmodInfo *kmod_info);
 
 			~KextMachO();
 
@@ -51,8 +51,8 @@ namespace xnu
 
 			virtual Size getSize() { return kmod_info->size > 0 ? kmod_info->size : MachO::getSize(); }
 
-			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
-			kmod_stop_func_t* getKmodStop() { return kmod_info->stop; }
+			xnu::KmodStartFunc* getKmodStart() { return kmod_info->start; }
+			xnu::KmodStopFunc* getKmodStop() { return kmod_info->stop; }
 
 			void setKernelCollection(xnu::Mach::VmAddress kc) { this->kernel_collection = kc; }
 
@@ -76,7 +76,7 @@ namespace xnu
 			xnu::Mach::VmAddress kernel_cache;
 			xnu::Mach::VmAddress kernel_collection;
 
-			kmod_info_t *kmod_info;
+			xnu::KmodInfo *kmod_info;
 
 			UInt8 *linkedit;
 

@@ -28,10 +28,10 @@ KextMachO::KextMachO(Kernel *kernel, char *name, xnu::Mach::VmAddress base)
 
 	this->initWithBase(base, 0);
 	
-	kmod_info = reinterpret_cast<kmod_info_t*>(this->getSymbolAddressByName("_kmod_info"));
+	kmod_info = reinterpret_cast<xnu::KmodInfo*>(this->getSymbolAddressByName("_kmod_info"));
 }
 
-KextMachO::KextMachO(Kernel *kernel, char *name, kmod_info_t *kmod_info)
+KextMachO::KextMachO(Kernel *kernel, char *name, xnu::KmodInfo *kmod_info)
     : kernel(kernel),
       name(&kmod_info->name[0]),
       kmod_info(kmod_info),

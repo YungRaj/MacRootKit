@@ -17,12 +17,12 @@ Kext::Kext(Kernel *kernel, xnu::Mach::VmAddress base, char *identifier)
 {
     macho = new KextMachO(kernel, identifier, address);
 
-    kmod_info = reinterpret_cast<kmod_info_t*>(macho->getSymbolAddressByName("_kmod_info"));
+    kmod_info = reinterpret_cast<xnu::KmodInfo*>(macho->getSymbolAddressByName("_kmod_info"));
 
     size = kmod_info->size;
 }
 
-Kext::Kext(Kernel *kernel, void *kext, kmod_info_t *kmod_info)
+Kext::Kext(Kernel *kernel, void *kext, xnu::KmodInfo *kmod_info)
     : kernel(kernel),
       kext(kext),
       kmod_info(kmod_info),
@@ -47,13 +47,13 @@ Kext* Kext::findKextWithIdentifier(Kernel *kernel, char *name)
 
 Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 {
-	kmod_info_t **kextKmods;
+	xnu::KmodInfo **kextKmods;
 
 	xnu::Mach::VmAddress _kmod = kernel->getSymbolAddressByName("_kmod");
 
-	kextKmods = reinterpret_cast<kmod_info_t**>(_kmod);
+	kextKmods = reinterpret_cast<xnu::KmodInfo**>(_kmod);
 
-	for(kmod_info_t *kmod = *kextKmods; kmod; kmod = kmod->next)
+	for(xnu::KmodInfo *kmod = *kextKmods; kmod; kmod = kmod->next)
 	{
 		if(strcmp(kmod->name, name) == 0)
 		{
@@ -83,7 +83,7 @@ Kext* Kext::findKextWithId(Kernel *kernel, UInt32 kext_id)
 	return NULL;
 }
 
-void Kext::onKextLoad(void *kext, kmod_info_t *kmod_info)
+void Kext::onKextLoad(void *kext, xnu::KmodInfo *kmod_info)
 {
 	return;
 }
