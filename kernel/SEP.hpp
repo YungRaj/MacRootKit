@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "vector.hpp"
 
 #include "MacRootKit.hpp"

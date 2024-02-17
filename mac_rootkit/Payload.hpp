@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -38,32 +40,32 @@ namespace mrk
 {
 	class Payload
 	{
-		static constexpr uint32_t expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
+		static constexpr UInt32 expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
 
 		public:
-			Payload(xnu::Task *task, Hook *hook, vm_prot_t prot);
+			Payload(xnu::Task *task, Hook *hook, xnu::Mach::VmProtection prot);
 
 			~Payload();
 
 			Hook* getHook() { return hook; }
 
-			mach_vm_address_t getAddress() { return address; }
+			xnu::Mach::VmAddress getAddress() { return address; }
 
-			void setCurrentOffset(off_t offset);
+			void setCurrentOffset(Offset offset);
 
-			off_t getCurrentOffset() { return current_offset; }
+			Offset getCurrentOffset() { return current_offset; }
 
-			size_t getSize() { return size; }
+			Size getSize() { return size; }
 
-			vm_prot_t getProt() { return prot; }
+			xnu::Mach::VmProtection getProt() { return prot; }
 
 			Task* getTask() { return task; }
 
-			bool readBytes(uint8_t *bytes, size_t size);
-			bool readBytes(off_t offset, uint8_t *bytes, size_t size);
+			bool readBytes(UInt8 *bytes, Size size);
+			bool readBytes(Offset offset, UInt8 *bytes, Size size);
 
-			bool writeBytes(uint8_t *bytes, size_t size);
-			bool writeBytes(off_t offset, uint8_t *bytes, size_t size);
+			bool writeBytes(UInt8 *bytes, Size size);
+			bool writeBytes(Offset offset, UInt8 *bytes, Size size);
 
 			void setWritable();
 			void setExecutable();
@@ -75,16 +77,16 @@ namespace mrk
 		private:
 			xnu::Task *task;
 
-			mach_vm_address_t address;
+			xnu::Mach::VmAddress address;
 
-			off_t current_offset;
+			Offset current_offset;
 
 			Hook *hook;
 
 			bool kernelPayload = false;
 
-			size_t size;
+			Size size;
 
-			vm_prot_t prot;
+			xnu::Mach::VmProtection prot;
 	};
 };

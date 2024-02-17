@@ -11,41 +11,41 @@ MachO::~MachO()
 	
 }
 
-void MachO::initWithBase(mach_vm_address_t machoBase, off_t slide)
+void MachO::initWithBase(xnu::Mach::VmAddress machoBase, Offset slide)
 {
 	base = machoBase;
 	aslr_slide = slide;
 	buffer = reinterpret_cast<char*>(base);
-	header = reinterpret_cast<struct mach_header_64*>(buffer);
+	header = reinterpret_cast<xnu::Macho::Header64*>(buffer);
 	symbolTable = new SymbolTable();
 
 	this->parseMachO();
 }
 
-size_t MachO::getSize()
+Size MachO::getSize()
 {
-	size_t file_size = 0;
+	Size file_size = 0;
 
-	struct mach_header_64 *mh = this->getMachHeader();
+	xnu::Macho::Header64 *mh = this->getMachHeader();
 
-	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
+	UInt8 *q = reinterpret_cast<UInt8*>(mh) + sizeof(xnu::Macho::Header64);
 
-	for(uint32_t i = 0; i < mh->ncmds; i++)
+	for(UInt32 i = 0; i < mh->ncmds; i++)
 	{
 		struct load_command *load_command = reinterpret_cast<struct load_command*>(q);
 
-		uint32_t cmd = load_command->cmd;
-		uint32_t cmdsize = load_command->cmdsize;
+		UInt32 cmd = load_command->cmd;
+		UInt32 cmdsize = load_command->cmdsize;
 
 		if(cmd == LC_SEGMENT_64)
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			uint64_t vmaddr = segment_command->vmaddr;
-			uint64_t vmsize = segment_command->vmsize;
+			UInt64 vmaddr = segment_command->vmaddr;
+			UInt64 vmsize = segment_command->vmsize;
 
-			uint64_t fileoff = segment_command->fileoff;
-			uint64_t filesize = segment_command->filesize;
+			UInt64 fileoff = segment_command->fileoff;
+			UInt64 filesize = segment_command->filesize;
 
 			if(vmsize > 0)
 			{
@@ -64,12 +64,12 @@ Symbol* MachO::getSymbolByName(char *symbolname)
 	return this->symbolTable->getSymbolByName(symbolname);
 }
 
-Symbol* MachO::getSymbolByAddress(mach_vm_address_t address)
+Symbol* MachO::getSymbolByAddress(xnu::Mach::VmAddress address)
 {
 	return this->symbolTable->getSymbolByAddress(address);
 }
 
-mach_vm_address_t MachO::getSymbolAddressByName(char *symbolname)
+xnu::Mach::VmAddress MachO::getSymbolAddressByName(char *symbolname)
 {
 	Symbol *symbol = this->getSymbolByName(symbolname);
 
@@ -79,39 +79,39 @@ mach_vm_address_t MachO::getSymbolAddressByName(char *symbolname)
 	return symbol->getAddress();
 }
 
-off_t MachO::addressToOffset(mach_vm_address_t address)
+Offset MachO::addressToOffset(xnu::Mach::VmAddress address)
 {
-	struct mach_header_64 *mh = this->getMachHeader();
+	xnu::Macho::Header64 *mh = this->getMachHeader();
 
-	uint64_t current_offset = sizeof(struct mach_header_64);
+	UInt64 current_offset = sizeof(xnu::Macho::Header64);
 
-	for(uint32_t i = 0; i < mh->ncmds; i++)
+	for(UInt32 i = 0; i < mh->ncmds; i++)
 	{
 		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
-		uint32_t cmdtype = load_command->cmd;
-		uint32_t cmdsize = load_command->cmdsize;
+		UInt32 cmdtype = load_command->cmd;
+		UInt32 cmdsize = load_command->cmdsize;
 
 		if(cmdtype == LC_SEGMENT_64)
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			uint64_t vmaddr = segment_command->vmaddr;
-			uint64_t vmsize = segment_command->vmsize;
+			UInt64 vmaddr = segment_command->vmaddr;
+			UInt64 vmsize = segment_command->vmsize;
 
-			uint64_t fileoff = segment_command->fileoff;
-			uint64_t filesize = segment_command->filesize;
+			UInt64 fileoff = segment_command->fileoff;
+			UInt64 filesize = segment_command->filesize;
 
-			uint64_t sect_offset = current_offset + sizeof(struct segment_command_64);
+			UInt64 sect_offset = current_offset + sizeof(struct segment_command_64);
 
 			for(int j = 0; j < segment_command->nsects; j++)
 			{
 				struct section_64 *section = reinterpret_cast<struct section_64*>((*this)[sect_offset]);
 
-				uint64_t sectaddr = section->addr;
-				uint64_t sectsize = section->size;
+				UInt64 sectaddr = section->addr;
+				UInt64 sectsize = section->size;
 
-				uint64_t offset = section->offset;
+				UInt64 offset = section->offset;
 
 				if(address >= sectaddr && address <= sectaddr + sectsize)
 				{
@@ -128,28 +128,28 @@ off_t MachO::addressToOffset(mach_vm_address_t address)
 	return 0;
 }
 
-mach_vm_address_t MachO::offsetToAddress(off_t offset)
+xnu::Mach::VmAddress MachO::offsetToAddress(Offset offset)
 {
-	struct mach_header_64 *mh = this->getMachHeader();
+	xnu::Macho::Header64 *mh = this->getMachHeader();
 
-	uint64_t current_offset = sizeof(struct mach_header_64);
+	UInt64 current_offset = sizeof(xnu::Macho::Header64);
 
-	for(uint32_t i = 0; i < mh->ncmds; i++)
+	for(UInt32 i = 0; i < mh->ncmds; i++)
 	{
 		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
-		uint32_t cmdtype = load_command->cmd;
-		uint32_t cmdsize = load_command->cmdsize;
+		UInt32 cmdtype = load_command->cmd;
+		UInt32 cmdsize = load_command->cmdsize;
 
 		if(cmdtype == LC_SEGMENT_64)
 		{
 			struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-			uint64_t vmaddr = segment_command->vmaddr;
-			uint64_t vmsize = segment_command->vmsize;
+			UInt64 vmaddr = segment_command->vmaddr;
+			UInt64 vmsize = segment_command->vmsize;
 
-			uint64_t fileoff = segment_command->fileoff;
-			uint64_t filesize = segment_command->filesize;
+			UInt64 fileoff = segment_command->fileoff;
+			UInt64 filesize = segment_command->filesize;
 
 			if(offset >= fileoff && offset <= fileoff + filesize)
 			{
@@ -163,14 +163,14 @@ mach_vm_address_t MachO::offsetToAddress(off_t offset)
 	return 0;
 }
 
-void* MachO::addressToPointer(mach_vm_address_t address)
+void* MachO::addressToPointer(xnu::Mach::VmAddress address)
 {
-	return reinterpret_cast<void*>(reinterpret_cast<mach_vm_address_t>(buffer + this->addressToOffset(address)));
+	return reinterpret_cast<void*>(reinterpret_cast<xnu::Mach::VmAddress>(buffer + this->addressToOffset(address)));
 }
 
-mach_vm_address_t MachO::getBufferAddress(mach_vm_address_t address)
+xnu::Mach::VmAddress MachO::getBufferAddress(xnu::Mach::VmAddress address)
 {
-	mach_vm_address_t header = reinterpret_cast<mach_vm_address_t>(this->getMachHeader());
+	xnu::Mach::VmAddress header = reinterpret_cast<xnu::Mach::VmAddress>(this->getMachHeader());
 
 	Segment *segment = this->segmentForAddress(address);
 
@@ -194,7 +194,7 @@ mach_vm_address_t MachO::getBufferAddress(mach_vm_address_t address)
 
 Segment* MachO::getSegment(char *segmentname)
 {
-	for(uint32_t i = 0; i < this->getSegments().size(); i++)
+	for(UInt32 i = 0; i < this->getSegments().size(); i++)
 	{
 		Segment *segment = this->getSegments().at(i);
 
@@ -210,14 +210,14 @@ Segment* MachO::getSegment(char *segmentname)
 
 Section* MachO::getSection(char *segmentname, char *sectionname)
 {
-	for(uint32_t i = 0; i < this->getSegments().size(); i++)
+	for(UInt32 i = 0; i < this->getSegments().size(); i++)
 	{
 		Segment *segment = this->getSegments().at(i);
 
 		if(strcmp(segment->getSegmentName(), segmentname) == 0 ||
 			strncmp(segment->getSegmentName(), segmentname, strlen(segmentname)) == 0)
 		{
-			for(uint32_t j = 0; j < segment->getSections().size(); j++)
+			for(UInt32 j = 0; j < segment->getSections().size(); j++)
 			{
 				Section *section = segment->getSections().at(j);
 
@@ -233,9 +233,9 @@ Section* MachO::getSection(char *segmentname, char *sectionname)
 	return NULL;
 }
 
-Segment* MachO::segmentForAddress(mach_vm_address_t address)
+Segment* MachO::segmentForAddress(xnu::Mach::VmAddress address)
 {
-	for(uint32_t i = 0; i < this->getSegments().size(); i++)
+	for(UInt32 i = 0; i < this->getSegments().size(); i++)
 	{
 		Segment *segment = this->getSegments().at(i);
 
@@ -248,14 +248,14 @@ Segment* MachO::segmentForAddress(mach_vm_address_t address)
 	return NULL;
 }
 
-Section* MachO::sectionForAddress(mach_vm_address_t address)
+Section* MachO::sectionForAddress(xnu::Mach::VmAddress address)
 {
 	Segment *segment = this->segmentForAddress(address);
 
 	if(!segment)
 		return NULL;
 
-	for(uint32_t i = 0; i < segment->getSections().size(); i++)
+	for(UInt32 i = 0; i < segment->getSections().size(); i++)
 	{
 		Section *section = segment->getSections().at(i);
 
@@ -268,9 +268,9 @@ Section* MachO::sectionForAddress(mach_vm_address_t address)
 	return NULL;
 }
 
-Segment* MachO::segmentForOffset(off_t offset)
+Segment* MachO::segmentForOffset(Offset offset)
 {
-	mach_vm_address_t address = this->offsetToAddress(offset);
+	xnu::Mach::VmAddress address = this->offsetToAddress(offset);
 
 	if(!address)
 		return NULL;
@@ -278,9 +278,9 @@ Segment* MachO::segmentForOffset(off_t offset)
 	return this->segmentForAddress(address);
 }
 
-Section* MachO::sectionForOffset(off_t offset)
+Section* MachO::sectionForOffset(Offset offset)
 {
-	mach_vm_address_t address = this->offsetToAddress(offset);
+	xnu::Mach::VmAddress address = this->offsetToAddress(offset);
 
 	if(!address)
 		return NULL;
@@ -288,15 +288,15 @@ Section* MachO::sectionForOffset(off_t offset)
 	return this->sectionForAddress(address);
 }
 
-bool MachO::addressInSegment(mach_vm_address_t address, char *segmentname)
+bool MachO::addressInSegment(xnu::Mach::VmAddress address, char *segmentname)
 {
 	Segment *segment = this->segmentForAddress(address);
 
 	if(segment && strcmp(segment->getSegmentName(), segmentname) == 0)
 	{
-		mach_vm_address_t segmentAddress = segment->getAddress();
+		xnu::Mach::VmAddress segmentAddress = segment->getAddress();
 
-		size_t segmentSize = segment->getSize();
+		Size segmentSize = segment->getSize();
 
 		return address >= segmentAddress && address < segmentAddress + segmentSize;
 	}
@@ -304,7 +304,7 @@ bool MachO::addressInSegment(mach_vm_address_t address, char *segmentname)
 	return false;
 }
 
-bool MachO::addressInSection(mach_vm_address_t address, char *segmentname, char *sectname)
+bool MachO::addressInSection(xnu::Mach::VmAddress address, char *segmentname, char *sectname)
 {
 	Section *section;
 
@@ -314,9 +314,9 @@ bool MachO::addressInSection(mach_vm_address_t address, char *segmentname, char 
 
 		if(section && strcmp(section->getSectionName(), sectname) == 0)
 		{
-			mach_vm_address_t sectionAddress = section->getAddress();
+			xnu::Mach::VmAddress sectionAddress = section->getAddress();
 
-			size_t sectionSize = section->getSize();
+			Size sectionSize = section->getSize();
 
 			return address >= sectionAddress && address < sectionAddress + sectionSize;
 		}
@@ -327,17 +327,17 @@ bool MachO::addressInSection(mach_vm_address_t address, char *segmentname, char 
 	return false;
 }
 
-void MachO::parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize)
+void MachO::parseSymbolTable(xnu::Macho::Nlist64 *symtab, UInt32 nsyms, char *strtab, Size strsize)
 {
 	for(int i = 0; i < nsyms; i++)
 	{
 		Symbol *symbol;
 
-		struct nlist_64 *nl = &symtab[i];
+		xnu::Macho::Nlist64 *nl = &symtab[i];
 
 		char *name;
 
-		mach_vm_address_t address;
+		xnu::Mach::VmAddress address;
 
 		name = &strtab[nl->n_strx];
 
@@ -367,16 +367,16 @@ void MachO::parseFatHeader()
 {
 	struct fat_header *fat_header = reinterpret_cast<struct fat_header*>(this->getMachHeader());
 
-	struct fat_arch *arch = reinterpret_cast<struct fat_arch*>(reinterpret_cast<uint8_t*>(fat_header) + sizeof(struct fat_header));
+	struct fat_arch *arch = reinterpret_cast<struct fat_arch*>(reinterpret_cast<UInt8*>(fat_header) + sizeof(struct fat_header));
 
-	uint32_t nfat_arch = OSSwapBigToHostInt32(fat_header->nfat_arch);
+	UInt32 nfat_arch = OSSwapBigToHostInt32(fat_header->nfat_arch);
 
-	for(uint32_t i = 0; i < nfat_arch; i++)
+	for(UInt32 i = 0; i < nfat_arch; i++)
 	{
-		uint32_t cputype;
-		uint32_t cpusubtype;
+		UInt32 cputype;
+		UInt32 cpusubtype;
 
-		uint32_t offset;
+		UInt32 offset;
 
 		cputype = OSSwapBigToHostInt32(arch->cputype);
 		cpusubtype = OSSwapBigToHostInt32(arch->cpusubtype);
@@ -393,7 +393,7 @@ void MachO::parseFatHeader()
 
 		if(cputype == NATIVE_CPU_TYPE)
 		{
-			struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(reinterpret_cast<uint8_t*>(fat_header) + offset);
+			xnu::Macho::Header64 *mh = reinterpret_cast<xnu::Macho::Header64*>(reinterpret_cast<UInt8*>(fat_header) + offset);
 
 			this->header = mh;
 			this->buffer = reinterpret_cast<char*>(mh);
@@ -406,9 +406,9 @@ void MachO::parseFatHeader()
 
 void MachO::parseHeader()
 {
-	struct mach_header_64 *mh = this->getMachHeader();
+	xnu::Macho::Header64 *mh = this->getMachHeader();
 
-	uint32_t magic = mh->magic;
+	UInt32 magic = mh->magic;
 
 	if(magic == FAT_CIGAM)
 	{

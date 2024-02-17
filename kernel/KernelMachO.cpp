@@ -28,7 +28,7 @@ KernelMachO::~KernelMachO()
 {
 }
 
-Kext* KernelMachO::kextLoadedAt(Kernel *kernel, mach_vm_address_t address)
+Kext* KernelMachO::kextLoadedAt(Kernel *kernel, xnu::Mach::VmAddress address)
 {
 	mrk::MacRootKit *rootkit = kernel->getRootKit();
 
@@ -49,24 +49,24 @@ void KernelMachO::parseLinkedit()
 
 bool KernelMachO::parseLoadCommands()
 {
-	struct mach_header_64 *mh = this->getMachHeader();
+	xnu::Macho::Header64 *mh = this->getMachHeader();
 
-	size_t file_size;
+	Size file_size;
 
 	this->size = this->getSize();
 
 	file_size = this->size;
 
-	uint8_t *q = reinterpret_cast<uint8_t*>(mh) + sizeof(struct mach_header_64);
+	UInt8 *q = reinterpret_cast<UInt8*>(mh) + sizeof(xnu::Macho::Header64);
 
-	uint32_t current_offset = sizeof(struct mach_header_64);
+	UInt32 current_offset = sizeof(xnu::Macho::Header64);
 
-	for(uint32_t i = 0; i < mh->ncmds; i++)
+	for(UInt32 i = 0; i < mh->ncmds; i++)
 	{
 		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
-		uint32_t cmdtype = load_command->cmd;
-		uint32_t cmdsize = load_command->cmdsize;
+		UInt32 cmdtype = load_command->cmd;
+		UInt32 cmdsize = load_command->cmdsize;
 
 		if(cmdsize > mh->sizeofcmds - ((uintptr_t) load_command - (uintptr_t)(mh + 1)))
 			return false;
@@ -78,8 +78,8 @@ bool KernelMachO::parseLoadCommands()
 				;
 				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
 
-				uint32_t nsects = segment_command->nsects;
-				uint32_t sect_offset = current_offset + sizeof(struct segment_command_64);
+				UInt32 nsects = segment_command->nsects;
+				UInt32 sect_offset = current_offset + sizeof(struct segment_command_64);
 
 				if(segment_command->fileoff > this->size || segment_command->filesize > this->size - segment_command->fileoff)
 					return false;
@@ -113,7 +113,7 @@ bool KernelMachO::parseLoadCommands()
 				
 				if (!strcmp(segment_command->segname, "__LINKEDIT"))
 				{
-					linkedit = reinterpret_cast<uint8_t *>(segment_command->vmaddr);
+					linkedit = reinterpret_cast<UInt8 *>(segment_command->vmaddr);
 					linkedit_off = segment_command->fileoff;
 					linkedit_size = segment_command->filesize;
 				}
@@ -158,13 +158,13 @@ bool KernelMachO::parseLoadCommands()
 				;
 				struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_command);
 
-				struct nlist_64 *symtab;
-				uint32_t nsyms;
+				xnu::Macho::Nlist64 *symtab;
+				UInt32 nsyms;
 
 				char *strtab;
-				uint32_t strsize;
+				UInt32 strsize;
 
-				if(symtab_command->stroff > this->size || symtab_command->symoff > this->size || symtab_command->nsyms > (this->size - symtab_command->symoff) / sizeof(struct nlist_64))
+				if(symtab_command->stroff > this->size || symtab_command->symoff > this->size || symtab_command->nsyms > (this->size - symtab_command->symoff) / sizeof(xnu::Macho::Nlist64))
 					return false;
 
 				MAC_RK_LOG("MacRK::LC_SYMTAB\n");
@@ -173,7 +173,7 @@ bool KernelMachO::parseLoadCommands()
 
 				if(this->kernel_cache)
 				{
-					symtab = reinterpret_cast<struct nlist_64*>(this->kernel_cache + symtab_command->symoff);
+					symtab = reinterpret_cast<xnu::Macho::Nlist64*>(this->kernel_cache + symtab_command->symoff);
 					nsyms = symtab_command->nsyms;
 
 					strtab = reinterpret_cast<char*>(this->kernel_cache + symtab_command->stroff);
@@ -182,15 +182,15 @@ bool KernelMachO::parseLoadCommands()
 					char buffer1[128];
 					char buffer2[128];
 
-					snprintf(buffer1, 128, "0x%llx", (uint64_t) symtab);
-					snprintf(buffer2, 128, "0x%llx", (uint64_t) strtab);
+					snprintf(buffer1, 128, "0x%llx", (UInt64) symtab);
+					snprintf(buffer2, 128, "0x%llx", (UInt64) strtab);
 
 					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
 					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
 					
 				} else if(this->kernel_collection)
 				{
-					symtab = reinterpret_cast<struct nlist_64*>(linkedit + (symtab_command->symoff - linkedit_off));
+					symtab = reinterpret_cast<xnu::Macho::Nlist64*>(linkedit + (symtab_command->symoff - linkedit_off));
 					nsyms = symtab_command->nsyms;
 
 					strtab = reinterpret_cast<char*>(linkedit + (symtab_command->stroff - linkedit_off));
@@ -254,8 +254,8 @@ bool KernelMachO::parseLoadCommands()
 				;
 				struct linkedit_data_command *linkedit = reinterpret_cast<struct linkedit_data_command*>(load_command);
 
-				uint32_t dataoff = linkedit->dataoff;
-				uint32_t datasize = linkedit->datasize;
+				UInt32 dataoff = linkedit->dataoff;
+				UInt32 datasize = linkedit->datasize;
 
 				MAC_RK_LOG("MacRK::LC_FUNCTION_STARTS\n");
 				MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
@@ -292,8 +292,8 @@ bool KernelMachO::parseLoadCommands()
 				;
 				struct linkedit_data_command *linkedit = reinterpret_cast<struct linkedit_data_command*>(load_command);
 
-				uint32_t dataoff = linkedit->dataoff;
-				uint32_t datasize = linkedit->datasize;
+				UInt32 dataoff = linkedit->dataoff;
+				UInt32 datasize = linkedit->datasize;
 
 				MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
 				MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);

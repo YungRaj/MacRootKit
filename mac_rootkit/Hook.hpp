@@ -23,6 +23,8 @@
 
 #include "vector.hpp"
 
+#include <Types.h>
+
 #include <x86_64/Isa_x86_64.hpp>
 #include <arm64/Isa_arm64.hpp>
 
@@ -56,10 +58,10 @@ enum HookType
 
 struct HookPatch
 {
-	mach_vm_address_t to;
-	mach_vm_address_t from;
+	xnu::Mach::VmAddress to;
+	xnu::Mach::VmAddress from;
 
-	mach_vm_address_t trampoline;
+	xnu::Mach::VmAddress trampoline;
 
 	enum HookType type;
 
@@ -67,10 +69,10 @@ struct HookPatch
 
 	mrk::Payload *payload;
 
-	uint8_t *original;
-	uint8_t *replace;
+	UInt8 *original;
+	UInt8 *replace;
 
-	size_t patch_size;
+	Size patch_size;
 };
 
 template<typename T, typename Y = enum HookType>
@@ -88,13 +90,13 @@ namespace mrk
 	{
 		public:
 			explicit Hook(mrk::Patcher *patcher, enum HookType hooktype);
-			explicit Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, mach_vm_address_t from);
+			explicit Hook(mrk::Patcher *patcher, enum HookType hooktype, xnu::Task *task, xnu::Mach::VmAddress from);
 
-			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
-			static Hook* hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+			static Hook* hookForFunction(xnu::Task *task, mrk::Patcher *patcher, xnu::Mach::VmAddress address);
+			static Hook* hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, xnu::Mach::VmAddress address);
 
-			static Hook* breakpointForAddress(xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
-			static Hook* breakpointForAddress(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address);
+			static Hook* breakpointForAddress(xnu::Task *task, mrk::Patcher *patcher, xnu::Mach::VmAddress address);
+			static Hook* breakpointForAddress(void *target, xnu::Task *task, mrk::Patcher *patcher, xnu::Mach::VmAddress address);
 
 			void* getTarget() { return target; }
 
@@ -106,21 +108,21 @@ namespace mrk
 
 			Disassembler* getDisassembler() { return disassembler; }
 
-			mach_vm_address_t getFrom() { return from; }
+			xnu::Mach::VmAddress getFrom() { return from; }
 
 			struct HookPatch* getLatestRegisteredHook();
 
-			mach_vm_address_t getTrampoline() { return trampoline; }
+			xnu::Mach::VmAddress getTrampoline() { return trampoline; }
 
-			mach_vm_address_t getTrampolineFromChain(mach_vm_address_t address);
+			xnu::Mach::VmAddress getTrampolineFromChain(xnu::Mach::VmAddress address);
 
 			HookArray<struct HookPatch*>& getHooks() { return hooks; }
 
-			HookCallbackArray<mach_vm_address_t>& getCallbacks() { return callbacks; }
+			HookCallbackArray<xnu::Mach::VmAddress>& getCallbacks() { return callbacks; }
 
 			enum HookType getHookType() { return hooktype; }
 
-			enum HookType getHookTypeForCallback(mach_vm_address_t callback);
+			enum HookType getHookTypeForCallback(xnu::Mach::VmAddress callback);
 
 			void setTarget(void *target) { this->target = target; }
 
@@ -130,26 +132,26 @@ namespace mrk
 
 			void setTask(Task *task) { this->task = task; }
 
-			void setFrom(mach_vm_address_t from) { this->from = from; }
+			void setFrom(xnu::Mach::VmAddress from) { this->from = from; }
 
-			void setTrampoline(mach_vm_address_t trampoline) { this->trampoline = trampoline; }
+			void setTrampoline(xnu::Mach::VmAddress trampoline) { this->trampoline = trampoline; }
 
 			void setHookType(enum HookType hooktype) { this->hooktype = hooktype; }
 
-			void prepareHook(xnu::Task *task, mach_vm_address_t from);
-			void prepareBreakpoint(xnu::Task *task, mach_vm_address_t breakpoint);
+			void prepareHook(xnu::Task *task, xnu::Mach::VmAddress from);
+			void prepareBreakpoint(xnu::Task *task, xnu::Mach::VmAddress breakpoint);
 
 			mrk::Payload* prepareTrampoline();
 
 			void registerHook(struct HookPatch *patch);
 
-			void registerCallback(mach_vm_address_t callback, enum HookType hooktype = kHookTypeCallback);
+			void registerCallback(xnu::Mach::VmAddress callback, enum HookType hooktype = kHookTypeCallback);
 
-			void hookFunction(mach_vm_address_t to, enum HookType hooktype = kHookTypeInstrumentFunction);
+			void hookFunction(xnu::Mach::VmAddress to, enum HookType hooktype = kHookTypeInstrumentFunction);
 
 			void uninstallHook();
 
-			void addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint);
+			void addBreakpoint(xnu::Mach::VmAddress breakpoint_hook, enum HookType hooktype = kHookTypeBreakpoint);
 
 			void removeBreakpoint();
 
@@ -168,13 +170,13 @@ namespace mrk
 
 			bool kernelHook = false;
 
-			mach_vm_address_t from;
+			xnu::Mach::VmAddress from;
 
-			mach_vm_address_t trampoline;
+			xnu::Mach::VmAddress trampoline;
 
 			enum HookType hooktype;
 
-			HookCallbackArray<mach_vm_address_t> callbacks;
+			HookCallbackArray<xnu::Mach::VmAddress> callbacks;
 
 			HookArray<struct HookPatch*> hooks;
 	};

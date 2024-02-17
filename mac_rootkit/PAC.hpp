@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <mach/mach_types.h>
 
 #include <ptrauth.h>
@@ -32,11 +34,11 @@ namespace Arch
 	{
 		namespace PAC
 		{
-			uint64_t signPointerWithAKey(uint64_t pointer);
+			UInt64 signPointerWithAKey(UInt64 pointer);
 
-			uint64_t signPointerWithBKey(uint64_t pointer);
+			UInt64 signPointerWithBKey(UInt64 pointer);
 
-			void stripPointerAuthenticationCode(uint64_t pointer);
+			void stripPointerAuthenticationCode(UInt64 pointer);
 		}
 	}
 };

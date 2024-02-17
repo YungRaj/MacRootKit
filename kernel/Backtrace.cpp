@@ -13,7 +13,7 @@
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"
 
-void Debug::Symbolicate::lookForAddressInsideKexts(mach_vm_address_t address, std::vector<xnu::Kext*> &kexts, Symbol *&sym)
+void Debug::Symbolicate::lookForAddressInsideKexts(xnu::Mach::VmAddress address, std::vector<xnu::Kext*> &kexts, Symbol *&sym)
 {
 	for(int i = 0; i < kexts.size(); i++)
 	{
@@ -34,9 +34,9 @@ void Debug::Symbolicate::lookForAddressInsideKexts(mach_vm_address_t address, st
 			{
 				if(sym)
 				{
-					off_t delta = address - sym->getAddress();
+					Offset delta = address - sym->getAddress();
 
-					off_t new_delta = address - symbol->getAddress();
+					Offset new_delta = address - symbol->getAddress();
 
 					if(new_delta < delta)
 					{
@@ -55,7 +55,7 @@ void Debug::Symbolicate::lookForAddressInsideKexts(mach_vm_address_t address, st
 	}
 }
 
-void Debug::Symbolicate::lookForAddressInsideKernel(mach_vm_address_t address, xnu::Kernel *kernel, Symbol *&sym)
+void Debug::Symbolicate::lookForAddressInsideKernel(xnu::Mach::VmAddress address, xnu::Kernel *kernel, Symbol *&sym)
 {
 	MachO *macho = kernel->getMachO();
 
@@ -73,9 +73,9 @@ void Debug::Symbolicate::lookForAddressInsideKernel(mach_vm_address_t address, x
 			{
 				if(sym)
 				{
-					off_t delta = address - sym->getAddress();
+					Offset delta = address - sym->getAddress();
 
-					off_t new_delta = address - symbol->getAddress();
+					Offset new_delta = address - symbol->getAddress();
 
 					if(new_delta < delta)
 					{
@@ -94,7 +94,7 @@ void Debug::Symbolicate::lookForAddressInsideKernel(mach_vm_address_t address, x
 	}
 }
 
-Symbol* Debug::Symbolicate::getSymbolFromAddress(mach_vm_address_t address, off_t *delta)
+Symbol* Debug::Symbolicate::getSymbolFromAddress(xnu::Mach::VmAddress address, Offset *delta)
 {
 	Symbol *sym = NULL;
 
@@ -117,45 +117,45 @@ void Debug::printBacktrace(union Arch::ThreadState *thread_state)
 
 	if constexpr(Arch::_arm64<arch>)
 	{
-		uint64_t fp = thread_state->state_arm64.fp;
+		UInt64 fp = thread_state->state_arm64.fp;
 
-		uint32_t frame = 0;
+		UInt32 frame = 0;
 
 		while(fp)
 		{
 			Symbol *symbol;
 
-			off_t delta;
+			Offset delta;
 
-			uint64_t lr = *(uint64_t*) (fp - sizeof(uint64_t));
+			UInt64 lr = *(UInt64*) (fp - sizeof(UInt64));
 
 			symbol = Debug::Symbolicate::getSymbolFromAddress(lr, &delta);
 
 			MAC_RK_LOG("frame %u: 0x%x %s + %llu", frame, lr, symbol->getName(), delta);
 
-			fp = *(uint64_t*) fp;
+			fp = *(UInt64*) fp;
 		}
 	}
 
 	if constexpr(Arch::_x86_64<arch>)
 	{
-		uint64_t rbp = thread_state->state_x86_64.rbp;
+		UInt64 rbp = thread_state->state_x86_64.rbp;
 
-		uint32_t frame = 0;
+		UInt32 frame = 0;
 
 		while(rbp)
 		{
 			Symbol *symbol;
 
-			off_t delta;
+			Offset delta;
 
-			uint64_t rip = *(uint64_t*) (rbp - sizeof(uint64_t));
+			UInt64 rip = *(UInt64*) (rbp - sizeof(UInt64));
 
 			symbol = Debug::Symbolicate::getSymbolFromAddress(rip, &delta);
 
 			MAC_RK_LOG("frame %u: 0x%x %s + %llu", frame, rip, symbol->getName(), delta);
 
-			rbp = *(uint64_t*) rbp;
+			rbp = *(UInt64*) rbp;
 
 			frame++;
 		}

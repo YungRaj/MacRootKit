@@ -1,13 +1,13 @@
 #include "FileIO.hpp"
 #include "Log.hpp"
 
-uint8_t *FileIO::readFile(const char *path, size_t *size) 
+UInt8 *FileIO::readFile(const char *path, Size *size) 
 {
 	vnode_t vnode = NULLVP;
 
 	vfs_context_t ctxt = vfs_context_create(nullptr);
 
-	uint8_t *buf = nullptr;
+	UInt8 *buf = nullptr;
 
 	int err = vnode_lookup(path, 0, &vnode, ctxt);
 
@@ -17,7 +17,7 @@ uint8_t *FileIO::readFile(const char *path, size_t *size)
 		
 		if(*size > 0) 
 		{
-			buf = new uint8_t[*size+1];
+			buf = new UInt8[*size+1];
 
 			if (buf)
 			{
@@ -51,12 +51,12 @@ uint8_t *FileIO::readFile(const char *path, size_t *size)
 }
 
 
-int FileIO::read(void *buffer, off_t off, size_t size, vnode_t vnode, vfs_context_t ctxt)
+int FileIO::read(void *buffer, Offset off, Size size, vnode_t vnode, vfs_context_t ctxt)
 {
 	return FileIO::performIO(buffer, off, size, vnode, ctxt, false);
 }
 
-size_t FileIO::getSize(vnode_t vnode, vfs_context_t ctxt)
+Size FileIO::getSize(vnode_t vnode, vfs_context_t ctxt)
 {
 	// Taken from XNU vnode_size
 	vnode_attr va;
@@ -64,10 +64,10 @@ size_t FileIO::getSize(vnode_t vnode, vfs_context_t ctxt)
 	VATTR_INIT(&va);
 	VATTR_WANTED(&va, va_data_size);
 
-	return vnode_getattr(vnode, &va, ctxt) ? 0 : (size_t)va.va_data_size;
+	return vnode_getattr(vnode, &va, ctxt) ? 0 : (Size)va.va_data_size;
 }
 
-int FileIO::writeFile(const char *path, void *buffer, size_t size, int fmode, int cmode)
+int FileIO::writeFile(const char *path, void *buffer, Size size, int fmode, int cmode)
 {
 	vnode_t vnode = NULLVP;
 
@@ -101,12 +101,12 @@ int FileIO::writeFile(const char *path, void *buffer, size_t size, int fmode, in
 	return err;
 }
 
-int FileIO::write(void *buffer, off_t off, size_t size, vnode_t vnode, vfs_context_t ctxt)
+int FileIO::write(void *buffer, Offset off, Size size, vnode_t vnode, vfs_context_t ctxt)
 {
 	return FileIO::performIO(buffer, off, size, vnode, ctxt, true);
 }
 
-int FileIO::performIO(void *buffer, off_t off, size_t size, vnode_t vnode, vfs_context_t ctxt, bool write)
+int FileIO::performIO(void *buffer, Offset off, Size size, vnode_t vnode, vfs_context_t ctxt, bool write)
 {
 	uio_t uio = uio_create(1, off, UIO_SYSSPACE, write ? UIO_WRITE : UIO_READ);
 

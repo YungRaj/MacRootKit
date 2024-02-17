@@ -22,6 +22,8 @@
 #include <mach/kmod.h>
 #include <mach/mach_types.h>
 
+#include <Types.h>
+
 #include "KextMachO.hpp"
 
 namespace xnu {}
@@ -33,7 +35,7 @@ namespace xnu
 	class Kext
 	{
 		public:
-			Kext(xnu::Kernel *kernel, mach_vm_address_t base, char *identifier);
+			Kext(xnu::Kernel *kernel, xnu::Mach::VmAddress base, char *identifier);
 
 			Kext(xnu::Kernel *kernel, void *kext, kmod_info_t *kmod_info);
 
@@ -42,7 +44,7 @@ namespace xnu
 			static xnu::Kext* findKextWithIdentifier(xnu::Kernel *kernel, char *name);
 			static xnu::Kext* findKextWithIdentifier_deprecated(xnu::Kernel *kernel, char *name);
 
-			static xnu::Kext* findKextWithId(xnu::Kernel *kernel, uint32_t kext_id);
+			static xnu::Kext* findKextWithId(xnu::Kernel *kernel, UInt32 kext_id);
 
 			static void onKextLoad(void *kext, kmod_info_t *kmod_info);
 
@@ -50,11 +52,11 @@ namespace xnu
 
 			xnu::KextMachO* getMachO() { return macho; }
 
-			mach_vm_address_t getBase() { return address; }
+			xnu::Mach::VmAddress getBase() { return address; }
 
-			mach_vm_address_t getAddress() { return address; }
+			xnu::Mach::VmAddress getAddress() { return address; }
 
-			size_t getSize() { return size; }
+			Size getSize() { return size; }
 
 			void* getOSKext() { return kext; }
 
@@ -66,9 +68,9 @@ namespace xnu
 			std::vector<Symbol*>& getAllSymbols() { return macho->getAllSymbols(); }
 
 			Symbol* getSymbolByName(char *symname) { return macho->getSymbolByName(symname); }
-			Symbol* getSymbolByAddress(mach_vm_address_t address) { return macho->getSymbolByAddress(address); }
+			Symbol* getSymbolByAddress(xnu::Mach::VmAddress address) { return macho->getSymbolByAddress(address); }
 
-			mach_vm_address_t getSymbolAddressByName(char *symbolname) { return macho->getSymbolAddressByName(symbolname); }
+			xnu::Mach::VmAddress getSymbolAddressByName(char *symbolname) { return macho->getSymbolAddressByName(symbolname); }
 
 		private:
 			xnu::Kernel *kernel;
@@ -79,9 +81,9 @@ namespace xnu
 
 			void *kext;
 
-			mach_vm_address_t address;
+			xnu::Mach::VmAddress address;
 
-			size_t size;
+			Size size;
 
 			char *identifier;
 	};

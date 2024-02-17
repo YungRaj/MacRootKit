@@ -23,6 +23,8 @@ extern "C"
 
 #include <IOKit/IOService.h>
 
+#include <Types.h>
+
 #include "API.h"
 #include "APIUtil.hpp"
 
@@ -44,17 +46,17 @@ namespace mrk
 	{
 		public:
 			explicit Plugin(IOService *service,
-							char *product, size_t version, uint32_t runmode,
-							const char **disableArg, size_t disableArgNum,
-							const char **debugArg, size_t debugArgNum,
-							const char **betaArg, size_t betaArgNum);
+							char *product, Size version, UInt32 runmode,
+							const char **disableArg, Size disableArgNum,
+							const char **debugArg, Size debugArgNum,
+							const char **betaArg, Size betaArgNum);
 
-			explicit Plugin(char *product, size_t version, uint32_t runmode,
-							const char **disableArg, size_t disableArgNum,
-							const char **debugArg, size_t debugArgNum,
-							const char **betaArg, size_t betaArgNum);
+			explicit Plugin(char *product, Size version, UInt32 runmode,
+							const char **disableArg, Size disableArgNum,
+							const char **debugArg, Size debugArgNum,
+							const char **betaArg, Size betaArgNum);
 
-			size_t getVersion() { return version; }
+			Size getVersion() { return version; }
 
 			IOService* getService() { return service; }
 
@@ -95,18 +97,18 @@ namespace mrk
 
 			const char *product;
 
-			size_t version;
+			Size version;
 			
-			uint32_t runmode;
+			UInt32 runmode;
 			
 			const char **disableArg;
-			size_t disableArgNum;
+			Size disableArgNum;
 			
 			const char **debugArg;
-			size_t debugArgNum;
+			Size debugArgNum;
 
 			const char **betaArg;
-			size_t betaArgNum;
+			Size betaArgNum;
 
 			std::vector<Hook*> hooks;
 	};

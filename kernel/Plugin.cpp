@@ -3,10 +3,10 @@
 using namespace mrk;
 
 Plugin::Plugin(IOService *service,
-			    char *product, size_t version, uint32_t runmode,
-				const char **disableArg, size_t disableArgNum,
-				const char **debugArg, size_t debugArgNum,
-				const char **betaArg, size_t betaArgNum)
+			    char *product, Size version, UInt32 runmode,
+				const char **disableArg, Size disableArgNum,
+				const char **debugArg, Size debugArgNum,
+				const char **betaArg, Size betaArgNum)
 	: service(service),
 	  product(product),
 	  version(version),
@@ -21,10 +21,10 @@ Plugin::Plugin(IOService *service,
 
 }
 
-Plugin::Plugin(char *product, size_t version, uint32_t runmode,
-				const char **disableArg, size_t disableArgNum,
-				const char **debugArg, size_t debugArgNum,
-				const char **betaArg, size_t betaArgNum)
+Plugin::Plugin(char *product, Size version, UInt32 runmode,
+				const char **disableArg, Size disableArgNum,
+				const char **debugArg, Size debugArgNum,
+				const char **betaArg, Size betaArgNum)
 	: service(NULL),
 	  product(product),
 	  version(version),

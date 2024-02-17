@@ -29,6 +29,8 @@ extern "C"
 
 #include <IOKit/IOLib.h>
 
+#include <Types.h>
+
 #include "Task.hpp"
 
 #include "Disassembler.hpp"
@@ -63,48 +65,48 @@ namespace xnu
 
 	class Kernel : public xnu::Task
 	{
-		static constexpr size_t tempExecutableMemorySize {4096 * 4 * 32};
+		static constexpr Size tempExecutableMemorySize {4096 * 4 * 32};
 
-		static off_t tempExecutableMemoryOffset;
+		static Offset tempExecutableMemoryOffset;
 
-		static uint8_t tempExecutableMemory[tempExecutableMemorySize];
+		static UInt8 tempExecutableMemory[tempExecutableMemorySize];
 
 		static xnu::Kernel *kernel;
 
 		public:
-			Kernel(mach_port_t kernel_task_port);
+			Kernel(xnu::Mach::Port kernel_task_port);
 
-			Kernel(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+			Kernel(xnu::Mach::VmAddress cache, xnu::Mach::VmAddress base, Offset slide);
 
-			Kernel(mach_vm_address_t base, off_t slide);
+			Kernel(xnu::Mach::VmAddress base, Offset slide);
 
 			~Kernel();
 
 			static xnu::Kernel* xnu() { return kernel; }
 
-			static xnu::Kernel* create(mach_port_t kernel_task_port);
+			static xnu::Kernel* create(xnu::Mach::Port kernel_task_port);
 
-			static xnu::Kernel* create(mach_vm_address_t cache, mach_vm_address_t base, off_t slide);
+			static xnu::Kernel* create(xnu::Mach::VmAddress cache, xnu::Mach::VmAddress base, Offset slide);
 
-			static xnu::Kernel* create(mach_vm_address_t base, off_t slide);
+			static xnu::Kernel* create(xnu::Mach::VmAddress base, Offset slide);
 
-			static mach_vm_address_t findKernelCache();
+			static xnu::Mach::VmAddress findKernelCache();
 
-			static mach_vm_address_t findKernelCollection();
+			static xnu::Mach::VmAddress findKernelCollection();
 
-			static mach_vm_address_t findKernelBase();
+			static xnu::Mach::VmAddress findKernelBase();
 
-			static off_t findKernelSlide();
+			static Offset findKernelSlide();
 
-			static mach_vm_address_t getExecutableMemory() { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[0]); }
+			static xnu::Mach::VmAddress getExecutableMemory() { return reinterpret_cast<xnu::Mach::VmAddress>(&tempExecutableMemory[0]); }
 
-			static mach_vm_address_t getExecutableMemoryAtOffset(off_t offset) { return reinterpret_cast<mach_vm_address_t>(&tempExecutableMemory[tempExecutableMemoryOffset]); }
+			static xnu::Mach::VmAddress getExecutableMemoryAtOffset(Offset offset) { return reinterpret_cast<xnu::Mach::VmAddress>(&tempExecutableMemory[tempExecutableMemoryOffset]); }
 
-			static size_t getExecutableMemorySize() { return tempExecutableMemorySize; }
+			static Size getExecutableMemorySize() { return tempExecutableMemorySize; }
 
-			static off_t getExecutableMemoryOffset() { return tempExecutableMemoryOffset; }
+			static Offset getExecutableMemoryOffset() { return tempExecutableMemoryOffset; }
 
-			static void setExecutableMemoryOffset(off_t offset) { tempExecutableMemoryOffset = offset; }
+			static void setExecutableMemoryOffset(Offset offset) { tempExecutableMemoryOffset = offset; }
 
 			const char* getVersion() const { return version; }
 
@@ -112,9 +114,9 @@ namespace xnu
 
 			MachO* getMachO() const { return macho; }
 
-			virtual mach_vm_address_t getBase();
+			virtual xnu::Mach::VmAddress getBase();
 
-			virtual off_t getSlide();
+			virtual Offset getSlide();
 
 			void setRootKit(mrk::MacRootKit *rootkit) { this->rootkit = rootkit; }
 
@@ -124,7 +126,7 @@ namespace xnu
 
 			IOKernelRootKitService* getRootKitService() { return this->rootkitService; }
 
-			mach_port_t getKernelTaskPort() { return this->kernel_task_port; }
+			xnu::Mach::Port getKernelTaskPort() { return this->kernel_task_port; }
 
 			bool setKernelWriting(bool enable);
 
@@ -140,58 +142,58 @@ namespace xnu
 
 			virtual pmap_t getKernelPmap() { return this->getPmap(); }
 
-			virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
-			virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
+			virtual UInt64 call(char *symbolname, UInt64 *arguments, Size argCount);
+			virtual UInt64 call(xnu::Mach::VmAddress func, UInt64 *arguments, Size argCount);
 
-			virtual mach_vm_address_t vmAllocate(size_t size);
-			virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
+			virtual xnu::Mach::VmAddress vmAllocate(Size size);
+			virtual xnu::Mach::VmAddress vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot);
 
-			virtual void vmDeallocate(mach_vm_address_t address, size_t size);
+			virtual void vmDeallocate(xnu::Mach::VmAddress address, Size size);
 
-			virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
+			virtual bool vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot);
 
-			virtual void* vmRemap(mach_vm_address_t address, size_t size);
+			virtual void* vmRemap(xnu::Mach::VmAddress address, Size size);
 
-			virtual uint64_t virtualToPhysical(mach_vm_address_t address);
+			virtual UInt64 virtualToPhysical(xnu::Mach::VmAddress address);
 
-			virtual bool physicalRead(uint64_t paddr, void *data, size_t size);
+			virtual bool physicalRead(UInt64 paddr, void *data, Size size);
 
-			virtual uint64_t physicalRead64(uint64_t paddr);
-			virtual uint32_t physicalRead32(uint64_t paddr);
-			virtual uint16_t physicalRead16(uint64_t paddr);
-			virtual uint8_t  physicalRead8(uint64_t paddr);
+			virtual UInt64 physicalRead64(UInt64 paddr);
+			virtual UInt32 physicalRead32(UInt64 paddr);
+			virtual UInt16 physicalRead16(UInt64 paddr);
+			virtual UInt8  physicalRead8(UInt64 paddr);
 
-			virtual bool physicalWrite(uint64_t paddr, void *data, size_t size);
+			virtual bool physicalWrite(UInt64 paddr, void *data, Size size);
 
-			virtual void physicalWrite64(uint64_t paddr, uint64_t value);
-			virtual void physicalWrite32(uint64_t paddr, uint32_t value);
-			virtual void physicalWrite16(uint64_t paddr, uint16_t value);
-			virtual void  physicalWrite8(uint64_t paddr, uint8_t value);
+			virtual void physicalWrite64(UInt64 paddr, UInt64 value);
+			virtual void physicalWrite32(UInt64 paddr, UInt32 value);
+			virtual void physicalWrite16(UInt64 paddr, UInt16 value);
+			virtual void  physicalWrite8(UInt64 paddr, UInt8 value);
 
-			virtual bool read(mach_vm_address_t address, void *data, size_t size);
-			virtual bool readUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual bool read(xnu::Mach::VmAddress address, void *data, Size size);
+			virtual bool readUnsafe(xnu::Mach::VmAddress address, void *data, Size size);
 
-			virtual uint8_t read8(mach_vm_address_t address);
-			virtual uint16_t read16(mach_vm_address_t address);
-			virtual uint32_t read32(mach_vm_address_t address);
-			virtual uint64_t read64(mach_vm_address_t address);
+			virtual UInt8 read8(xnu::Mach::VmAddress address);
+			virtual UInt16 read16(xnu::Mach::VmAddress address);
+			virtual UInt32 read32(xnu::Mach::VmAddress address);
+			virtual UInt64 read64(xnu::Mach::VmAddress address);
 
-			virtual bool write(mach_vm_address_t address, void *data, size_t size);
-			virtual bool writeUnsafe(mach_vm_address_t address, void *data, size_t size);
+			virtual bool write(xnu::Mach::VmAddress address, void *data, Size size);
+			virtual bool writeUnsafe(xnu::Mach::VmAddress address, void *data, Size size);
 
-			virtual void write8(mach_vm_address_t address, uint8_t value);
-			virtual void write16(mach_vm_address_t address, uint16_t value);
-			virtual void write32(mach_vm_address_t address, uint32_t value);
-			virtual void write64(mach_vm_address_t address, uint64_t value);
+			virtual void write8(xnu::Mach::VmAddress address, UInt8 value);
+			virtual void write16(xnu::Mach::VmAddress address, UInt16 value);
+			virtual void write32(xnu::Mach::VmAddress address, UInt32 value);
+			virtual void write64(xnu::Mach::VmAddress address, UInt64 value);
 
-			virtual char* readString(mach_vm_address_t address);
+			virtual char* readString(xnu::Mach::VmAddress address);
 
 			virtual std::vector<Symbol*>& getAllSymbols() { return macho->getAllSymbols(); }
 
 			virtual Symbol* getSymbolByName(char *symbolname);
-			virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
+			virtual Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
+			virtual xnu::Mach::VmAddress getSymbolAddressByName(char *symbolname);
 
 		protected:
 			KDK *kernelDebugKit;
@@ -202,7 +204,7 @@ namespace xnu
 
 			mrk::MacRootKit *rootkit;
 
-			mach_port_t kernel_task_port;
+			xnu::Mach::Port kernel_task_port;
 
 		private:
 			char *version;
@@ -254,9 +256,9 @@ namespace xnu
 	template<typename T>
 	struct Xref
 	{
-		mach_vm_address_t what;
+		xnu::Mach::VmAddress what;
 
-		mach_vm_address_t where;
+		xnu::Mach::VmAddress where;
 
 		T data;
 	};
@@ -279,22 +281,22 @@ namespace xnu
 
 			MachO* getMachO() const { return dynamic_cast<MachO*>(kernelWithDebugSymbols);  }
 
-			mach_vm_address_t getBase() const { return base; }
+			xnu::Mach::VmAddress getBase() const { return base; }
 
 			char* getPath() const { return path; }
 
-			mach_vm_address_t getKDKSymbolAddressByName(char *sym);
+			xnu::Mach::VmAddress getKDKSymbolAddressByName(char *sym);
 
 			Symbol* getKDKSymbolByName(char *symname);
-			Symbol* getKDKSymbolByAddress(mach_vm_address_t address);
+			Symbol* getKDKSymbolByAddress(xnu::Mach::VmAddress address);
 
 			char* findString(char *s);
 
 			template<typename T>
-			std::vector<Xref<T>*> getExternalReferences(mach_vm_address_t addr);
+			std::vector<Xref<T>*> getExternalReferences(xnu::Mach::VmAddress addr);
 
 			template<typename T>
-			std::vector<Xref<T>*> getStringReferences(mach_vm_address_t addr);
+			std::vector<Xref<T>*> getStringReferences(xnu::Mach::VmAddress addr);
 
 			template<typename T>
 			std::vector<Xref<T>*> getStringReferences(char *s);
@@ -316,7 +318,7 @@ namespace xnu
 
 			Debug::Dwarf *dwarf;
 
-			mach_vm_address_t base;
+			xnu::Mach::VmAddress base;
 	};
 
 	class KDKKernelMachO : public KernelMachO
@@ -324,9 +326,9 @@ namespace xnu
 		public:
 			explicit KDKKernelMachO(xnu::Kernel *kernel, const char *path);
 
-			mach_vm_address_t getBase() override;
+			xnu::Mach::VmAddress getBase() override;
 
-			void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize) override;
+			void parseSymbolTable(xnu::Macho::Nlist64 *symtab, UInt32 nsyms, char *strtab, Size strsize) override;
 
 		private:
 			const char *path;

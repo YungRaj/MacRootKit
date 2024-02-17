@@ -4,12 +4,12 @@
 
 namespace API
 {
-	void dump(Kernel *kernel, mach_vm_address_t address)
+	void dump(Kernel *kernel, xnu::Mach::VmAddress address)
 	{
 
 	}
 
-	void hexdump(unsigned char *data, size_t size, bool rev)
+	void hexdump(unsigned char *data, Size size, bool rev)
 	{
 
 	}

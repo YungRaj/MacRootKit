@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Log.hpp"
 
 #ifdef __USER__
@@ -91,9 +93,9 @@ using namespace xnu;
  *  @return reference to the struct member
  */
 template <typename T>
-inline T &getMember(void *that, size_t off)
+inline T &getMember(void *that, Size off)
 {
-    return *reinterpret_cast<T *>(static_cast<uint8_t *>(that) + off);
+    return *reinterpret_cast<T *>(static_cast<UInt8 *>(that) + off);
 }
 
 /**
@@ -194,9 +196,9 @@ constexpr T setBitField(T so, T hi, T lo)
  *  @return true if an element different from value was found
  */
 template <typename T, typename Y>
-inline bool findNotEquals(T &in, size_t size, Y value)
+inline bool findNotEquals(T &in, Size size, Y value)
 {
-    for (size_t i = 0; i < size; i++)
+    for (Size i = 0; i < size; i++)
         if (in[i] != value)
             return true;
         
@@ -219,14 +221,14 @@ inline const char *safeString(const char *str)
  *  A shorter form of writing reinterpret_cast<decltype(&org)>(ptr)
  */
 template <typename T>
-inline T FunctionCast(T org, mach_vm_address_t ptr)
+inline T FunctionCast(T org, xnu::Mach::VmAddress ptr)
 {
     return reinterpret_cast<T>(ptr);
 }
 
 namespace API
 {
-	void dump(Kernel *kernel, mach_vm_address_t address);
+	void dump(Kernel *kernel, xnu::Mach::VmAddress address);
 
-	void hexdump(unsigned char *data, size_t size, bool rev);
+	void hexdump(unsigned char *data, Size size, bool rev);
 };

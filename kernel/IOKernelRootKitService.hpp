@@ -19,6 +19,8 @@
 #include <IOKit/IOLib.h>
 #include <IOKit/IOService.h>
 
+#include <Types.h>
+
 #include "MacRootKit.hpp"
 
 #include "Kernel.hpp"
@@ -59,7 +61,7 @@ class IOKernelRootKitService : public IOService
 
 		xnu::Kext* getKext() { return rootkitKext; }
 
-		mach_port_t getKernelTaskPort() { return tfp0; }
+		xnu::Mach::Port getKernelTaskPort() { return tfp0; }
 
 		IOReturn createUserClient(task_t task, void *securityID, UInt32 type, IOKernelRootKitUserClient **client);
 		IOReturn createUserClient(task_t task, void *securityID, UInt32 type, OSDictionary *properties, IOKernelRootKitUserClient **client);
@@ -80,7 +82,7 @@ class IOKernelRootKitService : public IOService
 
 		xnu::Kext *rootkitKext;
 
-		mach_port_t tfp0;
+		xnu::Mach::Port tfp0;
 
 		OSSet *userClients;
 };

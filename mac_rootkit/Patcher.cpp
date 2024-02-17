@@ -13,9 +13,9 @@ Patcher::~Patcher()
 }
 
 void Patcher::findAndReplace(void *data,
-							size_t data_size,
-							const void *find, size_t find_size,
-							const void *replace, size_t replace_size)
+							Size data_size,
+							const void *find, Size find_size,
+							const void *replace, Size replace_size)
 {
 }
 
@@ -28,7 +28,7 @@ void Patcher::routeFunction(Hook *hook)
 	hooks.push_back(hook);
 }
 
-bool Patcher::isFunctionHooked(mach_vm_address_t address)
+bool Patcher::isFunctionHooked(xnu::Mach::VmAddress address)
 {
 	for(int i = 0; i < this->getHooks().size(); i++)
 	{
@@ -47,7 +47,7 @@ bool Patcher::isFunctionHooked(mach_vm_address_t address)
 	return false;
 }
 
-bool Patcher::isBreakpointAtInstruction(mach_vm_address_t address)
+bool Patcher::isBreakpointAtInstruction(xnu::Mach::VmAddress address)
 {
 	for(int i = 0; i < this->getHooks().size(); i++)
 	{
@@ -65,7 +65,7 @@ bool Patcher::isBreakpointAtInstruction(mach_vm_address_t address)
 	return false;
 }
 
-Hook* Patcher::hookForFunction(mach_vm_address_t address)
+Hook* Patcher::hookForFunction(xnu::Mach::VmAddress address)
 {
 	Hook *hook = NULL;
 
@@ -89,7 +89,7 @@ Hook* Patcher::hookForFunction(mach_vm_address_t address)
 	return hook;
 }
 
-Hook* Patcher::breakpointForAddress(mach_vm_address_t address)
+Hook* Patcher::breakpointForAddress(xnu::Mach::VmAddress address)
 {
 	Hook *hook = NULL;
 
@@ -112,7 +112,7 @@ Hook* Patcher::breakpointForAddress(mach_vm_address_t address)
 	return hook;
 }
 
-void Patcher::installHook(Hook *hook, mach_vm_address_t hooked)
+void Patcher::installHook(Hook *hook, xnu::Mach::VmAddress hooked)
 {
 	hook->hookFunction(hooked);
 

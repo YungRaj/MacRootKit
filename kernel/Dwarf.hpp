@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <DwarfV5.hpp>
 
 class Symbol;
@@ -57,14 +59,14 @@ namespace Debug
 
 		struct AttrSpec attr_spec;
 
-		uint64_t code;
+		UInt64 code;
 	};
 
 	struct Attribute
 	{
 		struct AttrAbbrev abbreviation;
 
-		uint64_t value;
+		UInt64 value;
 	};
 
 	Dwarf* parseDebugSymbols(MachO *macho);
@@ -74,7 +76,7 @@ namespace Debug
 	{
 		public:
 			explicit DIE(Dwarf *dwarf,
-						 uint64_t code,
+						 UInt64 code,
 						 char *name,
 						 enum DW_TAG tag,
 						 enum DW_CHILDREN has_children);
@@ -82,18 +84,18 @@ namespace Debug
 			enum DW_TAG getTag() { return tag; }
 			enum DW_CHILDREN getHasChildren() { return has_children; }
 
-			uint64_t getCode() { return code; }
+			UInt64 getCode() { return code; }
 
-			size_t getAttributesCount() { return abbreviationTable.size(); }
+			Size getAttributesCount() { return abbreviationTable.size(); }
 
 			struct AttrAbbrev* getAttribute(enum DW_AT attr);
 			struct AttrAbbrev* getAttribute(int index) { return abbreviationTable.at(index); }
 
 			char* getName() { return name; }
 
-			off_t getOffset() { return offset; }
+			Offset getOffset() { return offset; }
 
-			void setOffset(off_t offset) { this->offset = offset; }
+			void setOffset(Offset offset) { this->offset = offset; }
 
 			struct AttrAbbrev* getAbbreviation(int index) { return this->abbreviationTable.at(index); }
 			struct AttrAbbrev* getAbbreviation(enum DW_AT attr);
@@ -104,7 +106,7 @@ namespace Debug
 		private:
 			Dwarf *dwarf;
 
-			uint64_t code;
+			UInt64 code;
 
 			std::vector<struct AttrAbbrev*> abbreviationTable;
 
@@ -116,11 +118,11 @@ namespace Debug
 
 			DIE *parent;
 
-			uint32_t idx;
-			uint32_t sibling_idx;
-			uint32_t parent_idx;
+			UInt32 idx;
+			UInt32 sibling_idx;
+			UInt32 parent_idx;
 
-			off_t offset;
+			Offset offset;
 	};
 
 	class DwarfDIE
@@ -153,7 +155,7 @@ namespace Debug
 			struct Attribute* getAttribute(enum DW_AT attr);
 			struct Attribute* getAttribute(int index) { return this->attributes.at(index); }
 
-			uint64_t getAttributeValue(enum DW_AT attr);
+			UInt64 getAttributeValue(enum DW_AT attr);
 
 		private:
 			Dwarf *dwarf;
@@ -172,11 +174,11 @@ namespace Debug
 
 	struct CompileUnitHeader
 	{
-		uint32_t length;
-		uint16_t format;
-		uint16_t version;
-		uint16_t abbr_offset;
-		uint8_t addr_size;
+		UInt32 length;
+		UInt16 format;
+		UInt16 version;
+		UInt16 abbr_offset;
+		UInt8 addr_size;
 	};
 
 	#pragma options align=reset
@@ -210,33 +212,33 @@ namespace Debug
 			char *source_file;
 			char *source_language;
 
-			uint16_t dwarf_version;
+			UInt16 dwarf_version;
 
-			uint8_t unit_type;
-			uint64_t dwo_id;
+			UInt8 unit_type;
+			UInt64 dwo_id;
 
-			uint64_t unit_type_signature;
-			uint64_t unit_type_offset;
+			UInt64 unit_type_signature;
+			UInt64 unit_type_offset;
 
-			mach_vm_address_t address_base = 0;
-			mach_vm_address_t str_offsets_base = 0;
-			mach_vm_address_t range_lists_base = 0;
+			xnu::Mach::VmAddress address_base = 0;
+			xnu::Mach::VmAddress str_offsets_base = 0;
+			xnu::Mach::VmAddress range_lists_base = 0;
 	};
 
 	#pragma pack(1)
 
 	struct LTPrologue
 	{
-		uint32_t total_length;
-		uint8_t format;
-		uint8_t version;
-		uint32_t prologue_length;
-		uint8_t min_inst_length;
-		uint8_t max_ops_per_inst;
-		uint8_t default_is_stmt;
+		UInt32 total_length;
+		UInt8 format;
+		UInt8 version;
+		UInt32 prologue_length;
+		UInt8 min_inst_length;
+		UInt8 max_ops_per_inst;
+		UInt8 default_is_stmt;
 		int8_t line_base;
-		uint8_t line_range;
-		uint8_t opcode_base;
+		UInt8 line_range;
+		UInt8 opcode_base;
 	};
 
 	struct LTStandardOpcodeLengths
@@ -257,9 +259,9 @@ namespace Debug
 
 	struct LTSourceFileMetadata
 	{
-		uint8_t dir_index;
-		uint8_t mod_time;
-		uint8_t length;
+		UInt8 dir_index;
+		UInt8 mod_time;
+		UInt8 length;
 	};
 
 	#pragma options align=reset
@@ -273,15 +275,15 @@ namespace Debug
 
 	struct LTStateMachine
 	{
-		mach_vm_address_t address;
+		UInt64 address;
 
-		uint8_t  isa;
+		UInt8  isa;
 		int64_t line;
-		uint64_t column;
-		uint16_t file;
-		uint32_t discriminator;
+		UInt64 column;
+		UInt16 file;
+		UInt32 discriminator;
 
-		uint8_t statement : 1,
+		UInt8 statement : 1,
 				basic_block : 1,
 				end_sequence : 1,
 				prologue_end : 1,
@@ -297,8 +299,8 @@ namespace Debug
 
 	struct Sequence
 	{
-		uint64_t LowPC;
-		uint64_t HighPC;
+		UInt64 LowPC;
+		UInt64 HighPC;
 
 		Segment *segment;
 		Section *section;
@@ -331,7 +333,7 @@ namespace Debug
 
 			CompilationUnit* getCompilationUnit() { return compilationUnit; }
 
-			LTSourceLine* getSourceLine(mach_vm_address_t pc);
+			LTSourceLine* getSourceLine(xnu::Mach::VmAddress pc);
 			
 			LTSourceFile* getSourceFile(int index) { return this->files.at(index); }
 
@@ -366,10 +368,10 @@ namespace Debug
 	{
 		DW_LLE kind;
 
-		uint32_t offset;
+		UInt32 offset;
 
-		uint64_t value0;
-		uint64_t value1;
+		UInt64 value0;
+		UInt64 value1;
 
 		Segment *segment;
 
@@ -380,17 +382,17 @@ namespace Debug
 
 	struct AddressRange
 	{
-		mach_vm_address_t start;
-		mach_vm_address_t end;
+		xnu::Mach::VmAddress start;
+		xnu::Mach::VmAddress end;
 	};
 
 	struct AddressRangeHeader
 	{
-		uint32_t length;
-		uint16_t version;
-		uint32_t offset;
-		uint8_t addr_size;
-		uint8_t seg_size;
+		UInt32 length;
+		UInt16 version;
+		UInt32 offset;
+		UInt8 addr_size;
+		UInt8 seg_size;
 	};
 
 	struct AddressRangeEntry
@@ -402,10 +404,10 @@ namespace Debug
 
 	struct RangeEntry
 	{
-		uint32_t offset;
+		UInt32 offset;
 
-		uint64_t value0;
-		uint64_t value1;
+		UInt64 value0;
+		UInt64 value1;
 	};
 
 	using RangeEntries = std::vector<struct RangeEntry*>;
@@ -421,7 +423,7 @@ namespace Debug
 			CompilationUnit getCompilationUnit(const char *source_file);
 
 			DIE* getDebugInfoEntryByName(const char *name);
-			DIE* getDebugInfoEntryByCode(uint64_t code);
+			DIE* getDebugInfoEntryByCode(UInt64 code);
 
 			Segment* getDwarfSegment() { return dwarf; }
 
@@ -456,8 +458,8 @@ namespace Debug
 			void parseDebugRanges();
 			void parseDebugAddressRanges();
 
-			const char* getSourceFile(mach_vm_address_t instruction);
-			int64_t getSourceLineNumber(mach_vm_address_t instruction);
+			const char* getSourceFile(xnu::Mach::VmAddress instruction);
+			int64_t getSourceLineNumber(xnu::Mach::VmAddress instruction);
 
 		private:
 			MachO *macho;
@@ -489,11 +491,11 @@ namespace Debug
 
 	};
 
-	uint64_t GetStringSize(uint8_t *p);
+	UInt64 GetStringSize(UInt8 *p);
 
-	uint64_t ReadUleb128(uint8_t *p, uint8_t *end);
-	uint64_t ReadUleb128(uint8_t *p, uint8_t *end, uint32_t *idx);
+	UInt64 ReadUleb128(UInt8 *p, UInt8 *end);
+	UInt64 ReadUleb128(UInt8 *p, UInt8 *end, UInt32 *idx);
 
-	int64_t ReadSleb128(uint8_t *p, uint8_t *end);
-	int64_t ReadSleb128(uint8_t *p, uint8_t *end, uint32_t *idx);
+	int64_t ReadSleb128(UInt8 *p, UInt8 *end);
+	int64_t ReadSleb128(UInt8 *p, UInt8 *end, UInt32 *idx);
 };

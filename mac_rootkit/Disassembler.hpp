@@ -18,6 +18,8 @@
 
 #include <capstone/capstone.h>
 
+#include <Types.h>
+
 #include "Arch.hpp"
 
 namespace xnu
@@ -74,19 +76,19 @@ class Disassembler
 
 		void deinitDisassembler();
 
-		size_t disassemble(mach_vm_address_t address, size_t size, cs_insn **result);
+		Size disassemble(xnu::Mach::VmAddress address, Size size, cs_insn **result);
 
-		size_t quickInstructionSize(mach_vm_address_t address, size_t min);
+		Size quickInstructionSize(xnu::Mach::VmAddress address, Size min);
 
-		size_t instructionSize(mach_vm_address_t address, size_t min);
+		Size instructionSize(xnu::Mach::VmAddress address, Size min);
 
-		mach_vm_address_t disassembleNthCall(mach_vm_address_t address, size_t num, size_t lookup_size);
+		xnu::Mach::VmAddress disassembleNthCall(xnu::Mach::VmAddress address, Size num, Size lookup_size);
 
-		mach_vm_address_t disassembleNthJmp(mach_vm_address_t address, size_t num, size_t lookup_size);
+		xnu::Mach::VmAddress disassembleNthJmp(xnu::Mach::VmAddress address, Size num, Size lookup_size);
 
-		mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, uint32_t insn, size_t num, size_t lookup_size);
+		xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address, UInt32 insn, Size num, Size lookup_size);
 
-		mach_vm_address_t disassembleSignature(mach_vm_address_t address, std::vector<struct DisasmSig*> *signature, size_t num, size_t lookup_size);
+		xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address, std::vector<struct DisasmSig*> *signature, Size num, Size lookup_size);
 
 	private:
 		enum Architectures architecture;

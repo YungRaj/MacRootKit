@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #ifdef __arm64__
 
 namespace xnu
@@ -27,20 +29,20 @@ namespace xnu
 
     struct DeviceTreeNode
     {
-        uint32_t n_properties;
-        uint32_t n_children;
+        UInt32 n_properties;
+        UInt32 n_children;
     };
 
     struct DeviceTreeProperty
     {
         char name[DT_KEY_LEN];
-        uint32_t size;
+        UInt32 size;
 
         char val[0];
     };
 
-    typedef bool (^dt_node_callback_t) (uint32_t depth, void *node, uint32_t size);
-    typedef bool (^dt_property_callback_t) (uint32_t depth, void *prop, uint32_t size);
+    typedef Bool (^dt_node_callback_t) (UInt32 depth, void *node, UInt32 size);
+    typedef Bool (^dt_property_callback_t) (UInt32 depth, void *prop, UInt32 size);
 
     static DeviceTree *deviceTree;
     
@@ -56,11 +58,11 @@ namespace xnu
         return deviceTreeHead;
     }
 
-    size_t getDeviceTreeSize(xnu::Kernel *kernel)
+    Size getDeviceTreeSize(xnu::Kernel *kernel)
     {
         PE_state_t *PE = platformExpertState(kernel);
 
-        size_t deviceTreeSize = PE->deviceTreeSize;
+        Size deviceTreeSize = PE->deviceTreeSize;
 
         return deviceTreeSize;
     }
@@ -68,29 +70,29 @@ namespace xnu
     class DeviceTree
     {
         public:
-            explicit DeviceTree(xnu::Kernel *kernel) : kernel(kernel), device_tree(xnu::getDeviceTreeHead<mach_vm_address_t>(kernel)), device_tree_sz(xnu::getDeviceTreeSize(kernel)) { }
+            explicit DeviceTree(xnu::Kernel *kernel) : kernel(kernel), device_tree(xnu::getDeviceTreeHead<xnu::Mach::VmAddress>(kernel)), device_tree_sz(xnu::getDeviceTreeSize(kernel)) { }
 
             template<typename T>
             T getAs() { return reinterpret_cast<T>(device_tree); }
             
-            size_t getSize() const { return device_tree_sz; }
+            Size getSize() const { return device_tree_sz; }
 
-            size_t getNodeSize(uint32_t depth, DeviceTreeNode *node);
+            Size getNodeSize(UInt32 depth, DeviceTreeNode *node);
 
-            DeviceTreeNode* findNode(char *nodename, uint32_t *depth);
+            DeviceTreeNode* findNode(char *nodename, UInt32 *depth);
             DeviceTreeProperty* findProperty(char *nodename, char *propname);
 
-            bool iterateNode(void **data, void *data_end, uint32_t *depth,
-                             dt_node_callback_t node_cb, dt_property_callback_t prop_cb, bool *success);
+            Bool iterateNode(void **data, void *data_end, UInt32 *depth,
+                             dt_node_callback_t node_cb, dt_property_callback_t prop_cb, Bool *success);
 
-            bool iterateNodeProperties(void **data, void *data_end, uint32_t *depth,
-                                       DeviceTreeNode *node, dt_property_callback_t prop_cb, bool *success);
+            Bool iterateNodeProperties(void **data, void *data_end, UInt32 *depth,
+                                       DeviceTreeNode *node, dt_property_callback_t prop_cb, Bool *success);
 
-            void printData(uint8_t *prop_data, uint32_t prop_size);
+            void printData(UInt8 *prop_data, UInt32 prop_size);
 
             void printNode(char *name);
 
-            void print(DeviceTreeNode *node, size_t dt_size);
+            void print(DeviceTreeNode *node, Size dt_size);
 
             template<typename T>
             T dump();
@@ -98,9 +100,9 @@ namespace xnu
         private:
             xnu::Kernel *kernel;
 
-            mach_vm_address_t device_tree;
+            xnu::Mach::VmAddress device_tree;
 
-            size_t device_tree_sz;
+            Size device_tree_sz;
     };
 
 };

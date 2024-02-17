@@ -10,7 +10,7 @@
 
 using namespace xnu;
 
-Kext::Kext(Kernel *kernel, mach_vm_address_t base, char *identifier)
+Kext::Kext(Kernel *kernel, xnu::Mach::VmAddress base, char *identifier)
     : kernel(kernel),
       address(base),
       identifier(identifier)
@@ -49,7 +49,7 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 {
 	kmod_info_t **kextKmods;
 
-	mach_vm_address_t _kmod = kernel->getSymbolAddressByName("_kmod");
+	xnu::Mach::VmAddress _kmod = kernel->getSymbolAddressByName("_kmod");
 
 	kextKmods = reinterpret_cast<kmod_info_t**>(_kmod);
 
@@ -65,7 +65,7 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 
 			void* (*__ZN6OSKext24lookupKextWithIdentifierEPKc)(const char*);
 
-			mach_vm_address_t OSKext_lookupWithIdentifier = kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc");
+			xnu::Mach::VmAddress OSKext_lookupWithIdentifier = kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc");
 
 			__ZN6OSKext24lookupKextWithIdentifierEPKc = reinterpret_cast<lookupKextWithIdentifier>(OSKext_lookupWithIdentifier);
 
@@ -78,7 +78,7 @@ Kext* Kext::findKextWithIdentifier_deprecated(Kernel *kernel, char *name)
 	return NULL;
 }
 
-Kext* Kext::findKextWithId(Kernel *kernel, uint32_t kext_id)
+Kext* Kext::findKextWithId(Kernel *kernel, UInt32 kext_id)
 {
 	return NULL;
 }

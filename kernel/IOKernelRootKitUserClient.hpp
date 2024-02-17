@@ -22,6 +22,8 @@
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
 
+#include <Types.h>
+
 #include "APIUtil.hpp"
 
 #include "IOKernelRootKitService.hpp"
@@ -80,7 +82,7 @@ class IOKernelRootKitUserClient : public IOUserClient
 
 		void initRootKit();
 
-		uint8_t* mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping);
+		UInt8* mapBufferFromClientTask(xnu::Mach::VmAddress uaddr, Size size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping);
 
 };
 

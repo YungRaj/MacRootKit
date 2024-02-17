@@ -16,11 +16,13 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "MachO.hpp"
 
 namespace Debug
 {
-	enum class DW_TAG : uint64_t
+	enum class DW_TAG : UInt64
 	{
 		array_type	       = 0x01,
 		class_type	       = 0x02,
@@ -90,7 +92,7 @@ namespace Debug
 	};
 
 	// Child determination (Section 7, figure 19).
-	enum class DW_CHILDREN : uint8_t
+	enum class DW_CHILDREN : UInt8
 	{
 		no  = 0x00,
 		yes = 0x01,
@@ -99,7 +101,7 @@ namespace Debug
 	// Attribute names (Section 7, figure 20).  inline, friend, mutable,
 	// and explicit have a trailing underscore because they are reserved
 	// words.
-	enum class DW_AT : uint32_t
+	enum class DW_AT : UInt32
 	{
 		sibling	      = 0x01,			 // reference
 		location	     = 0x02,		 // exprloc, loclistptr
@@ -206,7 +208,7 @@ namespace Debug
 	};
 
 	// Attribute form encodings (Section 7, figure 21)
-	enum class DW_FORM : uint16_t
+	enum class DW_FORM : UInt16
 	{
 		addr	 = 0x01,    		// address
 		block2       = 0x03,    	// block
@@ -239,7 +241,7 @@ namespace Debug
 	};
 
 	// DWARF operation encodings (Section 7.7.1 and figure 24)
-	enum class DW_OP : uint8_t
+	enum class DW_OP : UInt8
 	{
 		addr		= 0x03, 		// [constant address (size target specific)]
 		deref	       = 0x06,
@@ -478,7 +480,7 @@ namespace Debug
 	};
 
 	// Line number standard opcodes (DWARF4 section 7.21 figure 37)
-	enum class DW_LNS : uint8_t
+	enum class DW_LNS : UInt8
 	{
 		copy = 0x01,
 		advance_pc = 0x02,

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Segment.hpp"
 #include "Section.hpp"
 
@@ -35,7 +37,7 @@ class Symbol
 	public:
 		Symbol() { }
 
-		Symbol(MachO *macho, uint32_t type, char *name, mach_vm_address_t address, off_t offset, Segment *segment, Section *section)
+		Symbol(MachO *macho, UInt32 type, char *name, xnu::Mach::VmAddress address, Offset offset, Segment *segment, Section *section)
 			: macho(macho),
 			  type(type),
 			  name(name),
@@ -79,11 +81,11 @@ class Symbol
 			return empty;
 		}
 
-		mach_vm_address_t getAddress() { return address; }
+		xnu::Mach::VmAddress getAddress() { return address; }
 
-		off_t getOffset() { return offset; }
+		Offset getOffset() { return offset; }
 
-		uint32_t getType() { return type; }
+		UInt32 getType() { return type; }
 
 	private:
 		MachO *macho;
@@ -94,9 +96,9 @@ class Symbol
 		char *name;
 		char *demangled_name;
 
-		uint32_t type;
+		UInt32 type;
 
-		mach_vm_address_t address;
+		xnu::Mach::VmAddress address;
 
-		off_t offset;
+		Offset offset;
 };

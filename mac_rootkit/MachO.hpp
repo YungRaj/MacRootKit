@@ -21,6 +21,8 @@ extern "C"
 	#include <mach-o.h>
 }
 
+#include <Types.h>
+
 #include "BinaryFormat.hpp"
 
 #include "vector.hpp"
@@ -45,20 +47,20 @@ class MachO : public Binary::BinaryFormat
 
 		~MachO();
 
-		virtual void initWithBase(mach_vm_address_t machoBase, off_t slide);
+		virtual void initWithBase(xnu::Mach::VmAddress machoBase, Offset slide);
 
-		struct mach_header_64* getMachHeader() { return header; }
+		xnu::Macho::Header64* getMachHeader() { return header; }
 
-		virtual mach_vm_address_t getBase() { return base; }
+		virtual xnu::Mach::VmAddress getBase() { return base; }
 
-		mach_vm_address_t getEntryPoint() { return entry_point; }
+		xnu::Mach::VmAddress getEntryPoint() { return entry_point; }
 
-		off_t getAslrSlide() { return aslr_slide; }
+		Offset getAslrSlide() { return aslr_slide; }
 
-		virtual size_t getSize();
+		virtual Size getSize();
 
-		uint8_t* getOffset(off_t offset) { return reinterpret_cast<uint8_t*>(buffer + offset); }
-		uint8_t* getEnd() { return reinterpret_cast<uint8_t*>(buffer + getSize()); }
+		UInt8* getOffset(Offset offset) { return reinterpret_cast<UInt8*>(buffer + offset); }
+		UInt8* getEnd() { return reinterpret_cast<UInt8*>(buffer + getSize()); }
 
 		std::vector<Segment*>& getSegments() { return segments; }
 		
@@ -71,33 +73,33 @@ class MachO : public Binary::BinaryFormat
 		Symbol* getSymbol(char *symbolname) { return this->getSymbolByName(symbolname); }
 
 		Symbol* getSymbolByName(char *symbolname);
-		Symbol* getSymbolByAddress(mach_vm_address_t address);
+		Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-		mach_vm_address_t getSymbolAddressByName(char *symbolname);
+		xnu::Mach::VmAddress getSymbolAddressByName(char *symbolname);
 
-		off_t addressToOffset(mach_vm_address_t address);
+		Offset addressToOffset(xnu::Mach::VmAddress address);
 
-		mach_vm_address_t offsetToAddress(off_t offset);
+		xnu::Mach::VmAddress offsetToAddress(Offset offset);
 
-		void* addressToPointer(mach_vm_address_t address);
+		void* addressToPointer(xnu::Mach::VmAddress address);
 
-		mach_vm_address_t getBufferAddress(mach_vm_address_t address);
+		xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
 
 		Segment* getSegment(char *segmentname);
 		Section* getSection(char *segmentname, char *sectionname);
 
-		Segment* segmentForAddress(mach_vm_address_t address);
-		Section* sectionForAddress(mach_vm_address_t address);
+		Segment* segmentForAddress(xnu::Mach::VmAddress address);
+		Section* sectionForAddress(xnu::Mach::VmAddress address);
 
-		Segment* segmentForOffset(off_t offset);
-		Section* sectionForOffset(off_t offset);
+		Segment* segmentForOffset(Offset offset);
+		Section* sectionForOffset(Offset offset);
 
-		bool addressInSegment(mach_vm_address_t address, char *segmentname);
-		bool addressInSection(mach_vm_address_t address, char *segmentname, char *sectname);
+		bool addressInSegment(xnu::Mach::VmAddress address, char *segmentname);
+		bool addressInSection(xnu::Mach::VmAddress address, char *segmentname, char *sectname);
 
-		uint8_t* operator[](uint64_t index) { return this->getOffset(index); }
+		UInt8* operator[](UInt64 index) { return this->getOffset(index); }
 
-		virtual void parseSymbolTable(struct nlist_64 *symtab, uint32_t nsyms, char *strtab, size_t strsize);
+		virtual void parseSymbolTable(xnu::Macho::Nlist64 *symtab, UInt32 nsyms, char *strtab, Size strsize);
 
 		virtual void parseLinkedit();
 
@@ -114,17 +116,17 @@ class MachO : public Binary::BinaryFormat
 
 		bool fat;
 
-		struct mach_header_64 *header;
+		xnu::Macho::Header64 *header;
 
 		std::vector<Segment*> segments;
 
 		SymbolTable *symbolTable;
 
-		off_t aslr_slide;
+		Offset aslr_slide;
 
-		mach_vm_address_t entry_point;
+		xnu::Mach::VmAddress entry_point;
 
-		mach_vm_address_t base;
+		xnu::Mach::VmAddress base;
 
-		size_t size;
+		Size size;
 };

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 namespace Binary
 {
 	class BinaryFormat

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Disassembler.hpp"
 
 #include "MachO.hpp"
@@ -46,12 +48,12 @@ namespace xnu
 		public:
 			Task();
 
-			Task(xnu::Kernel *kernel, mach_port_t task_port);
+			Task(xnu::Kernel *kernel, xnu::Mach::Port task_port);
 			Task(xnu::Kernel *kernel, task_t task);
 
 			void initialize();
 
-			static mach_port_t getTaskPort(Kernel *kernel, int pid);
+			static xnu::Mach::Port getTaskPort(Kernel *kernel, int pid);
 
 			static Task* getTaskByName(Kernel *kernel, char *name);
 
@@ -85,48 +87,48 @@ namespace xnu
 
 			void setProc(proc_t proc) { this->proc = proc; }
 
-			virtual mach_vm_address_t getBase() { return base; }
+			virtual xnu::Mach::VmAddress getBase() { return base; }
 
-			virtual off_t getSlide() { return slide; }
+			virtual Offset getSlide() { return slide; }
 
-			void setBase(mach_vm_address_t base) { this->base = base; }
+			void setBase(xnu::Mach::VmAddress base) { this->base = base; }
 
-			void setSlide(off_t slide) { this->slide = slide; }
+			void setSlide(Offset slide) { this->slide = slide; }
 
-			virtual uint64_t call(char *symbolname, uint64_t *arguments, size_t argCount);
-			virtual uint64_t call(mach_vm_address_t func, uint64_t *arguments, size_t argCount);
+			virtual UInt64 call(char *symbolname, UInt64 *arguments, Size argCount);
+			virtual UInt64 call(xnu::Mach::VmAddress func, UInt64 *arguments, Size argCount);
 
-			virtual mach_vm_address_t vmAllocate(size_t size);
-			virtual mach_vm_address_t vmAllocate(size_t size, uint32_t flags, vm_prot_t prot);
+			virtual xnu::Mach::VmAddress vmAllocate(Size size);
+			virtual xnu::Mach::VmAddress vmAllocate(Size size, UInt32 flags, vm_prot_t prot);
 
-			virtual void vmDeallocate(mach_vm_address_t address, size_t size);
+			virtual void vmDeallocate(xnu::Mach::VmAddress address, Size size);
 
-			virtual bool vmProtect(mach_vm_address_t address, size_t size, vm_prot_t prot);
+			virtual bool vmProtect(xnu::Mach::VmAddress address, Size size, vm_prot_t prot);
 
-			virtual void* vmRemap(mach_vm_address_t address, size_t size);
+			virtual void* vmRemap(xnu::Mach::VmAddress address, Size size);
 
-			virtual uint64_t virtualToPhysical(mach_vm_address_t address);
+			virtual UInt64 virtualToPhysical(xnu::Mach::VmAddress address);
 
-			virtual bool read(mach_vm_address_t address, void *data, size_t size);
+			virtual bool read(xnu::Mach::VmAddress address, void *data, Size size);
 
-			virtual uint8_t read8(mach_vm_address_t address);
-			virtual uint16_t read16(mach_vm_address_t address);
-			virtual uint32_t read32(mach_vm_address_t address);
-			virtual uint64_t read64(mach_vm_address_t address);
+			virtual UInt8 read8(xnu::Mach::VmAddress address);
+			virtual UInt16 read16(xnu::Mach::VmAddress address);
+			virtual UInt32 read32(xnu::Mach::VmAddress address);
+			virtual UInt64 read64(xnu::Mach::VmAddress address);
 
-			virtual bool write(mach_vm_address_t address, void *data, size_t size);
+			virtual bool write(xnu::Mach::VmAddress address, void *data, Size size);
 
-			virtual void write8(mach_vm_address_t address, uint8_t value);
-			virtual void write16(mach_vm_address_t address, uint16_t value);
-			virtual void write32(mach_vm_address_t address, uint32_t value);
-			virtual void write64(mach_vm_address_t address, uint64_t value);
+			virtual void write8(xnu::Mach::VmAddress address, UInt8 value);
+			virtual void write16(xnu::Mach::VmAddress address, UInt16 value);
+			virtual void write32(xnu::Mach::VmAddress address, UInt32 value);
+			virtual void write64(xnu::Mach::VmAddress address, UInt64 value);
 
-			virtual char* readString(mach_vm_address_t address);
+			virtual char* readString(xnu::Mach::VmAddress address);
 
 			virtual Symbol* getSymbolByName(char *symname);
-			virtual Symbol* getSymbolByAddress(mach_vm_address_t address);
+			virtual Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-			virtual mach_vm_address_t getSymbolAddressByName(char *symbolname);
+			virtual xnu::Mach::VmAddress getSymbolAddressByName(char *symbolname);
 
 		protected:
 			xnu::Kernel *kernel;
@@ -135,7 +137,7 @@ namespace xnu
 
 			Disassembler *disassembler;
 
-			mach_port_t task_port;
+			xnu::Mach::Port task_port;
 
 			bsd::Process *process;
 
@@ -145,12 +147,12 @@ namespace xnu
 			vm_map_t map;
 			pmap_t pmap;
 
-			mach_vm_address_t base;
+			xnu::Mach::VmAddress base;
 
-			off_t slide;
+			Offset slide;
 
-			mach_vm_address_t dyld = 0;
-			mach_vm_address_t dyld_shared_cache = 0;
+			xnu::Mach::VmAddress dyld = 0;
+			xnu::Mach::VmAddress dyld_shared_cache = 0;
 
 			int pid;
 	};

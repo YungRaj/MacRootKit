@@ -130,9 +130,9 @@ IOExternalTrap*  IOKernelRootKitUserClient::getExternalTrapForIndex(UInt32 index
 	return NULL;
 }
 
-uint8_t* IOKernelRootKitUserClient::mapBufferFromClientTask(mach_vm_address_t uaddr, size_t size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping)
+UInt8* IOKernelRootKitUserClient::mapBufferFromClientTask(xnu::Mach::VmAddress uaddr, Size size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping)
 {
-	uint8_t *buffer;
+	UInt8 *buffer;
 
 	IOReturn ret;
 
@@ -161,7 +161,7 @@ uint8_t* IOKernelRootKitUserClient::mapBufferFromClientTask(mach_vm_address_t ua
 		goto fail;
 	}
 
-	buffer = reinterpret_cast<uint8_t*>(map->getVirtualAddress());
+	buffer = reinterpret_cast<UInt8*>(map->getVirtualAddress());
 
 	if(!buffer)
 	{
@@ -201,13 +201,13 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 				bool success;
 
-				mach_vm_address_t address = arguments->scalarInput[0];
+				xnu::Mach::VmAddress address = arguments->scalarInput[0];
 
-				mach_vm_address_t hook = arguments->scalarInput[1];
+				xnu::Mach::VmAddress hook = arguments->scalarInput[1];
 
-				size_t hook_size = arguments->scalarInput[2];
+				Size hook_size = arguments->scalarInput[2];
 
-				size_t code_size = hook_size % 0x1000 >= sizeof(uint64_t) ? (hook_size - (hook_size % 0x1000)) + 0x1000 : hook_size;
+				Size code_size = hook_size % 0x1000 >= sizeof(UInt64) ? (hook_size - (hook_size % 0x1000)) + 0x1000 : hook_size;
 
 				if(hook)
 				{
@@ -228,15 +228,15 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 				bool success;
 
-				mach_vm_address_t breakpoint = arguments->scalarInput[0];
+				xnu::Mach::VmAddress breakpoint = arguments->scalarInput[0];
 
-				mach_vm_address_t breakpoint_hook = arguments->scalarInput[1];
+				xnu::Mach::VmAddress breakpoint_hook = arguments->scalarInput[1];
 
-				size_t breakpoint_hook_size = arguments->scalarInput[2];
+				Size breakpoint_hook_size = arguments->scalarInput[2];
 
-				size_t code_size = breakpoint_hook_size % 0x1000 > 0 ? (breakpoint_hook_size - (breakpoint_hook_size % 0x1000)) + 0x1000 : breakpoint_hook_size;
+				Size code_size = breakpoint_hook_size % 0x1000 > 0 ? (breakpoint_hook_size - (breakpoint_hook_size % 0x1000)) + 0x1000 : breakpoint_hook_size;
 			
-				mach_vm_address_t copyin;
+				xnu::Mach::VmAddress copyin;
 
 				if(breakpoint_hook)
 				{
@@ -250,18 +250,18 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 			if(arguments->scalarInputCount > 1)
 			{
-				mach_vm_address_t func = arguments->scalarInput[0];
+				xnu::Mach::VmAddress func = arguments->scalarInput[0];
 
-				size_t argCount = arguments->scalarInputCount - 1;
+				Size argCount = arguments->scalarInputCount - 1;
 
-				uint64_t *args = new uint64_t[argCount];
+				UInt64 *args = new UInt64[argCount];
 
-				for(uint32_t i = 1; i < argCount + 1; i++)
+				for(UInt32 i = 1; i < argCount + 1; i++)
 				{
 					args[i - 1] = arguments->scalarInput[i];
 				}
 
-				uint64_t ret = kernel->call(func, (uint64_t*) args, argCount);
+				UInt64 ret = kernel->call(func, (UInt64*) args, argCount);
 
 				arguments->scalarOutput[0] = ret;
 
@@ -276,7 +276,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 0)
 				{
-					uint64_t slide = Kernel::findKernelSlide();
+					UInt64 slide = Kernel::findKernelSlide();
 
 					arguments->scalarOutput[0] = slide;
 				}
@@ -290,7 +290,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 0)
 				{
-					mach_vm_address_t base = kernel->getBase();
+					xnu::Mach::VmAddress base = kernel->getBase();
 
 					arguments->scalarOutput[0] = base;
 				}
@@ -310,9 +310,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					Symbol *symbol;
 
-					mach_vm_address_t symaddr;
+					xnu::Mach::VmAddress symaddr;
 
-					uint8_t *buf = this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf = this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map);
 
 					char *symname = reinterpret_cast<char*>(buf);
 
@@ -348,11 +348,11 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					Symbol *symbol;
 
-					mach_vm_address_t symaddr;
+					xnu::Mach::VmAddress symaddr;
 
-					uint8_t *buf1 = this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf1 = this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map);
 
-					uint8_t *buf2= this->mapBufferFromClientTask(arguments->scalarInput[2], arguments->scalarInput[3], kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf2= this->mapBufferFromClientTask(arguments->scalarInput[2], arguments->scalarInput[3], kIODirectionOutIn, &descriptor, &map);
 
 					char *kextidentifier= reinterpret_cast<char*>(buf1);
 
@@ -397,13 +397,13 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					IOMemoryMap *map;
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[0];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[0];
 
-					uint64_t data = arguments->scalarInput[1];
+					UInt64 data = arguments->scalarInput[1];
 
-					size_t size = arguments->scalarInput[2];
+					Size size = arguments->scalarInput[2];
 
-					uint8_t *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
 
 					if(address && buf)
 					{
@@ -443,19 +443,19 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					IOMemoryMap *map;
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[0];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[0];
 
-					uint64_t data = arguments->scalarInput[1];
+					UInt64 data = arguments->scalarInput[1];
 
-					size_t size = arguments->scalarInput[2];
+					Size size = arguments->scalarInput[2];
 
-					uint8_t *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
 
 					if(address && buf)
 					{
-						uint8_t *buf_copy = new uint8_t[size];
+						UInt8 *buf_copy = new UInt8[size];
 
-						descriptor->readBytes(0, (void*) buf_copy, (uint32_t) size);
+						descriptor->readBytes(0, (void*) buf_copy, (UInt32) size);
 
 						kernel->write(address, (void*) buf_copy, size);
 
@@ -489,9 +489,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 1)
 				{
-					mach_vm_address_t address;
+					xnu::Mach::VmAddress address;
 
-					size_t size = arguments->scalarInput[0];
+					Size size = arguments->scalarInput[0];
 
 					address = kernel->vmAllocate(size);
 
@@ -512,9 +512,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 2)
 				{
-					mach_vm_address_t address = arguments->scalarInput[0];
+					xnu::Mach::VmAddress address = arguments->scalarInput[0];
 
-					size_t size = arguments->scalarInput[1];
+					Size size = arguments->scalarInput[1];
 
 					kernel->vmDeallocate(address, size);
 
@@ -532,9 +532,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 				{
 					bool success;
 
-					mach_vm_address_t address = arguments->scalarInput[0];
+					xnu::Mach::VmAddress address = arguments->scalarInput[0];
 
-					size_t size = arguments->scalarInput[1];
+					Size size = arguments->scalarInput[1];
 
 					vm_prot_t prot = (vm_prot_t) arguments->scalarInput[2];
 
@@ -561,15 +561,15 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 2)
 				{
-					mach_vm_address_t remapped;
+					xnu::Mach::VmAddress remapped;
 
-					mach_vm_address_t address = arguments->scalarInput[0];
+					xnu::Mach::VmAddress address = arguments->scalarInput[0];
 
-					size_t size = arguments->scalarInput[1];
+					Size size = arguments->scalarInput[1];
 
 					if(address)
 					{
-						remapped = reinterpret_cast<mach_vm_address_t>(kernel->vmRemap(address, size));
+						remapped = reinterpret_cast<xnu::Mach::VmAddress>(kernel->vmRemap(address, size));
 
 						if(!remapped)
 						{
@@ -599,13 +599,13 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					IOMemoryMap *map;
 
-					uint64_t paddr = arguments->scalarInput[0];
+					UInt64 paddr = arguments->scalarInput[0];
 
-					uint64_t data = arguments->scalarInput[1];
+					UInt64 data = arguments->scalarInput[1];
 
-					size_t size = arguments->scalarInput[2];
+					Size size = arguments->scalarInput[2];
 
-					uint8_t *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
 
 					success = kernel->physicalRead(paddr, (void*) buf, size);
 
@@ -636,13 +636,13 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					IOMemoryMap *map;
 
-					uint64_t paddr = arguments->scalarInput[0];
+					UInt64 paddr = arguments->scalarInput[0];
 
-					uint64_t data = arguments->scalarInput[1];
+					UInt64 data = arguments->scalarInput[1];
 
-					size_t size = arguments->scalarInput[2];
+					Size size = arguments->scalarInput[2];
 
-					uint8_t *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
+					UInt8 *buf = this->mapBufferFromClientTask(data, size, kIODirectionOutIn, &descriptor, &map);
 
 					success = kernel->physicalWrite(paddr, (void*) buf, size);
 
@@ -667,9 +667,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 1)
 				{
-					uint64_t physaddr;
+					UInt64 physaddr;
 
-					uint64_t vmaddr = (mach_vm_address_t) arguments->scalarInput[0];
+					UInt64 vmaddr = (xnu::Mach::VmAddress) arguments->scalarInput[0];
 
 					if(vmaddr)
 					{
@@ -699,7 +699,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 				{
 					int pid = (int) arguments->scalarInput[0];
 
-					mach_vm_address_t task = reinterpret_cast<mach_vm_address_t>(Task::findTaskByPid(this->kernel, pid));
+					xnu::Mach::VmAddress task = reinterpret_cast<xnu::Mach::VmAddress>(Task::findTaskByPid(this->kernel, pid));
 
 					if(!task)
 					{
@@ -721,7 +721,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 				{
 					int pid = (int) arguments->scalarInput[0];
 
-					mach_vm_address_t proc = reinterpret_cast<mach_vm_address_t>(Task::findProcByPid(this->kernel, pid));
+					xnu::Mach::VmAddress proc = reinterpret_cast<xnu::Mach::VmAddress>(Task::findProcByPid(this->kernel, pid));
 
 					if(!proc)
 					{
@@ -749,9 +749,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					char *name = reinterpret_cast<char*>(this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map));
 
-					MAC_RK_LOG("MacRK::finding task with name = 0x%llx\n", (uint64_t)(name));
+					MAC_RK_LOG("MacRK::finding task with name = 0x%llx\n", (UInt64)(name));
 
-					mach_vm_address_t task = reinterpret_cast<mach_vm_address_t>(Task::findTaskByName(this->kernel, name));
+					xnu::Mach::VmAddress task = reinterpret_cast<xnu::Mach::VmAddress>(Task::findTaskByName(this->kernel, name));
 
 					if(!task)
 					{
@@ -785,9 +785,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					char *name = reinterpret_cast<char*>(this->mapBufferFromClientTask(arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn, &descriptor, &map));
 
-					MAC_RK_LOG("MacRK::finding proc with 0x%llx\n", (uint64_t)(name));
+					MAC_RK_LOG("MacRK::finding proc with 0x%llx\n", (UInt64)(name));
 
-				 	mach_vm_address_t proc = reinterpret_cast<mach_vm_address_t>(Task::findProcByName(this->kernel, name));
+				 	xnu::Mach::VmAddress proc = reinterpret_cast<xnu::Mach::VmAddress>(Task::findProcByName(this->kernel, name));
 
 					if(!proc)
 					{
@@ -822,14 +822,14 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[1];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[1];
 
 					if(task_port == MACH_PORT_NULL)
 						break;
 
-					uint64_t data = (uint64_t) arguments->scalarInput[2];
+					UInt64 data = (UInt64) arguments->scalarInput[2];
 
-					size_t size = (size_t) arguments->scalarInput[3];
+					Size size = (Size) arguments->scalarInput[3];
 
 					vm_map_t (*_convert_port_to_map_read) (ipc_port_t port);
 
@@ -857,15 +857,15 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					
 					vm_map_t map = _convert_port_to_map_read(port);
 
-					size_t data_size;
+					Size data_size;
 
-					uint8_t *buf = this->getUserSpaceBuffer(data, size, kIODirectionOutIn, &descriptor, &mapping);
+					UInt8 *buf = this->getUserSpaceBuffer(data, size, kIODirectionOutIn, &descriptor, &mapping);
 
 					if(address != 0)
 					{
-						kern_return_t (*_vm_read)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_size_t*);
+						kern_return_t (*_vm_read)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_Size*);
 
-						_vm_read = (kern_return_t(*)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_size_t*)) vm_read_;
+						_vm_read = (kern_return_t(*)(vm_map_t, vm_address_t, vm_offset_t, vm_address_t, vm_Size*)) vm_read_;
 
 						kr = _vm_read(map, address, size, (vm_address_t) buf, &data_size);
 
@@ -901,14 +901,14 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[1];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[1];
 
 					if(task_port == MACH_PORT_NULL)
 						break;
 
-					uint64_t data = (uint64_t) arguments->scalarInput[2];
+					UInt64 data = (UInt64) arguments->scalarInput[2];
 
-					size_t size = (size_t) arguments->scalarInput[3];
+					Size size = (Size) arguments->scalarInput[3];
 
 					vm_map_t (*_convert_port_to_map_read) (ipc_port_t port);
 
@@ -947,7 +947,7 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						int                     type;
 						vm_object_offset_t      offset;
-						vm_map_size_t           size;
+						vm_map_Size           size;
 						void                    *kdata;
 					};
 
@@ -957,17 +957,17 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 					{
 						vm_map_copy_t copy;
 
-						typedef kern_return_t (*vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
+						typedef kern_return_t (*vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_Size, boolean_t, vm_map_copy_t*);
 						
-						kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_size_t, boolean_t, vm_map_copy_t*);
+						kern_return_t (*_vm_map_copyin)(vm_map_t, vm_map_address_t, vm_map_Size, boolean_t, vm_map_copy_t*);
 
 						_vm_map_copyin = reinterpret_cast<vm_map_copyin>(this->kernel->getSymbolAddressByName("_vm_map_copyin"));
 						
-						kr = _vm_map_copyin(src_map, (vm_address_t) data, (vm_map_size_t) size, FALSE, &copy);
+						kr = _vm_map_copyin(src_map, (vm_address_t) data, (vm_map_Size) size, FALSE, &copy);
 
-						typedef kern_return_t (*vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
+						typedef kern_return_t (*vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_Size, boolean_t);
 
-						kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_size_t, boolean_t);
+						kern_return_t (*_vm_map_copy_overwrite)(vm_map_t, vm_map_offset_t, vm_map_copy_t, vm_map_Size, boolean_t);
 
 						_vm_map_copy_overwrite = reinterpret_cast<vm_map_copy_overwrite>(this->kernel->getSymbolAddressByName("_vm_map_copy_overwrite"));
 
@@ -1000,9 +1000,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[1];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[1];
 
-					size_t size = (size_t) arguments->scalarInput[2];
+					Size size = (Size) arguments->scalarInput[2];
 
 					if(task_port == MACH_PORT_NULL)
 						break;
@@ -1054,12 +1054,12 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					mach_port_name_t task_port = (mach_port_name_t) arguments->scalarInput[0];
 
-					mach_vm_address_t address = (mach_vm_address_t) arguments->scalarInput[1];
+					xnu::Mach::VmAddress address = (xnu::Mach::VmAddress) arguments->scalarInput[1];
 
 					if(task_port == MACH_PORT_NULL)
 						break;
 
-					size_t size = (size_t) arguments->scalarInput[2];
+					Size size = (Size) arguments->scalarInput[2];
 
 					vm_prot_t prot = (vm_prot_t) arguments->scalarInput[3];
 
@@ -1091,9 +1091,9 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 
 					if(address != 0)
 					{
-						kern_return_t(*_vm_protect)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t);
+						kern_return_t(*_vm_protect)(vm_map_t, vm_address_t, vm_Size, boolean_t, vm_prot_t);
 
-						_vm_protect = (kern_return_t(*)(vm_map_t, vm_address_t, vm_size_t, boolean_t, vm_prot_t)) vm_protect_;
+						_vm_protect = (kern_return_t(*)(vm_map_t, vm_address_t, vm_Size, boolean_t, vm_prot_t)) vm_protect_;
 
 						kr = _vm_protect(map, address, size, true, prot);
 
@@ -1119,11 +1119,11 @@ IOReturn IOKernelRootKitUserClient::externalMethod(UInt32 selector, IOExternalMe
 			{
 				if(arguments->scalarInputCount == 2)
 				{
-					uint64_t paddr;
+					UInt64 paddr;
 
-					mach_port_t task_port = (mach_port_t) arguments->scalarInput[0];
+					xnu::Mach::Port task_port = (xnu::Mach::Port) arguments->scalarInput[0];
 
-					mach_vm_address_t vaddr = (mach_vm_address_t) arguments->scalarInput[1];
+					xnu::Mach::VmAddress vaddr = (xnu::Mach::VmAddress) arguments->scalarInput[1];
 
 					/*
 					if(paddr)

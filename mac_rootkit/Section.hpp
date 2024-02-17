@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 extern "C"
 {
 	#include <mach-o.h>
@@ -51,12 +53,12 @@ class Section
 
 		char* getSectionName() { return name; }
 
-		mach_vm_address_t getAddress() { return address; }
+		xnu::Mach::VmAddress getAddress() { return address; }
 
-		off_t getOffset() { return offset; }
-		off_t getOffsetEnd() { return offset + size; }
+		Offset getOffset() { return offset; }
+		Offset getOffsetEnd() { return offset + size; }
 
-		size_t getSize() { return size; }
+		Size getSize() { return size; }
 
 		struct section_64* getSectionHeader() { return section; }
 
@@ -65,9 +67,9 @@ class Section
 
 		char *name;
 
-		mach_vm_address_t address;
+		xnu::Mach::VmAddress address;
 
-		off_t offset;
+		Offset offset;
 
-		size_t size;
+		Size size;
 };

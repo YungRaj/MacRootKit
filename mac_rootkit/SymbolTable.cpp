@@ -26,7 +26,7 @@ extern "C"
 		return static_cast<char*>(retval.get());
 	}
 
-	typedef char* (*_swift_demangle) (char *mangled, uint32_t length, uint8_t *output_buffer, uint32_t output_buffer_size, uint32_t flags);
+	typedef char* (*_swift_demangle) (char *mangled, UInt32 length, UInt8 *output_buffer, UInt32 output_buffer_size, UInt32 flags);
 
 	char* swift_demangle(char *mangled)
 	{
@@ -80,7 +80,7 @@ Symbol* SymbolTable::getSymbolByName(char *symname)
 	return NULL;
 }
 
-Symbol* SymbolTable::getSymbolByAddress(mach_vm_address_t address)
+Symbol* SymbolTable::getSymbolByAddress(xnu::Mach::VmAddress address)
 {
 	for(int32_t i = 0; i < symbolTable.size(); i++)
 	{
@@ -95,7 +95,7 @@ Symbol* SymbolTable::getSymbolByAddress(mach_vm_address_t address)
 	return NULL;
 }
 
-Symbol* SymbolTable::getSymbolByOffset(off_t offset)
+Symbol* SymbolTable::getSymbolByOffset(Offset offset)
 {
 	for(int32_t i = 0; i < symbolTable.size(); i++)
 	{

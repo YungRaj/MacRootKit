@@ -44,9 +44,9 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	loaded = true;
 
-	mach_vm_address_t kernel_base = xnu::Kernel::findKernelBase();
+	xnu::Mach::VmAddress kernel_base = xnu::Kernel::findKernelBase();
 
-	uint64_t kernel_slide = xnu::Kernel::findKernelSlide();
+	UInt64 kernel_slide = xnu::Kernel::findKernelSlide();
 
 	char buffer[128];
 
@@ -60,7 +60,7 @@ bool IOKernelRootKitService::start(IOService *provider)
 
 	MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
 
-	snprintf(buffer, 128, "0x%x", *(uint32_t*) kernel_base);
+	snprintf(buffer, 128, "0x%x", *(UInt32*) kernel_base);
 
 	MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 

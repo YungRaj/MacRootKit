@@ -10,9 +10,9 @@ int isspace(int c)
 
 #endif
 
-static uint32_t log2(uint64_t value)
+static UInt32 log2(UInt64 value)
 {
-	uint32_t shift = 0;
+	UInt32 shift = 0;
 
 	while(value >>= 1) ++shift;
 
@@ -31,7 +31,7 @@ int hex_digit(char ch)
 	return -1;
 }
 
-char* strnchar(char *str, uint32_t len, char ch)
+char* strnchar(char *str, UInt32 len, char ch)
 {
 	char *s = str;
 	char *end = str + len;
@@ -51,11 +51,11 @@ char* strnchar(char *str, uint32_t len, char ch)
 }
 
 enum strtoint_result strtoint(char *str,
-							  uint32_t len,
+							  UInt32 len,
 							  bool sign,
 							  bool is_signed,
-							  uint32_t base,
-							  uint64_t *value,
+							  UInt32 base,
+							  UInt64 *value,
 							  char **end)
 {
 	enum strtoint_result result = STRTOINT_OK;
@@ -64,7 +64,7 @@ enum strtoint_result strtoint(char *str,
 
 	bool negate = false;
 
-	uint64_t _value = 0;
+	UInt64 _value = 0;
 
 	if(last == str)
 		goto no_chars;
@@ -107,11 +107,11 @@ enum strtoint_result strtoint(char *str,
 			goto fail;
 		}
 
-		uint64_t new_value = _value * base + d;
+		UInt64 new_value = _value * base + d;
 
 		if(is_signed)
 		{
-			uint64_t max = (uint64_t) (negate ? INTMAX_MIN : INTMAX_MAX);
+			UInt64 max = (UInt64) (negate ? INTMAX_MIN : INTMAX_MAX);
 
 			if(new_value > max)
 			{
@@ -131,7 +131,7 @@ enum strtoint_result strtoint(char *str,
 	}
 
 	if(negate)
-		_value = (uint64_t)(-(int64_t)_value);
+		_value = (UInt64)(-(int64_t)_value);
 
 	*value = _value;
 
@@ -149,9 +149,9 @@ fail:
 }
 
 enum strtodata_result strtodata(char *str,
-								uint32_t base,
+								UInt32 base,
 								void *data,
-								uint32_t *size,
+								UInt32 *size,
 								char **end)
 {
 	enum strtodata_result result = STRTODATA_OK;
@@ -171,19 +171,19 @@ enum strtodata_result strtodata(char *str,
 		str += 2;
 	}
 
-	uint32_t bits_per_digit = log2(base);
+	UInt32 bits_per_digit = log2(base);
 
-	uint8_t *p = (uint8_t*) data;
+	UInt8 *p = (UInt8*) data;
 
-	uint32_t left = (p == NULL ? 0 : *size);
+	UInt32 left = (p == NULL ? 0 : *size);
 
-	uint32_t realsize = 0;
+	UInt32 realsize = 0;
 
 	do
 	{
-		uint8_t byte = 0;
+		UInt8 byte = 0;
 
-		for(uint32_t i = 0; i < 8 / bits_per_digit; i++) 
+		for(UInt32 i = 0; i < 8 / bits_per_digit; i++) 
 		{
 			int d = hex_digit(*str);
 			
@@ -253,7 +253,7 @@ enum strparse_result strreplace(char *str, char find, char replace)
 
 char* strdup(char *s)
 {
-	size_t l;
+	Size l;
 	char *t;
 
 	if (s == NULL) return NULL;
@@ -390,13 +390,13 @@ char* deblank(char* input)
 
 int main()
 {
-	uint64_t value;
+	UInt64 value;
 
 	char *s = "0xfffffff007b6b668";
 	char *end = NULL;
 
-	uint8_t *data;
-	uint32_t data_len;
+	UInt8 *data;
+	UInt32 data_len;
 
 	enum strtoint_result sir;
 	enum strtodata_result sdr;
@@ -409,12 +409,12 @@ int main()
 
 	sdr = strtodata(s, 16, data, &data_len, &end);
 
-	for(uint32_t i = 0; i < data_len; i++)
+	for(UInt32 i = 0; i < data_len; i++)
 		printf("%x", data[i]);
 
 	printf("\n");
 
-	printf("0x%llx\n", *(uint64_t*) data);
+	printf("0x%llx\n", *(UInt64*) data);
 
 	sir = strtoint(s, strlen(s), true, false, 16, &value, &end);
 

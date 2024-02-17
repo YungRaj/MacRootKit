@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <Architecture.hpp>
 #include <vector.hpp>
 
@@ -60,7 +62,7 @@ namespace Debug
 
 			virtual void connected() = 0;
 
-			virtual uint8_t* readFromClient() = 0;
+			virtual UInt8* readFromClient() = 0;
 
 			virtual void writeToClient(std::span<const u8> data) = 0;
 
@@ -74,7 +76,7 @@ namespace Debug
 
 			virtual void watchpoint(xnu::Thread* thread) = 0;
 
-			virtual std::vector<DebuggerAction> clientData(uint8_t *data) = 0;
+			virtual std::vector<DebuggerAction> clientData(UInt8 *data) = 0;
 
 			bool notifyThreadStopped(Kernel::KThread* thread);
 
@@ -100,15 +102,15 @@ namespace Debug
 		public:
 			explicit GDBStubArm64(xnu::Kernel *kernel);
 
-			void addBreakpoint(mach_vm_address_t address);
+			void addBreakpoint(xnu::Mach::VmAddress address);
 
-			void removeBreakpoint(mach_vm_address_t address);
+			void removeBreakpoint(xnu::Mach::VmAddress address);
 
 			// std::String registerWrite(xnu::Thread* thread, std::String value) const override;
 
-			// std::String registerRead(xnu::Thread* thread, size_t id) const override;
+			// std::String registerRead(xnu::Thread* thread, Size id) const override;
 
-			// void registerWrite(xnu::Thread* thread, size_t id, std::String value) const override;
+			// void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
 
 			// void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
 
@@ -125,15 +127,15 @@ namespace Debug
 		public:
 			explicit GDBStubX64(xnu::Kernel *kernel);
 
-			void addBreakpoint(mach_vm_address_t address);
+			void addBreakpoint(xnu::Mach::VmAddress address);
 
-			void removeBreakpoint(mach_vm_address_t address);
+			void removeBreakpoint(xnu::Mach::VmAddress address);
 
 			// std::String registerWrite(xnu::Thread* thread, std::String value) const override;
 
-			// std::String registerRead(xnu::Thread* thread, size_t id) const override;
+			// std::String registerRead(xnu::Thread* thread, Size id) const override;
 
-			// void registerWrite(xnu::Thread* thread, size_t id, std::String value) const override;
+			// void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
 
 			// void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
 

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <sys/types.h>
 
 #include "Symbol.hpp"
@@ -28,10 +30,10 @@ class SymbolTable
 	public:
 		explicit SymbolTable() { }
 
-		explicit SymbolTable(struct nlist_64 *symtab,
-							 uint32_t nsyms,
+		explicit SymbolTable(xnu::Macho::Nlist64 *symtab,
+							 UInt32 nsyms,
 							 char *strtab,
-							 size_t strsize)
+							 Size strsize)
 		    : symtab(symtab),
 		      nsyms(nsyms),
 		      strtab(strtab),
@@ -44,15 +46,15 @@ class SymbolTable
 
 		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
 
-		bool containsSymbolWithAddress(mach_vm_address_t address) { return this->getSymbolByAddress(address) != NULL; }
+		bool containsSymbolWithAddress(xnu::Mach::VmAddress address) { return this->getSymbolByAddress(address) != NULL; }
 
-		bool containsSymbolWithOffset(off_t offset) { return this->getSymbolByOffset(offset) != NULL; }
+		bool containsSymbolWithOffset(Offset offset) { return this->getSymbolByOffset(offset) != NULL; }
 
 		Symbol* getSymbolByName(char *name);
 
-		Symbol* getSymbolByAddress(mach_vm_address_t address);
+		Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-		Symbol* getSymbolByOffset(off_t offset);
+		Symbol* getSymbolByOffset(Offset offset);
 
 		void addSymbol(Symbol *symbol) { symbolTable.push_back(symbol); }
 
@@ -63,11 +65,11 @@ class SymbolTable
 	private:
 		std::vector<Symbol*> symbolTable;
 
-		struct nlist_64 *symtab;
+		xnu::Macho::Nlist64 *symtab;
 		
-		uint32_t nsyms;
+		UInt32 nsyms;
 
 		char *strtab;
 
-		size_t strsize;
+		Size strsize;
 };

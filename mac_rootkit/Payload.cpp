@@ -5,7 +5,7 @@
 using namespace mrk;
 using namespace xnu;
 
-Payload::Payload(Task *task, Hook *hook, vm_prot_t protection) : task(task), hook(hook), prot(protection), current_offset(0)
+Payload::Payload(Task *task, Hook *hook, xnu::Mach::VmProtection protection) : task(task), hook(hook), prot(protection), current_offset(0)
 {
 	
 }
@@ -14,7 +14,7 @@ Payload::~Payload()
 {
 }
 
-bool Payload::readBytes(uint8_t *bytes, size_t size)
+bool Payload::readBytes(UInt8 *bytes, Size size)
 {
 	bool success;
 
@@ -23,18 +23,18 @@ bool Payload::readBytes(uint8_t *bytes, size_t size)
 	return success;
 }
 
-bool Payload::readBytes(off_t offset, uint8_t *bytes, size_t size)
+bool Payload::readBytes(Offset offset, UInt8 *bytes, Size size)
 {
 	bool success;
 
-	mach_vm_address_t address = this->address + offset;
+	xnu::Mach::VmAddress address = this->address + offset;
 
 	success = this->getTask()->read(address + offset, (void*) bytes, size);
 
 	return success;
 }
 
-bool Payload::writeBytes(uint8_t *bytes, size_t size)
+bool Payload::writeBytes(UInt8 *bytes, Size size)
 {
 	bool success;
 
@@ -46,17 +46,17 @@ bool Payload::writeBytes(uint8_t *bytes, size_t size)
 	return success;
 }
 
-bool Payload::writeBytes(off_t offset, uint8_t *bytes, size_t size)
+bool Payload::writeBytes(Offset offset, UInt8 *bytes, Size size)
 {
 	bool success;
 
-	mach_vm_address_t address = this->address + offset;
+	xnu::Mach::VmAddress address = this->address + offset;
 
 	success = this->getTask()->write(address, (void*) bytes, size);
 
 #ifdef __KERNEL__
 
-	if(address >= (mach_vm_address_t) Kernel::getExecutableMemory() && address < (mach_vm_address_t) Kernel::getExecutableMemory() + Kernel::getExecutableMemorySize())
+	if(address >= (xnu::Mach::VmAddress) Kernel::getExecutableMemory() && address < (xnu::Mach::VmAddress) Kernel::getExecutableMemory() + Kernel::getExecutableMemorySize())
 	{
 		Kernel::setExecutableMemoryOffset(Kernel::getExecutableMemoryOffset() + size);
 	}
@@ -70,7 +70,7 @@ bool Payload::prepare()
 {
 	bool success;
 
-	mach_vm_address_t trampoline;
+	xnu::Mach::VmAddress trampoline;
 
 	Task *task = this->getTask();
 

@@ -29,7 +29,7 @@
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
 
-#include "vector.hpp"
+#include <vector>
 
 template<typename classname>
 static inline classname getIvar(id self, const char *name)

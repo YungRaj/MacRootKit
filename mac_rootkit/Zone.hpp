@@ -50,21 +50,21 @@ namespace Heap
 
 	static std::vector<KallocTypeView*> allTypeViews;
 
-	static mach_vm_address_t zone_std::vector;
-	static mach_vm_address_t zone_security_std::vector;
-	static mach_vm_address_t zone_submaps;
+	static xnu::Mach::VmAddress zone_std::vector;
+	static xnu::Mach::VmAddress zone_security_std::vector;
+	static xnu::Mach::VmAddress zone_submaps;
 
-	static mach_vm_address_t kalloc_zones_default;
-	static mach_vm_address_t kalloc_zones_kext;
-	static mach_vm_address_t kalloc_zones_data_buffers;
+	static xnu::Mach::VmAddress kalloc_zones_default;
+	static xnu::Mach::VmAddress kalloc_zones_kext;
+	static xnu::Mach::VmAddress kalloc_zones_data_buffers;
 
-	static size_t num_zones;
+	static Size num_zones;
 
-	Zone* zoneForAddress(mach_vm_address_t address);
+	Zone* zoneForAddress(xnu::Mach::VmAddress address);
 
 	void enumerateAllZones(Kernel *kernel);
 
-	void enumerateKallocHeaps(Kernel *kernel, mach_vm_address_t kalloc_zones_default, mach_vm_address_t kalloc_zones_kext, mach_vm_address_t kalloc_zones_data_buffers);
+	void enumerateKallocHeaps(Kernel *kernel, xnu::Mach::VmAddress kalloc_zones_default, xnu::Mach::VmAddress kalloc_zones_kext, xnu::Mach::VmAddress kalloc_zones_data_buffers);
 
 	void enumerateKallocTypeViews(Kernel *kernel, Segment *segment, Section *section);
 
@@ -83,77 +83,77 @@ namespace Heap
 
 		namespace ZoneStats
 		{
-			zone_stats_t zoneStatsForZone(mach_vm_address_t zone);
+			zone_stats_t zoneStatsForZone(xnu::Mach::VmAddress zone);
 		}
 
 		namespace ZoneIndex
 		{
-			zone_id_t zoneIndexForZone(mach_vm_address_t zone);
+			zone_id_t zoneIndexForZone(xnu::Mach::VmAddress zone);
 
-			zone_id_t zoneIndexFromAddress(mach_vm_address_t address);
+			zone_id_t zoneIndexFromAddress(xnu::Mach::VmAddress address);
 
 			zone_id_t zoneIndexFromPointer(void *ptr);
 		}
 
 		namespace ZonePva
 		{
-			zone_pva_t zonePvaFromAddress(mach_vm_address_t zone);
+			zone_pva_t zonePvaFromAddress(xnu::Mach::VmAddress zone);
 
-			zone_pva_t zonePvaFromMeta(mach_vm_address_t meta);
+			zone_pva_t zonePvaFromMeta(xnu::Mach::VmAddress meta);
 
 			zone_pva_t zonePvaFromElement(zone_element_t element);
 
-			mach_vm_address_t zonePvaToAddress(zone_pva_t pva);
+			xnu::Mach::VmAddress zonePvaToAddress(zone_pva_t pva);
 
-			mach_vm_address_t zonePvaToMeta(zone_pva_t pva);
+			xnu::Mach::VmAddress zonePvaToMeta(zone_pva_t pva);
 		}
 
 		namespace ZoneBits
 		{
-			struct zone_bits_allocator_header* zoneBitsAllocatorHeader(mach_vm_address_t zone_bits_header);
+			struct zone_bits_allocator_header* zoneBitsAllocatorHeader(xnu::Mach::VmAddress zone_bits_header);
 
-			mach_vm_address_t zoneBitsAllocatorRefPtr(mach_vm_address_t address);
+			xnu::Mach::VmAddress zoneBitsAllocatorRefPtr(xnu::Mach::VmAddress address);
 
-			mach_vm_address_t zoneBitsAllocatorBase();
+			xnu::Mach::VmAddress zoneBitsAllocatorBase();
 
-			size_t zoneBitsAllocatorSize();
+			Size zoneBitsAllocatorSize();
 		}
 
 		namespace PageMetadata
 		{
 			namespace FreeList
 			{
-				uint64_t bitMap(mach_vm_address_t address, struct zone_page_metadata *metadata);
+				UInt64 bitMap(xnu::Mach::VmAddress address, struct zone_page_metadata *metadata);
 
-				uint32_t inlineBitMap(mach_vm_address_t address, struct zone_page_metadata *metadata);
+				UInt32 inlineBitMap(xnu::Mach::VmAddress address, struct zone_page_metadata *metadata);
 			}
 
-			struct zone_page_metadata* zoneMetadata(mach_vm_address_t meta);
+			struct zone_page_metadata* zoneMetadata(xnu::Mach::VmAddress meta);
 
-			mach_vm_address_t zoneMetaFromAddress(mach_vm_address_t address);
+			xnu::Mach::VmAddress zoneMetaFromAddress(xnu::Mach::VmAddress address);
 
-			mach_vm_address_t zoneMetaFromElement(zone_element_t element);
+			xnu::Mach::VmAddress zoneMetaFromElement(zone_element_t element);
 
-			mach_vm_address_t zoneMetaToAddress(mach_vm_address_t meta);
+			xnu::Mach::VmAddress zoneMetaToAddress(xnu::Mach::VmAddress meta);
 		}
 
-		zone_t zone(mach_vm_address_t zone);
+		zone_t zone(xnu::Mach::VmAddress zone);
 
-		mach_vm_address_t zoneFromName(char *zone_name);
+		xnu::Mach::VmAddress zoneFromName(char *zone_name);
 
-		mach_vm_address_t zoneFromAddress(mach_vm_address_t address);
+		xnu::Mach::VmAddress zoneFromAddress(xnu::Mach::VmAddress address);
 	};
 
 	class Zone
 	{
 		public:
-			Zone(Kernel *kernel, mach_vm_address_t zone);
+			Zone(Kernel *kernel, xnu::Mach::VmAddress zone);
 			Zone(Kernel *kernel, zone_id_t zone_id);
 			Zone(Kernel *kernel, char *zone_name);
 
 			~Zone();
 
-			static Zone* zoneForAddress(Kernel *kernel, mach_vm_address_t address);
+			static Zone* zoneForAddress(Kernel *kernel, xnu::Mach::VmAddress address);
 			static Zone* zoneForIndex(Kernel *kernel, zone_id_t zone_id);
 
 			static zone_info_t zoneInfo(Kernel *kernel);
@@ -162,7 +162,7 @@ namespace Heap
 
 			void setKallocTypeView(KallocTypeView *typeview) { this->typeview = typeview; }
 
-			mach_vm_address_t getZoneAddress() { return zone; }
+			xnu::Mach::VmAddress getZoneAddress() { return zone; }
 
 			zone_t getZone() { return z }
 
@@ -172,7 +172,7 @@ namespace Heap
 
 			char* getKHeapName() { return kheap_name; }
 
-			uint16_t getZoneElementSize() { return z_elem_size; }
+			UInt16 getZoneElementSize() { return z_elem_size; }
 
 			zone_id_t getZoneId() { return z_id; }
 
@@ -180,20 +180,20 @@ namespace Heap
 
 			zone_stats_t getZoneStats() { return z_stats; }
 
-			zone_element_t getZoneElement(mach_vm_address_t address);
+			zone_element_t getZoneElement(xnu::Mach::VmAddress address);
 
-			struct zone_page_metadata* zoneMetaForAddress(mach_vm_address_t address);
+			struct zone_page_metadata* zoneMetaForAddress(xnu::Mach::VmAddress address);
 
-			zone_id_t zoneIndexForAddress(Kernel *kernel, mach_vm_address_t address);
+			zone_id_t zoneIndexForAddress(Kernel *kernel, xnu::Mach::VmAddress address);
 
-			bool checkFree(mach_vm_address_t address);
+			bool checkFree(xnu::Mach::VmAddress address);
 
 			void parseZone();
 
 		private:
 			Kernel *kernel;
 
-			mach_vm_address_t zone;
+			xnu::Mach::VmAddress zone;
 
 			zone_t z;
 
@@ -206,7 +206,7 @@ namespace Heap
 			char* z_name;
 			char *z_site_name;
 
-			uint16_t z_elem_size;
+			UInt16 z_elem_size;
 
 			KallocHeap *kheap;
 
@@ -266,7 +266,7 @@ namespace Heap
 
 			zone_stats_t getKallocTypeViewStats();
 
-			off_t getSegmentOffset() { return offset; }
+			Offset getSegmentOffset() { return offset; }
 
 			char* getSignature() { return kt_signature; }
 
@@ -284,7 +284,7 @@ namespace Heap
 			Segment *segment;
 			Section *section;
 
-			off_t offset;
+			Offset offset;
 
 			struct kalloc_type_view *typeview;
 

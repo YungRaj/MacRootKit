@@ -22,7 +22,7 @@ Hook::Hook(Patcher *patcher, enum HookType hooktype)
 	
 }
 
-Hook::Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address_t from)
+Hook::Hook(Patcher *patcher, enum HookType hooktype, Task *task, xnu::Mach::VmAddress from)
     : patcher(patcher),
       hooktype(hooktype),
       payload(nullptr),
@@ -37,7 +37,7 @@ Hook::Hook(Patcher *patcher, enum HookType hooktype, Task *task, mach_vm_address
         this->prepareBreakpoint(task, from);
 }
 
-Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t address)
+Hook* Hook::hookForFunction(Task *task, Patcher *patcher, xnu::Mach::VmAddress address)
 {
 	Hook *hook;
 
@@ -60,7 +60,7 @@ Hook* Hook::hookForFunction(Task *task, Patcher *patcher, mach_vm_address_t addr
 	return hook;
 }
 
-Hook* Hook::hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, mach_vm_address_t address)
+Hook* Hook::hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher, xnu::Mach::VmAddress address)
 {
 	Hook *hook = Hook::hookForFunction(task, patcher, address);
 
@@ -69,7 +69,7 @@ Hook* Hook::hookForFunction(void *target, xnu::Task *task, mrk::Patcher *patcher
 	return hook;
 }
 
-Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t address)
+Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, xnu::Mach::VmAddress address)
 {
 	Hook *hook;
 
@@ -92,7 +92,7 @@ Hook* Hook::breakpointForAddress(Task *task, Patcher *patcher, mach_vm_address_t
 	return hook;
 }
 
-Hook* Hook::breakpointForAddress(void *target, Task *task, Patcher *patcher, mach_vm_address_t address)
+Hook* Hook::breakpointForAddress(void *target, Task *task, Patcher *patcher, xnu::Mach::VmAddress address)
 {
 	Hook *hook = Hook::breakpointForAddress(target, task, patcher, address);
 
@@ -101,14 +101,14 @@ Hook* Hook::breakpointForAddress(void *target, Task *task, Patcher *patcher, mac
 	return hook;
 }
 
-void Hook::prepareHook(Task *task, mach_vm_address_t from)
+void Hook::prepareHook(Task *task, xnu::Mach::VmAddress from)
 {
 	this->setTask(task);
 	this->setFrom(from);
 	this->setDisassembler(task->getDisassembler());
 }
 
-void Hook::prepareBreakpoint(Task *task, mach_vm_address_t breakpoint)
+void Hook::prepareBreakpoint(Task *task, xnu::Mach::VmAddress breakpoint)
 {
 	this->setHookType(kHookTypeBreakpoint);
 	this->setTask(task);
@@ -126,7 +126,7 @@ struct HookPatch* Hook::getLatestRegisteredHook()
 	return hooks.at((int) (hooks.size() - 1));
 }
 
-mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
+xnu::Mach::VmAddress Hook::getTrampolineFromChain(xnu::Mach::VmAddress address)
 {
 	std::vector<struct HookPatch*> &hooks = this->getHooks();
 
@@ -134,8 +134,8 @@ mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 	{
 		struct HookPatch *patch = hooks.at(i);
 
-		mach_vm_address_t to = patch->to;
-		mach_vm_address_t trampoline = patch->trampoline;
+		xnu::Mach::VmAddress to = patch->to;
+		xnu::Mach::VmAddress trampoline = patch->trampoline;
 
 		if(to == address)
 		{
@@ -152,13 +152,13 @@ mach_vm_address_t Hook::getTrampolineFromChain(mach_vm_address_t address)
 	return 0;
 }
 
-enum HookType Hook::getHookTypeForCallback(mach_vm_address_t callback)
+enum HookType Hook::getHookTypeForCallback(xnu::Mach::VmAddress callback)
 {
 	for(int i = 0; i < this->getCallbacks().size(); i++)
 	{
 		auto pair = this->getCallbacks().at(i);
 
-		mach_vm_address_t cb = pair->first;
+		xnu::Mach::VmAddress cb = pair->first;
 
 		if(callback == cb)
 		{
@@ -190,14 +190,14 @@ void Hook::registerHook(struct HookPatch *patch)
 	this->hooks.push_back(patch);
 }
 
-void Hook::registerCallback(mach_vm_address_t callback, enum HookType hooktype)
+void Hook::registerCallback(xnu::Mach::VmAddress callback, enum HookType hooktype)
 {
-	HookCallbackPair<mach_vm_address_t, enum HookType> *pair = HookCallbackPair<mach_vm_address_t, enum HookType>::create(callback, hooktype);
+	HookCallbackPair<xnu::Mach::VmAddress, enum HookType> *pair = HookCallbackPair<xnu::Mach::VmAddress, enum HookType>::create(callback, hooktype);
 
 	this->callbacks.push_back(pair);
 }
 
-void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
+void Hook::hookFunction(xnu::Mach::VmAddress to, enum HookType hooktype)
 {
 	struct HookPatch *hook = new HookPatch;
 
@@ -211,7 +211,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	struct HookPatch *chain = this->getLatestRegisteredHook();
 
-	mach_vm_address_t trampoline;
+	xnu::Mach::VmAddress trampoline;
 
 	// if we don't have any entries in the chain
 	// then we start at the payload's starting point
@@ -226,11 +226,11 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 		trampoline = payload->getAddress() + payload->getCurrentOffset();
 	}
 
-	size_t min;
+	Size min;
 	
-	size_t branch_size;
+	Size branch_size;
 
-	mach_vm_address_t from = chain ? chain->to : this->from;
+	xnu::Mach::VmAddress from = chain ? chain->to : this->from;
 
 	branch_size = architecture->getBranchSize();
 
@@ -243,10 +243,10 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 		return;
 	}
 
-	uint8_t *original_opcodes;
-	uint8_t *replace_opcodes;
+	UInt8 *original_opcodes;
+	UInt8 *replace_opcodes;
 
-	original_opcodes = new uint8_t[min];
+	original_opcodes = new UInt8[min];
 
 	this->task->read(from, (void*) original_opcodes, min);
 
@@ -259,7 +259,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	architecture->makeBranch(&to_hook_function, to, from);
 
-	replace_opcodes = new uint8_t[branch_size];
+	replace_opcodes = new UInt8[branch_size];
 
 	memcpy(replace_opcodes, (void*) &to_hook_function, branch_size);
 
@@ -269,7 +269,7 @@ void Hook::hookFunction(mach_vm_address_t to, enum HookType hooktype)
 
 	architecture->makeBranch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
 	
-	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
+	payload->writeBytes((UInt8*) &to_original_function, branch_size);
 
 	this->task->write(from, (void*) &to_hook_function, branch_size);
 
@@ -294,7 +294,7 @@ void Hook::uninstallHook()
 {
 }
 
-void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hooktype)
+void Hook::addBreakpoint(xnu::Mach::VmAddress breakpoint_hook, enum HookType hooktype)
 {
 	struct HookPatch *hook = new HookPatch;
 
@@ -306,23 +306,23 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	Payload *payload = this->prepareTrampoline();
 
-	mach_vm_address_t trampoline;
+	xnu::Mach::VmAddress trampoline;
 
 	trampoline = payload->getAddress() + payload->getCurrentOffset();
 
-	size_t min;
-	size_t branch_size;
+	Size min;
+	Size branch_size;
 
-	mach_vm_address_t from = this->from;
+	xnu::Mach::VmAddress from = this->from;
 
 	branch_size = architecture->getBranchSize();
 
 	min = disassembler->instructionSize(from, branch_size);
 
-	uint8_t *original_opcodes;
-	uint8_t *replace_opcodes;
+	UInt8 *original_opcodes;
+	UInt8 *replace_opcodes;
 
-	original_opcodes = new uint8_t[min];
+	original_opcodes = new UInt8[min];
 
 	this->task->read(from, (void*) original_opcodes, min);
 
@@ -333,11 +333,11 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	architecture->makeBranch(&to_trampoline, trampoline, from);
 
-	replace_opcodes = new uint8_t[branch_size];
+	replace_opcodes = new UInt8[branch_size];
 
 	memcpy(replace_opcodes, (void*) &to_trampoline, branch_size);
 
-	size_t breakpoint_size = architecture->getBreakpointSize();
+	Size breakpoint_size = architecture->getBreakpointSize();
 
 	if(breakpoint_hook)
 	{
@@ -346,34 +346,34 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 		union Breakpoint breakpoint;
 
-		size_t call_size = architecture->getCallSize();
+		Size call_size = architecture->getCallSize();
 
-		payload->writeBytes((uint8_t*) push_registers, (size_t) ((uint8_t*) push_registers_end - (uint8_t*) push_registers));
-		payload->writeBytes((uint8_t*) set_argument, (size_t) ((uint8_t*) set_argument_end - (uint8_t*) set_argument));
+		payload->writeBytes((UInt8*) push_registers, (Size) ((UInt8*) push_registers_end - (UInt8*) push_registers));
+		payload->writeBytes((UInt8*) set_argument, (Size) ((UInt8*) set_argument_end - (UInt8*) set_argument));
 
 		architecture->makeCall(&call_breakpoint_hook, breakpoint_hook, payload->getAddress() + payload->getCurrentOffset());
 
-		payload->writeBytes((uint8_t*) &call_breakpoint_hook, call_size);
+		payload->writeBytes((UInt8*) &call_breakpoint_hook, call_size);
 
-		payload->writeBytes((uint8_t*) check_breakpoint, (size_t) ((uint8_t*) check_breakpoint_end - (uint8_t*) check_breakpoint));
+		payload->writeBytes((UInt8*) check_breakpoint, (Size) ((UInt8*) check_breakpoint_end - (UInt8*) check_breakpoint));
 
 		architecture->makeBreakpoint(&breakpoint);
 
-		payload->writeBytes((uint8_t*) &breakpoint, breakpoint_size);
+		payload->writeBytes((UInt8*) &breakpoint, breakpoint_size);
 
-		payload->writeBytes((uint8_t*) pop_registers, (size_t) ((uint8_t*) pop_registers_end - (uint8_t*) pop_registers));
+		payload->writeBytes((UInt8*) pop_registers, (Size) ((UInt8*) pop_registers_end - (UInt8*) pop_registers));
 	} else
 	{
 		// break regardless
 		union Breakpoint breakpoint;
 
-		payload->writeBytes((uint8_t*) push_registers, (size_t) ((uint8_t*) push_registers_end - (uint8_t*) push_registers));
+		payload->writeBytes((UInt8*) push_registers, (Size) ((UInt8*) push_registers_end - (UInt8*) push_registers));
 		
 		architecture->makeBreakpoint(&breakpoint);
 
-		payload->writeBytes((uint8_t*) &breakpoint, breakpoint_size);
+		payload->writeBytes((UInt8*) &breakpoint, breakpoint_size);
 
-		payload->writeBytes((uint8_t*) pop_registers, (size_t) ((uint8_t*) pop_registers_end - (uint8_t*) pop_registers));
+		payload->writeBytes((UInt8*) pop_registers, (Size) ((UInt8*) pop_registers_end - (UInt8*) pop_registers));
 	}
 
 	union Branch to_original_function;
@@ -384,7 +384,7 @@ void Hook::addBreakpoint(mach_vm_address_t breakpoint_hook, enum HookType hookty
 
 	architecture->makeBranch(&to_original_function, from + min, payload->getAddress() + payload->getCurrentOffset());
 
-	payload->writeBytes((uint8_t*) &to_original_function, branch_size);
+	payload->writeBytes((UInt8*) &to_original_function, branch_size);
 
 	this->task->write(from, (void*) replace_opcodes, branch_size);
 

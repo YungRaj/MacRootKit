@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -38,7 +40,7 @@ enum strparse_result {
 	STRPARSE_OVERFLOW,
 };
 
-char* strnchar(char *str, uint32_t len, char ch);
+char* strnchar(char *str, UInt32 len, char ch);
 
 enum strtoint_result {
 	STRTOINT_OK,
@@ -48,11 +50,11 @@ enum strtoint_result {
 };
 
 enum strtoint_result strtoint(char *str,
-							  uint32_t len,
+							  UInt32 len,
 							  bool sign,
 							  bool is_signed,
-							  uint32_t base,
-							  uint64_t *value,
+							  UInt32 base,
+							  UInt64 *value,
 							  char **end);
 
 enum strtodata_result {
@@ -64,9 +66,9 @@ enum strtodata_result {
 };
 
 enum strtodata_result strtodata(char *str,
-								uint32_t base,
+								UInt32 base,
 								void *data,
-								uint32_t *size,
+								UInt32 *size,
 								char **end);
 
 enum strparse_result strreplace(char *str, char find, char replace);

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Arch.hpp"
 
 class MachO;
@@ -42,10 +44,10 @@ namespace Debug
 {
 	namespace Symbolicate
 	{
-		void lookForAddressInsideKernel(mach_vm_address_t address, xnu::Kernel *kernel, Symbol *&sym);
-		void lookForAddressInsideKexts(mach_vm_address_t address, std::vector<xnu::Kext*> &kexts, Symbol *&sym);
+		void lookForAddressInsideKernel(xnu::Mach::VmAddress address, xnu::Kernel *kernel, Symbol *&sym);
+		void lookForAddressInsideKexts(xnu::Mach::VmAddress address, std::vector<xnu::Kext*> &kexts, Symbol *&sym);
 
-		Symbol* getSymbolFromAddress(mach_vm_address_t address, off_t *delta);
+		Symbol* getSymbolFromAddress(xnu::Mach::VmAddress address, Offset *delta);
 	};
 
 	void printBacktrace(union Arch::ThreadState *thread_state);

@@ -30,7 +30,7 @@ void MacRootKit::registerCallbacks()
 		static_cast<MacRootKit*>(user)->onEntitlementRequest(task, entitlement, original);
 	});
 
-	this->registerBinaryLoadCallback((void*) this, [] (void *user, task_t task, const char *path, size_t len)
+	this->registerBinaryLoadCallback((void*) this, [] (void *user, task_t task, const char *path, Size len)
 	{
 		static_cast<MacRootKit*>(user)->onProcLoad(task, path, len);
 	});
@@ -79,7 +79,7 @@ Kext* MacRootKit::getKextByIdentifier(char *name)
 	return NULL;
 }
 
-Kext* MacRootKit::getKextByAddress(mach_vm_address_t address)
+Kext* MacRootKit::getKextByAddress(xnu::Mach::VmAddress address)
 {
 	std::vector<Kext*> &kexts = this->getKexts();
 
@@ -101,7 +101,7 @@ void MacRootKit::onEntitlementRequest(task_t task, const char *entitlement, void
 
 }
 
-void MacRootKit::onProcLoad(task_t task, const char *path, size_t len)
+void MacRootKit::onProcLoad(task_t task, const char *path, Size len)
 {
 
 }

@@ -6,7 +6,7 @@
 
 namespace IOKit
 {
-	static constexpr size_t bruteMax {40000000};
+	static constexpr Size bruteMax {40000000};
 	
 	OSSerialize *getProperty(IORegistryEntry *entry, const char *property)
 	{
@@ -35,7 +35,7 @@ namespace IOKit
 
 	bool awaitPublishing(IORegistryEntry *obj)
 	{
-		size_t counter = 0;
+		Size counter = 0;
 
 		while (counter < 256)
 		{
@@ -58,7 +58,7 @@ namespace IOKit
 		return false;
 	}
 
-	uint32_t readPCIConfigValue(IORegistryEntry *service, uint32_t reg, uint32_t space, uint32_t size)
+	UInt32 readPCIConfigValue(IORegistryEntry *service, UInt32 reg, UInt32 space, UInt32 size)
 	{
 		if (!awaitPublishing(service))
 			return 0xffffffff;
@@ -68,7 +68,7 @@ namespace IOKit
 		auto read8  = reinterpret_cast<t_PCIConfigRead8  **>(service)[0][PCIConfigOffset::ConfigRead8];
 
 		if (space == 0) {
-			space = getMember<uint32_t>(service, 0xA8);
+			space = getMember<UInt32>(service, 0xA8);
 			MAC_RK_LOG("read pci config discovered %s space to be 0x%08X", service->getName(), space);
 		}
 
@@ -139,7 +139,7 @@ namespace IOKit
 		}
 	}
 
-	void getDeviceAddress(IORegistryEntry *service, uint8_t &bus, uint8_t &device, uint8_t &function)
+	void getDeviceAddress(IORegistryEntry *service, UInt8 &bus, UInt8 &device, UInt8 &function)
 	{
 		auto getBus = reinterpret_cast<t_PCIConfigGetBusNumber **>(service)[0][PCIConfigOffset::GetBusNumber];
 		auto getDevice = reinterpret_cast<t_PCIConfigGetDeviceNumber **>(service)[0][PCIConfigOffset::GetDeviceNumber];
@@ -173,7 +173,7 @@ namespace IOKit
 
 		IORegistryEntry *res = NULL;
 
-		size_t bruteCount = 0;
+		Size bruteCount = 0;
 
 		do
 		{
@@ -183,7 +183,7 @@ namespace IOKit
 
 			if(iterator)
 			{
-				size_t len = strlen(prefix);
+				Size len = strlen(prefix);
 				
 				while ((res = OSDynamicCast(IORegistryEntry, iterator->getNextObject())) != NULL)
 				{
@@ -261,14 +261,14 @@ namespace IOKit
 		if (!compatibleProp)
 			return true;
 
-		uint32_t compatibleSz = compatibleProp->getLength();
+		UInt32 compatibleSz = compatibleProp->getLength();
 
 		const char *compatibleStr = static_cast<const char *>(compatibleProp->getBytesNoCopy());
 
 		MAC_RK_LOG("compatible property starts with %s and is %u bytes", compatibleStr ? compatibleStr : "(null)", compatibleSz);
 
 		if (compatibleStr) {
-			for (uint32_t i = 0; i < compatibleSz; i++) {
+			for (UInt32 i = 0; i < compatibleSz; i++) {
 				if (!strcmp(&compatibleStr[i], name)) {
 					MAC_RK_LOG("found %s in compatible, ignoring", name);
 					return true;
@@ -277,11 +277,11 @@ namespace IOKit
 				i += strlen(&compatibleStr[i]);
 			}
 
-			uint32_t nameSize = static_cast<uint32_t>(strlen(name) + 1);
+			UInt32 nameSize = static_cast<UInt32>(strlen(name) + 1);
 
-			uint32_t compatibleBufSz = compatibleSz + nameSize;
+			UInt32 compatibleBufSz = compatibleSz + nameSize;
 
-			uint8_t *compatibleBuf = new uint8_t[compatibleBufSz];
+			UInt8 *compatibleBuf = new UInt8[compatibleBufSz];
 
 			if (compatibleBuf)
 			{
@@ -311,7 +311,7 @@ namespace IOKit
 		return false;
 	}
 
-	void patchVtableEntry(OSObject *object, void *entry, uint32_t idx)
+	void patchVtableEntry(OSObject *object, void *entry, UInt32 idx)
 	{
 
 	}

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "MachO.hpp"
 
 class MachO;
@@ -34,15 +36,15 @@ namespace xnu
 
 			~KernelMachO();
 
-			mach_vm_address_t getKernelCache() { return kernel_cache; }
+			xnu::Mach::VmAddress getKernelCache() { return kernel_cache; }
 
-			mach_vm_address_t getKernelCollection() { return kernel_collection; }
+			xnu::Mach::VmAddress getKernelCollection() { return kernel_collection; }
 
-			void setKernelCache(mach_vm_address_t kc) { this->kernel_cache = kc; }
+			void setKernelCache(xnu::Mach::VmAddress kc) { this->kernel_cache = kc; }
 
-			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
+			void setKernelCollection(xnu::Mach::VmAddress kc) { this->kernel_collection = kc; }
 
-			static xnu::Kext* kextLoadedAt(xnu::Kernel *kernel, mach_vm_address_t address);
+			static xnu::Kext* kextLoadedAt(xnu::Kernel *kernel, xnu::Mach::VmAddress address);
 			static xnu::Kext* kextWithIdentifier(xnu::Kernel *kernel, char *kext);
 
 			virtual void parseLinkedit();
@@ -54,15 +56,15 @@ namespace xnu
 		protected:
 			xnu::Kernel *kernel;
 
-			mach_vm_address_t kernel_cache;
+			xnu::Mach::VmAddress kernel_cache;
 
-			mach_vm_address_t kernel_collection;
+			xnu::Mach::VmAddress kernel_collection;
 
-			uint8_t *linkedit;
+			UInt8 *linkedit;
 
-			mach_vm_address_t linkedit_off;
+			xnu::Mach::VmAddress linkedit_off;
 			
-			size_t linkedit_size;
+			Size linkedit_size;
 	};
 
 }

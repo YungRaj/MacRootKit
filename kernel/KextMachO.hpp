@@ -19,6 +19,8 @@
 #include <mach/mach_types.h>
 #include <mach/kmod.h>
 
+#include <Types.h>
+
 #include "MachO.hpp"
 
 #include "vector.hpp"
@@ -36,7 +38,7 @@ namespace xnu
 	class KextMachO : public MachO
 	{
 		public:
-			KextMachO(xnu::Kernel *kernel, char *name, mach_vm_address_t base);
+			KextMachO(xnu::Kernel *kernel, char *name, xnu::Mach::VmAddress base);
 			KextMachO(xnu::Kernel *kernel, char *name, kmod_info_t *kmod_info);
 
 			~KextMachO();
@@ -45,14 +47,14 @@ namespace xnu
 
 			char* getKextName() { return name; }
 
-			mach_vm_address_t getAddress() { return address; }
+			xnu::Mach::VmAddress getAddress() { return address; }
 
-			virtual size_t getSize() { return kmod_info->size > 0 ? kmod_info->size : MachO::getSize(); }
+			virtual Size getSize() { return kmod_info->size > 0 ? kmod_info->size : MachO::getSize(); }
 
 			kmod_start_func_t* getKmodStart() { return kmod_info->start; }
 			kmod_stop_func_t* getKmodStop() { return kmod_info->stop; }
 
-			void setKernelCollection(mach_vm_address_t kc) { this->kernel_collection = kc; }
+			void setKernelCollection(xnu::Mach::VmAddress kc) { this->kernel_collection = kc; }
 
 			virtual void parseLinkedit();
 
@@ -65,21 +67,21 @@ namespace xnu
 		private:
 			xnu::Kernel *kernel;
 
-			mach_vm_address_t address;
+			xnu::Mach::VmAddress address;
 
 			char *name;
 
-			off_t base_offset;
+			Offset base_offset;
 
-			mach_vm_address_t kernel_cache;
-			mach_vm_address_t kernel_collection;
+			xnu::Mach::VmAddress kernel_cache;
+			xnu::Mach::VmAddress kernel_collection;
 
 			kmod_info_t *kmod_info;
 
-			uint8_t *linkedit;
+			UInt8 *linkedit;
 
-			off_t linkedit_off;
+			Offset linkedit_off;
 
-			size_t linkedit_size;
+			Size linkedit_size;
 	};
 }

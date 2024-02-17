@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include <mach/kmod.h>
 
 #include "vector.hpp"
@@ -33,9 +35,9 @@ namespace mrk
 			~Patcher();
 
 			virtual void findAndReplace(void *data,
-										size_t data_size,
-										const void *find, size_t find_size,
-										const void *replace, size_t replace_size);
+										Size data_size,
+										const void *find, Size find_size,
+										const void *replace, Size replace_size);
 
 			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
@@ -43,15 +45,15 @@ namespace mrk
 
 			std::vector<Hook*>& getHooks() { return hooks; }
 
-			mrk::Hook* hookForFunction(mach_vm_address_t address);
+			mrk::Hook* hookForFunction(xnu::Mach::VmAddress address);
 
-			mrk::Hook* breakpointForAddress(mach_vm_address_t address);
+			mrk::Hook* breakpointForAddress(xnu::Mach::VmAddress address);
 
-			bool isFunctionHooked(mach_vm_address_t address);
+			bool isFunctionHooked(xnu::Mach::VmAddress address);
 
-			bool isBreakpointAtInstruction(mach_vm_address_t address);
+			bool isBreakpointAtInstruction(xnu::Mach::VmAddress address);
 
-			void installHook(mrk::Hook *hook, mach_vm_address_t hooked);
+			void installHook(mrk::Hook *hook, xnu::Mach::VmAddress hooked);
 
 			void removeHook(mrk::Hook *hook);
 

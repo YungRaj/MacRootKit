@@ -21,12 +21,12 @@
 namespace std
 {
 	template<typename T>
-	class Dictionary
+	class map
 	{
 		public:
-			Dictionary() { }
+			map() { }
 
-			~Dictionary() { }
+			~map() { }
 
 			T operator[](char *key) { return this->get(key); }
 

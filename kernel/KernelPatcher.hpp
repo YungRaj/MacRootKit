@@ -21,6 +21,8 @@
 #include <mach/mach_types.h>
 #include <mach/kmod.h>
 
+#include <Types.h>
+
 #include "Patcher.hpp"
 #include "Arch.hpp"
 
@@ -41,13 +43,13 @@ struct KextPatch
 		MachO *macho;
 		Symbol *symbol;
 
-		const uint8_t *find;
-		const uint8_t *replace;
+		const UInt8 *find;
+		const UInt8 *replace;
 
-		size_t size;
-		size_t count;
+		Size size;
+		Size count;
 
-		off_t offset;
+		Offset offset;
 };
 
 struct KernelPatch
@@ -58,13 +60,13 @@ struct KernelPatch
 		MachO *macho;
 		Symbol *symbol;
 
-		const uint8_t *find;
-		const uint8_t *replace;
+		const UInt8 *find;
+		const UInt8 *replace;
 
-		size_t size;
-		size_t count;
+		Size size;
+		Size count;
 
-		off_t offset;
+		Offset offset;
 };
 
 extern KernelPatch kernelPatches[];
@@ -103,15 +105,15 @@ namespace mrk
 
 			static void taskSetMainThreadQos(task_t task, thread_t thread);
 
-			virtual void findAndReplace(void *data, size_t data_size,
-										const void *find, size_t find_size,
-										const void *replace, size_t replace_size);
+			virtual void findAndReplace(void *data, Size data_size,
+										const void *find, Size find_size,
+										const void *replace, Size replace_size);
 
 			virtual void routeFunction(mrk::Hook *hook);
 
 			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
 
-			virtual void onExec(task_t task, const char *path, size_t len);
+			virtual void onExec(task_t task, const char *path, Size len);
 
 			virtual void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
@@ -127,9 +129,9 @@ namespace mrk
 
 			void processKext(kmod_info_t *kmod, bool loaded);
 
-			mach_vm_address_t injectPayload(mach_vm_address_t address, mrk::Payload *payload);
+			xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, mrk::Payload *payload);
 
-			mach_vm_address_t injectSegment(mach_vm_address_t address, mrk::Payload *payload);
+			xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, mrk::Payload *payload);
 
 			void applyKernelPatch(struct KernelPatch *patch);
 			void applyKextPatch(struct KextPatch *patch);

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <Types.h>
+
 #include "Arch.hpp"
 
 #include "Kernel.hpp"
@@ -52,7 +54,7 @@ namespace mrk
 		public:
 			using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, void *original);
 
-			using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, size_t len);
+			using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, Size len);
 
 			using kextload_callback_t = void (*)(void *user, void *kext, kmod_info_t *kmod_info);
 
@@ -71,7 +73,7 @@ namespace mrk
 
 			xnu::Kext* getKextByIdentifier(char *name);
 
-			xnu::Kext* getKextByAddress(mach_vm_address_t address);
+			xnu::Kext* getKextByAddress(xnu::Mach::VmAddress address);
 
 			mrk::KernelPatcher* getKernelPatcher() { return kernelPatcher; }
 
@@ -106,7 +108,7 @@ namespace mrk
 
 			void onEntitlementRequest(task_t task, const char *entitlement, void *original);
 
-			void onProcLoad(task_t task, const char *path, size_t len);
+			void onProcLoad(task_t task, const char *path, Size len);
 
 			void onKextLoad(void *kext, kmod_info_t *kmod);
 

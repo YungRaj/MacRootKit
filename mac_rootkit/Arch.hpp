@@ -16,10 +16,12 @@
 
 #pragma once
 
-#include "APIUtil.hpp"
+#include <Types.h>
 
 #include <x86_64/x86_64.hpp>
 #include <arm64/arm64.hpp>
+
+#include "APIUtil.hpp"
 
 namespace Arch
 {
@@ -208,32 +210,32 @@ namespace Arch
 	{
 		struct x86_64_register_state
 		{
-			uint64_t rsp;
-			uint64_t rbp;
-			uint64_t rax;
-			uint64_t rbx;
-			uint64_t rcx;
-			uint64_t rdx;
-			uint64_t rdi;
-			uint64_t rsi;
-			uint64_t r8;
-			uint64_t r9;
-			uint64_t r10;
-			uint64_t r11;
-			uint64_t r12;
-			uint64_t r13;
-			uint64_t r14;
-			uint64_t r15;
+			UInt64 rsp;
+			UInt64 rbp;
+			UInt64 rax;
+			UInt64 rbx;
+			UInt64 rcx;
+			UInt64 rdx;
+			UInt64 rdi;
+			UInt64 rsi;
+			UInt64 r8;
+			UInt64 r9;
+			UInt64 r10;
+			UInt64 r11;
+			UInt64 r12;
+			UInt64 r13;
+			UInt64 r14;
+			UInt64 r15;
 		} state_x86_64;
 
 		struct arm64_register_state
 		{
-			uint64_t    x[29];
-			uint64_t    fp;
-			uint64_t    lr;
-			uint64_t    sp;
-			uint64_t    pc;
-			uint64_t    cpsr;
+			UInt64    x[29];
+			UInt64    fp;
+			UInt64    lr;
+			UInt64    sp;
+			UInt64    pc;
+			UInt64    cpsr;
 		} state_arm64;
 	};
 
@@ -257,7 +259,7 @@ namespace Arch
 	#define PAGE_SHIFT_X86_64  12
 
 	template<enum Architectures ArchType>
-	static constexpr uint32_t getPageShift() requires SupportedProcessor<ArchType>
+	static constexpr UInt32 getPageShift() requires SupportedProcessor<ArchType>
 	{
 		if constexpr (ArchType == ARCH_arm64)
 			return PAGE_SHIFT_ARM64;
@@ -266,7 +268,7 @@ namespace Arch
 	}
 
 	template<enum Architectures ArchType>
-	static constexpr uint64_t getPageSize() requires SupportedProcessor<ArchType>
+	static constexpr UInt64 getPageSize() requires SupportedProcessor<ArchType>
 	{
 		return 1 << Arch::getPageShift<ArchType>();
 	}
@@ -365,7 +367,7 @@ namespace Arch
 	{
 		public:
 
-			constexpr static size_t getBranchSize()
+			constexpr static Size getBranchSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -377,7 +379,7 @@ namespace Arch
 			    }
 			}
 
-			constexpr static size_t getCallSize()
+			constexpr static Size getCallSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -389,7 +391,7 @@ namespace Arch
 			    }
 			}
 
-			constexpr static size_t getBreakpointSize()
+			constexpr static Size getBreakpointSize()
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -401,7 +403,7 @@ namespace Arch
 			    }
 			}
 
-			static void makeBranch(union Branch *branch, mach_vm_address_t to, mach_vm_address_t from)
+			static void makeBranch(union Branch *branch, xnu::Mach::VmAddress to, xnu::Mach::VmAddress from)
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -413,7 +415,7 @@ namespace Arch
 			    }
 			}
 
-			static void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
+			static void makeCall(union FunctionCall *call, xnu::Mach::VmAddress to, xnu::Mach::VmAddress from)
 			{
 				if constexpr (ArchType == ARCH_x86_64)
 				{
@@ -447,17 +449,17 @@ namespace Arch
 
 			static enum Architectures getArchitecture();
 
-			constexpr size_t getBranchSize()
+			constexpr Size getBranchSize()
 			{
 				return Instructions<Arch::getCurrentArchitecture()>::getBranchSize();
 			}
 
-			constexpr size_t getCallSize()
+			constexpr Size getCallSize()
 			{
 				return Instructions<Arch::getCurrentArchitecture()>::getCallSize();
 			}
 
-			constexpr size_t getBreakpointSize()
+			constexpr Size getBreakpointSize()
 			{
 				return Instructions<Arch::getCurrentArchitecture()>::getBreakpointSize();
 			}
@@ -470,12 +472,12 @@ namespace Arch
 
 			bool setPaging(bool enable);
 
-			void makeBranch(union Branch *branch, mach_vm_address_t to, mach_vm_address_t from)
+			void makeBranch(union Branch *branch, xnu::Mach::VmAddress to, xnu::Mach::VmAddress from)
 			{
 				return Instructions<Arch::getCurrentArchitecture()>::makeBranch(branch, to, from);
 			}
 
-			void makeCall(union FunctionCall *call, mach_vm_address_t to, mach_vm_address_t from)
+			void makeCall(union FunctionCall *call, xnu::Mach::VmAddress to, xnu::Mach::VmAddress from)
 			{
 				return Instructions<Arch::getCurrentArchitecture()>::makeCall(call, to, from);
 			}

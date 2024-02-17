@@ -27,9 +27,11 @@
 
 #include <mach/mach_types.h>
 
+#include <Types.h>
+
 namespace IOKit
 {
-	enum PCIRegister : uint8_t
+	enum PCIRegister : UInt8
 	{
 		kIOPCIConfigVendorID 				= 0x00,
 		kIOPCIConfigDeviceID 				= 0x02,
@@ -61,7 +63,7 @@ namespace IOKit
 
 	struct PCIConfigOffset
 	{
-		enum : size_t
+		enum : Size
 		{
 			ConfigRead32 		= 0x10A,
 			ConfigWrite32 		= 0x10B,
@@ -75,23 +77,23 @@ namespace IOKit
 		};
 	};
 	
-	using t_PCIConfigRead8 					= uint32_t (*)(IORegistryEntry *service, uint32_t space, uint8_t offset);
-	using t_PCIConfigRead16 				= uint16_t (*)(IORegistryEntry *service, uint32_t space, uint8_t offset);
-	using t_PCIConfigRead32 				= uint8_t (*)(IORegistryEntry *service, uint32_t space, uint8_t offset);
+	using t_PCIConfigRead8 					= UInt32 (*)(IORegistryEntry *service, UInt32 space, UInt8 offset);
+	using t_PCIConfigRead16 				= UInt16 (*)(IORegistryEntry *service, UInt32 space, UInt8 offset);
+	using t_PCIConfigRead32 				= UInt8 (*)(IORegistryEntry *service, UInt32 space, UInt8 offset);
 
-	using t_PCIConfigWrite8 				= void (*)(IORegistryEntry *service, uint32_t space, uint8_t offset, uint32_t data);
-	using t_PCIConfigWrite16 				= void (*)(IORegistryEntry *service, uint32_t space, uint8_t offset, uint16_t data);
-	using t_PCIConfigWrite32 				= void (*)(IORegistryEntry *service, uint32_t space, uint8_t offset, uint8_t data);
+	using t_PCIConfigWrite8 				= void (*)(IORegistryEntry *service, UInt32 space, UInt8 offset, UInt32 data);
+	using t_PCIConfigWrite16 				= void (*)(IORegistryEntry *service, UInt32 space, UInt8 offset, UInt16 data);
+	using t_PCIConfigWrite32 				= void (*)(IORegistryEntry *service, UInt32 space, UInt8 offset, UInt8 data);
 
-	using t_PCIConfigGetBusNumber 			= uint8_t (*)(IORegistryEntry *service);
-	using t_PCIConfigGetDeviceNumber 		= uint8_t (*)(IORegistryEntry *service);
-	using t_PCIConfigGetFunctionNumber 		= uint8_t (*)(IORegistryEntry *service);
+	using t_PCIConfigGetBusNumber 			= UInt8 (*)(IORegistryEntry *service);
+	using t_PCIConfigGetDeviceNumber 		= UInt8 (*)(IORegistryEntry *service);
+	using t_PCIConfigGetFunctionNumber 		= UInt8 (*)(IORegistryEntry *service);
 
 	bool awaitPublishing(IORegistryEntry *obj);
 
-	uint32_t readPCIConfigValue(IORegistryEntry *service, uint32_t reg, uint32_t space = 0, uint32_t size = 0);
+	UInt32 readPCIConfigValue(IORegistryEntry *service, UInt32 reg, UInt32 space = 0, UInt32 size = 0);
 
-	void getDeviceAddress(IORegistryEntry *service, uint8_t &bus, uint8_t &device, uint8_t &function);
+	void getDeviceAddress(IORegistryEntry *service, UInt8 &bus, UInt8 &device, UInt8 &function);
 
 	IORegistryEntry* findEntryByPrefix(const char *path, const char *prefix, const IORegistryPlane *plane, bool (*proc)(void*, IORegistryEntry*) = nullptr, bool brute = false, void *user = nullptr);
 
@@ -102,7 +104,7 @@ namespace IOKit
 
 	OSSerialize* getProperty(IORegistryEntry *entry, const char *property);
 
-	void patchVtableEntry(OSObject *object, void *entry, uint32_t idx);
+	void patchVtableEntry(OSObject *object, void *entry, UInt32 idx);
 
 	void patchVtable(OSObject *object, void *vtable);
 
