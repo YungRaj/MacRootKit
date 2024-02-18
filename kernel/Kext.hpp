@@ -29,87 +29,87 @@
 namespace xnu {}
 
 namespace xnu {
-    class Kernel;
+class Kernel;
 
-    class Kext {
-    public:
-        Kext(xnu::Kernel* kernel, xnu::Mach::VmAddress base, char* identifier);
+class Kext {
+public:
+    Kext(xnu::Kernel* kernel, xnu::Mach::VmAddress base, char* identifier);
 
-        Kext(xnu::Kernel* kernel, void* kext, xnu::KmodInfo* kmod_info);
+    Kext(xnu::Kernel* kernel, void* kext, xnu::KmodInfo* kmod_info);
 
-        ~Kext();
+    ~Kext();
 
-        static xnu::Kext* findKextWithIdentifier(xnu::Kernel* kernel, char* name);
-        static xnu::Kext* findKextWithIdentifier_deprecated(xnu::Kernel* kernel, char* name);
+    static xnu::Kext* findKextWithIdentifier(xnu::Kernel* kernel, char* name);
+    static xnu::Kext* findKextWithIdentifier_deprecated(xnu::Kernel* kernel, char* name);
 
-        static xnu::Kext* findKextWithId(xnu::Kernel* kernel, UInt32 kext_id);
+    static xnu::Kext* findKextWithId(xnu::Kernel* kernel, UInt32 kext_id);
 
-        static void onKextLoad(void* kext, xnu::KmodInfo* kmod_info);
+    static void onKextLoad(void* kext, xnu::KmodInfo* kmod_info);
 
-        char* getName() {
-            return identifier;
-        }
+    char* getName() {
+        return identifier;
+    }
 
-        xnu::KextMachO* getMachO() {
-            return macho;
-        }
+    xnu::KextMachO* getMachO() {
+        return macho;
+    }
 
-        xnu::Mach::VmAddress getBase() {
-            return address;
-        }
+    xnu::Mach::VmAddress getBase() {
+        return address;
+    }
 
-        xnu::Mach::VmAddress getAddress() {
-            return address;
-        }
+    xnu::Mach::VmAddress getAddress() {
+        return address;
+    }
 
-        Size getSize() {
-            return size;
-        }
+    Size getSize() {
+        return size;
+    }
 
-        void* getOSKext() {
-            return kext;
-        }
+    void* getOSKext() {
+        return kext;
+    }
 
-        xnu::KmodInfo* getKmodInfo() {
-            return kmod_info;
-        }
+    xnu::KmodInfo* getKmodInfo() {
+        return kmod_info;
+    }
 
-        xnu::KmodStartFunc* getKmodStart() {
-            return kmod_info->start;
-        }
-        xnu::KmodStopFunc* getKmodStop() {
-            return kmod_info->stop;
-        }
+    xnu::KmodStartFunc* getKmodStart() {
+        return kmod_info->start;
+    }
+    xnu::KmodStopFunc* getKmodStop() {
+        return kmod_info->stop;
+    }
 
-        std::vector<Symbol*>& getAllSymbols() {
-            return macho->getAllSymbols();
-        }
+    std::vector<Symbol*>& getAllSymbols() {
+        return macho->getAllSymbols();
+    }
 
-        Symbol* getSymbolByName(char* symname) {
-            return macho->getSymbolByName(symname);
-        }
-        Symbol* getSymbolByAddress(xnu::Mach::VmAddress address) {
-            return macho->getSymbolByAddress(address);
-        }
+    Symbol* getSymbolByName(char* symname) {
+        return macho->getSymbolByName(symname);
+    }
+    Symbol* getSymbolByAddress(xnu::Mach::VmAddress address) {
+        return macho->getSymbolByAddress(address);
+    }
 
-        xnu::Mach::VmAddress getSymbolAddressByName(char* symbolname) {
-            return macho->getSymbolAddressByName(symbolname);
-        }
+    xnu::Mach::VmAddress getSymbolAddressByName(char* symbolname) {
+        return macho->getSymbolAddressByName(symbolname);
+    }
 
-    private:
-        xnu::Kernel* kernel;
+private:
+    xnu::Kernel* kernel;
 
-        xnu::KextMachO* macho;
+    xnu::KextMachO* macho;
 
-        xnu::KmodInfo* kmod_info;
+    xnu::KmodInfo* kmod_info;
 
-        void* kext;
+    void* kext;
 
-        xnu::Mach::VmAddress address;
+    xnu::Mach::VmAddress address;
 
-        Size size;
+    Size size;
 
-        char* identifier;
-    };
+    char* identifier;
+};
 
 }; // namespace xnu

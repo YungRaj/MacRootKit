@@ -17,89 +17,89 @@
 #include "Arch.hpp"
 
 namespace Arch {
-    Architecture* initArchitecture() {
-        static Architecture* architecture = NULL;
+Architecture* initArchitecture() {
+    static Architecture* architecture = NULL;
 
-        if (!architecture) {
-            architecture = new Architecture();
-        }
-
-        return architecture;
+    if (!architecture) {
+        architecture = new Architecture();
     }
 
-    Architecture::Architecture() : arch(Arch::getCurrentArchitecture()) {}
+    return architecture;
+}
 
-    Architecture::~Architecture() {}
+Architecture::Architecture() : arch(Arch::getCurrentArchitecture()) {}
 
-    bool Architecture::setInterrupts(bool enable) {
-        bool success = false;
+Architecture::~Architecture() {}
 
-        switch (current_architecture) {
-        case ARCH_x86_64:
-            success = x86_64::setInterrupts(enable);
+bool Architecture::setInterrupts(bool enable) {
+    bool success = false;
 
-            break;
-        case ARCH_arm64:
-            success = arm64::setInterrupts(enable);
+    switch (current_architecture) {
+    case ARCH_x86_64:
+        success = x86_64::setInterrupts(enable);
 
-            break;
-        default:
-            break;
-        }
+        break;
+    case ARCH_arm64:
+        success = arm64::setInterrupts(enable);
 
-        return success;
+        break;
+    default:
+        break;
     }
 
-    bool Architecture::setWPBit(bool enable) {
-        bool success = false;
+    return success;
+}
 
-        switch (current_architecture) {
-        case ARCH_x86_64:
-            success = x86_64::setWPBit(enable);
+bool Architecture::setWPBit(bool enable) {
+    bool success = false;
 
-            break;
-        case ARCH_arm64:
-            success = arm64::setWPBit(enable);
+    switch (current_architecture) {
+    case ARCH_x86_64:
+        success = x86_64::setWPBit(enable);
 
-            break;
-        default:
-            break;
-        }
+        break;
+    case ARCH_arm64:
+        success = arm64::setWPBit(enable);
 
-        return success;
+        break;
+    default:
+        break;
     }
 
-    bool Architecture::setNXBit(bool enable) {
-        bool success = false;
+    return success;
+}
 
-        switch (current_architecture) {
-        case ARCH_x86_64:
-            success = x86_64::setNXBit(enable);
+bool Architecture::setNXBit(bool enable) {
+    bool success = false;
 
-            break;
-        case ARCH_arm64:
-            success = arm64::setNXBit(enable);
+    switch (current_architecture) {
+    case ARCH_x86_64:
+        success = x86_64::setNXBit(enable);
 
-            break;
-        default:
-            break;
-        }
+        break;
+    case ARCH_arm64:
+        success = arm64::setNXBit(enable);
 
-        return success;
+        break;
+    default:
+        break;
     }
 
-    bool Architecture::setPaging(bool enable) {
-        bool success = false;
+    return success;
+}
 
-        switch (current_architecture) {
-        case ARCH_x86_64:
-            break;
-        case ARCH_arm64:
-            break;
-        default:
-            break;
-        }
+bool Architecture::setPaging(bool enable) {
+    bool success = false;
 
-        return success;
+    switch (current_architecture) {
+    case ARCH_x86_64:
+        break;
+    case ARCH_arm64:
+        break;
+    default:
+        break;
     }
+
+    return success;
+}
 } // namespace Arch

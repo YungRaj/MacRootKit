@@ -26,20 +26,19 @@
 #include <Types.h>
 
 namespace FileIO {
-    vnode_t vnodeForPath(const char* path);
+vnode_t vnodeForPath(const char* path);
 
-    int performIO(void* buffer, Offset off, Size size, vnode_t vnode, vfs_context_t ctxt,
-                  bool write);
+int performIO(void* buffer, Offset off, Size size, vnode_t vnode, vfs_context_t ctxt, bool write);
 
-    int read(void* buffer, Offset off, Size sz, vnode_t vnode, vfs_context_t ctxt);
+int read(void* buffer, Offset off, Size sz, vnode_t vnode, vfs_context_t ctxt);
 
-    int write(void* buffer, Offset off, Size sz, vnode_t vnode, vfs_context_t ctxt);
+int write(void* buffer, Offset off, Size sz, vnode_t vnode, vfs_context_t ctxt);
 
-    UInt8* readFile(const char* path, Size* size);
+UInt8* readFile(const char* path, Size* size);
 
-    int writeFile(const char* path, void* buffer, Size size,
-                  int fmode = O_TRUNC | O_CREAT | FWRITE | O_NOFOLLOW,
-                  int cmode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+int writeFile(const char* path, void* buffer, Size size,
+              int fmode = O_TRUNC | O_CREAT | FWRITE | O_NOFOLLOW,
+              int cmode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
-    Size getSize(vnode_t vnode, vfs_context_t ctxt);
+Size getSize(vnode_t vnode, vfs_context_t ctxt);
 } // namespace FileIO

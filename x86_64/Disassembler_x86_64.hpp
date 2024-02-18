@@ -23,33 +23,31 @@
 struct DisasmSig;
 
 namespace Arch {
-    namespace x86_64 {
-        namespace Disassembler {
-            bool init();
+namespace x86_64 {
+namespace Disassembler {
+bool init();
 
-            bool deinit();
+bool deinit();
 
-            size_t instructionSize(mach_vm_address_t address, size_t min);
+size_t instructionSize(mach_vm_address_t address, size_t min);
 
-            size_t quickInstructionSize(mach_vm_address_t address, size_t min);
+size_t quickInstructionSize(mach_vm_address_t address, size_t min);
 
-            size_t disassemble(mach_vm_address_t address, size_t size, cs_insn** result);
+size_t disassemble(mach_vm_address_t address, size_t size, cs_insn** result);
 
-            bool registerAccess(cs_insn* insn, cs_regs regs_read, uint8_t* nread,
-                                cs_regs regs_write, uint8_t* nwrite);
+bool registerAccess(cs_insn* insn, cs_regs regs_read, uint8_t* nread, cs_regs regs_write,
+                    uint8_t* nwrite);
 
-            mach_vm_address_t disassembleNthCall(mach_vm_address_t address, size_t num,
-                                                 size_t lookup_size);
+mach_vm_address_t disassembleNthCall(mach_vm_address_t address, size_t num, size_t lookup_size);
 
-            mach_vm_address_t disassembleNthJmp(mach_vm_address_t address, size_t num,
-                                                size_t lookup_size);
+mach_vm_address_t disassembleNthJmp(mach_vm_address_t address, size_t num, size_t lookup_size);
 
-            mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, x86_insn insn,
-                                                        size_t num, size_t lookup_size);
+mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, x86_insn insn, size_t num,
+                                            size_t lookup_size);
 
-            mach_vm_address_t disassembleSignature(mach_vm_address_t address,
-                                                   std::vector<struct DisasmSig*>* signature,
-                                                   size_t num, size_t lookup_size);
-        } // namespace Disassembler
-    }     // namespace x86_64
-};        // namespace Arch
+mach_vm_address_t disassembleSignature(mach_vm_address_t address,
+                                       std::vector<struct DisasmSig*>* signature, size_t num,
+                                       size_t lookup_size);
+} // namespace Disassembler
+} // namespace x86_64
+}; // namespace Arch

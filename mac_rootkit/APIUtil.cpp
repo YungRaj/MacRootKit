@@ -19,7 +19,7 @@
 #include "Log.hpp"
 
 namespace API {
-    void dump(Kernel* kernel, uint64_t address) {}
+void dump(Kernel* kernel, uint64_t address) {}
 
-    void hexdump(unsigned char* data, Size size, bool rev) {}
+void hexdump(unsigned char* data, Size size, bool rev) {}
 }; // namespace API

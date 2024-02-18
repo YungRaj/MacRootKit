@@ -34,89 +34,89 @@ extern "C" {
 #include "Hook.hpp"
 
 namespace xnu {
-    class Kernel;
-    class Kext;
+class Kernel;
+class Kext;
 }; // namespace xnu
 
 namespace mrk {
-    struct Plugin {
-    public:
-        explicit Plugin(IOService* service, char* product, Size version, UInt32 runmode,
-                        const char** disableArg, Size disableArgNum, const char** debugArg,
-                        Size debugArgNum, const char** betaArg, Size betaArgNum);
+struct Plugin {
+public:
+    explicit Plugin(IOService* service, char* product, Size version, UInt32 runmode,
+                    const char** disableArg, Size disableArgNum, const char** debugArg,
+                    Size debugArgNum, const char** betaArg, Size betaArgNum);
 
-        explicit Plugin(char* product, Size version, UInt32 runmode, const char** disableArg,
-                        Size disableArgNum, const char** debugArg, Size debugArgNum,
-                        const char** betaArg, Size betaArgNum);
+    explicit Plugin(char* product, Size version, UInt32 runmode, const char** disableArg,
+                    Size disableArgNum, const char** debugArg, Size debugArgNum,
+                    const char** betaArg, Size betaArgNum);
 
-        Size getVersion() {
-            return version;
-        }
+    Size getVersion() {
+        return version;
+    }
 
-        IOService* getService() {
-            return service;
-        }
+    IOService* getService() {
+        return service;
+    }
 
-        const char* getProduct() {
-            return product;
-        }
+    const char* getProduct() {
+        return product;
+    }
 
-        bool isKextPlugin() {
-            return service != NULL;
-        }
+    bool isKextPlugin() {
+        return service != NULL;
+    }
 
-        void addTarget(void* t) {
-            union Target target;
+    void addTarget(void* t) {
+        union Target target;
 
-            target.target = t;
+        target.target = t;
 
-            this->targets.push_back(target);
-        }
+        this->targets.push_back(target);
+    }
 
-        void addHook(xnu::Kernel* kernel, Hook* hook) {
-            this->addTarget(kernel);
-            this->hooks.push_back(hook);
-        }
+    void addHook(xnu::Kernel* kernel, Hook* hook) {
+        this->addTarget(kernel);
+        this->hooks.push_back(hook);
+    }
 
-        void addHook(xnu::Kext* kext, Hook* hook) {
-            this->addTarget(kext);
-            this->hooks.push_back(hook);
-        }
+    void addHook(xnu::Kext* kext, Hook* hook) {
+        this->addTarget(kext);
+        this->hooks.push_back(hook);
+    }
 
-        void removeHook(Hook* hook) {
-            this->hooks.erase(std::remove(hooks.begin(), hooks.end(), hook), hooks.end());
-        }
+    void removeHook(Hook* hook) {
+        this->hooks.erase(std::remove(hooks.begin(), hooks.end(), hook), hooks.end());
+    }
 
-        void (*pluginStart)();
-        void (*pluginStop)();
+    void (*pluginStart)();
+    void (*pluginStop)();
 
-    private:
-        union Target {
-            void* target;
+private:
+    union Target {
+        void* target;
 
-            xnu::Kernel* kernel;
-            xnu::Kext* kext;
-        };
-
-        std::vector<union Target> targets;
-
-        IOService* service;
-
-        const char* product;
-
-        Size version;
-
-        UInt32 runmode;
-
-        const char** disableArg;
-        Size disableArgNum;
-
-        const char** debugArg;
-        Size debugArgNum;
-
-        const char** betaArg;
-        Size betaArgNum;
-
-        std::vector<Hook*> hooks;
+        xnu::Kernel* kernel;
+        xnu::Kext* kext;
     };
+
+    std::vector<union Target> targets;
+
+    IOService* service;
+
+    const char* product;
+
+    Size version;
+
+    UInt32 runmode;
+
+    const char** disableArg;
+    Size disableArgNum;
+
+    const char** debugArg;
+    Size debugArgNum;
+
+    const char** betaArg;
+    Size betaArgNum;
+
+    std::vector<Hook*> hooks;
+};
 }; // namespace mrk

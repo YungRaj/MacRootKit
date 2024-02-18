@@ -19,9 +19,9 @@
 class MachO;
 
 namespace Arch {
-    namespace arm64 {
-        namespace Disassembler {}
-    } // namespace arm64
+namespace arm64 {
+namespace Disassembler {}
+} // namespace arm64
 } // namespace Arch
 
 using namespace Arch::arm64;
@@ -36,10 +36,10 @@ char* tlbi_op(uint8_t op1, uint8_t CRm, uint8_t op2);
 };
 
 namespace Arch {
-    namespace arm64 {
-        namespace Disassembler {
-            bool disassemble(MachO* macho, mach_vm_address_t pc, uint32_t op);
-            void disassemble(MachO* macho, mach_vm_address_t start, uint64_t* length);
-        }; // namespace Disassembler
-    };     // namespace arm64
-};         // namespace Arch
+namespace arm64 {
+namespace Disassembler {
+bool disassemble(MachO* macho, mach_vm_address_t pc, uint32_t op);
+void disassemble(MachO* macho, mach_vm_address_t start, uint64_t* length);
+}; // namespace Disassembler
+}; // namespace arm64
+}; // namespace Arch

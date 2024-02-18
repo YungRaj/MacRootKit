@@ -19,17 +19,17 @@
 #include "Plugin.hpp"
 
 namespace mrk {
-    class MacRootKit;
+class MacRootKit;
 };
 
 extern mrk::MacRootKit* mac_rootkit_get_rootkit();
 
 namespace AGX {
-    static Plugin* plugin;
+static Plugin* plugin;
 
-    static Kext* agxG13X;
-    static Kext* agxFirmwareKextRTBuddy64;
-    static Kext* agxFirmwareKextG13XRTBuddy;
+static Kext* agxG13X;
+static Kext* agxFirmwareKextRTBuddy64;
+static Kext* agxFirmwareKextG13XRTBuddy;
 
-    void initialize();
+void initialize();
 }; // namespace AGX

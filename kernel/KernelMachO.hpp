@@ -23,54 +23,54 @@
 class MachO;
 
 namespace xnu {
-    class Kernel;
-    class Kext;
+class Kernel;
+class Kext;
 
-    class KernelMachO : public MachO {
-    public:
-        KernelMachO() {}
+class KernelMachO : public MachO {
+public:
+    KernelMachO() {}
 
-        KernelMachO(xnu::Kernel* kernel);
+    KernelMachO(xnu::Kernel* kernel);
 
-        ~KernelMachO();
+    ~KernelMachO();
 
-        xnu::Mach::VmAddress getKernelCache() {
-            return kernel_cache;
-        }
+    xnu::Mach::VmAddress getKernelCache() {
+        return kernel_cache;
+    }
 
-        xnu::Mach::VmAddress getKernelCollection() {
-            return kernel_collection;
-        }
+    xnu::Mach::VmAddress getKernelCollection() {
+        return kernel_collection;
+    }
 
-        void setKernelCache(xnu::Mach::VmAddress kc) {
-            this->kernel_cache = kc;
-        }
+    void setKernelCache(xnu::Mach::VmAddress kc) {
+        this->kernel_cache = kc;
+    }
 
-        void setKernelCollection(xnu::Mach::VmAddress kc) {
-            this->kernel_collection = kc;
-        }
+    void setKernelCollection(xnu::Mach::VmAddress kc) {
+        this->kernel_collection = kc;
+    }
 
-        static xnu::Kext* kextLoadedAt(xnu::Kernel* kernel, xnu::Mach::VmAddress address);
-        static xnu::Kext* kextWithIdentifier(xnu::Kernel* kernel, char* kext);
+    static xnu::Kext* kextLoadedAt(xnu::Kernel* kernel, xnu::Mach::VmAddress address);
+    static xnu::Kext* kextWithIdentifier(xnu::Kernel* kernel, char* kext);
 
-        virtual void parseLinkedit();
+    virtual void parseLinkedit();
 
-        virtual bool parseLoadCommands();
+    virtual bool parseLoadCommands();
 
-        virtual void parseMachO();
+    virtual void parseMachO();
 
-    protected:
-        xnu::Kernel* kernel;
+protected:
+    xnu::Kernel* kernel;
 
-        xnu::Mach::VmAddress kernel_cache;
+    xnu::Mach::VmAddress kernel_cache;
 
-        xnu::Mach::VmAddress kernel_collection;
+    xnu::Mach::VmAddress kernel_collection;
 
-        UInt8* linkedit;
+    UInt8* linkedit;
 
-        xnu::Mach::VmAddress linkedit_off;
+    xnu::Mach::VmAddress linkedit_off;
 
-        Size linkedit_size;
-    };
+    Size linkedit_size;
+};
 
 } // namespace xnu

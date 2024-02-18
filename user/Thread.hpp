@@ -29,73 +29,73 @@
 #include <Arch.hpp>
 
 namespace xnu {
-    class Thread {
-    public:
-        Thread() {}
+class Thread {
+public:
+    Thread() {}
 
-        ~Thread() {}
+    ~Thread() {}
 
-        thread_t getThread() {
-            return thread;
-        }
+    thread_t getThread() {
+        return thread;
+    }
 
-        pthread_t getPthread() {
-            return pthread;
-        }
+    pthread_t getPthread() {
+        return pthread;
+    }
 
-        Task* getTask() {
-            return task;
-        }
+    Task* getTask() {
+        return task;
+    }
 
-        xnu::Mach::Port getPortHandle() {
-            return handle;
-        }
+    xnu::Mach::Port getPortHandle() {
+        return handle;
+    }
 
-        xnu::Mach::VmAddress getThread() {
-            return thread;
-        }
-        xnu::Mach::VmAddress getUThread() {
-            return uthread;
-        }
+    xnu::Mach::VmAddress getThread() {
+        return thread;
+    }
+    xnu::Mach::VmAddress getUThread() {
+        return uthread;
+    }
 
-        union ThreadState* getThreadState() {
-            return &state;
-        }
+    union ThreadState* getThreadState() {
+        return &state;
+    }
 
-        void resume();
+    void resume();
 
-        void suspend();
+    void suspend();
 
-        void terminate();
+    void terminate();
 
-        void setThreadState(union ThreadState* thread_state);
+    void setThreadState(union ThreadState* thread_state);
 
-        void getThreadState(union ThreadState* thread_state);
+    void getThreadState(union ThreadState* thread_state);
 
-        void convertThreadState(Task* task, union ThreadState* thread_state);
+    void convertThreadState(Task* task, union ThreadState* thread_state);
 
-        void setEntryPoint(xnu::Mach::VmAddress address);
+    void setEntryPoint(xnu::Mach::VmAddress address);
 
-        void setReturnAddress(xnu::Mach::VmAddress address);
+    void setReturnAddress(xnu::Mach::VmAddress address);
 
-        void createPosixThreadFromMachThread(thread_t thread);
+    void createPosixThreadFromMachThread(thread_t thread);
 
-    private:
-        xnu::Task* task;
+private:
+    xnu::Task* task;
 
-        pthread_t pthread;
+    pthread_t pthread;
 
-        thread_t thread;
+    thread_t thread;
 
-        xnu::Mach::Port handle;
+    xnu::Mach::Port handle;
 
-        xnu::Mach::VmAddress thread;
-        xnu::Mach::VmAddress uthread;
+    xnu::Mach::VmAddress thread;
+    xnu::Mach::VmAddress uthread;
 
-        xnu::Mach::VmAddress stack;
-        xnu::Mach::VmAddress code;
-        xnu::Mach::VmAddress data;
+    xnu::Mach::VmAddress stack;
+    xnu::Mach::VmAddress code;
+    xnu::Mach::VmAddress data;
 
-        union ThreadState state;
-    };
+    union ThreadState state;
+};
 } // namespace xnu

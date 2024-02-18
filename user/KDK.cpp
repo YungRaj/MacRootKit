@@ -20,14 +20,14 @@
 #include "MachO.hpp"
 
 extern "C" {
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/proc.h>
-#include <sys/kauth.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <dirent.h>
 };

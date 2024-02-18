@@ -19,15 +19,15 @@
 #include "Plugin.hpp"
 
 namespace mrk {
-    class MacRootKit;
+class MacRootKit;
 };
 
 namespace BCMWLAN {
-    static Plugin* plugin;
+static Plugin* plugin;
 
-    static Kext* appleBCMWLANCore;
-    static Kext* appleBCMWLANBusInterfacePCIe;
-    static Kext* appleBCMWLANFirmware4387;
+static Kext* appleBCMWLANCore;
+static Kext* appleBCMWLANBusInterfacePCIe;
+static Kext* appleBCMWLANFirmware4387;
 
-    void initialize();
+void initialize();
 }; // namespace BCMWLAN

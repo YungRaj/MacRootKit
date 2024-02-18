@@ -23,8 +23,8 @@
 #include "Arch.hpp"
 
 namespace xnu {
-    class Kernel;
-    class Task;
+class Kernel;
+class Task;
 } // namespace xnu
 
 using namespace Arch;

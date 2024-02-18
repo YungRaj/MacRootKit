@@ -2207,65 +2207,64 @@ bool disassemble_fp_simd(MachO* macho, uint64_t pc, uint32_t op) {
 }
 
 namespace Arch {
-    namespace arm64 {
-        namespace Disassembler {
-            bool disassemble(MachO* macho, uint64_t pc, uint32_t op) {
-                if (disassemble_arith(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_logic(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_movknz(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_memory(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_adr_b(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_pac(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_sys(macho, pc, op)) {
-                    return true;
-                } else if (disassemble_fp_simd(macho, pc, op)) {
-                    return true;
-                } else if (is_nop(&op)) {
-                    printf("0x%016llx\t%-7s", pc, "NOP");
+namespace arm64 {
+namespace Disassembler {
+bool disassemble(MachO* macho, uint64_t pc, uint32_t op) {
+    if (disassemble_arith(macho, pc, op)) {
+        return true;
+    } else if (disassemble_logic(macho, pc, op)) {
+        return true;
+    } else if (disassemble_movknz(macho, pc, op)) {
+        return true;
+    } else if (disassemble_memory(macho, pc, op)) {
+        return true;
+    } else if (disassemble_adr_b(macho, pc, op)) {
+        return true;
+    } else if (disassemble_pac(macho, pc, op)) {
+        return true;
+    } else if (disassemble_sys(macho, pc, op)) {
+        return true;
+    } else if (disassemble_fp_simd(macho, pc, op)) {
+        return true;
+    } else if (is_nop(&op)) {
+        printf("0x%016llx\t%-7s", pc, "NOP");
 
-                    return true;
-                }
+        return true;
+    }
 
-                return false;
-            }
+    return false;
+}
 
-            void disassemble(MachO* macho, mach_vm_address_t start, uint64_t* length) {
-                mach_vm_address_t current = start;
-                mach_vm_address_t end = start + *length;
+void disassemble(MachO* macho, mach_vm_address_t start, uint64_t* length) {
+    mach_vm_address_t current = start;
+    mach_vm_address_t end = start + *length;
 
-                if (*length) {
-                    while (current < end) {
-                        uint32_t op =
-                            *reinterpret_cast<uint32_t*>(macho->getBufferAddress(current));
+    if (*length) {
+        while (current < end) {
+            uint32_t op = *reinterpret_cast<uint32_t*>(macho->getBufferAddress(current));
 
-                        bool ok = Arch::arm64::Disassembler::disassemble(macho, current, op);
+            bool ok = Arch::arm64::Disassembler::disassemble(macho, current, op);
 
-                        if (ok)
-                            printf("\n");
+            if (ok)
+                printf("\n");
 
-                        current += sizeof(uint32_t);
-                    }
-                } else {
-                    uint32_t op = *(uint32_t*)macho->getBufferAddress(current);
+            current += sizeof(uint32_t);
+        }
+    } else {
+        uint32_t op = *(uint32_t*)macho->getBufferAddress(current);
 
-                    while (!is_ret(&op)) {
-                        op = *reinterpret_cast<uint32_t*>(macho->getBufferAddress(current));
+        while (!is_ret(&op)) {
+            op = *reinterpret_cast<uint32_t*>(macho->getBufferAddress(current));
 
-                        bool ok = Arch::arm64::Disassembler::disassemble(macho, current, op);
+            bool ok = Arch::arm64::Disassembler::disassemble(macho, current, op);
 
-                        if (ok)
-                            printf("\n");
+            if (ok)
+                printf("\n");
 
-                        current += sizeof(uint32_t);
-                    }
-                }
-            }
-        } // namespace Disassembler
-    }     // namespace arm64
+            current += sizeof(uint32_t);
+        }
+    }
+}
+} // namespace Disassembler
+} // namespace arm64
 } // namespace Arch

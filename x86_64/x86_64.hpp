@@ -21,11 +21,11 @@
 #include "PatchFinder_x86_64.hpp"
 
 namespace Arch {
-    namespace x86_64 {
-        bool setInterrupts(bool enable);
+namespace x86_64 {
+bool setInterrupts(bool enable);
 
-        bool setNXBit(bool enable);
+bool setNXBit(bool enable);
 
-        bool setWPBit(bool enable);
-    } // namespace x86_64
+bool setWPBit(bool enable);
+} // namespace x86_64
 } // namespace Arch

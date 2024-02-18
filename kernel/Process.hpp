@@ -19,20 +19,20 @@
 #include <Types.h>
 
 namespace xnu {
-    class Task;
+class Task;
 };
 
 namespace bsd {
-    class Process {
-    public:
-        Process();
+class Process {
+public:
+    Process();
 
-        ~Process();
+    ~Process();
 
-        xnu::Task* getTask();
+    xnu::Task* getTask();
 
-    private:
-        xnu::Task* task;
-    };
+private:
+    xnu::Task* task;
+};
 
 }; // namespace bsd

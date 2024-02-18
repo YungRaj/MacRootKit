@@ -3876,111 +3876,110 @@ uint32_t assemble_fp_simd(char* ins) {
 }
 
 namespace Arch {
-    namespace arm64 {
-        namespace Assembler {
-            uint32_t assembleInstruction(char* ins) {
-                uint32_t assembly;
+namespace arm64 {
+namespace Assembler {
+uint32_t assembleInstruction(char* ins) {
+    uint32_t assembly;
 
-                uint32_t arith;
-                uint32_t logic;
-                uint32_t memory;
-                uint32_t movknz;
-                uint32_t adr_b;
-                uint32_t pac;
-                uint32_t sys;
-                uint32_t fp_simd;
+    uint32_t arith;
+    uint32_t logic;
+    uint32_t memory;
+    uint32_t movknz;
+    uint32_t adr_b;
+    uint32_t pac;
+    uint32_t sys;
+    uint32_t fp_simd;
 
-                assembly = 0;
+    assembly = 0;
 
-                arith = assemble_arith(ins);
+    arith = assemble_arith(ins);
 
-                if (arith)
-                    assembly = arith;
+    if (arith)
+        assembly = arith;
 
-                logic = assemble_logic(ins);
+    logic = assemble_logic(ins);
 
-                if (logic)
-                    assembly = logic;
+    if (logic)
+        assembly = logic;
 
-                memory = assemble_memory(ins);
+    memory = assemble_memory(ins);
 
-                if (memory)
-                    assembly = memory;
+    if (memory)
+        assembly = memory;
 
-                movknz = assemble_movknz(ins);
+    movknz = assemble_movknz(ins);
 
-                if (movknz)
-                    assembly = movknz;
+    if (movknz)
+        assembly = movknz;
 
-                adr_b = assemble_adr_b(ins);
+    adr_b = assemble_adr_b(ins);
 
-                if (adr_b)
-                    assembly = adr_b;
+    if (adr_b)
+        assembly = adr_b;
 
-                pac = assemble_pac(ins);
+    pac = assemble_pac(ins);
 
-                if (pac)
-                    assembly = pac;
+    if (pac)
+        assembly = pac;
 
-                sys = assemble_sys(ins);
+    sys = assemble_sys(ins);
 
-                if (sys)
-                    assembly = sys;
+    if (sys)
+        assembly = sys;
 
-                fp_simd = assemble_fp_simd(ins);
+    fp_simd = assemble_fp_simd(ins);
 
-                if (fp_simd)
-                    assembly = fp_simd;
+    if (fp_simd)
+        assembly = fp_simd;
 
-                return assembly;
-            }
+    return assembly;
+}
 
-            uint32_t* assemble(char* ins, uint32_t* nins) {
-                uint32_t* assembly = NULL;
+uint32_t* assemble(char* ins, uint32_t* nins) {
+    uint32_t* assembly = NULL;
 
-                ins = strdup(ins);
+    ins = strdup(ins);
 
-                strreplace(ins, ';', '\n');
+    strreplace(ins, ';', '\n');
 
-                char* line = ins;
+    char* line = ins;
 
-                uint32_t num_ins = 0;
+    uint32_t num_ins = 0;
 
-                while (line) {
-                    char* next_line = strchr(line, '\n');
+    while (line) {
+        char* next_line = strchr(line, '\n');
 
-                    int line_len = next_line ? (next_line - line) : strlen(line);
+        int line_len = next_line ? (next_line - line) : strlen(line);
 
-                    char* temp = (char*)new char[line_len + 1];
+        char* temp = (char*)new char[line_len + 1];
 
-                    memcpy(temp, line, line_len);
+        memcpy(temp, line, line_len);
 
-                    temp[line_len] = '\0';
+        temp[line_len] = '\0';
 
-                    temp = trim(temp);
+        temp = trim(temp);
 
-                    uint32_t* temp_assembly =
-                        reinterpret_cast<uint32_t*>(new uint32_t[(num_ins + 1)]);
+        uint32_t* temp_assembly = reinterpret_cast<uint32_t*>(new uint32_t[(num_ins + 1)]);
 
-                    if (num_ins)
-                        memcpy(temp_assembly, assembly, num_ins * sizeof(uint32_t));
+        if (num_ins)
+            memcpy(temp_assembly, assembly, num_ins * sizeof(uint32_t));
 
-                    temp_assembly[num_ins] = assemble_instruction(temp);
+        temp_assembly[num_ins] = assemble_instruction(temp);
 
-                    num_ins++;
+        num_ins++;
 
-                    line = next_line ? (next_line + 1) : NULL;
+        line = next_line ? (next_line + 1) : NULL;
 
-                    assembly = temp_assembly;
-                }
+        assembly = temp_assembly;
+    }
 
-                if (*nins)
-                    *nins = num_ins;
+    if (*nins)
+        *nins = num_ins;
 
-                delete ins;
+    delete ins;
 
-                return assembly;
-            }
-        } // namespace Assembler
-    }     // namespace arm64
+    return assembly;
+}
+} // namespace Assembler
+} // namespace arm64
 } // namespace Arch

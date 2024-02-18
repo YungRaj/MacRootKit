@@ -26,231 +26,213 @@
 
 namespace ObjectiveC {
 
-    ObjCData* parseObjectiveC(mrk::UserMachO* macho) {
-        return new ObjCData(macho);
-    }
+ObjCData* parseObjectiveC(mrk::UserMachO* macho) {
+    return new ObjCData(macho);
+}
 
-    void parseClassList(ObjCData* data, std::vector<ObjCClass*>& classes) {
-        mrk::UserMachO* macho = data->getMachO();
+void parseClassList(ObjCData* data, std::vector<ObjCClass*>& classes) {
+    mrk::UserMachO* macho = data->getMachO();
 
-        Section* classlist = data->getClassList();
+    Section* classlist = data->getClassList();
 
-        Section* classrefs = data->getClassRefs();
-        Section* superrefs = data->getSuperRefs();
+    Section* classrefs = data->getClassRefs();
+    Section* superrefs = data->getSuperRefs();
 
-        Section* ivars = data->getIvars();
-        Section* objc_data = data->getObjcData();
+    Section* ivars = data->getIvars();
+    Section* objc_data = data->getObjcData();
 
-        Size classlist_size = classlist->getSize();
+    Size classlist_size = classlist->getSize();
 
-        UInt64 address = classlist->getAddress();
+    UInt64 address = classlist->getAddress();
 
-        UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
+    UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
 
-        UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
+    UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
 
-        UInt64* clslist = reinterpret_cast<UInt64*>(header + classlist->getOffset());
+    UInt64* clslist = reinterpret_cast<UInt64*>(header + classlist->getOffset());
 
-        for (UInt64 off = 0; off < classlist_size; off = off + sizeof(UInt64)) {
-            ObjCClass* c;
-            ObjCClass* metac;
+    for (UInt64 off = 0; off < classlist_size; off = off + sizeof(UInt64)) {
+        ObjCClass* c;
+        ObjCClass* metac;
 
-            UInt64 cls = macho->getBufferAddress(
-                ((*(clslist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+        UInt64 cls = macho->getBufferAddress(((*(clslist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) -
+                                             macho->getAslrSlide());
 
-            if (!cls) {
-                cls = header + *(clslist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
+        if (!cls) {
+            cls = header + *(clslist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
+        }
+
+        struct _objc_2_class* objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
+
+        if (objc_class) {
+            c = new ObjCClass(data, objc_class, false);
+
+            if (c->isValid()) {
+                classes.push_back(c);
             }
+        }
 
-            struct _objc_2_class* objc_class = reinterpret_cast<struct _objc_2_class*>(cls);
+        struct _objc_2_class* objc_metaclass =
+            reinterpret_cast<struct _objc_2_class*>((objc_class->isa & 0xFFFFFFFF) + header);
 
-            if (objc_class) {
-                c = new ObjCClass(data, objc_class, false);
+        if (objc_metaclass && objc_class != objc_metaclass) {
+            metac = new ObjCClass(data, objc_metaclass, true);
 
-                if (c->isValid()) {
-                    classes.push_back(c);
-                }
-            }
-
-            struct _objc_2_class* objc_metaclass =
-                reinterpret_cast<struct _objc_2_class*>((objc_class->isa & 0xFFFFFFFF) + header);
-
-            if (objc_metaclass && objc_class != objc_metaclass) {
-                metac = new ObjCClass(data, objc_metaclass, true);
-
-                if (metac->isValid()) {
-                    classes.push_back(metac);
-                }
+            if (metac->isValid()) {
+                classes.push_back(metac);
             }
         }
     }
+}
 
-    void parseCategoryList(ObjCData* data, std::vector<Category*>& categories) {
-        mrk::UserMachO* macho = data->getMachO();
+void parseCategoryList(ObjCData* data, std::vector<Category*>& categories) {
+    mrk::UserMachO* macho = data->getMachO();
 
-        Section* catlist = data->getCategoryList();
+    Section* catlist = data->getCategoryList();
 
-        Size catlist_size = catlist->getSize();
+    Size catlist_size = catlist->getSize();
 
-        UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
+    UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
 
-        UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
+    UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
 
-        UInt64 address = catlist->getAddress();
+    UInt64 address = catlist->getAddress();
 
-        UInt64* categorylist = reinterpret_cast<UInt64*>(header + catlist->getOffset());
+    UInt64* categorylist = reinterpret_cast<UInt64*>(header + catlist->getOffset());
 
-        for (UInt64 off = 0; off < catlist_size; off = off + sizeof(UInt64)) {
-            Category* cat;
+    for (UInt64 off = 0; off < catlist_size; off = off + sizeof(UInt64)) {
+        Category* cat;
 
-            UInt64 category = macho->getBufferAddress(
-                (*(categorylist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+        UInt64 category = macho->getBufferAddress(
+            (*(categorylist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
 
-            if (!category) {
-                category = header + (*(categorylist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF);
-            }
-
-            struct _objc_2_category* objc_category =
-                reinterpret_cast<struct _objc_2_category*>(category);
-
-            if (category) {
-                if (!(objc_category->class_name & 0x4000000000000000)) {
-                    cat = new Category(data, objc_category);
-
-                    categories.push_back(cat);
-                }
-            }
+        if (!category) {
+            category = header + (*(categorylist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF);
         }
-    }
 
-    void parseProtocolList(ObjCData* data, std::vector<Protocol*>& protocols) {
-        mrk::UserMachO* macho = data->getMachO();
+        struct _objc_2_category* objc_category =
+            reinterpret_cast<struct _objc_2_category*>(category);
 
-        Section* protlist = data->getProtocolList();
+        if (category) {
+            if (!(objc_category->class_name & 0x4000000000000000)) {
+                cat = new Category(data, objc_category);
 
-        Section* protrefs = data->getProtoRefs();
-
-        Size protolist_size = protlist->getSize();
-
-        UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
-
-        UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
-
-        UInt64 address = protlist->getAddress();
-
-        UInt64* protolist = reinterpret_cast<UInt64*>(header + protlist->getOffset());
-
-        for (UInt64 off = 0; off < protolist_size; off = off + sizeof(UInt64)) {
-            Protocol* p;
-
-            UInt64 proto = macho->getBufferAddress(
-                ((*(protolist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
-
-            if (!proto) {
-                proto = header + *(protolist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
-            }
-
-            struct _objc_2_class_protocol* objc_protocol =
-                reinterpret_cast<struct _objc_2_class_protocol*>(proto);
-
-            if (objc_protocol) {
-                p = new Protocol(data, objc_protocol);
-
-                protocols.push_back(p);
+                categories.push_back(cat);
             }
         }
     }
+}
 
-    void parseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& methodList,
-                         enum MethodType methtype, struct _objc_2_class_method_info* methodInfo) {
-        mrk::UserMachO* macho = metadata->getMachO();
+void parseProtocolList(ObjCData* data, std::vector<Protocol*>& protocols) {
+    mrk::UserMachO* macho = data->getMachO();
 
-        struct _objc_2_class_method_info* methods;
+    Section* protlist = data->getProtocolList();
 
-        Offset off;
+    Section* protrefs = data->getProtoRefs();
 
-        UInt64 selectors = macho->isDyldCache() ? ObjectiveC::findSelectorsBase(macho) : 0;
+    Size protolist_size = protlist->getSize();
 
-        if (!methodInfo) {
-            return;
+    UInt64 base = macho->getBase() - data->getMachO()->getAslrSlide();
+
+    UInt64 header = reinterpret_cast<UInt64>(macho->getMachHeader());
+
+    UInt64 address = protlist->getAddress();
+
+    UInt64* protolist = reinterpret_cast<UInt64*>(header + protlist->getOffset());
+
+    for (UInt64 off = 0; off < protolist_size; off = off + sizeof(UInt64)) {
+        Protocol* p;
+
+        UInt64 proto = macho->getBufferAddress(
+            ((*(protolist + off / sizeof(UInt64))) & 0xFFFFFFFFFFF) - macho->getAslrSlide());
+
+        if (!proto) {
+            proto = header + *(protolist + off / sizeof(UInt64)) & 0xFFFFFFFFFFF;
         }
 
-        methods = reinterpret_cast<struct _objc_2_class_method_info*>(methodInfo);
+        struct _objc_2_class_protocol* objc_protocol =
+            reinterpret_cast<struct _objc_2_class_protocol*>(proto);
 
-        off = sizeof(struct _objc_2_class_method_info);
+        if (objc_protocol) {
+            p = new Protocol(data, objc_protocol);
 
-        char* type = "";
-        char* prefix = "";
-
-        switch (methtype) {
-        case INSTANCE_METHOD:
-            type = "Instance";
-            prefix = "-";
-
-            break;
-        case CLASS_METHOD:
-            type = "Class";
-            prefix = "+";
-
-            break;
-        case OPT_INSTANCE_METHOD:
-            type = "Optional Instance";
-            prefix = "-";
-
-            break;
-        case OPT_CLASS_METHOD:
-            type = "Optional Class";
-            prefix = "+";
-
-            break;
-        default:
-            break;
+            protocols.push_back(p);
         }
+    }
+}
 
-        MAC_RK_LOG("\t\t\t%s Methods\n", type);
+void parseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& methodList,
+                     enum MethodType methtype, struct _objc_2_class_method_info* methodInfo) {
+    mrk::UserMachO* macho = metadata->getMachO();
 
-        for (int i = 0; i < methods->count; i++) {
-            UInt64 pointer_to_name;
-            UInt64 offset_to_name;
+    struct _objc_2_class_method_info* methods;
 
-            UInt8* q = reinterpret_cast<UInt8*>(reinterpret_cast<UInt8*>(methods) + off);
+    Offset off;
 
-            if (macho->isDyldCache() && dynamic_cast<Protocol*>(object)) {
-                struct _objc_2_method* method = reinterpret_cast<struct _objc_2_method*>(q);
+    UInt64 selectors = macho->isDyldCache() ? ObjectiveC::findSelectorsBase(macho) : 0;
 
-                Method* meth = new Method(object, method);
+    if (!methodInfo) {
+        return;
+    }
 
-                MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
+    methods = reinterpret_cast<struct _objc_2_class_method_info*>(methodInfo);
 
-                methodList.push_back(meth);
+    off = sizeof(struct _objc_2_class_method_info);
 
-                off += sizeof(struct _objc_2_method);
+    char* type = "";
+    char* prefix = "";
 
-                continue;
-            } else if (macho->isDyldCache()) {
-                struct _objc_2_class_method* method =
-                    reinterpret_cast<struct _objc_2_class_method*>(q);
+    switch (methtype) {
+    case INSTANCE_METHOD:
+        type = "Instance";
+        prefix = "-";
 
-                pointer_to_name = selectors + method->name;
+        break;
+    case CLASS_METHOD:
+        type = "Class";
+        prefix = "+";
 
-                if (macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name)) {
-                    Method* meth = new Method(object, method);
+        break;
+    case OPT_INSTANCE_METHOD:
+        type = "Optional Instance";
+        prefix = "-";
 
-                    methodList.push_back(meth);
+        break;
+    case OPT_CLASS_METHOD:
+        type = "Optional Class";
+        prefix = "+";
 
-                    MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix,
-                               meth->getName());
-                }
+        break;
+    default:
+        break;
+    }
 
-            } else {
-                struct _objc_2_class_method* method =
-                    reinterpret_cast<struct _objc_2_class_method*>(q);
+    MAC_RK_LOG("\t\t\t%s Methods\n", type);
 
-                pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
-                                  reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
+    for (int i = 0; i < methods->count; i++) {
+        UInt64 pointer_to_name;
+        UInt64 offset_to_name;
 
-                offset_to_name = ((*(UInt64*)pointer_to_name) & 0xFFFFFF);
+        UInt8* q = reinterpret_cast<UInt8*>(reinterpret_cast<UInt8*>(methods) + off);
 
+        if (macho->isDyldCache() && dynamic_cast<Protocol*>(object)) {
+            struct _objc_2_method* method = reinterpret_cast<struct _objc_2_method*>(q);
+
+            Method* meth = new Method(object, method);
+
+            MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
+
+            methodList.push_back(meth);
+
+            off += sizeof(struct _objc_2_method);
+
+            continue;
+        } else if (macho->isDyldCache()) {
+            struct _objc_2_class_method* method = reinterpret_cast<struct _objc_2_class_method*>(q);
+
+            pointer_to_name = selectors + method->name;
+
+            if (macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name)) {
                 Method* meth = new Method(object, method);
 
                 methodList.push_back(meth);
@@ -258,83 +240,74 @@ namespace ObjectiveC {
                 MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
             }
 
-            off += sizeof(struct _objc_2_class_method);
+        } else {
+            struct _objc_2_class_method* method = reinterpret_cast<struct _objc_2_class_method*>(q);
+
+            pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
+                              reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
+
+            offset_to_name = ((*(UInt64*)pointer_to_name) & 0xFFFFFF);
+
+            Method* meth = new Method(object, method);
+
+            methodList.push_back(meth);
+
+            MAC_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->getImpl(), prefix, meth->getName());
         }
+
+        off += sizeof(struct _objc_2_class_method);
+    }
+}
+
+void parsePropertyList(ObjCData* metadata, ObjC* object, std::vector<Property*>& propertyList,
+                       struct _objc_2_class_property_info* propertyInfo) {
+    struct _objc_2_class_property_info* properties;
+
+    Offset off;
+
+    if (!propertyInfo) {
+        return;
     }
 
-    void parsePropertyList(ObjCData* metadata, ObjC* object, std::vector<Property*>& propertyList,
-                           struct _objc_2_class_property_info* propertyInfo) {
-        struct _objc_2_class_property_info* properties;
+    properties = reinterpret_cast<struct _objc_2_class_property_info*>(propertyInfo);
 
-        Offset off;
+    off = sizeof(struct _objc_2_class_property_info);
 
-        if (!propertyInfo) {
-            return;
-        }
+    MAC_RK_LOG("\t\t\tProperties\n");
 
-        properties = reinterpret_cast<struct _objc_2_class_property_info*>(propertyInfo);
+    for (int i = 0; i < properties->count; i++) {
+        struct _objc_2_class_property* property = reinterpret_cast<struct _objc_2_class_property*>(
+            reinterpret_cast<UInt8*>(properties) + off);
 
-        off = sizeof(struct _objc_2_class_property_info);
+        Property* prop = new Property(object, property);
 
-        MAC_RK_LOG("\t\t\tProperties\n");
+        propertyList.push_back(prop);
 
-        for (int i = 0; i < properties->count; i++) {
-            struct _objc_2_class_property* property =
-                reinterpret_cast<struct _objc_2_class_property*>(
-                    reinterpret_cast<UInt8*>(properties) + off);
+        MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
 
-            Property* prop = new Property(object, property);
-
-            propertyList.push_back(prop);
-
-            MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
-
-            off += sizeof(struct _objc_2_class_property);
-        }
+        off += sizeof(struct _objc_2_class_property);
     }
+}
 } // namespace ObjectiveC
 
 namespace ObjectiveC {
 
-    ObjCClass::ObjCClass(ObjCData* metadata, struct _objc_2_class* c, bool metaclass) {
-        metadata = metadata;
-        macho = metadata->getMachO();
-        metaclass = metaclass;
-        cls = c;
-        super = NULL;
+ObjCClass::ObjCClass(ObjCData* metadata, struct _objc_2_class* c, bool metaclass) {
+    metadata = metadata;
+    macho = metadata->getMachO();
+    metaclass = metaclass;
+    cls = c;
+    super = NULL;
 
-        data = reinterpret_cast<struct _objc_2_class_data*>((UInt64)c->data & 0xFFFFFFF8);
+    data = reinterpret_cast<struct _objc_2_class_data*>((UInt64)c->data & 0xFFFFFFF8);
 
-        if (macho->sectionForOffset(reinterpret_cast<UInt64>(this->data))) {
-            data = reinterpret_cast<struct _objc_2_class_data*>(
-                (UInt64)this->data + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
-            name = reinterpret_cast<char*>((data->name & 0xFFFFFFFF) +
-                                           reinterpret_cast<UInt64>(this->macho->getMachHeader()));
+    if (macho->sectionForOffset(reinterpret_cast<UInt64>(this->data))) {
+        data = reinterpret_cast<struct _objc_2_class_data*>(
+            (UInt64)this->data + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
+        name = reinterpret_cast<char*>((data->name & 0xFFFFFFFF) +
+                                       reinterpret_cast<UInt64>(this->macho->getMachHeader()));
 
-            if (macho->sectionForOffset(reinterpret_cast<UInt64>((data->name & 0xFFFFFFFF)))) {
-                if (metaclass)
-                    printf("\t\t$OBJC_METACLASS_%s\n", name);
-                else
-                    printf("\t\t$OBJC_CLASS_%s\n", name);
-
-                isa = reinterpret_cast<UInt64>(c->isa);
-                superclass = reinterpret_cast<UInt64>(c->superclass);
-                cache = reinterpret_cast<UInt64>(c->cache);
-                vtable = reinterpret_cast<UInt64>(c->vtable);
-
-                this->parseMethods();
-                this->parseIvars();
-                this->parseProperties();
-            }
-
-        } else if (macho->sectionForAddress(reinterpret_cast<UInt64>(
-                       ((UInt64)c->data & 0xFFFFFFFFF) - this->macho->getAslrSlide()))) {
-            data = reinterpret_cast<struct _objc_2_class_data*>(this->macho->getBufferAddress(
-                ((UInt64)c->data & 0xFFFFFFFFF) - macho->getAslrSlide()));
-
-            name = reinterpret_cast<char*>(
-                macho->getBufferAddress(data->name - macho->getAslrSlide()));
-
+        if (macho->sectionForOffset(reinterpret_cast<UInt64>((data->name & 0xFFFFFFFF)))) {
             if (metaclass)
                 printf("\t\t$OBJC_METACLASS_%s\n", name);
             else
@@ -348,377 +321,389 @@ namespace ObjectiveC {
             this->parseMethods();
             this->parseIvars();
             this->parseProperties();
-        } else {
-            name = NULL;
-            data = NULL;
-            isa = 0;
-            superclass = 0;
-            vtable = 0;
-            cache = 0;
+        }
+
+    } else if (macho->sectionForAddress(reinterpret_cast<UInt64>(((UInt64)c->data & 0xFFFFFFFFF) -
+                                                                 this->macho->getAslrSlide()))) {
+        data = reinterpret_cast<struct _objc_2_class_data*>(
+            this->macho->getBufferAddress(((UInt64)c->data & 0xFFFFFFFFF) - macho->getAslrSlide()));
+
+        name = reinterpret_cast<char*>(macho->getBufferAddress(data->name - macho->getAslrSlide()));
+
+        if (metaclass)
+            printf("\t\t$OBJC_METACLASS_%s\n", name);
+        else
+            printf("\t\t$OBJC_CLASS_%s\n", name);
+
+        isa = reinterpret_cast<UInt64>(c->isa);
+        superclass = reinterpret_cast<UInt64>(c->superclass);
+        cache = reinterpret_cast<UInt64>(c->cache);
+        vtable = reinterpret_cast<UInt64>(c->vtable);
+
+        this->parseMethods();
+        this->parseIvars();
+        this->parseProperties();
+    } else {
+        name = NULL;
+        data = NULL;
+        isa = 0;
+        superclass = 0;
+        vtable = 0;
+        cache = 0;
+    }
+}
+
+Protocol::Protocol(ObjCData* data, struct _objc_2_class_protocol* prot) {
+    mrk::UserMachO* macho;
+
+    struct _objc_2_class_method_info* instanceMethods;
+    struct _objc_2_class_method_info* classMethods;
+
+    struct _objc_2_class_method_info* optionalInstanceMethods;
+    struct _objc_2_class_method_info* optionalClassMethods;
+
+    struct _objc_2_class_property_info* instanceProperties;
+
+    metadata = data;
+    protocol = prot;
+
+    macho = metadata->getMachO();
+
+    if (macho->isDyldCache()) {
+        name = reinterpret_cast<char*>(macho->getBufferAddress(prot->name - macho->getAslrSlide()));
+
+        printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
+
+        if (prot->instance_methods) {
+            instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                macho->getBufferAddress(this->protocol->instance_methods - macho->getAslrSlide()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
+                                        INSTANCE_METHOD, instanceMethods);
+        }
+
+        if (prot->class_methods) {
+            classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                macho->getBufferAddress(this->protocol->class_methods - macho->getAslrSlide()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD,
+                                        classMethods);
+        }
+
+        if (prot->opt_instance_methods) {
+            optionalInstanceMethods =
+                reinterpret_cast<struct _objc_2_class_method_info*>(macho->getBufferAddress(
+                    this->protocol->opt_instance_methods - macho->getAslrSlide()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalInstanceMethods(),
+                                        OPT_INSTANCE_METHOD, optionalInstanceMethods);
+        }
+
+        if (prot->opt_class_methods) {
+            optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                macho->getBufferAddress(this->protocol->opt_class_methods - macho->getAslrSlide()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(),
+                                        OPT_CLASS_METHOD, optionalClassMethods);
+        }
+
+        if (prot->instance_properties) {
+            instanceProperties =
+                reinterpret_cast<struct _objc_2_class_property_info*>(macho->getBufferAddress(
+                    this->protocol->instance_properties - macho->getAslrSlide()));
+
+            ObjectiveC::parsePropertyList(this->metadata, this, this->getInstanceProperties(),
+                                          instanceProperties);
+        }
+    } else {
+        this->name = reinterpret_cast<char*>((prot->name & 0xFFFFFFF) +
+                                             reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+        printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
+
+        if (prot->instance_methods) {
+            instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->protocol->instance_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
+                                        INSTANCE_METHOD, instanceMethods);
+        }
+
+        if (prot->class_methods) {
+            classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->protocol->class_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD,
+                                        classMethods);
+        }
+
+        if (prot->opt_instance_methods) {
+            optionalInstanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->protocol->opt_instance_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalInstanceMethods(),
+                                        OPT_INSTANCE_METHOD, optionalInstanceMethods);
+        }
+
+        if (prot->opt_class_methods) {
+            optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->protocol->opt_class_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(),
+                                        OPT_CLASS_METHOD, optionalClassMethods);
+        }
+
+        if (prot->instance_properties) {
+            instanceProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
+                (this->protocol->instance_properties & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjectiveC::parsePropertyList(this->metadata, this, this->getInstanceProperties(),
+                                          instanceProperties);
         }
     }
+}
 
-    Protocol::Protocol(ObjCData* data, struct _objc_2_class_protocol* prot) {
-        mrk::UserMachO* macho;
+Category::Category(ObjCData* data, struct _objc_2_category* cat) {
+    mrk::UserMachO* macho = data->getMachO();
 
-        struct _objc_2_class_method_info* instanceMethods;
-        struct _objc_2_class_method_info* classMethods;
+    struct _objc_2_class_method_info* instanceMethods;
+    struct _objc_2_class_method_info* classMethods;
 
-        struct _objc_2_class_method_info* optionalInstanceMethods;
-        struct _objc_2_class_method_info* optionalClassMethods;
+    struct _objc_2_class_property_info* catProperties;
 
-        struct _objc_2_class_property_info* instanceProperties;
+    metadata = data;
+    category = cat;
 
-        metadata = data;
-        protocol = prot;
+    if (macho->isDyldCache()) {
+        name = reinterpret_cast<char*>(
+            macho->getBufferAddress(cat->category_name - macho->getAslrSlide()));
 
-        macho = metadata->getMachO();
-
-        if (macho->isDyldCache()) {
-            name = reinterpret_cast<char*>(
-                macho->getBufferAddress(prot->name - macho->getAslrSlide()));
-
-            printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
-
-            if (prot->instance_methods) {
-                instanceMethods =
-                    reinterpret_cast<struct _objc_2_class_method_info*>(macho->getBufferAddress(
-                        this->protocol->instance_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
-                                            INSTANCE_METHOD, instanceMethods);
-            }
-
-            if (prot->class_methods) {
-                classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    macho->getBufferAddress(this->protocol->class_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(),
-                                            CLASS_METHOD, classMethods);
-            }
-
-            if (prot->opt_instance_methods) {
-                optionalInstanceMethods =
-                    reinterpret_cast<struct _objc_2_class_method_info*>(macho->getBufferAddress(
-                        this->protocol->opt_instance_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this,
-                                            this->getOptionalInstanceMethods(), OPT_INSTANCE_METHOD,
-                                            optionalInstanceMethods);
-            }
-
-            if (prot->opt_class_methods) {
-                optionalClassMethods =
-                    reinterpret_cast<struct _objc_2_class_method_info*>(macho->getBufferAddress(
-                        this->protocol->opt_class_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(),
-                                            OPT_CLASS_METHOD, optionalClassMethods);
-            }
-
-            if (prot->instance_properties) {
-                instanceProperties =
-                    reinterpret_cast<struct _objc_2_class_property_info*>(macho->getBufferAddress(
-                        this->protocol->instance_properties - macho->getAslrSlide()));
-
-                ObjectiveC::parsePropertyList(this->metadata, this, this->getInstanceProperties(),
-                                              instanceProperties);
-            }
-        } else {
-            this->name = reinterpret_cast<char*>((prot->name & 0xFFFFFFF) +
-                                                 reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-            printf("\t\t$OBJC_PROTOCOL_%s\n", this->name);
-
-            if (prot->instance_methods) {
-                instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->protocol->instance_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
-                                            INSTANCE_METHOD, instanceMethods);
-            }
-
-            if (prot->class_methods) {
-                classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->protocol->class_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(),
-                                            CLASS_METHOD, classMethods);
-            }
-
-            if (prot->opt_instance_methods) {
-                optionalInstanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->protocol->opt_instance_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parseMethodList(this->metadata, this,
-                                            this->getOptionalInstanceMethods(), OPT_INSTANCE_METHOD,
-                                            optionalInstanceMethods);
-            }
-
-            if (prot->opt_class_methods) {
-                optionalClassMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->protocol->opt_class_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getOptionalClassMethods(),
-                                            OPT_CLASS_METHOD, optionalClassMethods);
-            }
-
-            if (prot->instance_properties) {
-                instanceProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
-                    (this->protocol->instance_properties & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parsePropertyList(this->metadata, this, this->getInstanceProperties(),
-                                              instanceProperties);
-            }
+        if (!name) {
+            name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
+                cat->category_name - macho->getAslrSlide()));
         }
-    }
 
-    Category::Category(ObjCData* data, struct _objc_2_category* cat) {
-        mrk::UserMachO* macho = data->getMachO();
+        ObjCClass* isa = data->getClassByName(this->name);
 
-        struct _objc_2_class_method_info* instanceMethods;
-        struct _objc_2_class_method_info* classMethods;
+        if (isa) {
+            class_name = isa->getName();
+        } else {
+            class_name = "UNKNOWN";
+        }
 
-        struct _objc_2_class_property_info* catProperties;
+        printf("\t\t$OBJC_CATEGORY_%s+%s\n", this->class_name, "extra");
 
-        metadata = data;
-        category = cat;
+        if (cat->instance_methods) {
+            instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                macho->getBufferAddress(this->category->instance_methods - macho->getAslrSlide()));
 
-        if (macho->isDyldCache()) {
-            name = reinterpret_cast<char*>(
-                macho->getBufferAddress(cat->category_name - macho->getAslrSlide()));
+            ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
+                                        INSTANCE_METHOD, instanceMethods);
+        }
 
-            if (!name) {
-                name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
-                    cat->category_name - macho->getAslrSlide()));
-            }
+        if (cat->class_methods) {
+            classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                macho->getBufferAddress(this->category->class_methods - macho->getAslrSlide()));
 
-            ObjCClass* isa = data->getClassByName(this->name);
+            ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD,
+                                        classMethods);
+        }
+
+        if (cat->properties) {
+            catProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
+                macho->getBufferAddress(this->category->properties - macho->getAslrSlide()));
+
+            ObjectiveC::parsePropertyList(this->metadata, this, this->getProperties(),
+                                          catProperties);
+        }
+
+    } else {
+        name = reinterpret_cast<char*>((cat->category_name & 0xFFFFFFF) +
+                                       reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+        if (!(cat->class_name & 0x4000000000000000)) {
+            UInt64 cls =
+                ((cat->class_name & 0xFFFFFFF) + reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+            ObjCClass* isa = data->getClassByIsa((UInt64)cls);
 
             if (isa) {
                 class_name = isa->getName();
             } else {
                 class_name = "UNKNOWN";
             }
-
-            printf("\t\t$OBJC_CATEGORY_%s+%s\n", this->class_name, "extra");
-
-            if (cat->instance_methods) {
-                instanceMethods =
-                    reinterpret_cast<struct _objc_2_class_method_info*>(macho->getBufferAddress(
-                        this->category->instance_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
-                                            INSTANCE_METHOD, instanceMethods);
-            }
-
-            if (cat->class_methods) {
-                classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    macho->getBufferAddress(this->category->class_methods - macho->getAslrSlide()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(),
-                                            CLASS_METHOD, classMethods);
-            }
-
-            if (cat->properties) {
-                catProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
-                    macho->getBufferAddress(this->category->properties - macho->getAslrSlide()));
-
-                ObjectiveC::parsePropertyList(this->metadata, this, this->getProperties(),
-                                              catProperties);
-            }
-
         } else {
-            name = reinterpret_cast<char*>((cat->category_name & 0xFFFFFFF) +
-                                           reinterpret_cast<UInt64>(macho->getMachHeader()));
+            class_name = "UNKNOWN";
+        }
 
-            if (!(cat->class_name & 0x4000000000000000)) {
-                UInt64 cls = ((cat->class_name & 0xFFFFFFF) +
-                              reinterpret_cast<UInt64>(macho->getMachHeader()));
+        printf("\t\t$OBJC_CATEGORY_%s+%s\n", this->class_name, this->name);
 
-                ObjCClass* isa = data->getClassByIsa((UInt64)cls);
+        if (cat->instance_methods) {
+            instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->category->instance_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
 
-                if (isa) {
-                    class_name = isa->getName();
-                } else {
-                    class_name = "UNKNOWN";
-                }
-            } else {
-                class_name = "UNKNOWN";
-            }
+            ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
+                                        INSTANCE_METHOD, instanceMethods);
+        }
 
-            printf("\t\t$OBJC_CATEGORY_%s+%s\n", this->class_name, this->name);
+        if (cat->class_methods) {
+            classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
+                (this->category->class_methods & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
 
-            if (cat->instance_methods) {
-                instanceMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->category->instance_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
+            ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(), CLASS_METHOD,
+                                        classMethods);
+        }
 
-                ObjectiveC::parseMethodList(this->metadata, this, this->getInstanceMethods(),
-                                            INSTANCE_METHOD, instanceMethods);
-            }
+        if (cat->properties) {
+            catProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
+                (this->category->properties & 0xFFFFFFF) +
+                reinterpret_cast<UInt64>(macho->getMachHeader()));
 
-            if (cat->class_methods) {
-                classMethods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                    (this->category->class_methods & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parseMethodList(this->metadata, this, this->getClassMethods(),
-                                            CLASS_METHOD, classMethods);
-            }
-
-            if (cat->properties) {
-                catProperties = reinterpret_cast<struct _objc_2_class_property_info*>(
-                    (this->category->properties & 0xFFFFFFF) +
-                    reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-                ObjectiveC::parsePropertyList(this->metadata, this, this->getProperties(),
-                                              catProperties);
-            }
+            ObjectiveC::parsePropertyList(this->metadata, this, this->getProperties(),
+                                          catProperties);
         }
     }
+}
 
-    Ivar::Ivar(ObjC* object, struct _objc_2_class_ivar* ivar) {
-        mrk::UserMachO* macho = object->getMetadata()->getMachO();
+Ivar::Ivar(ObjC* object, struct _objc_2_class_ivar* ivar) {
+    mrk::UserMachO* macho = object->getMetadata()->getMachO();
 
-        if (macho->isDyldCache()) {
-            object = object;
-            ivar = ivar;
-            name = reinterpret_cast<char*>(
-                macho->getBufferAddress(ivar->name - macho->getAslrSlide()));
-
-            if (!name) {
-                name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
-                    ivar->name - macho->getAslrSlide()));
-            }
-
-            offset = ivar->offset - macho->getAslrSlide();
-            type = ivar->type;
-            size = ivar->size;
-
-        } else {
-            object = object;
-            ivar = ivar;
-            offset = reinterpret_cast<UInt64>((ivar->offset & 0xFFFFFF) +
-                                              reinterpret_cast<UInt64>(macho->getMachHeader()));
-            name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) +
-                                           reinterpret_cast<char*>(macho->getMachHeader()));
-            type = ivar->type;
-            size = ivar->size;
-        }
-    }
-
-    Property::Property(ObjC* object, struct _objc_2_class_property* property) {
-        mrk::UserMachO* macho = object->getMetadata()->getMachO();
-
-        if (macho->isDyldCache()) {
-            object = object;
-            property = property;
-            name = reinterpret_cast<char*>(
-                macho->getBufferAddress(property->name - macho->getAslrSlide()));
-
-            if (!name) {
-                name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
-                    property->name - macho->getAslrSlide()));
-            }
-
-            attributes = reinterpret_cast<char*>(
-                macho->getBufferAddress(property->attributes - macho->getAslrSlide()));
-
-            if (!attributes) {
-                attributes =
-                    reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
-                        property->attributes - macho->getAslrSlide()));
-            }
-
-        } else {
-            object = object;
-            property = property;
-            name = reinterpret_cast<char*>((property->name & 0xFFFFFF) +
-                                           reinterpret_cast<char*>(macho->getMachHeader()));
-            attributes = reinterpret_cast<char*>((property->attributes & 0xFFFFFF) +
-                                                 reinterpret_cast<char*>(macho->getMachHeader()));
-        }
-    }
-
-    Method::Method(ObjC* object, struct _objc_2_class_method* method) {
-        mrk::UserMachO* macho = object->getMetadata()->getMachO();
-
-        UInt64 selectors;
-
-        UInt64 pointer_to_type;
-
-        UInt64 pointer_to_name;
-
+    if (macho->isDyldCache()) {
         object = object;
-        method = method;
-
-        selectors = ObjectiveC::findSelectorsBase(macho);
-
-        if (macho->isDyldCache() && selectors) {
-            pointer_to_name = selectors + method->name;
-
-            pointer_to_name = macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name);
-
-            name = reinterpret_cast<char*>(pointer_to_name);
-
-            pointer_to_type = macho->offsetToAddress(
-                (UInt64)&method->type - reinterpret_cast<UInt64>(macho->getMachHeader()));
-
-            pointer_to_type += method->type;
-
-            pointer_to_type = macho->getBufferAddress(pointer_to_type);
-
-            if (!pointer_to_type) {
-                pointer_to_type = macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_type);
-            }
-
-            type = pointer_to_type;
-
-            impl = reinterpret_cast<UInt64>(
-                method->imp +
-                macho->offsetToAddress(reinterpret_cast<UInt64>(&method->imp) -
-                                       reinterpret_cast<UInt64>(macho->getMachHeader())));
-        } else {
-            if (dynamic_cast<ObjCClass*>(this->object) || dynamic_cast<Category*>(this->object)) {
-                pointer_to_name = reinterpret_cast<UInt64>(&method->name) +
-                                  reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
-
-                pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
-                                  ((*(UInt64*)pointer_to_name) & 0xFFFFFF);
-            } else {
-                pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
-                                  reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
-            }
-
-            name = reinterpret_cast<char*>(pointer_to_name);
-            impl = reinterpret_cast<UInt64>((method->imp & 0xFFFFFF) +
-                                            reinterpret_cast<UInt64>(macho->getMachHeader()));
-            type = method->type;
-        }
-    }
-
-    Method::Method(ObjC* object, struct _objc_2_method* method) {
-        mrk::UserMachO* macho = object->getMetadata()->getMachO();
-
-        object = object;
-
-        name =
-            reinterpret_cast<char*>(macho->getBufferAddress(method->name - macho->getAslrSlide()));
+        ivar = ivar;
+        name = reinterpret_cast<char*>(macho->getBufferAddress(ivar->name - macho->getAslrSlide()));
 
         if (!name) {
             name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
-                method->name - macho->getAslrSlide()));
+                ivar->name - macho->getAslrSlide()));
         }
 
-        impl = method->imp ? method->imp - macho->getAslrSlide() : 0;
-        type = macho->getBufferAddress(method->type - macho->getAslrSlide());
+        offset = ivar->offset - macho->getAslrSlide();
+        type = ivar->type;
+        size = ivar->size;
+
+    } else {
+        object = object;
+        ivar = ivar;
+        offset = reinterpret_cast<UInt64>((ivar->offset & 0xFFFFFF) +
+                                          reinterpret_cast<UInt64>(macho->getMachHeader()));
+        name = reinterpret_cast<char*>((ivar->name & 0xFFFFFF) +
+                                       reinterpret_cast<char*>(macho->getMachHeader()));
+        type = ivar->type;
+        size = ivar->size;
     }
+}
+
+Property::Property(ObjC* object, struct _objc_2_class_property* property) {
+    mrk::UserMachO* macho = object->getMetadata()->getMachO();
+
+    if (macho->isDyldCache()) {
+        object = object;
+        property = property;
+        name = reinterpret_cast<char*>(
+            macho->getBufferAddress(property->name - macho->getAslrSlide()));
+
+        if (!name) {
+            name = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
+                property->name - macho->getAslrSlide()));
+        }
+
+        attributes = reinterpret_cast<char*>(
+            macho->getBufferAddress(property->attributes - macho->getAslrSlide()));
+
+        if (!attributes) {
+            attributes = reinterpret_cast<char*>(macho->getObjectiveCLibrary()->getBufferAddress(
+                property->attributes - macho->getAslrSlide()));
+        }
+
+    } else {
+        object = object;
+        property = property;
+        name = reinterpret_cast<char*>((property->name & 0xFFFFFF) +
+                                       reinterpret_cast<char*>(macho->getMachHeader()));
+        attributes = reinterpret_cast<char*>((property->attributes & 0xFFFFFF) +
+                                             reinterpret_cast<char*>(macho->getMachHeader()));
+    }
+}
+
+Method::Method(ObjC* object, struct _objc_2_class_method* method) {
+    mrk::UserMachO* macho = object->getMetadata()->getMachO();
+
+    UInt64 selectors;
+
+    UInt64 pointer_to_type;
+
+    UInt64 pointer_to_name;
+
+    object = object;
+    method = method;
+
+    selectors = ObjectiveC::findSelectorsBase(macho);
+
+    if (macho->isDyldCache() && selectors) {
+        pointer_to_name = selectors + method->name;
+
+        pointer_to_name = macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name);
+
+        name = reinterpret_cast<char*>(pointer_to_name);
+
+        pointer_to_type = macho->offsetToAddress((UInt64)&method->type -
+                                                 reinterpret_cast<UInt64>(macho->getMachHeader()));
+
+        pointer_to_type += method->type;
+
+        pointer_to_type = macho->getBufferAddress(pointer_to_type);
+
+        if (!pointer_to_type) {
+            pointer_to_type = macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_type);
+        }
+
+        type = pointer_to_type;
+
+        impl = reinterpret_cast<UInt64>(
+            method->imp + macho->offsetToAddress(reinterpret_cast<UInt64>(&method->imp) -
+                                                 reinterpret_cast<UInt64>(macho->getMachHeader())));
+    } else {
+        if (dynamic_cast<ObjCClass*>(this->object) || dynamic_cast<Category*>(this->object)) {
+            pointer_to_name = reinterpret_cast<UInt64>(&method->name) +
+                              reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
+
+            pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
+                              ((*(UInt64*)pointer_to_name) & 0xFFFFFF);
+        } else {
+            pointer_to_name = reinterpret_cast<UInt64>(macho->getMachHeader()) +
+                              reinterpret_cast<UInt32>(method->name & 0xFFFFFF);
+        }
+
+        name = reinterpret_cast<char*>(pointer_to_name);
+        impl = reinterpret_cast<UInt64>((method->imp & 0xFFFFFF) +
+                                        reinterpret_cast<UInt64>(macho->getMachHeader()));
+        type = method->type;
+    }
+}
+
+Method::Method(ObjC* object, struct _objc_2_method* method) {
+    mrk::UserMachO* macho = object->getMetadata()->getMachO();
+
+    object = object;
+
+    name = reinterpret_cast<char*>(macho->getBufferAddress(method->name - macho->getAslrSlide()));
+
+    if (!name) {
+        name = reinterpret_cast<char*>(
+            macho->getObjectiveCLibrary()->getBufferAddress(method->name - macho->getAslrSlide()));
+    }
+
+    impl = method->imp ? method->imp - macho->getAslrSlide() : 0;
+    type = macho->getBufferAddress(method->type - macho->getAslrSlide());
+}
 } // namespace ObjectiveC
 
 #ifdef __arm64__
@@ -735,175 +720,194 @@ namespace ObjectiveC {
 
 namespace ObjectiveC {
 
-    UInt64 findSelectorsBase(mrk::UserMachO* macho) {
-        UInt64 selectors;
+UInt64 findSelectorsBase(mrk::UserMachO* macho) {
+    UInt64 selectors;
 
-        UInt64 method_getName;
+    UInt64 method_getName;
 
-        mrk::UserMachO* libobjc;
+    mrk::UserMachO* libobjc;
 
-        Symbol* symbol;
+    Symbol* symbol;
 
-        libobjc = macho->getObjectiveCLibrary();
+    libobjc = macho->getObjectiveCLibrary();
 
-        if (!libobjc) {
-            return 0;
-        }
+    if (!libobjc) {
+        return 0;
+    }
 
-        symbol = libobjc->getSymbolByName("_method_getName");
+    symbol = libobjc->getSymbolByName("_method_getName");
 
-        if (!symbol) {
-            return 0;
-        }
+    if (!symbol) {
+        return 0;
+    }
 
-        method_getName = symbol->getAddress();
+    method_getName = symbol->getAddress();
 
-        if (!method_getName) {
-            return 0;
-        }
+    if (!method_getName) {
+        return 0;
+    }
 
-        UInt64 start = libobjc->getBufferAddress(method_getName);
+    UInt64 start = libobjc->getBufferAddress(method_getName);
 
 #ifdef __arm64__
 
-        using namespace Arch::arm64;
+    using namespace Arch::arm64;
 
-        UInt64 add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,
-                                                      (bool (*)(UInt32*))is_add_reg, -1, -1);
+    UInt64 add = Arch::arm64::PatchFinder::step64(libobjc, start, 0x100,
+                                                  (bool (*)(UInt32*))is_add_reg, -1, -1);
 
-        UInt64 xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,
-                                                           (bool (*)(UInt32*))is_adrp, -1, -1);
+    UInt64 xref = Arch::arm64::PatchFinder::stepBack64(libobjc, add, 0x100,
+                                                       (bool (*)(UInt32*))is_adrp, -1, -1);
 
-        adr_t adrp = *reinterpret_cast<adr_t*>(xref);
+    adr_t adrp = *reinterpret_cast<adr_t*>(xref);
 
-        add_imm_t add_imm = *reinterpret_cast<add_imm_t*>(xref + 0x4);
+    add_imm_t add_imm = *reinterpret_cast<add_imm_t*>(xref + 0x4);
 
-        selectors = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) +
-                    (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
+    selectors = (xref & ~0xFFF) + ((((adrp.immhi << 2) | adrp.immlo)) << 12) +
+                (add_imm.sh ? (add_imm.imm << 12) : add_imm.imm);
 
-        return (selectors - start) + method_getName;
+    return (selectors - start) + method_getName;
 
 #elif __x86_64__
 
-        using namespace Arch::x86_64;
+    using namespace Arch::x86_64;
 
-        cs_insn insn;
+    cs_insn insn;
 
-        UInt64 add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
+    UInt64 add = Arch::x86_64::PatchFinder::step64(libobjc, start, 0x100, "add", NULL);
 
-        UInt64 mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
+    UInt64 mov = Arch::x86_64::PatchFinder::stepBack64(libobjc, add, 0x100, "mov", NULL);
 
-        Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
+    Arch::x86_64::disassemble(mov, Arch::x86_64::MaxInstruction, &insn);
 
-        UInt64 selectors = insn.detail.x86->operands[1].mem.disp + mov;
+    UInt64 selectors = insn.detail.x86->operands[1].mem.disp + mov;
 
-        return selectors;
+    return selectors;
 
 #endif
+}
+
+Protocol* ObjCClass::getProtocol(char* protocolname) {
+    for (int i = 0; i < this->getProtocols().size(); i++) {
+        Protocol* protocol = this->getProtocols().at(i);
+
+        if (strcmp(protocol->getName(), protocolname) == 0) {
+            return protocol;
+        }
     }
 
-    Protocol* ObjCClass::getProtocol(char* protocolname) {
-        for (int i = 0; i < this->getProtocols().size(); i++) {
-            Protocol* protocol = this->getProtocols().at(i);
+    return NULL;
+}
 
-            if (strcmp(protocol->getName(), protocolname) == 0) {
-                return protocol;
+Method* ObjCClass::getMethod(char* methodname) {
+    for (int i = 0; i < this->getMethods().size(); i++) {
+        Method* method = this->getMethods().at(i);
+
+        if (strcmp(method->getName(), methodname) == 0) {
+            return method;
+        }
+    }
+
+    return NULL;
+}
+
+Ivar* ObjCClass::getIvar(char* ivarname) {
+    for (int i = 0; i < this->getIvars().size(); i++) {
+        Ivar* ivar = this->getIvars().at(i);
+
+        if (strcmp(ivar->getName(), ivarname) == 0) {
+            return ivar;
+        }
+    }
+
+    return NULL;
+}
+
+Property* ObjCClass::getProperty(char* propertyname) {
+    for (int i = 0; i < this->getProperties().size(); i++) {
+        Property* property = this->getProperties().at(i);
+
+        if (strcmp(property->getName(), propertyname) == 0) {
+            return property;
+        }
+    }
+
+    return NULL;
+}
+
+void ObjCClass::parseMethods() {
+    struct _objc_2_class* c;
+
+    struct _objc_2_class_data* d;
+
+    struct _objc_2_class_method_info* methods;
+
+    UInt64 selectors = 0;
+
+    Offset off;
+
+    c = this->cls;
+
+    d = this->data;
+
+    if (!d->methods) {
+        return;
+    }
+
+    if (macho->isDyldCache()) {
+        selectors = ObjectiveC::findSelectorsBase(this->macho);
+    }
+
+    methods = NULL;
+
+    if (macho->isDyldCache()) {
+        methods = reinterpret_cast<struct _objc_2_class_method_info*>(this->macho->getBufferAddress(
+            (d->methods & 0xFFFFFFFFFF) - this->macho->getAslrSlide()));
+    } else {
+        methods = reinterpret_cast<struct _objc_2_class_method_info*>(
+            (d->methods & 0xFFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
+    }
+
+    if (!methods) {
+        return;
+    }
+
+    off = sizeof(struct _objc_2_class_method_info);
+
+    MAC_RK_LOG("\t\t\tMethods\n");
+
+    for (int i = 0; i < methods->count; i++) {
+        struct _objc_2_class_method* method =
+            reinterpret_cast<struct _objc_2_class_method*>(reinterpret_cast<UInt8*>(methods) + off);
+
+        UInt64 pointer_to_name;
+        UInt64 offset_to_name;
+
+        if (selectors) {
+            pointer_to_name = selectors + method->name;
+
+            if (this->macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name)) {
+                Method* meth = new Method(this, method);
+
+                this->methods.push_back(meth);
+
+                if (metaclass) {
+                    MAC_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->getImpl(), meth->getName());
+                } else {
+                    MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
+                }
             }
-        }
 
-        return NULL;
-    }
-
-    Method* ObjCClass::getMethod(char* methodname) {
-        for (int i = 0; i < this->getMethods().size(); i++) {
-            Method* method = this->getMethods().at(i);
-
-            if (strcmp(method->getName(), methodname) == 0) {
-                return method;
-            }
-        }
-
-        return NULL;
-    }
-
-    Ivar* ObjCClass::getIvar(char* ivarname) {
-        for (int i = 0; i < this->getIvars().size(); i++) {
-            Ivar* ivar = this->getIvars().at(i);
-
-            if (strcmp(ivar->getName(), ivarname) == 0) {
-                return ivar;
-            }
-        }
-
-        return NULL;
-    }
-
-    Property* ObjCClass::getProperty(char* propertyname) {
-        for (int i = 0; i < this->getProperties().size(); i++) {
-            Property* property = this->getProperties().at(i);
-
-            if (strcmp(property->getName(), propertyname) == 0) {
-                return property;
-            }
-        }
-
-        return NULL;
-    }
-
-    void ObjCClass::parseMethods() {
-        struct _objc_2_class* c;
-
-        struct _objc_2_class_data* d;
-
-        struct _objc_2_class_method_info* methods;
-
-        UInt64 selectors = 0;
-
-        Offset off;
-
-        c = this->cls;
-
-        d = this->data;
-
-        if (!d->methods) {
-            return;
-        }
-
-        if (macho->isDyldCache()) {
-            selectors = ObjectiveC::findSelectorsBase(this->macho);
-        }
-
-        methods = NULL;
-
-        if (macho->isDyldCache()) {
-            methods =
-                reinterpret_cast<struct _objc_2_class_method_info*>(this->macho->getBufferAddress(
-                    (d->methods & 0xFFFFFFFFFF) - this->macho->getAslrSlide()));
         } else {
-            methods = reinterpret_cast<struct _objc_2_class_method_info*>(
-                (d->methods & 0xFFFFFFFFF) +
-                reinterpret_cast<UInt64>(this->macho->getMachHeader()));
-        }
+            pointer_to_name = reinterpret_cast<UInt64>(&method->name) +
+                              reinterpret_cast<UInt32>(method->name & 0xFFFFFFFF);
 
-        if (!methods) {
-            return;
-        }
+            offset_to_name = ((*(UInt64*)pointer_to_name));
 
-        off = sizeof(struct _objc_2_class_method_info);
+            if (offset_to_name) {
+                Section* sect = this->macho->sectionForOffset(offset_to_name);
 
-        MAC_RK_LOG("\t\t\tMethods\n");
-
-        for (int i = 0; i < methods->count; i++) {
-            struct _objc_2_class_method* method = reinterpret_cast<struct _objc_2_class_method*>(
-                reinterpret_cast<UInt8*>(methods) + off);
-
-            UInt64 pointer_to_name;
-            UInt64 offset_to_name;
-
-            if (selectors) {
-                pointer_to_name = selectors + method->name;
-
-                if (this->macho->getObjectiveCLibrary()->getBufferAddress(pointer_to_name)) {
+                if (sect && strcmp(sect->getSectionName(), "__objc_methname") == 0) {
                     Method* meth = new Method(this, method);
 
                     this->methods.push_back(meth);
@@ -914,259 +918,236 @@ namespace ObjectiveC {
                         MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
                     }
                 }
-
-            } else {
-                pointer_to_name = reinterpret_cast<UInt64>(&method->name) +
-                                  reinterpret_cast<UInt32>(method->name & 0xFFFFFFFF);
-
-                offset_to_name = ((*(UInt64*)pointer_to_name));
-
-                if (offset_to_name) {
-                    Section* sect = this->macho->sectionForOffset(offset_to_name);
-
-                    if (sect && strcmp(sect->getSectionName(), "__objc_methname") == 0) {
-                        Method* meth = new Method(this, method);
-
-                        this->methods.push_back(meth);
-
-                        if (metaclass) {
-                            MAC_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->getImpl(), meth->getName());
-                        } else {
-                            MAC_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->getImpl(), meth->getName());
-                        }
-                    }
-                }
             }
-
-            off += sizeof(struct _objc_2_class_method);
         }
+
+        off += sizeof(struct _objc_2_class_method);
+    }
+}
+
+void ObjCClass::parseProtocols() {
+    struct _objc_2_class* c;
+
+    struct _objc_2_class_data* d;
+
+    struct _objc_2_class_protocol_info* protocols;
+
+    Offset off;
+
+    c = this->cls;
+
+    d = this->data;
+
+    protocols = reinterpret_cast<struct _objc_2_class_protocol_info*>(data->protocols);
+
+    off = sizeof(struct _objc_2_class_protocol_info);
+}
+
+void ObjCClass::parseIvars() {
+    struct _objc_2_class* c;
+
+    struct _objc_2_class_data* d;
+
+    struct _objc_2_class_ivar_info* ivars;
+
+    Offset off;
+
+    c = this->cls;
+
+    d = this->data;
+
+    if (!d->ivars) {
+        return;
     }
 
-    void ObjCClass::parseProtocols() {
-        struct _objc_2_class* c;
+    ivars = NULL;
 
-        struct _objc_2_class_data* d;
-
-        struct _objc_2_class_protocol_info* protocols;
-
-        Offset off;
-
-        c = this->cls;
-
-        d = this->data;
-
-        protocols = reinterpret_cast<struct _objc_2_class_protocol_info*>(data->protocols);
-
-        off = sizeof(struct _objc_2_class_protocol_info);
+    if (this->macho->isDyldCache()) {
+        ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(
+            this->macho->getBufferAddress(d->ivars - this->macho->getAslrSlide()));
+    } else {
+        ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(
+            (d->ivars & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
     }
 
-    void ObjCClass::parseIvars() {
-        struct _objc_2_class* c;
-
-        struct _objc_2_class_data* d;
-
-        struct _objc_2_class_ivar_info* ivars;
-
-        Offset off;
-
-        c = this->cls;
-
-        d = this->data;
-
-        if (!d->ivars) {
-            return;
-        }
-
-        ivars = NULL;
-
-        if (this->macho->isDyldCache()) {
-            ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(
-                this->macho->getBufferAddress(d->ivars - this->macho->getAslrSlide()));
-        } else {
-            ivars = reinterpret_cast<struct _objc_2_class_ivar_info*>(
-                (d->ivars & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
-        }
-
-        if (!ivars) {
-            return;
-        }
-
-        off = sizeof(struct _objc_2_class_ivar_info);
-
-        MAC_RK_LOG("\t\t\tIvars\n");
-
-        for (int i = 0; i < ivars->count; i++) {
-            struct _objc_2_class_ivar* ivar =
-                reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<UInt8*>(ivars) + off);
-
-            Ivar* iv = new Ivar(this, ivar);
-
-            this->ivars.push_back(iv);
-
-            MAC_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->getOffset(), iv->getName());
-
-            off += sizeof(struct _objc_2_class_ivar);
-        }
+    if (!ivars) {
+        return;
     }
 
-    void ObjCClass::parseProperties() {
-        struct _objc_2_class* c;
+    off = sizeof(struct _objc_2_class_ivar_info);
 
-        struct _objc_2_class_data* d;
+    MAC_RK_LOG("\t\t\tIvars\n");
 
-        struct _objc_2_class_property_info* properties;
+    for (int i = 0; i < ivars->count; i++) {
+        struct _objc_2_class_ivar* ivar =
+            reinterpret_cast<struct _objc_2_class_ivar*>(reinterpret_cast<UInt8*>(ivars) + off);
 
-        Offset off;
+        Ivar* iv = new Ivar(this, ivar);
 
-        c = this->cls;
+        this->ivars.push_back(iv);
 
-        d = this->data;
+        MAC_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->getOffset(), iv->getName());
 
-        if (!d->properties) {
-            return;
-        }
-
-        properties = NULL;
-
-        if (this->macho->isDyldCache()) {
-            properties = reinterpret_cast<struct _objc_2_class_property_info*>(
-                this->macho->getBufferAddress(d->properties - this->macho->getAslrSlide()));
-        } else {
-            properties = reinterpret_cast<struct _objc_2_class_property_info*>(
-                (d->properties & 0xFFFFFFFF) +
-                reinterpret_cast<UInt64>(this->macho->getMachHeader()));
-        }
-
-        if (!properties) {
-            return;
-        }
-
-        off = sizeof(struct _objc_2_class_property_info);
-
-        MAC_RK_LOG("\t\t\tProperties\n");
-
-        for (int i = 0; i < properties->count; i++) {
-            struct _objc_2_class_property* property =
-                reinterpret_cast<struct _objc_2_class_property*>(
-                    reinterpret_cast<UInt8*>(properties) + off);
-
-            Property* prop = new Property(this, property);
-
-            this->properties.push_back(prop);
-
-            MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
-
-            off += sizeof(struct _objc_2_class_property);
-        }
+        off += sizeof(struct _objc_2_class_ivar);
     }
+}
+
+void ObjCClass::parseProperties() {
+    struct _objc_2_class* c;
+
+    struct _objc_2_class_data* d;
+
+    struct _objc_2_class_property_info* properties;
+
+    Offset off;
+
+    c = this->cls;
+
+    d = this->data;
+
+    if (!d->properties) {
+        return;
+    }
+
+    properties = NULL;
+
+    if (this->macho->isDyldCache()) {
+        properties = reinterpret_cast<struct _objc_2_class_property_info*>(
+            this->macho->getBufferAddress(d->properties - this->macho->getAslrSlide()));
+    } else {
+        properties = reinterpret_cast<struct _objc_2_class_property_info*>(
+            (d->properties & 0xFFFFFFFF) + reinterpret_cast<UInt64>(this->macho->getMachHeader()));
+    }
+
+    if (!properties) {
+        return;
+    }
+
+    off = sizeof(struct _objc_2_class_property_info);
+
+    MAC_RK_LOG("\t\t\tProperties\n");
+
+    for (int i = 0; i < properties->count; i++) {
+        struct _objc_2_class_property* property = reinterpret_cast<struct _objc_2_class_property*>(
+            reinterpret_cast<UInt8*>(properties) + off);
+
+        Property* prop = new Property(this, property);
+
+        this->properties.push_back(prop);
+
+        MAC_RK_LOG("\t\t\t\t%s %s\n", prop->getAttributes(), prop->getName());
+
+        off += sizeof(struct _objc_2_class_property);
+    }
+}
 } // namespace ObjectiveC
 
 namespace ObjectiveC {
-    void ObjCData::parseObjC() {
-        data = this->macho->getSegment("__DATA");
-        data_const = this->macho->getSegment("__DATA_CONST");
+void ObjCData::parseObjC() {
+    data = this->macho->getSegment("__DATA");
+    data_const = this->macho->getSegment("__DATA_CONST");
 
-        classlist = this->macho->getSection("__DATA_CONST", "__objc_classlist");
-        catlist = this->macho->getSection("__DATA_CONST", "__objc_catlist");
-        protolist = this->macho->getSection("__DATA_CONST", "__objc_protolist");
+    classlist = this->macho->getSection("__DATA_CONST", "__objc_classlist");
+    catlist = this->macho->getSection("__DATA_CONST", "__objc_catlist");
+    protolist = this->macho->getSection("__DATA_CONST", "__objc_protolist");
 
-        selrefs = this->macho->getSection("__DATA", "__objc_selrefs");
-        protorefs = this->macho->getSection("__DATA", "__objc_protorefs");
-        classrefs = this->macho->getSection("__DATA", "__objc_classrefs");
-        superrefs = this->macho->getSection("__DATA", "__objc_superrefs");
+    selrefs = this->macho->getSection("__DATA", "__objc_selrefs");
+    protorefs = this->macho->getSection("__DATA", "__objc_protorefs");
+    classrefs = this->macho->getSection("__DATA", "__objc_classrefs");
+    superrefs = this->macho->getSection("__DATA", "__objc_superrefs");
 
-        ivar = this->macho->getSection("__DATA", "__objc_ivar");
-        objc_data = this->macho->getSection("__DATA", "__objc_data");
+    ivar = this->macho->getSection("__DATA", "__objc_ivar");
+    objc_data = this->macho->getSection("__DATA", "__objc_data");
 
-        assert(data);
-        assert(data);
+    assert(data);
+    assert(data);
 
-        assert(classlist);
+    assert(classlist);
 
-        assert(selrefs);
+    assert(selrefs);
 
-        assert(ivar);
-        assert(objc_data);
+    assert(ivar);
+    assert(objc_data);
 
-        parseClassList(this, classes);
+    parseClassList(this, classes);
 
-        if (protolist)
-            parseProtocolList(this, protocols);
+    if (protolist)
+        parseProtocolList(this, protocols);
 
-        if (catlist)
-            parseCategoryList(this, categories);
+    if (catlist)
+        parseCategoryList(this, categories);
 
-        if (!macho->isDyldCache()) {
-            // do not parse categories and protocols when dyld cache is being parsed
-            // all of the class pointers will be invalid because they will exist in other libraries
-            // we aren't going to need categories during runtime anyways
+    if (!macho->isDyldCache()) {
+        // do not parse categories and protocols when dyld cache is being parsed
+        // all of the class pointers will be invalid because they will exist in other libraries
+        // we aren't going to need categories during runtime anyways
+    }
+}
+
+ObjCClass* ObjCData::getClassByName(char* classname) {
+    for (int i = 0; i < this->classes.size(); i++) {
+        ObjCClass* cls = this->classes.at(i);
+
+        if (cls->getName() && strcmp(cls->getName(), classname) == 0) {
+            return cls;
         }
     }
 
-    ObjCClass* ObjCData::getClassByName(char* classname) {
-        for (int i = 0; i < this->classes.size(); i++) {
-            ObjCClass* cls = this->classes.at(i);
+    return NULL;
+}
 
-            if (cls->getName() && strcmp(cls->getName(), classname) == 0) {
-                return cls;
-            }
+ObjCClass* ObjCData::getClassByIsa(UInt64 isa) {
+    for (int i = 0; i < this->classes.size(); i++) {
+        ObjCClass* cls = this->classes.at(i);
+
+        if (reinterpret_cast<UInt64>(cls->getClass()) == isa) {
+            return cls;
         }
-
-        return NULL;
     }
 
-    ObjCClass* ObjCData::getClassByIsa(UInt64 isa) {
-        for (int i = 0; i < this->classes.size(); i++) {
-            ObjCClass* cls = this->classes.at(i);
+    return NULL;
+}
 
-            if (reinterpret_cast<UInt64>(cls->getClass()) == isa) {
-                return cls;
-            }
+Protocol* ObjCData::getProtocol(char* protoname) {
+    for (int i = 0; i < this->protocols.size(); i++) {
+        Protocol* protocol = this->protocols.at(i);
+
+        if (strcmp(protocol->getName(), protoname) == 0) {
+            return protocol;
         }
-
-        return NULL;
     }
 
-    Protocol* ObjCData::getProtocol(char* protoname) {
-        for (int i = 0; i < this->protocols.size(); i++) {
-            Protocol* protocol = this->protocols.at(i);
+    return NULL;
+}
 
-            if (strcmp(protocol->getName(), protoname) == 0) {
-                return protocol;
-            }
+Category* ObjCData::getCategory(char* catname) {
+    for (int i = 0; i < this->categories.size(); i++) {
+        Category* category = this->categories.at(i);
+
+        if (strcmp(category->getName(), catname) == 0) {
+            return category;
         }
-
-        return NULL;
     }
 
-    Category* ObjCData::getCategory(char* catname) {
-        for (int i = 0; i < this->categories.size(); i++) {
-            Category* category = this->categories.at(i);
+    return NULL;
+}
 
-            if (strcmp(category->getName(), catname) == 0) {
-                return category;
-            }
-        }
+Method* ObjCData::getMethod(char* classname, char* methodname) {
+    ObjCClass* cls = this->getClassByName(classname);
 
-        return NULL;
-    }
+    return cls ? cls->getMethod(methodname) : NULL;
+}
 
-    Method* ObjCData::getMethod(char* classname, char* methodname) {
-        ObjCClass* cls = this->getClassByName(classname);
+Ivar* ObjCData::getIvar(char* classname, char* ivarname) {
+    ObjCClass* cls = this->getClassByName(classname);
 
-        return cls ? cls->getMethod(methodname) : NULL;
-    }
+    return cls ? cls->getIvar(ivarname) : NULL;
+}
 
-    Ivar* ObjCData::getIvar(char* classname, char* ivarname) {
-        ObjCClass* cls = this->getClassByName(classname);
+Property* ObjCData::getProperty(char* classname, char* propertyname) {
+    ObjCClass* cls = this->getClassByName(classname);
 
-        return cls ? cls->getIvar(ivarname) : NULL;
-    }
-
-    Property* ObjCData::getProperty(char* classname, char* propertyname) {
-        ObjCClass* cls = this->getClassByName(classname);
-
-        return cls ? cls->getProperty(propertyname) : NULL;
-    }
+    return cls ? cls->getProperty(propertyname) : NULL;
+}
 
 } // namespace ObjectiveC

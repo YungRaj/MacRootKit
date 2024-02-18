@@ -44,7 +44,7 @@ extern "C" {
 #include <mach/vm_types.h>
 
 namespace xnu {
-    class Kernel;
+class Kernel;
 }
 
 using namespace xnu;
@@ -213,7 +213,7 @@ inline T FunctionCast(T org, uint64_t ptr) {
 }
 
 namespace API {
-    void dump(Kernel* kernel, uint64_t address);
+void dump(Kernel* kernel, uint64_t address);
 
-    void hexdump(unsigned char* data, Size size, bool rev);
+void hexdump(unsigned char* data, Size size, bool rev);
 }; // namespace API

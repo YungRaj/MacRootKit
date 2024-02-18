@@ -27,72 +27,72 @@
 #include "vector.hpp"
 
 namespace xnu {
-    class Kernel;
-    class Kext;
-    class KextMachO;
+class Kernel;
+class Kext;
+class KextMachO;
 } // namespace xnu
 
 namespace xnu {
-    class KextMachO : public MachO {
-    public:
-        KextMachO(xnu::Kernel* kernel, char* name, xnu::Mach::VmAddress base);
-        KextMachO(xnu::Kernel* kernel, char* name, xnu::KmodInfo* kmod_info);
+class KextMachO : public MachO {
+public:
+    KextMachO(xnu::Kernel* kernel, char* name, xnu::Mach::VmAddress base);
+    KextMachO(xnu::Kernel* kernel, char* name, xnu::KmodInfo* kmod_info);
 
-        ~KextMachO();
+    ~KextMachO();
 
-        xnu::Kernel* getKernel() {
-            return kernel;
-        }
+    xnu::Kernel* getKernel() {
+        return kernel;
+    }
 
-        char* getKextName() {
-            return name;
-        }
+    char* getKextName() {
+        return name;
+    }
 
-        xnu::Mach::VmAddress getAddress() {
-            return address;
-        }
+    xnu::Mach::VmAddress getAddress() {
+        return address;
+    }
 
-        virtual Size getSize() {
-            return kmod_info->size > 0 ? kmod_info->size : MachO::getSize();
-        }
+    virtual Size getSize() {
+        return kmod_info->size > 0 ? kmod_info->size : MachO::getSize();
+    }
 
-        xnu::KmodStartFunc* getKmodStart() {
-            return kmod_info->start;
-        }
-        xnu::KmodStopFunc* getKmodStop() {
-            return kmod_info->stop;
-        }
+    xnu::KmodStartFunc* getKmodStart() {
+        return kmod_info->start;
+    }
+    xnu::KmodStopFunc* getKmodStop() {
+        return kmod_info->stop;
+    }
 
-        void setKernelCollection(xnu::Mach::VmAddress kc) {
-            this->kernel_collection = kc;
-        }
+    void setKernelCollection(xnu::Mach::VmAddress kc) {
+        this->kernel_collection = kc;
+    }
 
-        virtual void parseLinkedit();
+    virtual void parseLinkedit();
 
-        virtual bool parseLoadCommands();
+    virtual bool parseLoadCommands();
 
-        virtual void parseHeader();
+    virtual void parseHeader();
 
-        virtual void parseMachO();
+    virtual void parseMachO();
 
-    private:
-        xnu::Kernel* kernel;
+private:
+    xnu::Kernel* kernel;
 
-        xnu::Mach::VmAddress address;
+    xnu::Mach::VmAddress address;
 
-        char* name;
+    char* name;
 
-        Offset base_offset;
+    Offset base_offset;
 
-        xnu::Mach::VmAddress kernel_cache;
-        xnu::Mach::VmAddress kernel_collection;
+    xnu::Mach::VmAddress kernel_cache;
+    xnu::Mach::VmAddress kernel_collection;
 
-        xnu::KmodInfo* kmod_info;
+    xnu::KmodInfo* kmod_info;
 
-        UInt8* linkedit;
+    UInt8* linkedit;
 
-        Offset linkedit_off;
+    Offset linkedit_off;
 
-        Size linkedit_size;
-    };
+    Size linkedit_size;
+};
 } // namespace xnu

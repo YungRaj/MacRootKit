@@ -25,34 +25,33 @@
 struct DisasmSig;
 
 namespace Arch {
-    namespace arm64 {
-        namespace Disassembler {
-            bool init();
+namespace arm64 {
+namespace Disassembler {
+bool init();
 
-            bool deinit();
+bool deinit();
 
-            size_t instructionSize(xnu::Mach::VmAddress address, size_t min);
+size_t instructionSize(xnu::Mach::VmAddress address, size_t min);
 
-            size_t quickInstructionSize(xnu::Mach::VmAddress address, size_t min);
+size_t quickInstructionSize(xnu::Mach::VmAddress address, size_t min);
 
-            size_t disassemble(xnu::Mach::VmAddress address, size_t size, cs_insn** result);
+size_t disassemble(xnu::Mach::VmAddress address, size_t size, cs_insn** result);
 
-            bool registerAccess(cs_insn* insn, cs_regs regs_read, uint8_t* nread,
-                                cs_regs regs_write, uint8_t* nwrite);
+bool registerAccess(cs_insn* insn, cs_regs regs_read, uint8_t* nread, cs_regs regs_write,
+                    uint8_t* nwrite);
 
-            xnu::Mach::VmAddress disassembleNthBranchLink(xnu::Mach::VmAddress address, size_t num,
-                                                          size_t lookup_size);
+xnu::Mach::VmAddress disassembleNthBranchLink(xnu::Mach::VmAddress address, size_t num,
+                                              size_t lookup_size);
 
-            xnu::Mach::VmAddress disassembleNthBranch(xnu::Mach::VmAddress address, size_t num,
-                                                      size_t lookup_size);
+xnu::Mach::VmAddress disassembleNthBranch(xnu::Mach::VmAddress address, size_t num,
+                                          size_t lookup_size);
 
-            xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address,
-                                                           arm64_insn insn, size_t num,
-                                                           size_t lookup_size);
+xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address, arm64_insn insn,
+                                               size_t num, size_t lookup_size);
 
-            xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address,
-                                                      std::vector<struct DisasmSig*>* signature,
-                                                      size_t num, size_t lookup_size);
-        } // namespace Disassembler
-    }     // namespace arm64
-};        // namespace Arch
+xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address,
+                                          std::vector<struct DisasmSig*>* signature, size_t num,
+                                          size_t lookup_size);
+} // namespace Disassembler
+} // namespace arm64
+}; // namespace Arch

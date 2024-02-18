@@ -21,46 +21,46 @@
 #include "MachO.hpp"
 
 namespace xnu {
-    class Kernel;
+class Kernel;
 
-    class KernelMachO : public MachO {
-    public:
-        KernelMachO() {}
+class KernelMachO : public MachO {
+public:
+    KernelMachO() {}
 
-        KernelMachO(uintptr_t address);
-        KernelMachO(uintptr_t address, Offset slide);
+    KernelMachO(uintptr_t address);
+    KernelMachO(uintptr_t address, Offset slide);
 
-        KernelMachO(const char* path, Offset slide);
-        KernelMachO(const char* path);
+    KernelMachO(const char* path, Offset slide);
+    KernelMachO(const char* path);
 
-        ~KernelMachO();
+    ~KernelMachO();
 
-        virtual void parseLinkedit();
+    virtual void parseLinkedit();
 
-        virtual bool parseLoadCommands();
+    virtual bool parseLoadCommands();
 
-        virtual void parseMachO();
+    virtual void parseMachO();
 
-    private:
-        xnu::Kernel* kernel;
+private:
+    xnu::Kernel* kernel;
 
-    protected:
-        UInt8* linkedit;
+protected:
+    UInt8* linkedit;
 
-        xnu::Mach::VmAddress linkedit_off;
+    xnu::Mach::VmAddress linkedit_off;
 
-        Size linkedit_size;
-    };
+    Size linkedit_size;
+};
 
-    class KernelCacheMachO : public KernelMachO {
-    public:
-        KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address);
-        KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address, Offset slide);
+class KernelCacheMachO : public KernelMachO {
+public:
+    KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address);
+    KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address, Offset slide);
 
-        virtual bool parseLoadCommands();
+    virtual bool parseLoadCommands();
 
-    private:
-        xnu::Mach::VmAddress kernel_cache;
-    };
+private:
+    xnu::Mach::VmAddress kernel_cache;
+};
 
 } // namespace xnu

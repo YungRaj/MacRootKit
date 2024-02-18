@@ -31,7 +31,7 @@
 #include "Kernel.hpp"
 
 namespace mrk {
-    class MacRootKit;
+class MacRootKit;
 }
 
 using namespace xnu;

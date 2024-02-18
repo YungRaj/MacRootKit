@@ -29,18 +29,18 @@
 #include <x86_64/Isa_x86_64.hpp>
 
 namespace mrk {
-    class MacRootKit;
+class MacRootKit;
 
-    class Patcher;
+class Patcher;
 
-    class Payload;
+class Payload;
 }; // namespace mrk
 
 namespace xnu {
-    class Kernel;
-    class Kext;
+class Kernel;
+class Kext;
 
-    class Task;
+class Task;
 } // namespace xnu
 
 using namespace Arch;
@@ -81,140 +81,140 @@ template <typename T = struct HookPatch*>
 using HookArray = std::vector<T>;
 
 namespace mrk {
-    class Hook {
-    public:
-        explicit Hook(mrk::Patcher* patcher, enum HookType hooktype);
-        explicit Hook(mrk::Patcher* patcher, enum HookType hooktype, xnu::Task* task,
-                      xnu::Mach::VmAddress from);
+class Hook {
+public:
+    explicit Hook(mrk::Patcher* patcher, enum HookType hooktype);
+    explicit Hook(mrk::Patcher* patcher, enum HookType hooktype, xnu::Task* task,
+                  xnu::Mach::VmAddress from);
 
-        static Hook* hookForFunction(xnu::Task* task, mrk::Patcher* patcher,
-                                     xnu::Mach::VmAddress address);
-        static Hook* hookForFunction(void* target, xnu::Task* task, mrk::Patcher* patcher,
-                                     xnu::Mach::VmAddress address);
+    static Hook* hookForFunction(xnu::Task* task, mrk::Patcher* patcher,
+                                 xnu::Mach::VmAddress address);
+    static Hook* hookForFunction(void* target, xnu::Task* task, mrk::Patcher* patcher,
+                                 xnu::Mach::VmAddress address);
 
-        static Hook* breakpointForAddress(xnu::Task* task, mrk::Patcher* patcher,
-                                          xnu::Mach::VmAddress address);
-        static Hook* breakpointForAddress(void* target, xnu::Task* task, mrk::Patcher* patcher,
-                                          xnu::Mach::VmAddress address);
+    static Hook* breakpointForAddress(xnu::Task* task, mrk::Patcher* patcher,
+                                      xnu::Mach::VmAddress address);
+    static Hook* breakpointForAddress(void* target, xnu::Task* task, mrk::Patcher* patcher,
+                                      xnu::Mach::VmAddress address);
 
-        void* getTarget() {
-            return target;
-        }
+    void* getTarget() {
+        return target;
+    }
 
-        mrk::Patcher* getPatcher() {
-            return patcher;
-        }
+    mrk::Patcher* getPatcher() {
+        return patcher;
+    }
 
-        xnu::Task* getTask() {
-            return task;
-        }
+    xnu::Task* getTask() {
+        return task;
+    }
 
-        Architecture* getArchitecture() {
-            return architecture;
-        }
+    Architecture* getArchitecture() {
+        return architecture;
+    }
 
-        Disassembler* getDisassembler() {
-            return disassembler;
-        }
+    Disassembler* getDisassembler() {
+        return disassembler;
+    }
 
-        xnu::Mach::VmAddress getFrom() {
-            return from;
-        }
+    xnu::Mach::VmAddress getFrom() {
+        return from;
+    }
 
-        struct HookPatch* getLatestRegisteredHook();
+    struct HookPatch* getLatestRegisteredHook();
 
-        xnu::Mach::VmAddress getTrampoline() {
-            return trampoline;
-        }
+    xnu::Mach::VmAddress getTrampoline() {
+        return trampoline;
+    }
 
-        xnu::Mach::VmAddress getTrampolineFromChain(xnu::Mach::VmAddress address);
+    xnu::Mach::VmAddress getTrampolineFromChain(xnu::Mach::VmAddress address);
 
-        HookArray<struct HookPatch*>& getHooks() {
-            return hooks;
-        }
+    HookArray<struct HookPatch*>& getHooks() {
+        return hooks;
+    }
 
-        HookCallbackArray<xnu::Mach::VmAddress>& getCallbacks() {
-            return callbacks;
-        }
+    HookCallbackArray<xnu::Mach::VmAddress>& getCallbacks() {
+        return callbacks;
+    }
 
-        enum HookType getHookType() {
-            return hooktype;
-        }
+    enum HookType getHookType() {
+        return hooktype;
+    }
 
-        enum HookType getHookTypeForCallback(xnu::Mach::VmAddress callback);
+    enum HookType getHookTypeForCallback(xnu::Mach::VmAddress callback);
 
-        void setTarget(void* target) {
-            this->target = target;
-        }
+    void setTarget(void* target) {
+        this->target = target;
+    }
 
-        void setPatcher(Patcher* patcher) {
-            this->patcher = patcher;
-        }
+    void setPatcher(Patcher* patcher) {
+        this->patcher = patcher;
+    }
 
-        void setDisassembler(Disassembler* disassembler) {
-            this->disassembler = disassembler;
-        }
+    void setDisassembler(Disassembler* disassembler) {
+        this->disassembler = disassembler;
+    }
 
-        void setTask(Task* task) {
-            this->task = task;
-        }
+    void setTask(Task* task) {
+        this->task = task;
+    }
 
-        void setFrom(xnu::Mach::VmAddress from) {
-            this->from = from;
-        }
+    void setFrom(xnu::Mach::VmAddress from) {
+        this->from = from;
+    }
 
-        void setTrampoline(xnu::Mach::VmAddress trampoline) {
-            this->trampoline = trampoline;
-        }
+    void setTrampoline(xnu::Mach::VmAddress trampoline) {
+        this->trampoline = trampoline;
+    }
 
-        void setHookType(enum HookType hooktype) {
-            this->hooktype = hooktype;
-        }
+    void setHookType(enum HookType hooktype) {
+        this->hooktype = hooktype;
+    }
 
-        void prepareHook(xnu::Task* task, xnu::Mach::VmAddress from);
-        void prepareBreakpoint(xnu::Task* task, xnu::Mach::VmAddress breakpoint);
+    void prepareHook(xnu::Task* task, xnu::Mach::VmAddress from);
+    void prepareBreakpoint(xnu::Task* task, xnu::Mach::VmAddress breakpoint);
 
-        mrk::Payload* prepareTrampoline();
+    mrk::Payload* prepareTrampoline();
 
-        void registerHook(struct HookPatch* patch);
+    void registerHook(struct HookPatch* patch);
 
-        void registerCallback(xnu::Mach::VmAddress callback,
-                              enum HookType hooktype = kHookTypeCallback);
+    void registerCallback(xnu::Mach::VmAddress callback,
+                          enum HookType hooktype = kHookTypeCallback);
 
-        void hookFunction(xnu::Mach::VmAddress to,
-                          enum HookType hooktype = kHookTypeInstrumentFunction);
+    void hookFunction(xnu::Mach::VmAddress to,
+                      enum HookType hooktype = kHookTypeInstrumentFunction);
 
-        void uninstallHook();
+    void uninstallHook();
 
-        void addBreakpoint(xnu::Mach::VmAddress breakpoint_hook,
-                           enum HookType hooktype = kHookTypeBreakpoint);
+    void addBreakpoint(xnu::Mach::VmAddress breakpoint_hook,
+                       enum HookType hooktype = kHookTypeBreakpoint);
 
-        void removeBreakpoint();
+    void removeBreakpoint();
 
-    private:
-        void* target;
+private:
+    void* target;
 
-        mrk::Patcher* patcher;
+    mrk::Patcher* patcher;
 
-        xnu::Task* task;
+    xnu::Task* task;
 
-        Arch::Architecture* architecture;
+    Arch::Architecture* architecture;
 
-        Disassembler* disassembler;
+    Disassembler* disassembler;
 
-        mrk::Payload* payload;
+    mrk::Payload* payload;
 
-        bool kernelHook = false;
+    bool kernelHook = false;
 
-        xnu::Mach::VmAddress from;
+    xnu::Mach::VmAddress from;
 
-        xnu::Mach::VmAddress trampoline;
+    xnu::Mach::VmAddress trampoline;
 
-        enum HookType hooktype;
+    enum HookType hooktype;
 
-        HookCallbackArray<xnu::Mach::VmAddress> callbacks;
+    HookCallbackArray<xnu::Mach::VmAddress> callbacks;
 
-        HookArray<struct HookPatch*> hooks;
-    };
+    HookArray<struct HookPatch*> hooks;
+};
 
 } // namespace mrk

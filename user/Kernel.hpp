@@ -38,214 +38,212 @@ extern "C" {
 #include <sys/utsname.h>
 
 namespace xnu {
-    class Task;
+class Task;
 
-    const char* getKernelVersion();
-    const char* getOSBuildVersion();
+const char* getKernelVersion();
+const char* getOSBuildVersion();
 
-    class Kernel : public xnu::Task {
-    public:
-        Kernel();
+class Kernel : public xnu::Task {
+public:
+    Kernel();
 
-        ~Kernel();
+    ~Kernel();
 
-        virtual xnu::Mach::VmAddress getBase();
+    virtual xnu::Mach::VmAddress getBase();
 
-        virtual Offset getSlide();
+    virtual Offset getSlide();
 
-        virtual UInt64 call(char* symbolname, UInt64* arguments, Size argCount);
-        virtual UInt64 call(xnu::Mach::VmAddress func, UInt64* arguments, Size argCount);
+    virtual UInt64 call(char* symbolname, UInt64* arguments, Size argCount);
+    virtual UInt64 call(xnu::Mach::VmAddress func, UInt64* arguments, Size argCount);
 
-        virtual xnu::Mach::VmAddress vmAllocate(Size size);
-        virtual xnu::Mach::VmAddress vmAllocate(Size size, UInt32 flags,
-                                                xnu::Mach::VmProtection prot);
+    virtual xnu::Mach::VmAddress vmAllocate(Size size);
+    virtual xnu::Mach::VmAddress vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot);
 
-        virtual void vmDeallocate(xnu::Mach::VmAddress address, Size size);
+    virtual void vmDeallocate(xnu::Mach::VmAddress address, Size size);
 
-        virtual bool vmProtect(xnu::Mach::VmAddress address, Size size,
-                               xnu::Mach::VmProtection prot);
+    virtual bool vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot);
 
-        virtual void* vmRemap(xnu::Mach::VmAddress address, Size size);
+    virtual void* vmRemap(xnu::Mach::VmAddress address, Size size);
 
-        virtual UInt64 virtualToPhysical(xnu::Mach::VmAddress address);
+    virtual UInt64 virtualToPhysical(xnu::Mach::VmAddress address);
 
-        virtual bool physicalRead(UInt64 paddr, void* data, Size size);
+    virtual bool physicalRead(UInt64 paddr, void* data, Size size);
 
-        virtual UInt64 physicalRead64(UInt64 paddr);
-        virtual UInt32 physicalRead32(UInt64 paddr);
-        virtual UInt16 physicalRead16(UInt64 paddr);
-        virtual UInt8 physicalRead8(UInt64 paddr);
+    virtual UInt64 physicalRead64(UInt64 paddr);
+    virtual UInt32 physicalRead32(UInt64 paddr);
+    virtual UInt16 physicalRead16(UInt64 paddr);
+    virtual UInt8 physicalRead8(UInt64 paddr);
 
-        virtual bool physicalWrite(UInt64 paddr, void* data, Size size);
+    virtual bool physicalWrite(UInt64 paddr, void* data, Size size);
 
-        virtual void physicalWrite64(UInt64 paddr, UInt64 value);
-        virtual void physicalWrite32(UInt64 paddr, UInt32 value);
-        virtual void physicalWrite16(UInt64 paddr, UInt16 value);
-        virtual void physicalWrite8(UInt64 paddr, UInt8 value);
+    virtual void physicalWrite64(UInt64 paddr, UInt64 value);
+    virtual void physicalWrite32(UInt64 paddr, UInt32 value);
+    virtual void physicalWrite16(UInt64 paddr, UInt16 value);
+    virtual void physicalWrite8(UInt64 paddr, UInt8 value);
 
-        virtual bool read(xnu::Mach::VmAddress address, void* data, Size size);
-        virtual bool readUnsafe(xnu::Mach::VmAddress address, void* data, Size size);
+    virtual bool read(xnu::Mach::VmAddress address, void* data, Size size);
+    virtual bool readUnsafe(xnu::Mach::VmAddress address, void* data, Size size);
 
-        virtual UInt8 read8(xnu::Mach::VmAddress address);
-        virtual UInt16 read16(xnu::Mach::VmAddress address);
-        virtual UInt32 read32(xnu::Mach::VmAddress address);
-        virtual UInt64 read64(xnu::Mach::VmAddress address);
+    virtual UInt8 read8(xnu::Mach::VmAddress address);
+    virtual UInt16 read16(xnu::Mach::VmAddress address);
+    virtual UInt32 read32(xnu::Mach::VmAddress address);
+    virtual UInt64 read64(xnu::Mach::VmAddress address);
 
-        virtual bool write(xnu::Mach::VmAddress address, void* data, Size size);
-        virtual bool writeUnsafe(xnu::Mach::VmAddress address, void* data, Size size);
+    virtual bool write(xnu::Mach::VmAddress address, void* data, Size size);
+    virtual bool writeUnsafe(xnu::Mach::VmAddress address, void* data, Size size);
 
-        virtual void write8(xnu::Mach::VmAddress address, UInt8 value);
-        virtual void write16(xnu::Mach::VmAddress address, UInt16 value);
-        virtual void write32(xnu::Mach::VmAddress address, UInt32 value);
-        virtual void write64(xnu::Mach::VmAddress address, UInt64 value);
+    virtual void write8(xnu::Mach::VmAddress address, UInt8 value);
+    virtual void write16(xnu::Mach::VmAddress address, UInt16 value);
+    virtual void write32(xnu::Mach::VmAddress address, UInt32 value);
+    virtual void write64(xnu::Mach::VmAddress address, UInt64 value);
 
-        virtual bool hookFunction(char* symname, xnu::Mach::VmAddress hook, Size hook_size);
-        virtual bool hookFunction(xnu::Mach::VmAddress address, xnu::Mach::VmAddress hook,
-                                  Size hook_size);
+    virtual bool hookFunction(char* symname, xnu::Mach::VmAddress hook, Size hook_size);
+    virtual bool hookFunction(xnu::Mach::VmAddress address, xnu::Mach::VmAddress hook,
+                              Size hook_size);
 
-        virtual bool setBreakpoint(char* symname);
-        virtual bool setBreakpoint(char* symname, xnu::Mach::VmAddress hook, Size hook_size);
+    virtual bool setBreakpoint(char* symname);
+    virtual bool setBreakpoint(char* symname, xnu::Mach::VmAddress hook, Size hook_size);
 
-        virtual bool setBreakpoint(xnu::Mach::VmAddress address);
-        virtual bool setBreakpoint(xnu::Mach::VmAddress address,
-                                   xnu::Mach::VmAddress breakpoint_hook, Size breakpoint_hook_size);
+    virtual bool setBreakpoint(xnu::Mach::VmAddress address);
+    virtual bool setBreakpoint(xnu::Mach::VmAddress address, xnu::Mach::VmAddress breakpoint_hook,
+                               Size breakpoint_hook_size);
 
-        virtual char* readString(xnu::Mach::VmAddress address);
+    virtual char* readString(xnu::Mach::VmAddress address);
 
-        virtual Symbol* getSymbolByName(char* symname);
-        virtual Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
+    virtual Symbol* getSymbolByName(char* symname);
+    virtual Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-        virtual xnu::Mach::VmAddress getSymbolAddressByName(char* symbolname);
+    virtual xnu::Mach::VmAddress getSymbolAddressByName(char* symbolname);
 
-    private:
-        mrk::UserMachO* macho;
+private:
+    mrk::UserMachO* macho;
 
-        xnu::Mach::Port connection;
+    xnu::Mach::Port connection;
 
-        Disassembler* disassembler;
+    Disassembler* disassembler;
 
-        xnu::Mach::VmAddress base;
+    xnu::Mach::VmAddress base;
 
-        Offset slide;
-    };
+    Offset slide;
+};
 
-    enum KDKKernelType {
-        KdkKernelTypeNone = -1,
-        KdkKernelTypeRelease = 0,
-        KdkKernelTypeReleaseT6000,
-        KdkKernelTypeReleaseT6020,
-        KdkKernelTypeReleaseT8103,
-        KdkKernelTypeReleaseT8112,
-        KdkKernelTypeReleaseVmApple,
+enum KDKKernelType {
+    KdkKernelTypeNone = -1,
+    KdkKernelTypeRelease = 0,
+    KdkKernelTypeReleaseT6000,
+    KdkKernelTypeReleaseT6020,
+    KdkKernelTypeReleaseT8103,
+    KdkKernelTypeReleaseT8112,
+    KdkKernelTypeReleaseVmApple,
 
-        KdkKernelTypeDevelopment = 0x10,
-        KdkKernelTypeDevelopmentT6000,
-        KdkKernelTypeDevelopmentT6020,
-        KdkKernelTypeDevelopmentT8103,
-        KdkKernelTypeDevelopmentT8112,
-        KdkKernelTypeDevelopmentVmApple,
+    KdkKernelTypeDevelopment = 0x10,
+    KdkKernelTypeDevelopmentT6000,
+    KdkKernelTypeDevelopmentT6020,
+    KdkKernelTypeDevelopmentT8103,
+    KdkKernelTypeDevelopmentT8112,
+    KdkKernelTypeDevelopmentVmApple,
 
-        KdkKernelTypeKasan = 0x20,
-        KdkKernelTypeKasanT6000,
-        KdkKernelTypeKasanT6020,
-        KdkKernelTypeKasanT8103,
-        KdkKernelTypeKasanT8112,
-        KdkKernelTypeKasanVmApple,
-    };
+    KdkKernelTypeKasan = 0x20,
+    KdkKernelTypeKasanT6000,
+    KdkKernelTypeKasanT6020,
+    KdkKernelTypeKasanT8103,
+    KdkKernelTypeKasanT8112,
+    KdkKernelTypeKasanVmApple,
+};
 
 #define KDK_PATH_SIZE 1024
 
-    struct KDKInfo {
-        KDKKernelType type;
+struct KDKInfo {
+    KDKKernelType type;
 
-        char* kernelName;
+    char* kernelName;
 
-        char path[KDK_PATH_SIZE];
-        char kernelPath[KDK_PATH_SIZE];
-        char kernelDebugSymbolsPath[KDK_PATH_SIZE];
-    };
+    char path[KDK_PATH_SIZE];
+    char kernelPath[KDK_PATH_SIZE];
+    char kernelDebugSymbolsPath[KDK_PATH_SIZE];
+};
+
+template <typename T>
+struct Xref {
+    xnu::Mach::VmAddress what;
+
+    xnu::Mach::VmAddress where;
+
+    T data;
+};
+
+class KDK {
+public:
+    explicit KDK(xnu::Kernel* kernel, struct KDKInfo* kdkInfo);
+
+    static KDK* KDKFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
+                                 const char* kernelVersion);
+
+    static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
+                                         const char* kernelVersion);
+    static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
+                                         const char* kernelVersion, bool vm);
+
+    static void getKDKPathFromBuildInfo(const char* buildVersion, char* outPath);
+
+    static void getKDKKernelFromPath(const char* path, const char* kernelVersion,
+                                     KDKKernelType* outType, char* outKernelPath);
+    static void getKDKKernelFromPath(const char* path, const char* kernelVersion,
+                                     KDKKernelType* outType, char* outKernelPath, bool vm);
+
+    char* getPath() const {
+        return path;
+    }
+
+    xnu::Kernel* getKernel() const {
+        return kernel;
+    }
+
+    Debug::Dwarf<KernelMachO*>* getDwarf() const {
+        return dwarf;
+    }
+
+    MachO* getMachO() const {
+        return dynamic_cast<MachO*>(kernelWithDebugSymbols);
+    }
+
+    xnu::Mach::VmAddress getBase() const {
+        return base;
+    }
+
+    xnu::Mach::VmAddress getKDKSymbolAddressByName(char* sym);
+
+    Symbol* getKDKSymbolByName(char* symname);
+    Symbol* getKDKSymbolByAddress(xnu::Mach::VmAddress address);
+
+    char* findString(char* s);
 
     template <typename T>
-    struct Xref {
-        xnu::Mach::VmAddress what;
+    std::vector<Xref<T>*> getExternalReferences(xnu::Mach::VmAddress addr);
 
-        xnu::Mach::VmAddress where;
+    template <typename T>
+    std::vector<Xref<T>*> getStringReferences(xnu::Mach::VmAddress addr);
 
-        T data;
-    };
+    template <typename T>
+    std::vector<Xref<T>*> getStringReferences(const char* s);
 
-    class KDK {
-    public:
-        explicit KDK(xnu::Kernel* kernel, struct KDKInfo* kdkInfo);
+    void parseDebugInformation();
 
-        static KDK* KDKFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
-                                     const char* kernelVersion);
+private:
+    bool valid;
 
-        static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
-                                             const char* kernelVersion);
-        static KDKInfo* KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion,
-                                             const char* kernelVersion, bool vm);
+    char* path;
 
-        static void getKDKPathFromBuildInfo(const char* buildVersion, char* outPath);
+    KDKKernelType type;
 
-        static void getKDKKernelFromPath(const char* path, const char* kernelVersion,
-                                         KDKKernelType* outType, char* outKernelPath);
-        static void getKDKKernelFromPath(const char* path, const char* kernelVersion,
-                                         KDKKernelType* outType, char* outKernelPath, bool vm);
+    xnu::KDKInfo* kdkInfo;
 
-        char* getPath() const {
-            return path;
-        }
+    xnu::Kernel* kernel;
 
-        xnu::Kernel* getKernel() const {
-            return kernel;
-        }
+    xnu::KernelMachO* kernelWithDebugSymbols;
 
-        Debug::Dwarf<KernelMachO*>* getDwarf() const {
-            return dwarf;
-        }
+    Debug::Dwarf<KernelMachO*>* dwarf;
 
-        MachO* getMachO() const {
-            return dynamic_cast<MachO*>(kernelWithDebugSymbols);
-        }
-
-        xnu::Mach::VmAddress getBase() const {
-            return base;
-        }
-
-        xnu::Mach::VmAddress getKDKSymbolAddressByName(char* sym);
-
-        Symbol* getKDKSymbolByName(char* symname);
-        Symbol* getKDKSymbolByAddress(xnu::Mach::VmAddress address);
-
-        char* findString(char* s);
-
-        template <typename T>
-        std::vector<Xref<T>*> getExternalReferences(xnu::Mach::VmAddress addr);
-
-        template <typename T>
-        std::vector<Xref<T>*> getStringReferences(xnu::Mach::VmAddress addr);
-
-        template <typename T>
-        std::vector<Xref<T>*> getStringReferences(const char* s);
-
-        void parseDebugInformation();
-
-    private:
-        bool valid;
-
-        char* path;
-
-        KDKKernelType type;
-
-        xnu::KDKInfo* kdkInfo;
-
-        xnu::Kernel* kernel;
-
-        xnu::KernelMachO* kernelWithDebugSymbols;
-
-        Debug::Dwarf<KernelMachO*>* dwarf;
-
-        xnu::Mach::VmAddress base;
-    };
+    xnu::Mach::VmAddress base;
+};
 }; // namespace xnu

@@ -28,238 +28,207 @@
 #include <sys/types.h>
 
 namespace std {
-    template <typename T>
-    struct Node {
-        Node<T>* next;
-        Node<T>* previous;
+template <typename T>
+struct Node {
+    Node<T>* next;
+    Node<T>* previous;
 
-        T t;
+    T t;
+};
+
+template <typename T>
+class vector;
+
+template <typename T>
+T remove(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, T t);
+
+template <typename T>
+typename std::vector<T>::iterator find(typename std::vector<T>::iterator begin,
+                                       typename std::vector<T>::iterator end, T t);
+
+template <typename T>
+class vector {
+public:
+    class iterator {
+    public:
+        iterator(vector<T>& vec, off_t offset) : vec(vec), current_offset(offset) {}
+
+        off_t offset() {
+            return current_offset;
+        }
+
+        T at(off_t index) {
+            return vec.at(index);
+        }
+
+        T operator*() {
+            return vec.at(current_offset);
+        }
+
+        T operator++() {
+            return vec.at(++current_offset);
+        }
+
+        T operator++(int) {
+            T tmp = vec.at(current_offset);
+
+            ++current_offset;
+
+            return tmp;
+        }
+
+        bool operator==(iterator other) {
+            return offset() == other.offset();
+        }
+
+        bool operator!=(iterator other) {
+            return offset() != other.offset();
+        }
+
+        iterator operator+(iterator& other) {
+            return iterator(vec, offset() + other.offset());
+        }
+
+        iterator operator+(int other) {
+            return iterator(vec, offset() + other);
+        }
+
+        iterator operator-(iterator& other) {
+            return iterator(vec, offset() - other.offset());
+        }
+
+        iterator operator-(int other) {
+            return iterator(vec, offset() - other);
+        }
+
+    private:
+        vector<T>& vec;
+
+        off_t current_offset;
     };
 
-    template <typename T>
-    class vector;
+public:
+    vector() : head(NULL), tail(NULL), sz(0) {}
 
-    template <typename T>
-    T remove(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, T t);
+    ~vector() {
+        clear();
 
-    template <typename T>
-    typename std::vector<T>::iterator find(typename std::vector<T>::iterator begin,
-                                           typename std::vector<T>::iterator end, T t);
+        head = NULL;
+        tail = NULL;
+    }
 
-    template <typename T>
-    class vector {
-    public:
-        class iterator {
-        public:
-            iterator(vector<T>& vec, off_t offset) : vec(vec), current_offset(offset) {}
+    iterator begin() {
+        return iterator(*this, 0);
+    }
 
-            off_t offset() {
-                return current_offset;
-            }
+    iterator end() {
+        return iterator(*this, size());
+    }
 
-            T at(off_t index) {
-                return vec.at(index);
-            }
+    size_t size() {
+        return sz;
+    }
 
-            T operator*() {
-                return vec.at(current_offset);
-            }
+    bool empty() {
+        return sz == 0;
+    }
 
-            T operator++() {
-                return vec.at(++current_offset);
-            }
+    T operator[](int index) {
+        return this->get(index);
+    }
 
-            T operator++(int) {
-                T tmp = vec.at(current_offset);
+    T at(int index) {
+        Node<T>* current = head;
 
-                ++current_offset;
+        if (index < 0 && index >= sz)
+            return (T)NULL;
 
-                return tmp;
-            }
+        while (current && index) {
+            current = current->next;
 
-            bool operator==(iterator other) {
-                return offset() == other.offset();
-            }
-
-            bool operator!=(iterator other) {
-                return offset() != other.offset();
-            }
-
-            iterator operator+(iterator& other) {
-                return iterator(vec, offset() + other.offset());
-            }
-
-            iterator operator+(int other) {
-                return iterator(vec, offset() + other);
-            }
-
-            iterator operator-(iterator& other) {
-                return iterator(vec, offset() - other.offset());
-            }
-
-            iterator operator-(int other) {
-                return iterator(vec, offset() - other);
-            }
-
-        private:
-            vector<T>& vec;
-
-            off_t current_offset;
-        };
-
-    public:
-        vector() : head(NULL), tail(NULL), sz(0) {}
-
-        ~vector() {
-            clear();
-
-            head = NULL;
-            tail = NULL;
+            index--;
         }
 
-        iterator begin() {
-            return iterator(*this, 0);
+        if (!current)
+            return (T)NULL;
+
+        return current->t;
+    }
+
+    int find(T t) {
+        int index = 0;
+
+        Node<T>* current = head;
+
+        while (current) {
+            if (index >= sz)
+                break;
+            if (current->t == t)
+                return index;
+
+            current = current->next;
+
+            index++;
         }
 
-        iterator end() {
-            return iterator(*this, size());
-        }
+        return -1;
+    }
 
-        size_t size() {
-            return sz;
-        }
+    void clear() {
+        struct Node<T>* current = head;
 
-        bool empty() {
-            return sz == 0;
-        }
+        while (current) {
+            struct Node<T>* next = current->next;
 
-        T operator[](int index) {
-            return this->get(index);
-        }
+            delete current;
 
-        T at(int index) {
+            current = next;
+        }
+    }
+
+    void push_back(T t) {
+        Node<T>* node = new Node<T>;
+
+        node->t = t;
+
+        if (!head && !tail) {
+            head = tail = node;
+
+            sz++;
+        } else if (head) {
             Node<T>* current = head;
 
-            if (index < 0 && index >= sz)
-                return (T)NULL;
-
-            while (current && index) {
+            while (current->next)
                 current = current->next;
 
-                index--;
-            }
+            current->next = node;
+            node->previous = current;
 
-            if (!current)
-                return (T)NULL;
+            tail = node;
 
-            return current->t;
+            sz++;
+        } else {
+            delete node;
         }
+    }
 
-        int find(T t) {
-            int index = 0;
+    void insert(T t, int index) {
+        Node<T>* node;
+        Node<T>* current;
 
-            Node<T>* current = head;
+        node = new Node<T>;
+        node->t = node;
 
-            while (current) {
-                if (index >= sz)
-                    break;
-                if (current->t == t)
-                    return index;
+        current = head;
 
-                current = current->next;
+        if (index < 0)
+            return;
 
-                index++;
-            }
+        if (!head && !tail) {
+            head = tail = node;
 
-            return -1;
-        }
-
-        void clear() {
-            struct Node<T>* current = head;
-
-            while (current) {
-                struct Node<T>* next = current->next;
-
-                delete current;
-
-                current = next;
-            }
-        }
-
-        void push_back(T t) {
-            Node<T>* node = new Node<T>;
-
-            node->t = t;
-
-            if (!head && !tail) {
-                head = tail = node;
-
-                sz++;
-            } else if (head) {
-                Node<T>* current = head;
-
-                while (current->next)
-                    current = current->next;
-
-                current->next = node;
-                node->previous = current;
-
-                tail = node;
-
-                sz++;
-            } else {
-                delete node;
-            }
-        }
-
-        void insert(T t, int index) {
-            Node<T>* node;
-            Node<T>* current;
-
-            node = new Node<T>;
-            node->t = node;
-
-            current = head;
-
-            if (index < 0)
-                return;
-
-            if (!head && !tail) {
-                head = tail = node;
-
-                sz++;
-            } else if (head) {
-                while (current && index) {
-                    current = current->next;
-
-                    index--;
-                }
-
-                if (!index) {
-                    if (!current) {
-                        tail->next = node;
-                        node->previous = tail;
-                    } else {
-                        Node<T>* previous = current->previous;
-
-                        node->previous = previous;
-                        previous->next = node;
-
-                        node->next = current;
-                        current->previous = node;
-                    }
-
-                    sz++;
-                }
-            }
-        }
-
-        void erase_internal(off_t begin, off_t end, int index) {
-            Node<T>* current = head;
-
-            if (index < 0 && index >= sz)
-                return;
-
+            sz++;
+        } else if (head) {
             while (current && index) {
                 current = current->next;
 
@@ -267,99 +236,130 @@ namespace std {
             }
 
             if (!index) {
-                if (head == tail) {
-                    head = NULL;
-                    tail = NULL;
-                } else if (current == head) {
-                    Node<T>* next = current->next;
-
-                    if (next) {
-                        next->previous = NULL;
-
-                        head = next;
-                    }
-                } else if (current == tail) {
+                if (!current) {
+                    tail->next = node;
+                    node->previous = tail;
+                } else {
                     Node<T>* previous = current->previous;
 
-                    if (previous) {
-                        previous->next = NULL;
+                    node->previous = previous;
+                    previous->next = node;
 
-                        tail = previous;
-                    }
-                } else {
-                    Node<T>* next;
-                    Node<T>* previous;
-
-                    next = current->next;
-                    previous = current->previous;
-
-                    next->previous = previous;
-                    previous->next = next;
+                    node->next = current;
+                    current->previous = node;
                 }
 
-                sz--;
-
-                delete current;
+                sz++;
             }
         }
+    }
 
-        void erase(iterator begin, iterator end, int index) {
-            off_t b = begin.offset();
-            off_t e = end.offset();
+    void erase_internal(off_t begin, off_t end, int index) {
+        Node<T>* current = head;
 
-            if (b > index || e <= index)
-                return;
+        if (index < 0 && index >= sz)
+            return;
 
-            erase_internal(b, e, index);
+        while (current && index) {
+            current = current->next;
+
+            index--;
         }
 
-        void erase(iterator it) {
-            off_t off = it.offset();
+        if (!index) {
+            if (head == tail) {
+                head = NULL;
+                tail = NULL;
+            } else if (current == head) {
+                Node<T>* next = current->next;
 
-            erase(begin(), end(), off);
+                if (next) {
+                    next->previous = NULL;
+
+                    head = next;
+                }
+            } else if (current == tail) {
+                Node<T>* previous = current->previous;
+
+                if (previous) {
+                    previous->next = NULL;
+
+                    tail = previous;
+                }
+            } else {
+                Node<T>* next;
+                Node<T>* previous;
+
+                next = current->next;
+                previous = current->previous;
+
+                next->previous = previous;
+                previous->next = next;
+            }
+
+            sz--;
+
+            delete current;
         }
+    }
 
-        void erase(int index) {
+    void erase(iterator begin, iterator end, int index) {
+        off_t b = begin.offset();
+        off_t e = end.offset();
+
+        if (b > index || e <= index)
+            return;
+
+        erase_internal(b, e, index);
+    }
+
+    void erase(iterator it) {
+        off_t off = it.offset();
+
+        erase(begin(), end(), off);
+    }
+
+    void erase(int index) {
+        erase(begin(), end(), index);
+    }
+
+    void erase(T t, iterator it) {
+        int index = find(t);
+
+        if (index >= 0)
             erase(begin(), end(), index);
-        }
-
-        void erase(T t, iterator it) {
-            int index = find(t);
-
-            if (index >= 0)
-                erase(begin(), end(), index);
-        }
-
-        void print() {}
-
-    private:
-        Node<T>* head;
-        Node<T>* tail;
-
-        size_t sz;
-    };
-
-    template <typename T>
-    T remove(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, T t) {
-        return t;
     }
 
-    template <typename T>
-    typename std::vector<T>::iterator find(typename std::vector<T>::iterator begin,
-                                           typename std::vector<T>::iterator end, T t) {
-        typename vector<T>::iterator it = begin;
+    void print() {}
 
-        while (*it) {
-            T elem = *it;
+private:
+    Node<T>* head;
+    Node<T>* tail;
 
-            if (elem == t)
-                return it;
+    size_t sz;
+};
 
-            it++;
-        }
+template <typename T>
+T remove(typename std::vector<T>::iterator begin, typename std::vector<T>::iterator end, T t) {
+    return t;
+}
 
-        return end;
+template <typename T>
+typename std::vector<T>::iterator find(typename std::vector<T>::iterator begin,
+                                       typename std::vector<T>::iterator end, T t) {
+    typename vector<T>::iterator it = begin;
+
+    while (*it) {
+        T elem = *it;
+
+        if (elem == t)
+            return it;
+
+        it++;
     }
+
+    return end;
+}
 }; // namespace std
 
 #endif

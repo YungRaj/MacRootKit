@@ -29,16 +29,16 @@
 static_assert(Arch::_arm64<Arch::getCurrentArchitecture()>);
 
 namespace Arch {
-    namespace arm64 {
-        namespace PAC {
-            UInt64 signPointerWithAKey(UInt64 pointer);
+namespace arm64 {
+namespace PAC {
+UInt64 signPointerWithAKey(UInt64 pointer);
 
-            UInt64 signPointerWithBKey(UInt64 pointer);
+UInt64 signPointerWithBKey(UInt64 pointer);
 
-            void stripPointerAuthenticationCode(UInt64 pointer);
-        } // namespace PAC
-    }     // namespace arm64
-};        // namespace Arch
+void stripPointerAuthenticationCode(UInt64 pointer);
+} // namespace PAC
+} // namespace arm64
+}; // namespace Arch
 
 #define PACSignPointerWithAKey(ptr) PAC::signPointerWithAKey(ptr)
 #define PACSignPointerWithBKey(ptr) PAC::signPointerWithBKey(ptr);

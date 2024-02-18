@@ -27,7 +27,7 @@
 #include "Kext.hpp"
 
 namespace mrk {
-    class MacRootKit;
+class MacRootKit;
 };
 
 class IOKernelRootKitService;

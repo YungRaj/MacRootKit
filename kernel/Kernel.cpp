@@ -32,12 +32,12 @@ extern "C" {
 
 #include <mach/mach_types.h>
 
-#include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/namei.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+#include <sys/vnode.h>
 
 #include <vfs/vfs_support.h>
 }

@@ -19,7 +19,7 @@
 #include "APIUtil.hpp"
 
 namespace Arch {
-    namespace x86_64 {
+namespace x86_64 {
 #define CR0_PG 0x80000000 /*	 Enable paging */
 #define CR0_CD 0x40000000 /* i486: Cache disable */
 #define CR0_NW 0x20000000 /* i486: No write-through */
@@ -65,12 +65,12 @@ namespace Arch {
 #define MSR_IA32_EFER_LMA 0x00000400
 #define MSR_IA32_EFER_NXE 0x00000800
 
-        uintptr_t getCR0();
+uintptr_t getCR0();
 
-        void setCR0(uintptr_t value);
+void setCR0(uintptr_t value);
 
-        uintptr_t getEFER();
+uintptr_t getEFER();
 
-        void setEFER(uintptr_t value);
-    } // namespace x86_64
+void setEFER(uintptr_t value);
+} // namespace x86_64
 } // namespace Arch

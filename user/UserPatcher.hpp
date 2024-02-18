@@ -21,31 +21,31 @@
 #include "Patcher.hpp"
 
 namespace mrk {
-    class Hook;
-    class Payload;
+class Hook;
+class Payload;
 
-    class UserPatcher : Patcher {
-    public:
-        UserPatcher();
+class UserPatcher : Patcher {
+public:
+    UserPatcher();
 
-        ~UserPatcher();
+    ~UserPatcher();
 
-        virtual void findAndReplace(void* data, Size data_size, const void* find, Size find_size,
-                                    const void* replace, Size replace_size);
+    virtual void findAndReplace(void* data, Size data_size, const void* find, Size find_size,
+                                const void* replace, Size replace_size);
 
-        virtual void routeFunction(Hook* hook);
+    virtual void routeFunction(Hook* hook);
 
-        virtual void onExec(char* name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task,
-                            xnu::Mach::VmAddress proc);
+    virtual void onExec(char* name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task,
+                        xnu::Mach::VmAddress proc);
 
-        virtual void onKextLoad(void* kext, kmod_info_t* kmod);
+    virtual void onKextLoad(void* kext, kmod_info_t* kmod);
 
-        xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload* payload);
+    xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload* payload);
 
-        xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload* payload);
+    xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload* payload);
 
-        Size mapAddresses(const char* mapBuf);
+    Size mapAddresses(const char* mapBuf);
 
-    private:
-    };
+private:
+};
 } // namespace mrk
