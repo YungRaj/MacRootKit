@@ -4275,7 +4275,7 @@ namespace Arch
 	{
 		namespace Assembler
 		{
-			uint32_t assemble_instruction(char *ins)
+			uint32_t assembleInstruction(char *ins)
 			{
 				uint32_t assembly;
 
