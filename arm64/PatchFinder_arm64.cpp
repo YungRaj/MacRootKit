@@ -14,857 +14,800 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "PatchFinder_arm64.hpp"
 #include "Isa_arm64.hpp"
+#include "PatchFinder_arm64.hpp"
 
 #include "MachO.hpp"
 
-#include "Segment.hpp"
 #include "Section.hpp"
+#include "Segment.hpp"
 
-extern "C"
-{
-	#include <string.h>
+extern "C" {
+#include <string.h>
 
-	#include <mach-o.h>
+#include <mach-o.h>
 }
 
-namespace Arch
-{
-	namespace arm64
-	{
-		namespace PatchFinder
-		{
-			using namespace Arch::arm64;
-
-			unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, Size hlen,
-													  const unsigned char* needle,   Size nlen)
-			{
-				size_t last, scan = 0;
-				size_t bad_char_skip[UCHAR_MAX + 1]; /* Officially called:
-													 * bad character shift */
-
-				/* Sanity checks on the parameters */
-				if (nlen <= 0 || !haystack || !needle)
-					return NULL;
-
-				/* ---- Preprocess ---- */
-				/* Initialize the table to default value */
-				/* When a character is encountered that does not occur
-				 * in the needle, we can safely skip ahead for the whole
-				 * length of the needle.
-				*/
-				for (scan = 0; scan <= UCHAR_MAX; scan = scan + 1)
-					bad_char_skip[scan] = nlen;
+namespace Arch {
+    namespace arm64 {
+        namespace PatchFinder {
+            using namespace Arch::arm64;
 
-				/* C arrays have the first byte at [0], therefore:
-				* [nlen - 1] is the last byte of the array. */
-				last = nlen - 1;
+            unsigned char* boyermoore_horspool_memmem(const unsigned char* haystack, Size hlen,
+                                                      const unsigned char* needle, Size nlen) {
+                size_t last, scan = 0;
+                size_t bad_char_skip[UCHAR_MAX + 1]; /* Officially called:
+                                                      * bad character shift */
 
-				/* Then populate it with the analysis of the needle */
-				for (scan = 0; scan < last; scan = scan + 1)
-					bad_char_skip[needle[scan]] = last - scan;
+                /* Sanity checks on the parameters */
+                if (nlen <= 0 || !haystack || !needle)
+                    return NULL;
 
-				/* ---- Do the matching ---- */
+                /* ---- Preprocess ---- */
+                /* Initialize the table to default value */
+                /* When a character is encountered that does not occur
+                 * in the needle, we can safely skip ahead for the whole
+                 * length of the needle.
+                 */
+                for (scan = 0; scan <= UCHAR_MAX; scan = scan + 1)
+                    bad_char_skip[scan] = nlen;
 
-				/* Search the haystack, while the needle can still be within it. */
-				while (hlen >= nlen)
-				{
-					/* scan from the end of the needle */
-					for (scan = last; haystack[scan] == needle[scan]; scan = scan - 1)
-						if (scan == 0) /* If the first byte matches, we've found it. */
-							return (unsigned char*) haystack;
+                /* C arrays have the first byte at [0], therefore:
+                 * [nlen - 1] is the last byte of the array. */
+                last = nlen - 1;
 
-					/* otherwise, we need to skip some bytes and start again.
-					   Note that here we are getting the skip value based on the last byte
-					   of needle, no matter where we didn't match. So if needle is: "abcd"
-					   then we are skipping based on 'd' and that value will be 4, and
-					   for "abcdd" we again skip on 'd' but the value will be only 1.
-					   The alternative of pretending that the mismatched character was
-					   the last character is slower in the normal case (E.g. finding
-					   "abcd" in "...azcd..." gives 4 by using 'd' but only
-					   4-2==2 using 'z'. */
-					hlen     -= bad_char_skip[haystack[last]];
-					haystack += bad_char_skip[haystack[last]];
-				}
+                /* Then populate it with the analysis of the needle */
+                for (scan = 0; scan < last; scan = scan + 1)
+                    bad_char_skip[needle[scan]] = last - scan;
 
-				return NULL;
-			}
+                /* ---- Do the matching ---- */
 
-			xnu::Mach::VmAddress xref64(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress end, xnu::Mach::VmAddress what)
-			{
-				xnu::Mach::VmAddress base;
+                /* Search the haystack, while the needle can still be within it. */
+                while (hlen >= nlen) {
+                    /* scan from the end of the needle */
+                    for (scan = last; haystack[scan] == needle[scan]; scan = scan - 1)
+                        if (scan == 0) /* If the first byte matches, we've found it. */
+                            return (unsigned char*)haystack;
 
-				xnu::Mach::VmAddress current_insn;
+                    /* otherwise, we need to skip some bytes and start again.
+                       Note that here we are getting the skip value based on the last byte
+                       of needle, no matter where we didn't match. So if needle is: "abcd"
+                       then we are skipping based on 'd' and that value will be 4, and
+                       for "abcdd" we again skip on 'd' but the value will be only 1.
+                       The alternative of pretending that the mismatched character was
+                       the last character is slower in the normal case (E.g. finding
+                       "abcd" in "...azcd..." gives 4 by using 'd' but only
+                       4-2==2 using 'z'. */
+                    hlen -= bad_char_skip[haystack[last]];
+                    haystack += bad_char_skip[haystack[last]];
+                }
 
-				uint64_t state[32];
+                return NULL;
+            }
 
-				base = macho->getBase();
+            xnu::Mach::VmAddress xref64(MachO* macho, xnu::Mach::VmAddress start,
+                                        xnu::Mach::VmAddress end, xnu::Mach::VmAddress what) {
+                xnu::Mach::VmAddress base;
 
-				memset(state, 0x0, sizeof(state));
+                xnu::Mach::VmAddress current_insn;
 
-				end &= ~3;
+                uint64_t state[32];
 
-				if(!start || !end || !what || !base)
-					return 0;
+                base = macho->getBase();
 
-				for(current_insn = start & ~3; current_insn < end; current_insn += sizeof(uint32_t))
-				{
-					uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
+                memset(state, 0x0, sizeof(state));
 
-					uint32_t reg = op & 0x1F;
+                end &= ~3;
 
-					if(is_adrp((adr_t*) &op))
-					{
-						adr_t *adrp = reinterpret_cast<adr_t*>(&op);
-						
-						// ADRP <Xd>, <label>
+                if (!start || !end || !what || !base)
+                    return 0;
 
-						bool sign;
+                for (current_insn = start & ~3; current_insn < end;
+                     current_insn += sizeof(uint32_t)) {
+                    uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
 
-						uint64_t imm = (adrp->immlo | (adrp->immhi << 2));
+                    uint32_t reg = op & 0x1F;
 
-						if(imm & 0x100000)
-						{
-							imm = ~(imm - 1);
-							imm &= 0xFFFFF;
+                    if (is_adrp((adr_t*)&op)) {
+                        adr_t* adrp = reinterpret_cast<adr_t*>(&op);
 
-							sign = true;
-						} else
-						{
-							sign = false;
-						}
+                        // ADRP <Xd>, <label>
 
-						imm <<= 12;
+                        bool sign;
 
-						state[reg] = sign ? (current_insn & ~0xFFF) - imm : (current_insn & ~0xFFF) + imm;
+                        uint64_t imm = (adrp->immlo | (adrp->immhi << 2));
 
-						continue;
+                        if (imm & 0x100000) {
+                            imm = ~(imm - 1);
+                            imm &= 0xFFFFF;
 
-					} else if(is_adr((adr_t*) &op))
-					{
-						adr_t *adr = reinterpret_cast<adr_t*>(&op);
+                            sign = true;
+                        } else {
+                            sign = false;
+                        }
 
-						// ADR <Xd>, <label>
+                        imm <<= 12;
 
-						signed imm = adr->immlo | (adr->immhi << 2);
+                        state[reg] =
+                            sign ? (current_insn & ~0xFFF) - imm : (current_insn & ~0xFFF) + imm;
 
-						state[reg] = current_insn + imm;
+                        continue;
 
-					} else if(is_add_imm((add_imm_t*) &op))
-					{
-						add_imm_t *add = reinterpret_cast<add_imm_t*>(&op);
+                    } else if (is_adr((adr_t*)&op)) {
+                        adr_t* adr = reinterpret_cast<adr_t*>(&op);
 
-						//ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
+                        // ADR <Xd>, <label>
 
-						uint8_t Rn = add->Rn;
+                        signed imm = adr->immlo | (adr->immhi << 2);
 
-						if(Rn == 31) // skip if SP is rn
-						{
-							state[reg] = 0;
+                        state[reg] = current_insn + imm;
 
-							continue;
-						}
+                    } else if (is_add_imm((add_imm_t*)&op)) {
+                        add_imm_t* add = reinterpret_cast<add_imm_t*>(&op);
 
-						unsigned imm = add->imm;
+                        // ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
 
-						uint8_t shift = add->sh;
+                        uint8_t Rn = add->Rn;
 
-						if(shift == 1)
-							imm <<= 12;
-						else if(shift > 1)
-							continue;
+                        if (Rn == 31) // skip if SP is rn
+                        {
+                            state[reg] = 0;
 
-						state[reg] = state[Rn] + imm;
+                            continue;
+                        }
 
-					} else if(is_ldr_imm_uoff((ldr_imm_uoff_t*) &op))
-					{
-						ldr_imm_uoff_t *ldr = reinterpret_cast<ldr_imm_uoff_t*>(&op);
+                        unsigned imm = add->imm;
 
-						// LDR <Xt>, [<Xn|SP>, #<simm>]!
+                        uint8_t shift = add->sh;
 
-						unsigned imm = ldr->imm >> (2 + ldr->sf);
+                        if (shift == 1)
+                            imm <<= 12;
+                        else if (shift > 1)
+                            continue;
 
-						uint8_t Rn = ldr->Rn;
+                        state[reg] = state[Rn] + imm;
 
-						if(!imm) continue;
+                    } else if (is_ldr_imm_uoff((ldr_imm_uoff_t*)&op)) {
+                        ldr_imm_uoff_t* ldr = reinterpret_cast<ldr_imm_uoff_t*>(&op);
 
-						state[reg] = state[Rn] + imm;
+                        // LDR <Xt>, [<Xn|SP>, #<simm>]!
 
-					} else if(is_ldr_lit((ldr_lit_t*) &op))
-					{
-						ldr_lit_t *ldr = reinterpret_cast<ldr_lit_t*>(&op);
+                        unsigned imm = ldr->imm >> (2 + ldr->sf);
 
-						// LDR <Xt>, <label>
-						
-						unsigned addr = ldr->imm << 2; // label is imm * 4
+                        uint8_t Rn = ldr->Rn;
 
-						state[reg] = addr + current_insn;
+                        if (!imm)
+                            continue;
 
-					} else if(is_bl((bl_t*) &op))
-					{
-						bl_t *bl = reinterpret_cast<bl_t*>(&op);
+                        state[reg] = state[Rn] + imm;
 
-						// BL <label>
+                    } else if (is_ldr_lit((ldr_lit_t*)&op)) {
+                        ldr_lit_t* ldr = reinterpret_cast<ldr_lit_t*>(&op);
 
-						bool sign;
+                        // LDR <Xt>, <label>
 
-						uint64_t imm = bl->imm;
-						
-						if(imm & 0x2000000)
-						{
-							imm = ~(imm - 1);
-							imm &= 0x1FFFFFF;
+                        unsigned addr = ldr->imm << 2; // label is imm * 4
 
-							sign = true;
-						} else
-						{
-							sign = false;
-						}
+                        state[reg] = addr + current_insn;
 
-						imm <<= 2;
+                    } else if (is_bl((bl_t*)&op)) {
+                        bl_t* bl = reinterpret_cast<bl_t*>(&op);
 
-						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
-						
-						if(to == what)
-						{
-							return current_insn;
-						}
+                        // BL <label>
 
-					} else if(is_b((b_t*) &op))
-					{
-						b_t *b = reinterpret_cast<b_t*>(&op);
+                        bool sign;
 
-						bool sign;
+                        uint64_t imm = bl->imm;
 
-						uint64_t imm = b->imm;
-						
-						if(imm & 0x2000000)
-						{
-							imm = ~(imm - 1);
-							imm &= 0x1FFFFFF;
+                        if (imm & 0x2000000) {
+                            imm = ~(imm - 1);
+                            imm &= 0x1FFFFFF;
 
-							sign = true;
-						} else
-						{
-							sign = false;
-						}
+                            sign = true;
+                        } else {
+                            sign = false;
+                        }
 
-						imm <<= 2;
+                        imm <<= 2;
 
-						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
-						
-						if(to == what)
-						{
-							return current_insn;
-						}
-						
-					} else if(is_cbz((cbz_t*) &op) || is_cbnz((cbz_t*) &op))
-					{
-						cbz_t *cbz = reinterpret_cast<cbz_t*>(&op);
+                        xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 
-						uint64_t imm = cbz->imm;
+                        if (to == what) {
+                            return current_insn;
+                        }
 
-						bool sign;
+                    } else if (is_b((b_t*)&op)) {
+                        b_t* b = reinterpret_cast<b_t*>(&op);
 
-						if(imm & 0x100000)
-						{
-							imm = ~(imm - 1);
-							imm &= 0xfffff;
+                        bool sign;
 
-							sign = true;
-						} else
-						{
-							sign = false;
-						}
+                        uint64_t imm = b->imm;
 
-						imm <<= 2;
+                        if (imm & 0x2000000) {
+                            imm = ~(imm - 1);
+                            imm &= 0x1FFFFFF;
 
-						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
-						
-						if(to == what)
-						{
-							return current_insn;
-						}
+                            sign = true;
+                        } else {
+                            sign = false;
+                        }
 
-					} else if(is_tbz((tbz_t*) &op) || is_tbnz((tbz_t*) &op))
-					{
-						tbz_t *tbz = reinterpret_cast<tbz_t*>(&op);
+                        imm <<= 2;
 
-						uint64_t imm = tbz->imm;
+                        xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 
-						bool sign;
+                        if (to == what) {
+                            return current_insn;
+                        }
 
-						if(imm & 0x8000)
-						{
-							imm = ~(imm - 1);
-							imm &= 0xfffff;
+                    } else if (is_cbz((cbz_t*)&op) || is_cbnz((cbz_t*)&op)) {
+                        cbz_t* cbz = reinterpret_cast<cbz_t*>(&op);
 
-							sign = true;
-						} else
-						{
-							sign = false;
-						}
+                        uint64_t imm = cbz->imm;
 
-						imm <<= 2;
+                        bool sign;
 
-						xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
-						
-						if(to == what)
-						{
-							return current_insn;
-						}
+                        if (imm & 0x100000) {
+                            imm = ~(imm - 1);
+                            imm &= 0xfffff;
 
-					}
-					else if(is_ret((ret_t*) &op))
-					{
-						memset(state, 0x0, sizeof(state));
+                            sign = true;
+                        } else {
+                            sign = false;
+                        }
 
-						continue;
-					}
+                        imm <<= 2;
 
-					if(state[reg] == what && reg != 31)
-					{
-						return current_insn;
-					}
-				}
+                        xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 
-				return 0;
-			}
-	
-			xnu::Mach::VmAddress findInstruction64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt32 ins)
-			{
-				uint8_t *buffer;
+                        if (to == what) {
+                            return current_insn;
+                        }
 
-				xnu::Mach::VmAddress end;
+                    } else if (is_tbz((tbz_t*)&op) || is_tbnz((tbz_t*)&op)) {
+                        tbz_t* tbz = reinterpret_cast<tbz_t*>(&op);
 
-				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
+                        uint64_t imm = tbz->imm;
 
-				end = start + length;
+                        bool sign;
 
-				while(start < end)
-				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
+                        if (imm & 0x8000) {
+                            imm = ~(imm - 1);
+                            imm &= 0xfffff;
 
-					if(x == ins)
-						return start;
+                            sign = true;
+                        } else {
+                            sign = false;
+                        }
 
-					start += sizeof(uint32_t);
-				}
-				
-				return 0;
-			}
+                        imm <<= 2;
 
-			xnu::Mach::VmAddress findInstructionBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, UInt32 ins)
-			{
-				uint8_t *buffer;
+                        xnu::Mach::VmAddress to = sign ? current_insn - imm : current_insn + imm;
 
-				xnu::Mach::VmAddress end;
+                        if (to == what) {
+                            return current_insn;
+                        }
 
-				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
+                    } else if (is_ret((ret_t*)&op)) {
+                        memset(state, 0x0, sizeof(state));
 
-				end = start + length;
+                        continue;
+                    }
 
-				while(start < end)
-				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
+                    if (state[reg] == what && reg != 31) {
+                        return current_insn;
+                    }
+                }
 
-					if(x == ins)
-						return start;
+                return 0;
+            }
 
-					start -= sizeof(uint32_t);
-				}
+            xnu::Mach::VmAddress findInstruction64(MachO* macho, xnu::Mach::VmAddress start,
+                                                   Size length, UInt32 ins) {
+                uint8_t* buffer;
 
-				return 0;
-			}
+                xnu::Mach::VmAddress end;
 
-			xnu::Mach::VmAddress findInstructionNTimes64(MachO *macho, int n, xnu::Mach::VmAddress start, Size length, UInt32 ins, bool forward)
-			{
-				int nfound = 0;
+                buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
-				xnu::Mach::VmAddress result = start + sizeof(uint32_t);
+                end = start + length;
 
-				do
-				{
-					xnu::Mach::VmAddress tmp = result - sizeof(uint32_t);
+                while (start < end) {
+                    uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
 
-					if(forward)
-						result = findInstruction64(macho, tmp, length, ins);
-					else
-						result = findInstructionBack64(macho, tmp, length, ins);
+                    if (x == ins)
+                        return start;
 
-					if(tmp > result)
-						length -= (tmp - result);
-					else
-						length -= (result - tmp);
+                    start += sizeof(uint32_t);
+                }
 
-					if(result)
-						nfound++;
+                return 0;
+            }
 
-				} while(length && result && nfound < n);
+            xnu::Mach::VmAddress findInstructionBack64(MachO* macho, xnu::Mach::VmAddress start,
+                                                       Size length, UInt32 ins) {
+                uint8_t* buffer;
 
-				return nfound == n ? result : 0;
-			}
+                xnu::Mach::VmAddress end;
 
-			xnu::Mach::VmAddress step64(MachO *macho, xnu::Mach::VmAddress start, Size length, bool (*is_ins)(UInt32*), int Rt, int Rn)
-			{
-				uint8_t *buffer;
-				
-				xnu::Mach::VmAddress end = start + length;
+                buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
-				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
+                end = start + length;
 
-				bool no_Rt = Rt == NO_REG;
-				bool no_Rn = Rn == NO_REG;
+                while (start < end) {
+                    uint32_t x = *reinterpret_cast<uint32_t*>(buffer + start);
 
-				bool no_reg = no_Rt && no_Rn;
+                    if (x == ins)
+                        return start;
 
-				while(start <= end)
-				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(start);
+                    start -= sizeof(uint32_t);
+                }
 
-					if(is_ins(&x) && no_reg)
-						return start;
-					else if(is_ins(&x) && no_Rt && ((x >> 5) & 0x1F) == Rn)
-						return start;
-					else if(is_ins(&x) && no_Rn && (x & 0x1F) == Rt)
-						return start;
-					else if(is_ins(&x) && (x & 0x1F) == Rt && ((x >> 5) & 0x1F) == Rn)
-						return start;
+                return 0;
+            }
 
-					start += sizeof(uint32_t);
-				}
+            xnu::Mach::VmAddress findInstructionNTimes64(MachO* macho, int n,
+                                                         xnu::Mach::VmAddress start, Size length,
+                                                         UInt32 ins, bool forward) {
+                int nfound = 0;
 
-				return 0;
-			}
+                xnu::Mach::VmAddress result = start + sizeof(uint32_t);
 
-			xnu::Mach::VmAddress stepBack64(MachO *macho, xnu::Mach::VmAddress start, Size length, bool (*is_ins)(UInt32*), int Rt, int Rn)
-			{
-				uint8_t *buffer;
-				
-				xnu::Mach::VmAddress end = start - length;
+                do {
+                    xnu::Mach::VmAddress tmp = result - sizeof(uint32_t);
 
-				buffer = reinterpret_cast<uint8_t*>(macho->getBase());
+                    if (forward)
+                        result = findInstruction64(macho, tmp, length, ins);
+                    else
+                        result = findInstructionBack64(macho, tmp, length, ins);
 
-				bool no_Rt = Rt == NO_REG;
-				bool no_Rn = Rn == NO_REG;
+                    if (tmp > result)
+                        length -= (tmp - result);
+                    else
+                        length -= (result - tmp);
 
-				bool no_reg = no_Rt && no_Rn;
+                    if (result)
+                        nfound++;
 
-				while(start >= end)
-				{
-					uint32_t x = *reinterpret_cast<uint32_t*>(start);
+                } while (length && result && nfound < n);
 
-					if(is_ins(&x) && no_reg)
-						return start;
-					else if(is_ins(&x) && no_Rt && ((x >> 5) & 0x1F) == Rn)
-						return start;
-					else if(is_ins(&x) && no_Rn && (x & 0x1F) == Rt)
-						return start;
-					else if(is_ins(&x) && (x & 0x1F) == Rt && ((x >> 5) & 0x1F) == Rn)
-						return start;
+                return nfound == n ? result : 0;
+            }
 
-					start -= sizeof(uint32_t);
-				}
+            xnu::Mach::VmAddress step64(MachO* macho, xnu::Mach::VmAddress start, Size length,
+                                        bool (*is_ins)(UInt32*), int Rt, int Rn) {
+                uint8_t* buffer;
 
-				return 0;
-			}
+                xnu::Mach::VmAddress end = start + length;
 
-			xnu::Mach::VmAddress findFunctionBegin(MachO *macho, xnu::Mach::VmAddress start, xnu::Mach::VmAddress where)
-			{
-				xnu::Mach::VmAddress base;
+                buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
-				xnu::Mach::VmAddress current_insn;
+                bool no_Rt = Rt == NO_REG;
+                bool no_Rn = Rn == NO_REG;
 
-				base = macho->getBase();
+                bool no_reg = no_Rt && no_Rn;
 
-				for(current_insn = where; current_insn >= start; current_insn -= sizeof(uint32_t))
-				{
-					uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
+                while (start <= end) {
+                    uint32_t x = *reinterpret_cast<uint32_t*>(start);
 
-					if(is_pacsys((pacsys_t*) &op))
-					{
-						pacsys_t *pac = reinterpret_cast<pacsys_t*>(&op);
+                    if (is_ins(&x) && no_reg)
+                        return start;
+                    else if (is_ins(&x) && no_Rt && ((x >> 5) & 0x1F) == Rn)
+                        return start;
+                    else if (is_ins(&x) && no_Rn && (x & 0x1F) == Rt)
+                        return start;
+                    else if (is_ins(&x) && (x & 0x1F) == Rt && ((x >> 5) & 0x1F) == Rn)
+                        return start;
 
-						if(pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1)
-						{
-							return current_insn;
-						}
-					}
+                    start += sizeof(uint32_t);
+                }
 
-					/*
-					if(is_stp_soff((stp_t*) &op) || is_stp_post((stp_t*) &op) || is_stp_pre((stp_t*) &op))
-					{
-						// STP <Xt1>, <Xt2>, [<Xn|SP>], #<imm>
-						stp_t *stp = (stp_t*) &prev_op;
+                return 0;
+            }
 
-						if(stp->Rn == SP)
-						{
-							// STP x, y, [SP,#-imm]!
-							// prev_op & 0x3BC003E0 == 0x298003E0 post index
-							prev_op = *(uint32_t*) macho->getOffset(prev - ARM64e_INS_SZ);
+            xnu::Mach::VmAddress stepBack64(MachO* macho, xnu::Mach::VmAddress start, Size length,
+                                            bool (*is_ins)(UInt32*), int Rt, int Rn) {
+                uint8_t* buffer;
 
-							uint64_t sub_ins = step64_back(macho, prev, ((delta >> 4) + 1) * 4, IS_INS(sub_imm), SP, SP);
+                xnu::Mach::VmAddress end = start - length;
 
-							if(sub_ins)
-							{
-								prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, sub_ins - ARM64e_INS_SZ);
-								prev = sub_ins;
-							}
+                buffer = reinterpret_cast<uint8_t*>(macho->getBase());
 
-							if(is_pacsys((pacsys_t*) &prev_op))
-							{
-								pacsys_t *pac = (pacsys_t*) &prev_op;
+                bool no_Rt = Rt == NO_REG;
+                bool no_Rn = Rn == NO_REG;
 
-								if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1)
-									prev -= ARM64e_INS_SZ;
-							}
+                bool no_reg = no_Rt && no_Rn;
 
-							return prev;
-						}
-					} else if(is_sub_imm((sub_imm_t*) &prev_op))
-					{
-						// SUB <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
-						sub_imm_t *sub = (sub_imm_t*) &prev_op;
+                while (start >= end) {
+                    uint32_t x = *reinterpret_cast<uint32_t*>(start);
 
-						// SUB SP, SP, #imm
-						// prev_op & 0x7F8003FF == 0x510003FF
-						if(sub->Rn == SP && sub->Rd == SP)
-						{
-							prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, prev - ARM64e_INS_SZ);
+                    if (is_ins(&x) && no_reg)
+                        return start;
+                    else if (is_ins(&x) && no_Rt && ((x >> 5) & 0x1F) == Rn)
+                        return start;
+                    else if (is_ins(&x) && no_Rn && (x & 0x1F) == Rt)
+                        return start;
+                    else if (is_ins(&x) && (x & 0x1F) == Rt && ((x >> 5) & 0x1F) == Rn)
+                        return start;
 
-							if(is_pacsys((pacsys_t*) &prev_op))
-							{
-								pacsys_t *pac = (pacsys_t*) &prev_op;
+                    start -= sizeof(uint32_t);
+                }
 
-								if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1)
-									prev -= ARM64e_INS_SZ;
-							}
+                return 0;
+            }
 
-							return prev;
-						}
-					}
-					*/
-				}
+            xnu::Mach::VmAddress findFunctionBegin(MachO* macho, xnu::Mach::VmAddress start,
+                                                   xnu::Mach::VmAddress where) {
+                xnu::Mach::VmAddress base;
 
-				return 0;
-			}
+                xnu::Mach::VmAddress current_insn;
 
-			xnu::Mach::VmAddress findReference(MachO *macho, xnu::Mach::VmAddress to, int n, enum text which_text)
-			{
-				Segment *segment;
+                base = macho->getBase();
 
-				xnu::Mach::VmAddress ref;
+                for (current_insn = where; current_insn >= start;
+                     current_insn -= sizeof(uint32_t)) {
+                    uint32_t op = *reinterpret_cast<uint32_t*>(current_insn);
 
-				xnu::Mach::VmAddress text_base = 0;
-				xnu::Mach::VmAddress text_size = 0;
+                    if (is_pacsys((pacsys_t*)&op)) {
+                        pacsys_t* pac = reinterpret_cast<pacsys_t*>(&op);
 
-				xnu::Mach::VmAddress text_end;
+                        if (pac->x == 1 && pac->key == 1 && pac->op2 == 0b10 && pac->C == 1) {
+                            return current_insn;
+                        }
+                    }
 
-				if((segment = macho->getSegment("__TEXT_EXEC")))
-				{
-					struct segment_command_64 *segment_command = segment->getSegmentCommand();
+                    /*
+                    if(is_stp_soff((stp_t*) &op) || is_stp_post((stp_t*) &op) || is_stp_pre((stp_t*)
+                    &op))
+                    {
+                        // STP <Xt1>, <Xt2>, [<Xn|SP>], #<imm>
+                        stp_t *stp = (stp_t*) &prev_op;
 
-					text_base = segment_command->vmaddr;
-					text_size = segment_command->vmsize;
-				}
+                        if(stp->Rn == SP)
+                        {
+                            // STP x, y, [SP,#-imm]!
+                            // prev_op & 0x3BC003E0 == 0x298003E0 post index
+                            prev_op = *(uint32_t*) macho->getOffset(prev - ARM64e_INS_SZ);
 
-				switch(which_text)
-				{
-					case __TEXT_XNU_BASE:
-						break;
+                            uint64_t sub_ins = step64_back(macho, prev, ((delta >> 4) + 1) * 4,
+                    IS_INS(sub_imm), SP, SP);
 
-					case __TEXT_PRELINK_BASE:
-						
-						if((segment = macho->getSegment("__PRELINK_TEXT")))
-						{
-							struct segment_command_64 *segment_command = segment->getSegmentCommand();
+                            if(sub_ins)
+                            {
+                                prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, sub_ins -
+                    ARM64e_INS_SZ); prev = sub_ins;
+                            }
 
-							text_base = segment_command->vmaddr;
-							text_size = segment_command->vmsize;
-						}
+                            if(is_pacsys((pacsys_t*) &prev_op))
+                            {
+                                pacsys_t *pac = (pacsys_t*) &prev_op;
 
-						break;
-					case __TEXT_PPL_BASE:
-						
-						if((segment = macho->getSegment("__PPLTEXT")))
-						{
-							struct segment_command_64 *segment_command = macho->getSegment("__PPLTEXT")->getSegmentCommand();
+                                if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2
+                    == 0b10 && pac->C == 1) prev -= ARM64e_INS_SZ;
+                            }
 
-							text_base = segment_command->vmaddr;
-							text_size = segment_command->vmsize;
-						}
+                            return prev;
+                        }
+                    } else if(is_sub_imm((sub_imm_t*) &prev_op))
+                    {
+                        // SUB <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
+                        sub_imm_t *sub = (sub_imm_t*) &prev_op;
 
-						break;
-					default:
-						return 0;
-				}
+                        // SUB SP, SP, #imm
+                        // prev_op & 0x7F8003FF == 0x510003FF
+                        if(sub->Rn == SP && sub->Rd == SP)
+                        {
+                            prev_op = *(uint32_t*) MACHO_GET_OFFSET(macho, prev - ARM64e_INS_SZ);
 
-				if(n <= 0)
-				{
-					n = 1;
-				}
+                            if(is_pacsys((pacsys_t*) &prev_op))
+                            {
+                                pacsys_t *pac = (pacsys_t*) &prev_op;
 
-				text_end = text_base + text_size;
+                                if(pac->op3 == 0b11111 && pac->x == 1 && pac->key == 1 && pac->op2
+                    == 0b10 && pac->C == 1) prev -= ARM64e_INS_SZ;
+                            }
 
-				do
-				{
-					ref = xref64(macho, text_base, text_end, to);
+                            return prev;
+                        }
+                    }
+                    */
+                }
 
-					if(!ref)
-						return 0;
+                return 0;
+            }
 
-					text_base = ref + sizeof(uint32_t);
+            xnu::Mach::VmAddress findReference(MachO* macho, xnu::Mach::VmAddress to, int n,
+                                               enum text which_text) {
+                Segment* segment;
 
-				} while(--n > 0);
+                xnu::Mach::VmAddress ref;
 
-				return ref;
-			}
+                xnu::Mach::VmAddress text_base = 0;
+                xnu::Mach::VmAddress text_size = 0;
 
-			xnu::Mach::VmAddress findDataReference(MachO *macho, xnu::Mach::VmAddress to, enum data which_data, int n)
-			{
-				Segment *segment;
+                xnu::Mach::VmAddress text_end;
 
-				struct segment_command_64 *segment_command;
+                if ((segment = macho->getSegment("__TEXT_EXEC"))) {
+                    struct segment_command_64* segment_command = segment->getSegmentCommand();
 
-				xnu::Mach::VmAddress start;
-				xnu::Mach::VmAddress end;
+                    text_base = segment_command->vmaddr;
+                    text_size = segment_command->vmsize;
+                }
 
-				segment = NULL;
-				segment_command = NULL;
+                switch (which_text) {
+                case __TEXT_XNU_BASE:
+                    break;
 
-				switch(which_data)
-				{
-					case __DATA_CONST:
+                case __TEXT_PRELINK_BASE:
 
-						if((segment = macho->getSegment("__DATA_CONST")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                    if ((segment = macho->getSegment("__PRELINK_TEXT"))) {
+                        struct segment_command_64* segment_command = segment->getSegmentCommand();
 
-						break;
-					case __PPLDATA_CONST:
+                        text_base = segment_command->vmaddr;
+                        text_size = segment_command->vmsize;
+                    }
 
-						if((segment = macho->getSegment("__PPLDATA_CONST")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                    break;
+                case __TEXT_PPL_BASE:
 
-						break;
-					case __PPLDATA:
-						
-						if((segment = macho->getSegment("__PPLDATA")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                    if ((segment = macho->getSegment("__PPLTEXT"))) {
+                        struct segment_command_64* segment_command =
+                            macho->getSegment("__PPLTEXT")->getSegmentCommand();
 
-						break;
-					case __DATA:
-						
-						if((segment = macho->getSegment("__DATA")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                        text_base = segment_command->vmaddr;
+                        text_size = segment_command->vmsize;
+                    }
 
-						break;
-					case __BOOTDATA:
-						
-						if((segment = macho->getSegment("__BOOTDATA")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                    break;
+                default:
+                    return 0;
+                }
 
-						break;
-					case __PRELINK_DATA:
-						
-						if((segment = macho->getSegment("__PRELINK_DATA")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                if (n <= 0) {
+                    n = 1;
+                }
 
-						break;
-					case __PLK_DATA_CONST:
-						
-						if((segment = macho->getSegment("__PLK_DATA_CONST")))
-						{
-							segment_command = segment->getSegmentCommand();
-						}
+                text_end = text_base + text_size;
 
-						break;
-					default:
-						segment = NULL;
+                do {
+                    ref = xref64(macho, text_base, text_end, to);
 
-						segment_command = NULL;
+                    if (!ref)
+                        return 0;
 
-						return 0;
-				}
+                    text_base = ref + sizeof(uint32_t);
 
-				if(!segment || !segment_command)
-					return 0;
+                } while (--n > 0);
 
-				start = segment_command->vmaddr;
-				end = segment_command->vmaddr + segment_command->vmsize;
+                return ref;
+            }
 
-				for(xnu::Mach::VmAddress i = start; i <= end; i += sizeof(uint16_t))
-				{
-					xnu::Mach::VmAddress ref = *reinterpret_cast<xnu::Mach::VmAddress*>(i);
+            xnu::Mach::VmAddress findDataReference(MachO* macho, xnu::Mach::VmAddress to,
+                                                   enum data which_data, int n) {
+                Segment* segment;
 
-				#if defined(__arm64__) || defined(__arm64e__)
+                struct segment_command_64* segment_command;
 
-					__asm__ volatile("XPACI %[pac]" : [pac] "+rm" (ref));
+                xnu::Mach::VmAddress start;
+                xnu::Mach::VmAddress end;
 
-				#endif
+                segment = NULL;
+                segment_command = NULL;
 
-					if(ref == to)
-					{
-						return i;
-					}
-				}
+                switch (which_data) {
+                case __DATA_CONST:
 
-				return 0;
-			}
+                    if ((segment = macho->getSegment("__DATA_CONST"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-			uint8_t* findString(MachO *macho, char *string, xnu::Mach::VmAddress base, xnu::Mach::VmAddress size, bool full_match)
-			{
-				uint8_t *find;
+                    break;
+                case __PPLDATA_CONST:
 
-				xnu::Mach::VmAddress offset = 0;
+                    if ((segment = macho->getSegment("__PPLDATA_CONST"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-				while((find = boyermoore_horspool_memmem(reinterpret_cast<unsigned char*>(base + offset), size - offset, (uint8_t *)string, strlen(string))))
-				{
-					if((find == reinterpret_cast<unsigned char*>(base)|| *(string - 1) == '\0') && (!full_match || strcmp((char*)find, string) == 0))
-						break;
+                    break;
+                case __PPLDATA:
 
-					offset = (uint64_t) (find -  base + 1);
-				}
+                    if ((segment = macho->getSegment("__PPLDATA"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-				return find;
-			}
+                    break;
+                case __DATA:
 
-			xnu::Mach::VmAddress findStringReference(MachO *macho, char *string, int n, enum string which_string, enum text which_text, bool full_match)
-			{
-				Segment *segment;
-				Section *section;
+                    if ((segment = macho->getSegment("__DATA"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-				uint8_t *find;
+                    break;
+                case __BOOTDATA:
 
-				xnu::Mach::VmAddress base;
+                    if ((segment = macho->getSegment("__BOOTDATA"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-				size_t size = 0;
+                    break;
+                case __PRELINK_DATA:
 
-				switch(which_string)
-				{
-					case __const_:
+                    if ((segment = macho->getSegment("__PRELINK_DATA"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-						segment = macho->getSegment("__TEXT");
+                    break;
+                case __PLK_DATA_CONST:
 
-						if(segment)
-						{
-							section = macho->getSection("__TEXT", "__const");
+                    if ((segment = macho->getSegment("__PLK_DATA_CONST"))) {
+                        segment_command = segment->getSegmentCommand();
+                    }
 
-							if(section)
-							{
-								struct section_64 *sect = section->getSection();
+                    break;
+                default:
+                    segment = NULL;
 
-								base = sect->addr;
-								size = sect->size;
-							}
-						}
+                    segment_command = NULL;
 
-						break;
-					case __data_:
+                    return 0;
+                }
 
-						segment = macho->getSegment("__DATA");
+                if (!segment || !segment_command)
+                    return 0;
 
-						if(segment)
-						{
-							section = macho->getSection("__DATA", "__data");
+                start = segment_command->vmaddr;
+                end = segment_command->vmaddr + segment_command->vmsize;
 
-							if(section)
-							{
-								struct section_64 *sect = section->getSection();
+                for (xnu::Mach::VmAddress i = start; i <= end; i += sizeof(uint16_t)) {
+                    xnu::Mach::VmAddress ref = *reinterpret_cast<xnu::Mach::VmAddress*>(i);
 
-								base = sect->addr;
-								size = sect->size;
-							}
-						}
+#if defined(__arm64__) || defined(__arm64e__)
 
-						break;
-					case __oslstring_:
+                    __asm__ volatile("XPACI %[pac]" : [pac] "+rm"(ref));
 
-						segment = macho->getSegment("__TEXT");
+#endif
 
-						if(segment)
-						{
-							section = macho->getSection("__TEXT", "__os_log");
+                    if (ref == to) {
+                        return i;
+                    }
+                }
 
-							if(section)
-							{
-								struct section_64 *sect = section->getSection();
+                return 0;
+            }
 
-								base = sect->addr;
-								size = sect->size;
-							}
-						}
+            uint8_t* findString(MachO* macho, char* string, xnu::Mach::VmAddress base,
+                                xnu::Mach::VmAddress size, bool full_match) {
+                uint8_t* find;
 
-						break;
-					case __pstring_:
+                xnu::Mach::VmAddress offset = 0;
 
-						segment = macho->getSegment("__TEXT");
+                while ((find = boyermoore_horspool_memmem(
+                            reinterpret_cast<unsigned char*>(base + offset), size - offset,
+                            (uint8_t*)string, strlen(string)))) {
+                    if ((find == reinterpret_cast<unsigned char*>(base) || *(string - 1) == '\0') &&
+                        (!full_match || strcmp((char*)find, string) == 0))
+                        break;
 
-						if(segment)
-						{
-							section = macho->getSection("__TEXT", "__text");
+                    offset = (uint64_t)(find - base + 1);
+                }
 
-							if(section)
-							{
-								struct section_64 *sect = section->getSection();
+                return find;
+            }
 
-								base = sect->addr;
-								size = sect->size;
-							}
-						}
+            xnu::Mach::VmAddress findStringReference(MachO* macho, char* string, int n,
+                                                     enum string which_string, enum text which_text,
+                                                     bool full_match) {
+                Segment* segment;
+                Section* section;
 
-						break;
-					case __cstring_:
+                uint8_t* find;
 
-						segment = macho->getSegment("__TEXT");
+                xnu::Mach::VmAddress base;
 
-						if(segment)
-						{
-							section = macho->getSection("__TEXT", "__cstring");
+                size_t size = 0;
 
-							if(section)
-							{
-								struct section_64 *sect = section->getSection();
+                switch (which_string) {
+                case __const_:
 
-								base = sect->addr;
-								size = sect->size;
-							}
-						}
+                    segment = macho->getSegment("__TEXT");
 
-						break;
-					default:
-						break;
-				}
+                    if (segment) {
+                        section = macho->getSection("__TEXT", "__const");
 
-				if(!base && !size)
-					return 0;
+                        if (section) {
+                            struct section_64* sect = section->getSection();
 
-				find = findString(macho, string, base, size, full_match);
+                            base = sect->addr;
+                            size = sect->size;
+                        }
+                    }
 
+                    break;
+                case __data_:
 
-				if(!find)
-					return 0;
+                    segment = macho->getSegment("__DATA");
 
-				return Arch::arm64::PatchFinder::findReference(macho, (xnu::Mach::VmAddress) find, n, which_text);
-			}
+                    if (segment) {
+                        section = macho->getSection("__DATA", "__data");
 
-			void printInstruction64(MachO *macho, xnu::Mach::VmAddress start, UInt32 length, bool (*is_ins)(UInt32*), int Rt, int Rn)
-			{
-				return;
-			}
+                        if (section) {
+                            struct section_64* sect = section->getSection();
 
-		}
-	}
-}
+                            base = sect->addr;
+                            size = sect->size;
+                        }
+                    }
+
+                    break;
+                case __oslstring_:
+
+                    segment = macho->getSegment("__TEXT");
+
+                    if (segment) {
+                        section = macho->getSection("__TEXT", "__os_log");
+
+                        if (section) {
+                            struct section_64* sect = section->getSection();
+
+                            base = sect->addr;
+                            size = sect->size;
+                        }
+                    }
+
+                    break;
+                case __pstring_:
+
+                    segment = macho->getSegment("__TEXT");
+
+                    if (segment) {
+                        section = macho->getSection("__TEXT", "__text");
+
+                        if (section) {
+                            struct section_64* sect = section->getSection();
+
+                            base = sect->addr;
+                            size = sect->size;
+                        }
+                    }
+
+                    break;
+                case __cstring_:
+
+                    segment = macho->getSegment("__TEXT");
+
+                    if (segment) {
+                        section = macho->getSection("__TEXT", "__cstring");
+
+                        if (section) {
+                            struct section_64* sect = section->getSection();
+
+                            base = sect->addr;
+                            size = sect->size;
+                        }
+                    }
+
+                    break;
+                default:
+                    break;
+                }
+
+                if (!base && !size)
+                    return 0;
+
+                find = findString(macho, string, base, size, full_match);
+
+                if (!find)
+                    return 0;
+
+                return Arch::arm64::PatchFinder::findReference(macho, (xnu::Mach::VmAddress)find, n,
+                                                               which_text);
+            }
+
+            void printInstruction64(MachO* macho, xnu::Mach::VmAddress start, UInt32 length,
+                                    bool (*is_ins)(UInt32*), int Rt, int Rn) {
+                return;
+            }
+
+        } // namespace PatchFinder
+    }     // namespace arm64
+} // namespace Arch

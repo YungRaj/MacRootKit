@@ -20,9 +20,7 @@
 
 #include "BinaryFormat.hpp"
 
-class ELF : public Binary::BinaryFormat
-{
-	public:
-
-	private:
+class ELF : public Binary::BinaryFormat {
+public:
+private:
 };

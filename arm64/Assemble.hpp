@@ -16,15 +16,12 @@
 
 #pragma once
 
-namespace Arch
-{
-	namespace arm64
-	{
-		namespace Assembler
-		{
-			uint32_t* assemble(char *ins, uint32_t *nins);
-			
-			uint32_t  assembleInstruction(char *ins);
-		};
-	};
-};
+namespace Arch {
+    namespace arm64 {
+        namespace Assembler {
+            uint32_t* assemble(char* ins, uint32_t* nins);
+
+            uint32_t assembleInstruction(char* ins);
+        }; // namespace Assembler
+    };     // namespace arm64
+};         // namespace Arch

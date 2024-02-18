@@ -25,51 +25,54 @@
 class Symbol;
 class MachO;
 
-class SymbolTable
-{
-	public:
-		explicit SymbolTable() { }
+class SymbolTable {
+public:
+    explicit SymbolTable() {}
 
-		explicit SymbolTable(xnu::Macho::Nlist64 *symtab,
-							 UInt32 nsyms,
-							 char *strtab,
-							 Size strsize)
-		    : symtab(symtab),
-		      nsyms(nsyms),
-		      strtab(strtab),
-		      strsize(strsize)
-		{
+    explicit SymbolTable(xnu::Macho::Nlist64* symtab, UInt32 nsyms, char* strtab, Size strsize)
+        : symtab(symtab), nsyms(nsyms), strtab(strtab), strsize(strsize) {}
 
-		}
+    std::vector<Symbol*>& getAllSymbols() {
+        return symbolTable;
+    }
 
-		std::vector<Symbol*>& getAllSymbols() { return symbolTable; }
+    bool containsSymbolNamed(char* name) {
+        return this->getSymbolByName(name) != NULL;
+    }
 
-		bool containsSymbolNamed(char *name) { return this->getSymbolByName(name) != NULL; }
+    bool containsSymbolWithAddress(xnu::Mach::VmAddress address) {
+        return this->getSymbolByAddress(address) != NULL;
+    }
 
-		bool containsSymbolWithAddress(xnu::Mach::VmAddress address) { return this->getSymbolByAddress(address) != NULL; }
+    bool containsSymbolWithOffset(Offset offset) {
+        return this->getSymbolByOffset(offset) != NULL;
+    }
 
-		bool containsSymbolWithOffset(Offset offset) { return this->getSymbolByOffset(offset) != NULL; }
+    Symbol* getSymbolByName(char* name);
 
-		Symbol* getSymbolByName(char *name);
+    Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-		Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
+    Symbol* getSymbolByOffset(Offset offset);
 
-		Symbol* getSymbolByOffset(Offset offset);
+    void addSymbol(Symbol* symbol) {
+        symbolTable.push_back(symbol);
+    }
 
-		void addSymbol(Symbol *symbol) { symbolTable.push_back(symbol); }
+    void removeSymbol(Symbol* symbol) {
+        symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), symbol),
+                          symbolTable.end());
+    }
 
-		void removeSymbol(Symbol *symbol) { symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), symbol), symbolTable.end()); }
+    void replaceSymbol(Symbol* symbol);
 
-		void replaceSymbol(Symbol *symbol);
+private:
+    std::vector<Symbol*> symbolTable;
 
-	private:
-		std::vector<Symbol*> symbolTable;
+    xnu::Macho::Nlist64* symtab;
 
-		xnu::Macho::Nlist64 *symtab;
-		
-		UInt32 nsyms;
+    UInt32 nsyms;
 
-		char *strtab;
+    char* strtab;
 
-		Size strsize;
+    Size strsize;
 };

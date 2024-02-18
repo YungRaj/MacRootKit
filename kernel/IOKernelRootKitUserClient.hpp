@@ -30,9 +30,8 @@
 
 #include "Kernel.hpp"
 
-namespace mrk
-{
-	class MacRootKit;
+namespace mrk {
+    class MacRootKit;
 }
 
 using namespace xnu;
@@ -40,49 +39,63 @@ using namespace mrk;
 
 class IOKernelRootKitService;
 
-class IOKernelRootKitUserClient : public IOUserClient
-{
-	OSDeclareDefaultStructors(IOKernelRootKitUserClient)
+class IOKernelRootKitUserClient : public IOUserClient {
+    OSDeclareDefaultStructors(IOKernelRootKitUserClient)
 
-	public:
-		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
+        public : static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel* kernel,
+                                                                               task_t owningTask,
+                                                                               void* securityToken,
+                                                                               UInt32 type);
 
-		static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
+    static IOKernelRootKitUserClient* rootKitUserClientWithKernel(xnu::Kernel* kernel,
+                                                                  task_t owningTask,
+                                                                  void* securityToken, UInt32 type,
+                                                                  OSDictionary* properties);
 
-		virtual bool initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type);
+    virtual bool initRootKitUserClientWithKernel(xnu::Kernel* kernel, task_t owningTask,
+                                                 void* securityToken, UInt32 type);
 
-		virtual bool initRootKitUserClientWithKernel(xnu::Kernel *kernel, task_t owningTask, void *securityToken, UInt32 type, OSDictionary *properties);
+    virtual bool initRootKitUserClientWithKernel(xnu::Kernel* kernel, task_t owningTask,
+                                                 void* securityToken, UInt32 type,
+                                                 OSDictionary* properties);
 
-		virtual bool start(IOService *provider);
-		virtual void stop(IOService *provider);
+    virtual bool start(IOService* provider);
+    virtual void stop(IOService* provider);
 
-		virtual IOReturn clientClose();
-		virtual IOReturn clientDied();
+    virtual IOReturn clientClose();
+    virtual IOReturn clientDied();
 
-		virtual void free();
+    virtual void free();
 
-		virtual IOExternalMethod* getExternalMethodForIndex(UInt32 index);
-		virtual IOExternalTrap*   getExternalTrapForIndex(UInt32 index);
+    virtual IOExternalMethod* getExternalMethodForIndex(UInt32 index);
+    virtual IOExternalTrap* getExternalTrapForIndex(UInt32 index);
 
-		virtual IOReturn externalMethod(UInt32 selector, IOExternalMethodArguments *arguments, IOExternalMethodDispatch *dispatch, OSObject *target, void *reference);
+    virtual IOReturn externalMethod(UInt32 selector, IOExternalMethodArguments* arguments,
+                                    IOExternalMethodDispatch* dispatch, OSObject* target,
+                                    void* reference);
 
-		IOKernelRootKitService* getRootKitService() { return rootkitService; }
+    IOKernelRootKitService* getRootKitService() {
+        return rootkitService;
+    }
 
-		task_t getClientTask() { return clientTask; }
-		task_t getKernelTask() { return kernelTask; }
+    task_t getClientTask() {
+        return clientTask;
+    }
+    task_t getKernelTask() {
+        return kernelTask;
+    }
 
-	private:
-		IOKernelRootKitService *rootkitService;
+private:
+    IOKernelRootKitService* rootkitService;
 
-		task_t clientTask;
+    task_t clientTask;
 
-		task_t kernelTask;
+    task_t kernelTask;
 
-		xnu::Kernel *kernel;
+    xnu::Kernel* kernel;
 
-		void initRootKit();
+    void initRootKit();
 
-		UInt8* mapBufferFromClientTask(xnu::Mach::VmAddress uaddr, Size size, IOOptionBits options, IOMemoryDescriptor **desc, IOMemoryMap **mapping);
-
+    UInt8* mapBufferFromClientTask(xnu::Mach::VmAddress uaddr, Size size, IOOptionBits options,
+                                   IOMemoryDescriptor** desc, IOMemoryMap** mapping);
 };
-

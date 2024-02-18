@@ -18,25 +18,27 @@
 
 #include "Task.hpp"
 
-namespace dyld
-{
-	class Library
-	{
-		public:
-			Library(xnu::Task *task, dyld::Dyld *dyld, struct dyld_image_info *image_info)
-				: task(task), dyld(dyld), image_info(image_info) { }
+namespace dyld {
+    class Library {
+    public:
+        Library(xnu::Task* task, dyld::Dyld* dyld, struct dyld_image_info* image_info)
+            : task(task), dyld(dyld), image_info(image_info) {}
 
-			~Library() { }
+        ~Library() {}
 
-			dyld::Dyld* getDyld() { return dyld; }
+        dyld::Dyld* getDyld() {
+            return dyld;
+        }
 
-			xnu::Task* getTask() { return task; }
+        xnu::Task* getTask() {
+            return task;
+        }
 
-		private:
-			xnu::Task *task;
+    private:
+        xnu::Task* task;
 
-			dyld::Dyld *dyld;
+        dyld::Dyld* dyld;
 
-			struct dyld_image_info *image_info;
-	};
-}
+        struct dyld_image_info* image_info;
+    };
+} // namespace dyld

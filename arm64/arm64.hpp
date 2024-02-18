@@ -16,20 +16,17 @@
 
 #pragma once
 
-#include "Isa_arm64.hpp"
 #include "Disassembler_arm64.hpp"
+#include "Isa_arm64.hpp"
 #include "PatchFinder_arm64.hpp"
 
-namespace Arch
-{
-	namespace arm64
-	{
-		bool setInterrupts(bool enable);
+namespace Arch {
+    namespace arm64 {
+        bool setInterrupts(bool enable);
 
-		bool setNXBit(bool enable);
+        bool setNXBit(bool enable);
 
-		bool setWPBit(bool enable);
+        bool setWPBit(bool enable);
 
-	};
-};
-
+    }; // namespace arm64
+};     // namespace Arch

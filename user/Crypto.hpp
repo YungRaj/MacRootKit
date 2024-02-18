@@ -16,10 +16,7 @@
 
 #pragma once
 
-#include <openssl/openssl.h>
 #include <CommonCrypto/CommonCrypto.h>
+#include <openssl/openssl.h>
 
-namespace Crypto
-{
-
-};
+namespace Crypto {};

@@ -16,12 +16,10 @@
 
 #include "KernelPatcher.hpp"
 
-KernelPatch kernelPatches[] = 
-{
+KernelPatch kernelPatches[] = {
 
 };
 
-KextPatch kextPatches[] =
-{
-	
+KextPatch kextPatches[] = {
+
 };

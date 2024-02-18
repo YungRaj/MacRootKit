@@ -18,628 +18,547 @@
 
 #include <mach/mach.h>
 
-#include "Log.hpp"
-#include "Kernel.hpp"
 #include "Disassembler.hpp"
+#include "Kernel.hpp"
+#include "Log.hpp"
 
-#include "Task.hpp"
 #include "Dyld.hpp"
+#include "Task.hpp"
 
 using namespace xnu;
 
-static int EndsWith(const char *str, const char *suffix)
-{
-	if (!str || !suffix)
-		return 0;
-	
-	Size lenstr = strlen(str);
-	Size lensuffix = strlen(suffix);
-	
-	if (lensuffix >  lenstr)
-		return 0;
-	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+static int EndsWith(const char* str, const char* suffix) {
+    if (!str || !suffix)
+        return 0;
+
+    Size lenstr = strlen(str);
+    Size lensuffix = strlen(suffix);
+
+    if (lensuffix > lenstr)
+        return 0;
+    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
+Task::Task() : disassembler(new Disassembler(this)) {}
 
-Task::Task() : disassembler(new Disassembler(this)) { }
+Task::Task(Kernel* kernel, int pid)
+    : kernel(kernel), pid(pid), task_port(Task::getTaskForPid(pid)),
+      proc(Task::findProcByPid(kernel, pid)) {
+    task = Task::getTaskFromProc(kernel, this->proc);
+    name = this->getTaskName();
 
-Task::Task(Kernel *kernel, int pid)
-    : kernel(kernel),
-      pid(pid),
-      task_port(Task::getTaskForPid(pid)),
-      proc(Task::findProcByPid(kernel, pid))
-{
-	task = Task::getTaskFromProc(kernel, this->proc);
-	name = this->getTaskName();
-
-	dyld = new dyld::Dyld(kernel, this);
-	macho = new mrk::UserMachO();
+    dyld = new dyld::Dyld(kernel, this);
+    macho = new mrk::UserMachO();
 }
 
-Task::Task(Kernel *kernel, char *name)
-    : kernel(kernel),
-      name(name),
-      proc(Task::findProcByName(kernel, name))
-{
-	task = Task::getTaskFromProc(kernel, this->proc);
-	
-	pid = this->findPid();
-	task_port = Task::getTaskForPid(pid);
+Task::Task(Kernel* kernel, char* name)
+    : kernel(kernel), name(name), proc(Task::findProcByName(kernel, name)) {
+    task = Task::getTaskFromProc(kernel, this->proc);
 
-	dyld = new dyld::Dyld(kernel, this);
-	macho = new mrk::UserMachO();
-}
-		
-Task::Task(Kernel *kernel, xnu::Mach::Port task_port) : kernel(kernel), task_port(task_port)
-{
+    pid = this->findPid();
+    task_port = Task::getTaskForPid(pid);
 
+    dyld = new dyld::Dyld(kernel, this);
+    macho = new mrk::UserMachO();
 }
 
-Task::~Task()
-{
-	
+Task::Task(Kernel* kernel, xnu::Mach::Port task_port) : kernel(kernel), task_port(task_port) {}
+
+Task::~Task() {}
+
+xnu::Mach::Port Task::getTaskForPid(int pid) {
+    kern_return_t ret;
+
+    xnu::Mach::Port task;
+
+    ret = task_for_pid(mach_task_self(), pid, &task);
+
+    if (ret != KERN_SUCCESS) {
+        MAC_RK_LOG("task_for_pid() failed! ret = %d\n", ret);
+    }
+
+    assert(task != MACH_PORT_NULL);
+    assert(ret == KERN_SUCCESS);
+
+    return task;
 }
 
-xnu::Mach::Port Task::getTaskForPid(int pid)
-{
-	kern_return_t ret;
+int Task::findPid() {
+    UInt64 arguments[] = {this->proc};
 
-	xnu::Mach::Port task;
+    int pid = kernel->call("_proc_pid", arguments, 1);
 
-	ret = task_for_pid(mach_task_self(), pid, &task);
-
-	if(ret != KERN_SUCCESS)
-	{
-		MAC_RK_LOG("task_for_pid() failed! ret = %d\n", ret);
-	}
-
-	assert(task != MACH_PORT_NULL);
-	assert(ret == KERN_SUCCESS);
-
-	return task;
+    return pid;
 }
 
-int Task::findPid()
-{
-	UInt64 arguments[] = { this->proc };
-
-	int pid = kernel->call("_proc_pid", arguments, 1);
-
-	return pid;
+Task* Task::getTaskInfo(Kernel* kernel, char* task_name) {
+    return NULL;
 }
 
-Task* Task::getTaskInfo(Kernel *kernel, char *task_name)
-{
-	return NULL;
+xnu::Mach::VmAddress Task::findProcByPid(Kernel* kernel, int pid) {
+    xnu::Mach::VmAddress current_proc;
+
+    int current_pid;
+
+    current_proc =
+        (xnu::Mach::VmAddress)kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
+
+    current_proc = (xnu::Mach::VmAddress)kernel->read64(current_proc + 0x8);
+
+    while (current_proc) {
+        UInt64 arguments[] = {current_proc};
+
+        current_pid = kernel->call("_proc_pid", arguments, 1);
+
+        if (current_pid == pid) {
+            return current_proc;
+        }
+
+        if (current_pid == 0)
+            break;
+
+        current_proc = (xnu::Mach::VmAddress)kernel->read64(current_proc + 0x8);
+    }
+
+    current_proc = get_proc_for_pid(pid);
+
+    if (current_proc) {
+        return current_proc;
+    }
+
+    MAC_RK_LOG("MacRK::could not find proc for pid = %d\n", pid);
+
+    assert(false);
+
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::findProcByPid(Kernel *kernel, int pid)
-{
-	xnu::Mach::VmAddress current_proc;
+xnu::Mach::VmAddress Task::findProcByName(Kernel* kernel, char* name) {
+    xnu::Mach::VmAddress current_proc;
 
-	int current_pid;
+    current_proc = kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
 
-	current_proc = (xnu::Mach::VmAddress) kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
+    current_proc = kernel->read64(current_proc + 0x8);
 
-	current_proc = (xnu::Mach::VmAddress) kernel->read64(current_proc + 0x8);
+    while (current_proc) {
+        UInt64 arguments[] = {current_proc};
 
-	while(current_proc)
-	{
-		UInt64 arguments[] = { current_proc };
+        xnu::Mach::VmAddress proc_name;
 
-		current_pid = kernel->call("_proc_pid", arguments, 1);
+        proc_name = kernel->call("_proc_name", arguments, 1);
 
-		if(current_pid == pid)
-		{
-			return current_proc;
-		}
+        if (EndsWith(name, kernel->readString(proc_name)) == 0) {
+            return current_proc;
+        }
 
-		if(current_pid == 0)
-			break;
+        current_proc = kernel->read64(current_proc + 0x8);
+    }
 
-		current_proc = (xnu::Mach::VmAddress) kernel->read64(current_proc + 0x8);
-	}
+    current_proc = get_proc_by_name(name);
 
-	current_proc = get_proc_for_pid(pid);
+    if (current_proc) {
+        return current_proc;
+    }
 
-	if(current_proc)
-	{
-		return current_proc;
-	}
+    MAC_RK_LOG("MacRK::could not find proc for name = %s\n", name);
 
-	MAC_RK_LOG("MacRK::could not find proc for pid = %d\n", pid);
+    assert(false);
 
-	assert(false);
-
-	return 0;
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::findProcByName(Kernel *kernel, char *name)
-{
-	xnu::Mach::VmAddress current_proc;
+xnu::Mach::VmAddress Task::findTaskByPid(Kernel* kernel, int pid) {
+    xnu::Mach::VmAddress task;
+    xnu::Mach::VmAddress proc;
 
-	current_proc = kernel->read64(kernel->getSymbolAddressByName("_kernproc"));
+    proc = Task::findProcByPid(kernel, pid);
 
-	current_proc = kernel->read64(current_proc + 0x8);
+    if (proc) {
+        UInt64 arguments[] = {proc};
 
-	while(current_proc)
-	{
-		UInt64 arguments[] = { current_proc };
+        task = kernel->call("_proc_task", arguments, 1);
 
-		xnu::Mach::VmAddress proc_name;
+        return task;
+    }
 
-		proc_name = kernel->call("_proc_name", arguments, 1);
+    task = get_task_for_pid(pid);
 
-		if(EndsWith(name, kernel->readString(proc_name)) == 0)
-		{
-			return current_proc;
-		}
+    if (task) {
+        return task;
+    }
 
-		current_proc = kernel->read64(current_proc + 0x8);
-	}
+    MAC_RK_LOG("MacPE::could not find task by pid = %d\n", pid);
 
-	current_proc = get_proc_by_name(name);
+    assert(false);
 
-	if(current_proc)
-	{
-		return current_proc;
-	}
-
-	MAC_RK_LOG("MacRK::could not find proc for name = %s\n", name);
-
-	assert(false);
-
-	return 0;
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::findTaskByPid(Kernel *kernel, int pid)
-{
-	xnu::Mach::VmAddress task;
-	xnu::Mach::VmAddress proc;
+xnu::Mach::VmAddress Task::findTaskByName(Kernel* kernel, char* name) {
+    xnu::Mach::VmAddress task;
+    xnu::Mach::VmAddress proc;
 
-	proc = Task::findProcByPid(kernel, pid);
+    proc = Task::findProcByName(kernel, name);
 
-	if(proc)
-	{
-		UInt64 arguments[] = { proc };
+    if (proc) {
+        UInt64 arguments[] = {proc};
 
-		task = kernel->call("_proc_task", arguments, 1);
+        task = kernel->call("_proc_task", arguments, 1);
 
-		return task;
-	}
+        return task;
+    }
 
-	task = get_task_for_pid(pid);
+    task = get_task_by_name(name);
 
-	if(task)
-	{
-		return task;
-	}
+    if (task) {
+        return task;
+    }
 
-	MAC_RK_LOG("MacPE::could not find task by pid = %d\n", pid);
+    MAC_RK_LOG("MacPE::could not find task by name = %s\n", name);
 
-	assert(false);
+    assert(false);
 
-	return 0;
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::findTaskByName(Kernel *kernel, char *name)
-{
-	xnu::Mach::VmAddress task;
-	xnu::Mach::VmAddress proc;
+xnu::Mach::VmAddress Task::getTaskFromProc(Kernel* kernel, xnu::Mach::VmAddress proc) {
+    xnu::Mach::VmAddress task;
 
-	proc = Task::findProcByName(kernel, name);
+    if (proc) {
+        UInt64 arguments[] = {proc};
 
-	if(proc)
-	{
-		UInt64 arguments[] = { proc };
+        task = kernel->call("_proc_task", arguments, 1);
 
-		task = kernel->call("_proc_task", arguments, 1);
+        return task;
+    }
 
-		return task;
-	}
-
-	task = get_task_by_name(name);
-
-	if(task)
-	{
-		return task;
-	}
-
-	MAC_RK_LOG("MacPE::could not find task by name = %s\n", name);
-
-	assert(false);
-
-	return 0;
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::getTaskFromProc(Kernel *kernel, xnu::Mach::VmAddress proc)
-{
-	xnu::Mach::VmAddress task;
+char* Task::getTaskName() {
+    char* task_name;
 
-	if(proc)
-	{
-		UInt64 arguments[] = { proc };
+    xnu::Mach::VmAddress name;
 
-		task = kernel->call("_proc_task", arguments, 1);
+    UInt64 kalloc_args[] = {256};
 
-		return task;
-	}
+    UInt64 buffer = this->kernel->call("_kalloc", kalloc_args, 1);
 
-	return 0;
+    UInt64 proc_name_args[] = {static_cast<UInt64>(this->pid), buffer, 256};
+
+    name = this->kernel->call("_proc_name", proc_name_args, 3);
+
+    task_name = this->kernel->readString(buffer);
+
+    UInt64 kfree_args[] = {buffer, 256};
+
+    this->kernel->call("_kfree", kfree_args, 2);
+
+    return task_name;
 }
 
-char* Task::getTaskName()
-{
-	char *task_name;
-
-	xnu::Mach::VmAddress name;
-
-	UInt64 kalloc_args[] = { 256 };
-
-	UInt64 buffer = this->kernel->call("_kalloc", kalloc_args, 1);
-
-	UInt64 proc_name_args[] = { static_cast<UInt64>(this->pid) , buffer, 256 };
-
-	name = this->kernel->call("_proc_name", proc_name_args, 3);
-
-	task_name = this->kernel->readString(buffer);
-
-	UInt64 kfree_args[] = { buffer, 256 };
-
-	this->kernel->call("_kfree", kfree_args, 2);
-
-	return task_name;
+xnu::Mach::VmAddress Task::findPort(Kernel* kernel, xnu::Mach::VmAddress task,
+                                    xnu::Mach::Port port) {
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::findPort(Kernel *kernel, xnu::Mach::VmAddress task, xnu::Mach::Port port)
-{
-	return 0;
+xnu::Mach::VmAddress Task::getBase() {
+    return 0;
 }
 
-xnu::Mach::VmAddress Task::getBase()
-{
-	return 0;
+Offset Task::getSlide() {
+    return 0;
 }
 
-Offset Task::getSlide()
-{
-	return 0;
+UInt64 Task::call(char* symbolname, UInt64* arguments, Size argCount) {
+    // return task_call(task_port, symaddr, arguments, argcount);
+    return 0;
 }
 
-UInt64 Task::call(char *symbolname, UInt64 *arguments, Size argCount)
-{
-	// return task_call(task_port, symaddr, arguments, argcount);
-	return 0;
+UInt64 Task::call(xnu::Mach::VmAddress func, UInt64* arguments, Size argCount) {
+    return task_call(task_port, func, arguments, argCount);
 }
 
-UInt64 Task::call(xnu::Mach::VmAddress func, UInt64 *arguments, Size argCount)
-{
-	return task_call(task_port, func, arguments, argCount);
+xnu::Mach::VmAddress Task::vmAllocate(Size size) {
+    kern_return_t ret;
+
+    xnu::Mach::VmAddress address;
+
+    ret = vm_allocate(this->task_port, (vm_address_t*)&address, size, VM_PROT_DEFAULT);
+
+    if (ret == KERN_SUCCESS) {
+        return address;
+    }
+
+    MAC_RK_LOG("mach_vm_allocate() failed!\n");
+
+    assert(ret == KERN_SUCCESS);
+
+    return task_vm_allocate(task_port, size);
 }
 
-xnu::Mach::VmAddress Task::vmAllocate(Size size)
-{
-	kern_return_t ret;
+xnu::Mach::VmAddress Task::vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot) {
+    kern_return_t ret;
 
-	xnu::Mach::VmAddress address;
+    xnu::Mach::VmAddress address;
 
-	ret = vm_allocate(this->task_port, (vm_address_t*) &address, size, VM_PROT_DEFAULT);
+    ret = vm_allocate(this->task_port, (vm_address_t*)&address, size, prot);
 
-	if(ret == KERN_SUCCESS)
-	{
-		return address;
-	}
+    if (ret == KERN_SUCCESS) {
+        return address;
+    }
 
-	MAC_RK_LOG("mach_vm_allocate() failed!\n");
+    MAC_RK_LOG("mach_vm_allocate() failed!\n");
 
-	assert(ret == KERN_SUCCESS);
+    assert(ret == KERN_SUCCESS);
 
-	return task_vm_allocate(task_port, size);
+    return task_vm_allocate(task_port, size);
 }
 
-xnu::Mach::VmAddress Task::vmAllocate(Size size, UInt32 flags, xnu::Mach::VmProtection prot)
-{
-	kern_return_t ret;
+void Task::vmDeallocate(xnu::Mach::VmAddress address, Size size) {
+    kern_return_t ret;
 
-	xnu::Mach::VmAddress address;
+    ret = vm_deallocate(this->task_port, address, size);
 
-	ret = vm_allocate(this->task_port, (vm_address_t*) &address, size, prot);
+    if (ret != KERN_SUCCESS) {
+        MAC_RK_LOG("mach_vm_deallocate() failed!\n");
+    }
 
-	if(ret == KERN_SUCCESS)
-	{
-		return address;
-	}
+    assert(ret == KERN_SUCCESS);
 
-	MAC_RK_LOG("mach_vm_allocate() failed!\n");
-
-	assert(ret == KERN_SUCCESS);
-
-	return task_vm_allocate(task_port, size);
+    if (ret != KERN_SUCCESS) {
+        task_vm_deallocate(task_port, address, size);
+    }
 }
 
-void Task::vmDeallocate(xnu::Mach::VmAddress address, Size size)
-{
-	kern_return_t ret;
+bool Task::vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot) {
+    kern_return_t ret;
 
-	ret = vm_deallocate(this->task_port, address, size);
+    ret = vm_protect(this->task_port, address, size, FALSE, prot);
 
-	if(ret != KERN_SUCCESS)
-	{
-		MAC_RK_LOG("mach_vm_deallocate() failed!\n");
-	}
+    if (ret == KERN_SUCCESS) {
+        return true;
+    }
 
-	assert(ret == KERN_SUCCESS);
+    MAC_RK_LOG("mach_vm_protect() failed!\n");
 
-	if(ret != KERN_SUCCESS)
-	{
-		task_vm_deallocate(task_port, address, size);
-	}
+    assert(ret == KERN_SUCCESS);
+
+    return task_vm_protect(task_port, address, size, prot);
 }
 
-bool Task::vmProtect(xnu::Mach::VmAddress address, Size size, xnu::Mach::VmProtection prot)
-{
-	kern_return_t ret;
+void* Task::vmRemap(xnu::Mach::VmAddress address, Size size) {
+    kern_return_t ret;
 
-	ret = vm_protect(this->task_port, address, size, FALSE, prot);
+    xnu::Mach::VmAddress remap = 0;
 
-	if(ret == KERN_SUCCESS)
-	{
-		return true;
-	}
+    // ret = vm_remap(this->task_port, address, size, &remap);
 
-	MAC_RK_LOG("mach_vm_protect() failed!\n");
+    if (ret == KERN_SUCCESS) {
+        return reinterpret_cast<void*>(remap);
+    }
 
-	assert(ret == KERN_SUCCESS);
+    MAC_RK_LOG("mach_vm_remap() failed!\n");
 
-	return task_vm_protect(task_port, address, size, prot);
+    assert(ret == KERN_SUCCESS);
+
+    return NULL;
 }
 
-void* Task::vmRemap(xnu::Mach::VmAddress address, Size size)
-{
-	kern_return_t ret;
-
-	xnu::Mach::VmAddress remap = 0;
-
-	// ret = vm_remap(this->task_port, address, size, &remap);
-
-	if(ret == KERN_SUCCESS)
-	{
-		return reinterpret_cast<void*>(remap);
-	}
-
-	MAC_RK_LOG("mach_vm_remap() failed!\n");
-
-	assert(ret == KERN_SUCCESS);
-
-	return NULL;
+UInt64 Task::virtualToPhysical(xnu::Mach::VmAddress address) {
+    return 0;
 }
 
-UInt64 Task::virtualToPhysical(xnu::Mach::VmAddress address)
-{
-	return 0;
+bool Task::read(xnu::Mach::VmAddress address, void* data, Size size) {
+    kern_return_t ret;
+
+    mach_msg_type_number_t dataCount = size;
+
+    ret = vm_read_overwrite(this->task_port, address, size, (mach_vm_address_t)data,
+                            (vm_size_t*)&dataCount);
+
+    if (ret == KERN_SUCCESS) {
+        return true;
+    }
+
+    MAC_RK_LOG("mach_vm_read() failed! %d\n", ret);
+
+    assert(ret == KERN_SUCCESS);
+
+    return task_vm_read(task_port, address, data, size);
 }
 
-bool Task::read(xnu::Mach::VmAddress address, void *data, Size size)
-{
-	kern_return_t ret;
-
-	mach_msg_type_number_t dataCount = size;
-
-	ret = vm_read_overwrite(this->task_port, address, size, (mach_vm_address_t) data, (vm_size_t*) &dataCount);
-
-	if(ret == KERN_SUCCESS)
-	{
-		return true;
-	}
-
-	MAC_RK_LOG("mach_vm_read() failed! %d\n", ret);
-
-	assert(ret == KERN_SUCCESS);
-
-	return task_vm_read(task_port, address, data, size);
+bool Task::readUnsafe(xnu::Mach::VmAddress address, void* data, Size size) {
+    return false;
 }
 
-bool Task::readUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
-{
-	return false;
+UInt8 Task::read8(xnu::Mach::VmAddress address) {
+    bool success;
+
+    UInt8 read;
+
+    success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt8));
+
+    if (!success) {
+        MAC_RK_LOG("Task::read8() failed!\n");
+    }
+
+    assert(success);
+
+    return read;
 }
 
-UInt8 Task::read8(xnu::Mach::VmAddress address)
-{
-	bool success;
+UInt16 Task::read16(xnu::Mach::VmAddress address) {
+    bool success;
 
-	UInt8 read;
+    UInt16 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt8));
+    success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt16));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::read8() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::read16() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 
-	return read;
+    return read;
 }
 
-UInt16 Task::read16(xnu::Mach::VmAddress address)
-{
-	bool success;
+UInt32 Task::read32(xnu::Mach::VmAddress address) {
+    bool success;
 
-	UInt16 read;
+    UInt32 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt16));
+    success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt32));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::read16() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::read32() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 
-	return read;
+    return read;
 }
 
-UInt32 Task::read32(xnu::Mach::VmAddress address)
-{
-	bool success;
+UInt64 Task::read64(xnu::Mach::VmAddress address) {
+    bool success;
 
-	UInt32 read;
+    UInt64 read;
 
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt32));
+    success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt64));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::read32() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::read64() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 
-	return read;
+    return read;
 }
 
-UInt64 Task::read64(xnu::Mach::VmAddress address)
-{
-	bool success;
-
-	UInt64 read;
-
-	success = this->read(address, reinterpret_cast<void*>(&read), sizeof(UInt64));
-
-	if(!success)
-	{
-		MAC_RK_LOG("Task::read64() failed!\n");
-	}
-
-	assert(success);
-
-	return read;
+bool Task::write(xnu::Mach::VmAddress address, void* data, Size size) {
+    return task_vm_write(task_port, address, data, size);
 }
 
-bool Task::write(xnu::Mach::VmAddress address, void *data, Size size)
-{
-	return task_vm_write(task_port, address, data, size);
+bool Task::writeUnsafe(xnu::Mach::VmAddress address, void* data, Size size) {
+    return false;
 }
 
-bool Task::writeUnsafe(xnu::Mach::VmAddress address, void *data, Size size)
-{
-	return false;
+void Task::write8(xnu::Mach::VmAddress address, UInt8 value) {
+    bool success;
+
+    success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt8));
+
+    if (!success) {
+        MAC_RK_LOG("Task::write8() failed!\n");
+    }
+
+    assert(success);
 }
 
-void Task::write8(xnu::Mach::VmAddress address, UInt8 value)
-{
-	bool success;
+void Task::write16(xnu::Mach::VmAddress address, UInt16 value) {
+    bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt8));
+    success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt16));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::write8() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::write16() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 }
 
-void Task::write16(xnu::Mach::VmAddress address, UInt16 value)
-{
-	bool success;
+void Task::write32(xnu::Mach::VmAddress address, UInt32 value) {
+    bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt16));
+    success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt32));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::write16() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::write32() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 }
 
-void Task::write32(xnu::Mach::VmAddress address, UInt32 value)
-{
-	bool success;
+void Task::write64(xnu::Mach::VmAddress address, UInt64 value) {
+    bool success;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt32));
+    success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt64));
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::write32() failed!\n");
-	}
+    if (!success) {
+        MAC_RK_LOG("Task::write64() failed!\n");
+    }
 
-	assert(success);
+    assert(success);
 }
 
-void Task::write64(xnu::Mach::VmAddress address, UInt64 value)
-{
-	bool success;
+char* Task::readString(xnu::Mach::VmAddress address) {
+    char* string;
 
-	success = this->write(address, reinterpret_cast<void*>(&value), sizeof(UInt64));
+    UInt8 value;
 
-	if(!success)
-	{
-		MAC_RK_LOG("Task::write64() failed!\n");
-	}
+    Size size = 0;
 
-	assert(success);
+    do {
+        this->read(address + size++, &value, sizeof(value));
+    } while (value);
+
+    assert(size > 0);
+
+    string = (char*)malloc(size + 1);
+
+    this->read(address, string, size + 1);
+
+    return string;
 }
 
-char* Task::readString(xnu::Mach::VmAddress address)
-{
-	char *string;
-
-	UInt8 value;
-
-	Size size = 0;
-
-	do
-	{
-		this->read(address + size++, &value, sizeof(value));
-	} 
-	while(value);
-
-	assert(size > 0);
-
-	string = (char*) malloc(size + 1);
-
-	this->read(address, string, size + 1);
-
-	return string;
+Symbol* Task::getSymbolByName(char* symname) {
+    return macho->getSymbolByName(symname);
 }
 
-Symbol* Task::getSymbolByName(char *symname)
-{
-	return macho->getSymbolByName(symname);
+Symbol* Task::getSymbolByAddress(xnu::Mach::VmAddress address) {
+    return macho->getSymbolByAddress(address);
 }
 
-Symbol* Task::getSymbolByAddress(xnu::Mach::VmAddress address)
-{
-	return macho->getSymbolByAddress(address);
+xnu::Mach::VmAddress Task::getSymbolAddressByName(char* symbolname) {
+    Symbol* symbol = this->macho->getSymbolByName(symbolname);
+
+    if (!symbol)
+        return 0;
+
+    return symbol->getAddress();
 }
 
-xnu::Mach::VmAddress Task::getSymbolAddressByName(char *symbolname)
-{
-	Symbol *symbol = this->macho->getSymbolByName(symbolname);
+xnu::Mach::VmAddress Task::getImageLoadedAt(char* image_name, char** image_path) {
+    xnu::Mach::VmAddress image = this->dyld->getImageLoadedAt(image_name, image_path);
 
-	if(!symbol)
-		return 0;
+    if (!image) {
+        MAC_RK_LOG("Locating image %s failed!\n", image_name);
+    }
 
-	return symbol->getAddress();
+    assert(image != 0);
+
+    return image;
 }
 
-xnu::Mach::VmAddress Task::getImageLoadedAt(char *image_name, char **image_path)
-{
-	xnu::Mach::VmAddress image = this->dyld->getImageLoadedAt(image_name, image_path);
-
-	if(!image)
-	{
-		MAC_RK_LOG("Locating image %s failed!\n", image_name);
-	}
-
-	assert(image != 0);
-
-	return image;
-}
-
-void Task::printLoadedImages()
-{
-	
-}
+void Task::printLoadedImages() {}

@@ -16,20 +16,19 @@
 
 #pragma once
 
-extern "C"
-{
-	#include <mach-o.h>
+extern "C" {
+#include <mach-o.h>
 }
 
 #include <Types.h>
 
 #include "BinaryFormat.hpp"
 
-#include "vector.hpp"
+#include "Section.hpp"
+#include "Segment.hpp"
 #include "Symbol.hpp"
 #include "SymbolTable.hpp"
-#include "Segment.hpp"
-#include "Section.hpp"
+#include "vector.hpp"
 
 #include "Log.hpp"
 
@@ -40,93 +39,115 @@ extern "C"
 
 #endif
 
-class MachO : public Binary::BinaryFormat
-{
-	public:
-		explicit MachO();
+class MachO : public Binary::BinaryFormat {
+public:
+    explicit MachO();
 
-		~MachO();
+    ~MachO();
 
-		virtual void initWithBase(xnu::Mach::VmAddress machoBase, Offset slide);
+    virtual void initWithBase(xnu::Mach::VmAddress machoBase, Offset slide);
 
-		xnu::Macho::Header64* getMachHeader() { return header; }
+    xnu::Macho::Header64* getMachHeader() {
+        return header;
+    }
 
-		virtual xnu::Mach::VmAddress getBase() { return base; }
+    virtual xnu::Mach::VmAddress getBase() {
+        return base;
+    }
 
-		xnu::Mach::VmAddress getEntryPoint() { return entry_point; }
+    xnu::Mach::VmAddress getEntryPoint() {
+        return entry_point;
+    }
 
-		Offset getAslrSlide() { return aslr_slide; }
+    Offset getAslrSlide() {
+        return aslr_slide;
+    }
 
-		virtual Size getSize();
+    virtual Size getSize();
 
-		UInt8* getOffset(Offset offset) { return reinterpret_cast<UInt8*>(buffer + offset); }
-		UInt8* getEnd() { return reinterpret_cast<UInt8*>(buffer + getSize()); }
+    UInt8* getOffset(Offset offset) {
+        return reinterpret_cast<UInt8*>(buffer + offset);
+    }
+    UInt8* getEnd() {
+        return reinterpret_cast<UInt8*>(buffer + getSize());
+    }
 
-		std::vector<Segment*>& getSegments() { return segments; }
-		
-		std::vector<Section*>& getSections(Segment* segment);
+    std::vector<Segment*>& getSegments() {
+        return segments;
+    }
 
-		std::vector<Symbol*>& getAllSymbols() { return symbolTable->getAllSymbols(); }
+    std::vector<Section*>& getSections(Segment* segment);
 
-		SymbolTable* getSymbolTable() { return symbolTable; }
+    std::vector<Symbol*>& getAllSymbols() {
+        return symbolTable->getAllSymbols();
+    }
 
-		Symbol* getSymbol(char *symbolname) { return this->getSymbolByName(symbolname); }
+    SymbolTable* getSymbolTable() {
+        return symbolTable;
+    }
 
-		Symbol* getSymbolByName(char *symbolname);
-		Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
+    Symbol* getSymbol(char* symbolname) {
+        return this->getSymbolByName(symbolname);
+    }
 
-		xnu::Mach::VmAddress getSymbolAddressByName(char *symbolname);
+    Symbol* getSymbolByName(char* symbolname);
+    Symbol* getSymbolByAddress(xnu::Mach::VmAddress address);
 
-		Offset addressToOffset(xnu::Mach::VmAddress address);
+    xnu::Mach::VmAddress getSymbolAddressByName(char* symbolname);
 
-		xnu::Mach::VmAddress offsetToAddress(Offset offset);
+    Offset addressToOffset(xnu::Mach::VmAddress address);
 
-		void* addressToPointer(xnu::Mach::VmAddress address);
+    xnu::Mach::VmAddress offsetToAddress(Offset offset);
 
-		xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
+    void* addressToPointer(xnu::Mach::VmAddress address);
 
-		Segment* getSegment(char *segmentname);
-		Section* getSection(char *segmentname, char *sectionname);
+    xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
 
-		Segment* segmentForAddress(xnu::Mach::VmAddress address);
-		Section* sectionForAddress(xnu::Mach::VmAddress address);
+    Segment* getSegment(char* segmentname);
+    Section* getSection(char* segmentname, char* sectionname);
 
-		Segment* segmentForOffset(Offset offset);
-		Section* sectionForOffset(Offset offset);
+    Segment* segmentForAddress(xnu::Mach::VmAddress address);
+    Section* sectionForAddress(xnu::Mach::VmAddress address);
 
-		bool addressInSegment(xnu::Mach::VmAddress address, char *segmentname);
-		bool addressInSection(xnu::Mach::VmAddress address, char *segmentname, char *sectname);
+    Segment* segmentForOffset(Offset offset);
+    Section* sectionForOffset(Offset offset);
 
-		UInt8* operator[](UInt64 index) { return this->getOffset(index); }
+    bool addressInSegment(xnu::Mach::VmAddress address, char* segmentname);
+    bool addressInSection(xnu::Mach::VmAddress address, char* segmentname, char* sectname);
 
-		virtual void parseSymbolTable(xnu::Macho::Nlist64 *symtab, UInt32 nsyms, char *strtab, Size strsize);
+    UInt8* operator[](UInt64 index) {
+        return this->getOffset(index);
+    }
 
-		virtual void parseLinkedit();
+    virtual void parseSymbolTable(xnu::Macho::Nlist64* symtab, UInt32 nsyms, char* strtab,
+                                  Size strsize);
 
-		virtual bool parseLoadCommands();
+    virtual void parseLinkedit();
 
-		virtual void parseHeader();
+    virtual bool parseLoadCommands();
 
-		virtual void parseFatHeader();
+    virtual void parseHeader();
 
-		virtual void parseMachO();
+    virtual void parseFatHeader();
 
-	protected:
-		char *buffer;
+    virtual void parseMachO();
 
-		bool fat;
+protected:
+    char* buffer;
 
-		xnu::Macho::Header64 *header;
+    bool fat;
 
-		std::vector<Segment*> segments;
+    xnu::Macho::Header64* header;
 
-		SymbolTable *symbolTable;
+    std::vector<Segment*> segments;
 
-		Offset aslr_slide;
+    SymbolTable* symbolTable;
 
-		xnu::Mach::VmAddress entry_point;
+    Offset aslr_slide;
 
-		xnu::Mach::VmAddress base;
+    xnu::Mach::VmAddress entry_point;
 
-		Size size;
+    xnu::Mach::VmAddress base;
+
+    Size size;
 };

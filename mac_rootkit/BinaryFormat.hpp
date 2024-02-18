@@ -18,12 +18,10 @@
 
 #include <Types.h>
 
-namespace Binary
-{
-	class BinaryFormat
-	{
-		public:
-			BinaryFormat() {}
-			~BinaryFormat() {}
-	};
-}
+namespace Binary {
+    class BinaryFormat {
+    public:
+        BinaryFormat() {}
+        ~BinaryFormat() {}
+    };
+} // namespace Binary

@@ -54,45 +54,36 @@ extern mach_vm_address_t phys_write32_;
 extern mach_vm_address_t phys_write16_;
 extern mach_vm_address_t phys_write8_;
 
-struct vm_map_copy
-{
-	int                    type;
-	vm_object_offset_t     offset;
-	vm_map_size_t          size;
-	void                  *kdata;
+struct vm_map_copy {
+    int type;
+    vm_object_offset_t offset;
+    vm_map_size_t size;
+    void* kdata;
 };
 
-typedef struct vm_map_copy *vm_map_copy_t;
+typedef struct vm_map_copy* vm_map_copy_t;
 
 void set_kernel_map(vm_map_t kernel_map);
 
-void set_vm_functions(mach_vm_address_t vm_read,
-					  mach_vm_address_t vm_write,
-					  mach_vm_address_t vm_protect,
-					  mach_vm_address_t vm_remap,
-					  mach_vm_address_t vm_allocate,
-					  mach_vm_address_t vm_deallocate,
-					  mach_vm_address_t vm_map_copyin,
-					  mach_vm_address_t vm_map_copy_overwrite);
+void set_vm_functions(mach_vm_address_t vm_read, mach_vm_address_t vm_write,
+                      mach_vm_address_t vm_protect, mach_vm_address_t vm_remap,
+                      mach_vm_address_t vm_allocate, mach_vm_address_t vm_deallocate,
+                      mach_vm_address_t vm_map_copyin, mach_vm_address_t vm_map_copy_overwrite);
 
-void set_phys_functions(mach_vm_address_t pmap_find_phys,
-						mach_vm_address_t phys_read64,
-						mach_vm_address_t phys_read32,
-						mach_vm_address_t phys_read16,
-						mach_vm_address_t phys_read8,
-						mach_vm_address_t phys_write64,
-						mach_vm_address_t phys_write32,
-						mach_vm_address_t phys_write16,
-						mach_vm_address_t phys_write8);
+void set_phys_functions(mach_vm_address_t pmap_find_phys, mach_vm_address_t phys_read64,
+                        mach_vm_address_t phys_read32, mach_vm_address_t phys_read16,
+                        mach_vm_address_t phys_read8, mach_vm_address_t phys_write64,
+                        mach_vm_address_t phys_write32, mach_vm_address_t phys_write16,
+                        mach_vm_address_t phys_write8);
 
-bool kernel_read(mach_vm_address_t address, void *data, size_t size);
-bool kernel_write(mach_vm_address_t address, const void *data, size_t size);
+bool kernel_read(mach_vm_address_t address, void* data, size_t size);
+bool kernel_write(mach_vm_address_t address, const void* data, size_t size);
 
-bool kernel_read_unsafe(mach_vm_address_t address, void *data, size_t size);
-bool kernel_write_unsafe(mach_vm_address_t address, const void *data, size_t size);
+bool kernel_read_unsafe(mach_vm_address_t address, void* data, size_t size);
+bool kernel_write_unsafe(mach_vm_address_t address, const void* data, size_t size);
 
-bool kernel_vm_read(mach_vm_address_t address, void *data, size_t size);
-bool kernel_vm_write(mach_vm_address_t address, const void *data, size_t size);
+bool kernel_vm_read(mach_vm_address_t address, void* data, size_t size);
+bool kernel_vm_write(mach_vm_address_t address, const void* data, size_t size);
 
 mach_vm_address_t kernel_vm_allocate(size_t size);
 
@@ -103,8 +94,8 @@ void* kernel_vm_remap(mach_vm_address_t address, size_t size);
 
 uint64_t kernel_virtual_to_physical(mach_vm_address_t vaddr);
 
-bool task_vm_read(vm_map_t task_map, mach_vm_address_t address, void *data, size_t size);
-bool task_vm_write(vm_map_t task_map, mach_vm_address_t address, const void *data, size_t size);
+bool task_vm_read(vm_map_t task_map, mach_vm_address_t address, void* data, size_t size);
+bool task_vm_write(vm_map_t task_map, mach_vm_address_t address, const void* data, size_t size);
 
 mach_vm_address_t task_vm_allocate(vm_map_t task_map, size_t size);
 
@@ -122,4 +113,3 @@ void physical_write64(uint64_t paddr, uint64_t value);
 void physical_write32(uint64_t paddr, uint32_t value);
 void physical_write16(uint64_t paddr, uint16_t value);
 void physical_write8(uint64_t paddr, uint8_t value);
-

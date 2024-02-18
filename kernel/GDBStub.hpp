@@ -21,129 +21,121 @@
 #include <Architecture.hpp>
 #include <vector.hpp>
 
-namespace xnu
-{
-	class Kernel;
-	class Thread;
-}
+namespace xnu {
+    class Kernel;
+    class Thread;
+} // namespace xnu
 
-namespace mrk
-{
-	class MacRootKit;
-	class KernelPatcher;
-};
+namespace mrk {
+    class MacRootKit;
+    class KernelPatcher;
+}; // namespace mrk
 
-namespace Debug
-{
-	enum class DebuggerAction
-	{
-		Interrupt,
-		Continue,
-		StepThreadLocked,
-		StepThreadUnlocked,
-		ShutdownEmulation,
-	};
+namespace Debug {
+    enum class DebuggerAction {
+        Interrupt,
+        Continue,
+        StepThreadLocked,
+        StepThreadUnlocked,
+        ShutdownEmulation,
+    };
 
-	constexpr char GDB_STUB_START = '$';
-	constexpr char GDB_STUB_END = '#';
-	constexpr char GDB_STUB_ACK = '+';
-	constexpr char GDB_STUB_NACK = '-';
-	constexpr char GDB_STUB_INT3 = 0x03;
-	constexpr int  GDB_STUB_SIGTRAP = 5;
+    constexpr char GDB_STUB_START = '$';
+    constexpr char GDB_STUB_END = '#';
+    constexpr char GDB_STUB_ACK = '+';
+    constexpr char GDB_STUB_NACK = '-';
+    constexpr char GDB_STUB_INT3 = 0x03;
+    constexpr int GDB_STUB_SIGTRAP = 5;
 
-	constexpr char GDB_STUB_REPLY_ERR[] = "E01";
-	constexpr char GDB_STUB_REPLY_OK[] = "OK";
-	constexpr char GDB_STUB_REPLY_EMPTY[] = "";
+    constexpr char GDB_STUB_REPLY_ERR[] = "E01";
+    constexpr char GDB_STUB_REPLY_OK[] = "OK";
+    constexpr char GDB_STUB_REPLY_EMPTY[] = "";
 
-	class Debugger
-	{
-		public:
-			explicit Debugger(xnu::Kernel *kernel);
+    class Debugger {
+    public:
+        explicit Debugger(xnu::Kernel* kernel);
 
-			virtual void connected() = 0;
+        virtual void connected() = 0;
 
-			virtual UInt8* readFromClient() = 0;
+        virtual UInt8* readFromClient() = 0;
 
-			virtual void writeToClient(std::span<const u8> data) = 0;
+        virtual void writeToClient(std::span<const u8> data) = 0;
 
-			virtual xnu::Thread* getActiveThread() = 0;
+        virtual xnu::Thread* getActiveThread() = 0;
 
-			virtual void setActiveThread(xnu::Thread *thread) = 0;
-			
-			virtual void stopped(xnu::Thread* thread) = 0;
+        virtual void setActiveThread(xnu::Thread* thread) = 0;
 
-			virtual void shuttingDown() = 0;
+        virtual void stopped(xnu::Thread* thread) = 0;
 
-			virtual void watchpoint(xnu::Thread* thread) = 0;
+        virtual void shuttingDown() = 0;
 
-			virtual std::vector<DebuggerAction> clientData(UInt8 *data) = 0;
+        virtual void watchpoint(xnu::Thread* thread) = 0;
 
-			bool notifyThreadStopped(Kernel::KThread* thread);
+        virtual std::vector<DebuggerAction> clientData(UInt8* data) = 0;
 
-			void notifyShutdown();
+        bool notifyThreadStopped(Kernel::KThread* thread);
 
-			bool notifyThreadWatchpoint(xnu::Thread* thread);
+        void notifyShutdown();
 
-		protected:
-			GDBStubArch *arch;
+        bool notifyThreadWatchpoint(xnu::Thread* thread);
 
-			xnu::Kernel *kernel;
+    protected:
+        GDBStubArch* arch;
 
-			Debug::Dwarf *dwarf;
+        xnu::Kernel* kernel;
 
-			xnu::KernelMachO *macho;
+        Debug::Dwarf* dwarf;
 
-			mrk::MacRootKit *mrk;
+        xnu::KernelMachO* macho;
 
-	};
+        mrk::MacRootKit* mrk;
+    };
 
-	class GDBStubA64 : public Debugger
-	{
-		public:
-			explicit GDBStubArm64(xnu::Kernel *kernel);
+    class GDBStubA64 : public Debugger {
+    public:
+        explicit GDBStubArm64(xnu::Kernel* kernel);
 
-			void addBreakpoint(xnu::Mach::VmAddress address);
+        void addBreakpoint(xnu::Mach::VmAddress address);
 
-			void removeBreakpoint(xnu::Mach::VmAddress address);
+        void removeBreakpoint(xnu::Mach::VmAddress address);
 
-			// std::String registerWrite(xnu::Thread* thread, std::String value) const override;
+        // std::String registerWrite(xnu::Thread* thread, std::String value) const override;
 
-			// std::String registerRead(xnu::Thread* thread, Size id) const override;
+        // std::String registerRead(xnu::Thread* thread, Size id) const override;
 
-			// void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
+        // void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
 
-			// void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
+        // void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
 
-			// std::String threadStatus(xnu::Thread* thread, u8 signal) const override;
+        // std::String threadStatus(xnu::Thread* thread, u8 signal) const override;
 
-		private:
-			Arch::Architecture architecture;
+    private:
+        Arch::Architecture architecture;
 
-			Array<Hook*> breakpoints;
-	};
+        Array<Hook*> breakpoints;
+    };
 
-	class GDBStubX64 : public Debugger
-	{
-		public:
-			explicit GDBStubX64(xnu::Kernel *kernel);
+    class GDBStubX64 : public Debugger {
+    public:
+        explicit GDBStubX64(xnu::Kernel* kernel);
 
-			void addBreakpoint(xnu::Mach::VmAddress address);
+        void addBreakpoint(xnu::Mach::VmAddress address);
 
-			void removeBreakpoint(xnu::Mach::VmAddress address);
+        void removeBreakpoint(xnu::Mach::VmAddress address);
 
-			// std::String registerWrite(xnu::Thread* thread, std::String value) const override;
+        // std::String registerWrite(xnu::Thread* thread, std::String value) const override;
 
-			// std::String registerRead(xnu::Thread* thread, Size id) const override;
+        // std::String registerRead(xnu::Thread* thread, Size id) const override;
 
-			// void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
+        // void registerWrite(xnu::Thread* thread, Size id, std::String value) const override;
 
-			// void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
+        // void writeRegisters(xnu::Thread* thread, std::String register_data) const override;
 
-			// std::String threadStatus(xnu::Thread* thread, u8 signal) const override;
+        // std::String threadStatus(xnu::Thread* thread, u8 signal) const override;
 
-		private:
-			Arch::Architecture architecture;
+    private:
+        Arch::Architecture architecture;
 
-			Array<Hook*> breakpoints;
-	}
-};
+        Array<Hook*> breakpoints;
+    }
+}; // namespace Debug

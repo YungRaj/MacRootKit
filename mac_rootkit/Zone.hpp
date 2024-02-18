@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <stdio.h>
 #include <stddef.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <assert.h>
 
@@ -32,283 +32,316 @@
 
 class Kernel;
 
-namespace Heap
-{
-	class Zone;
+namespace Heap {
+    class Zone;
 
-	class KallocHeap;
-	class KallocTypeView;
-};
+    class KallocHeap;
+    class KallocTypeView;
+}; // namespace Heap
 
-namespace Heap
-{
-	static Kernel *kernel = NULL;
+namespace Heap {
+    static Kernel* kernel = NULL;
 
-	static std::vector<Zone*> zones;
+    static std::vector<Zone*> zones;
 
-	static std::vector<KallocHeap*> allHeaps;
+    static std::vector<KallocHeap*> allHeaps;
 
-	static std::vector<KallocTypeView*> allTypeViews;
+    static std::vector<KallocTypeView*> allTypeViews;
 
-	static xnu::Mach::VmAddress zone_std::vector;
-	static xnu::Mach::VmAddress zone_security_std::vector;
-	static xnu::Mach::VmAddress zone_submaps;
+    static xnu::Mach::VmAddress zone_std::vector;
+    static xnu::Mach::VmAddress zone_security_std::vector;
+    static xnu::Mach::VmAddress zone_submaps;
 
-	static xnu::Mach::VmAddress kalloc_zones_default;
-	static xnu::Mach::VmAddress kalloc_zones_kext;
-	static xnu::Mach::VmAddress kalloc_zones_data_buffers;
+    static xnu::Mach::VmAddress kalloc_zones_default;
+    static xnu::Mach::VmAddress kalloc_zones_kext;
+    static xnu::Mach::VmAddress kalloc_zones_data_buffers;
 
-	static Size num_zones;
+    static Size num_zones;
 
-	Zone* zoneForAddress(xnu::Mach::VmAddress address);
+    Zone* zoneForAddress(xnu::Mach::VmAddress address);
 
-	void enumerateAllZones(Kernel *kernel);
+    void enumerateAllZones(Kernel* kernel);
 
-	void enumerateKallocHeaps(Kernel *kernel, xnu::Mach::VmAddress kalloc_zones_default, xnu::Mach::VmAddress kalloc_zones_kext, xnu::Mach::VmAddress kalloc_zones_data_buffers);
+    void enumerateKallocHeaps(Kernel* kernel, xnu::Mach::VmAddress kalloc_zones_default,
+                              xnu::Mach::VmAddress kalloc_zones_kext,
+                              xnu::Mach::VmAddress kalloc_zones_data_buffers);
 
-	void enumerateKallocTypeViews(Kernel *kernel, Segment *segment, Section *section);
+    void enumerateKallocTypeViews(Kernel* kernel, Segment* segment, Section* section);
 
-	namespace ZoneAllocator
-	{
-		Zone* findLargestZone();
+    namespace ZoneAllocator {
+        Zone* findLargestZone();
 
-		Zone* createZone();
+        Zone* createZone();
 
-		void destroyZone(Zone *zone);
+        void destroyZone(Zone* zone);
 
-		namespace ZoneInfo
-		{
-			zone_info_t* zoneInfo();
-		}
+        namespace ZoneInfo {
+            zone_info_t* zoneInfo();
+        }
 
-		namespace ZoneStats
-		{
-			zone_stats_t zoneStatsForZone(xnu::Mach::VmAddress zone);
-		}
+        namespace ZoneStats {
+            zone_stats_t zoneStatsForZone(xnu::Mach::VmAddress zone);
+        }
 
-		namespace ZoneIndex
-		{
-			zone_id_t zoneIndexForZone(xnu::Mach::VmAddress zone);
+        namespace ZoneIndex {
+            zone_id_t zoneIndexForZone(xnu::Mach::VmAddress zone);
 
-			zone_id_t zoneIndexFromAddress(xnu::Mach::VmAddress address);
+            zone_id_t zoneIndexFromAddress(xnu::Mach::VmAddress address);
 
-			zone_id_t zoneIndexFromPointer(void *ptr);
-		}
+            zone_id_t zoneIndexFromPointer(void* ptr);
+        } // namespace ZoneIndex
 
-		namespace ZonePva
-		{
-			zone_pva_t zonePvaFromAddress(xnu::Mach::VmAddress zone);
+        namespace ZonePva {
+            zone_pva_t zonePvaFromAddress(xnu::Mach::VmAddress zone);
 
-			zone_pva_t zonePvaFromMeta(xnu::Mach::VmAddress meta);
+            zone_pva_t zonePvaFromMeta(xnu::Mach::VmAddress meta);
 
-			zone_pva_t zonePvaFromElement(zone_element_t element);
+            zone_pva_t zonePvaFromElement(zone_element_t element);
 
-			xnu::Mach::VmAddress zonePvaToAddress(zone_pva_t pva);
+            xnu::Mach::VmAddress zonePvaToAddress(zone_pva_t pva);
 
-			xnu::Mach::VmAddress zonePvaToMeta(zone_pva_t pva);
-		}
+            xnu::Mach::VmAddress zonePvaToMeta(zone_pva_t pva);
+        } // namespace ZonePva
 
-		namespace ZoneBits
-		{
-			struct zone_bits_allocator_header* zoneBitsAllocatorHeader(xnu::Mach::VmAddress zone_bits_header);
+        namespace ZoneBits {
+            struct zone_bits_allocator_header* zoneBitsAllocatorHeader(
+                xnu::Mach::VmAddress zone_bits_header);
 
-			xnu::Mach::VmAddress zoneBitsAllocatorRefPtr(xnu::Mach::VmAddress address);
+            xnu::Mach::VmAddress zoneBitsAllocatorRefPtr(xnu::Mach::VmAddress address);
 
-			xnu::Mach::VmAddress zoneBitsAllocatorBase();
+            xnu::Mach::VmAddress zoneBitsAllocatorBase();
 
-			Size zoneBitsAllocatorSize();
-		}
+            Size zoneBitsAllocatorSize();
+        } // namespace ZoneBits
 
-		namespace PageMetadata
-		{
-			namespace FreeList
-			{
-				UInt64 bitMap(xnu::Mach::VmAddress address, struct zone_page_metadata *metadata);
+        namespace PageMetadata {
+            namespace FreeList {
+                UInt64 bitMap(xnu::Mach::VmAddress address, struct zone_page_metadata* metadata);
 
-				UInt32 inlineBitMap(xnu::Mach::VmAddress address, struct zone_page_metadata *metadata);
-			}
+                UInt32 inlineBitMap(xnu::Mach::VmAddress address,
+                                    struct zone_page_metadata* metadata);
+            } // namespace FreeList
 
-			struct zone_page_metadata* zoneMetadata(xnu::Mach::VmAddress meta);
+            struct zone_page_metadata* zoneMetadata(xnu::Mach::VmAddress meta);
 
-			xnu::Mach::VmAddress zoneMetaFromAddress(xnu::Mach::VmAddress address);
+            xnu::Mach::VmAddress zoneMetaFromAddress(xnu::Mach::VmAddress address);
 
-			xnu::Mach::VmAddress zoneMetaFromElement(zone_element_t element);
+            xnu::Mach::VmAddress zoneMetaFromElement(zone_element_t element);
 
-			xnu::Mach::VmAddress zoneMetaToAddress(xnu::Mach::VmAddress meta);
-		}
+            xnu::Mach::VmAddress zoneMetaToAddress(xnu::Mach::VmAddress meta);
+        } // namespace PageMetadata
 
-		zone_t zone(xnu::Mach::VmAddress zone);
+        zone_t zone(xnu::Mach::VmAddress zone);
 
-		xnu::Mach::VmAddress zoneFromName(char *zone_name);
+        xnu::Mach::VmAddress zoneFromName(char* zone_name);
 
-		xnu::Mach::VmAddress zoneFromAddress(xnu::Mach::VmAddress address);
-	};
+        xnu::Mach::VmAddress zoneFromAddress(xnu::Mach::VmAddress address);
+    }; // namespace ZoneAllocator
 
-	class Zone
-	{
-		public:
-			Zone(Kernel *kernel, xnu::Mach::VmAddress zone);
-			Zone(Kernel *kernel, zone_id_t zone_id);
-			Zone(Kernel *kernel, char *zone_name);
+    class Zone {
+    public:
+        Zone(Kernel* kernel, xnu::Mach::VmAddress zone);
+        Zone(Kernel* kernel, zone_id_t zone_id);
+        Zone(Kernel* kernel, char* zone_name);
 
-			~Zone();
+        ~Zone();
 
-			static Zone* zoneForAddress(Kernel *kernel, xnu::Mach::VmAddress address);
-			static Zone* zoneForIndex(Kernel *kernel, zone_id_t zone_id);
+        static Zone* zoneForAddress(Kernel* kernel, xnu::Mach::VmAddress address);
+        static Zone* zoneForIndex(Kernel* kernel, zone_id_t zone_id);
 
-			static zone_info_t zoneInfo(Kernel *kernel);
+        static zone_info_t zoneInfo(Kernel* kernel);
 
-			void setKallocHeap(KallocHeap *kheap) { this->kheap = kheap; }
+        void setKallocHeap(KallocHeap* kheap) {
+            this->kheap = kheap;
+        }
 
-			void setKallocTypeView(KallocTypeView *typeview) { this->typeview = typeview; }
+        void setKallocTypeView(KallocTypeView* typeview) {
+            this->typeview = typeview;
+        }
 
-			xnu::Mach::VmAddress getZoneAddress() { return zone; }
+        xnu::Mach::VmAddress getZoneAddress() {
+            return zone;
+        }
 
-			zone_t getZone() { return z }
+        zone_t getZone() {
+            return z
+        }
 
-			char* getZoneName() { return z_name; }
+        char* getZoneName() {
+            return z_name;
+        }
 
-			char* getZoneSiteName() { return z_site_name; }
+        char* getZoneSiteName() {
+            return z_site_name;
+        }
 
-			char* getKHeapName() { return kheap_name; }
+        char* getKHeapName() {
+            return kheap_name;
+        }
 
-			UInt16 getZoneElementSize() { return z_elem_size; }
+        UInt16 getZoneElementSize() {
+            return z_elem_size;
+        }
 
-			zone_id_t getZoneId() { return z_id; }
+        zone_id_t getZoneId() {
+            return z_id;
+        }
 
-			zone_info_t* getZoneInfo() { return z_info; }
+        zone_info_t* getZoneInfo() {
+            return z_info;
+        }
 
-			zone_stats_t getZoneStats() { return z_stats; }
+        zone_stats_t getZoneStats() {
+            return z_stats;
+        }
 
-			zone_element_t getZoneElement(xnu::Mach::VmAddress address);
+        zone_element_t getZoneElement(xnu::Mach::VmAddress address);
 
-			struct zone_page_metadata* zoneMetaForAddress(xnu::Mach::VmAddress address);
+        struct zone_page_metadata* zoneMetaForAddress(xnu::Mach::VmAddress address);
 
-			zone_id_t zoneIndexForAddress(Kernel *kernel, xnu::Mach::VmAddress address);
+        zone_id_t zoneIndexForAddress(Kernel* kernel, xnu::Mach::VmAddress address);
 
-			bool checkFree(xnu::Mach::VmAddress address);
+        bool checkFree(xnu::Mach::VmAddress address);
 
-			void parseZone();
+        void parseZone();
 
-		private:
-			Kernel *kernel;
+    private:
+        Kernel* kernel;
 
-			xnu::Mach::VmAddress zone;
+        xnu::Mach::VmAddress zone;
 
-			zone_t z;
+        zone_t z;
 
-			zone_id_t z_id;
+        zone_id_t z_id;
 
-			zone_info_t z_info;
+        zone_info_t z_info;
 
-			zone_stats z_stats;
+        zone_stats z_stats;
 
-			char* z_name;
-			char *z_site_name;
+        char* z_name;
+        char* z_site_name;
 
-			UInt16 z_elem_size;
+        UInt16 z_elem_size;
 
-			KallocHeap *kheap;
+        KallocHeap* kheap;
 
-			KallocTypeView *typeview;
+        KallocTypeView* typeview;
+    };
 
-	};
+    class KallocHeap {
+    public:
+        KallocHeap(struct kheap_zones* kheap_zones, struct kalloc_heap* kalloc_heap);
 
-	class KallocHeap
-	{
-		public:
-			KallocHeap(struct kheap_zones *kheap_zones, struct kalloc_heap *kalloc_heap);
+        ~KallocHeap();
 
-			~KallocHeap();
+        std::vector<Zone*> getZones() {
+            return &zones;
+        }
 
-			std::vector<Zone*> getZones() { return &zones; }
+        char* getKHeapName() {
+            return kh_name;
+        }
 
-			char* getKHeapName() { return kh_name; }
+        zone_kheap_id_t getKHeapId() {
+            return kheap_id;
+        }
 
-			zone_kheap_id_t getKHeapId() { return kheap_id; }
+        Zone* getZoneByName(char* zone_name);
+        Zone* getZoneByIndex(zone_id_t zone_id);
 
-			Zone* getZoneByName(char *zone_name);
-			Zone* getZoneByIndex(zone_id_t zone_id);
+        void parseKallocHeap();
 
-			void parseKallocHeap();
+    private:
+        Kernel* kernel;
 
-		private:
-			Kernel *kernel;
+        std::vector<Zone*> zones;
 
-			std::vector<Zone*> zones;
+        enum zone_kheap_id_t kheap_id;
 
-			enum zone_kheap_id_t kheap_id;
+        struct kalloc_heap* kalloc_heap;
+        struct kheap_zones* kheap_zones;
 
-			struct kalloc_heap *kalloc_heap;
-			struct kheap_zones *kheap_zones;
+        char* kh_name;
 
-			char *kh_name;
+        zone_kheap_id_t kh_id;
+    };
 
-			zone_kheap_id_t kh_id;
-	};
+    class KallocTypeView {
+    public:
+        KallocTypeView(struct kalloc_type_view* typeview);
 
-	class KallocTypeView
-	{
-		public:
-			KallocTypeView(struct kalloc_type_view *typeview);
+        ~KallocTypeView();
 
-			~KallocTypeView();
+        struct kalloc_type_view* getKallocTypeView() {
+            return typeview;
+        }
 
-			struct kalloc_type_view* getKallocTypeView() { return typeview; }
+        Zone* getZone() {
+            return zone;
+        }
 
-			Zone* getZone() { return zone; }
+        KallocHeap* getKallocHeap() {
+            return kheap;
+        }
 
-			KallocHeap* getKallocHeap() { return kheap; }
+        Segment* getSegment() {
+            return segment;
+        }
 
-			Segment* getSegment() { return segment; }
+        Section* getSection() {
+            return section;
+        }
 
-			Section* getSection() { return section; }
+        zone_stats_t getKallocTypeViewStats();
 
-			zone_stats_t getKallocTypeViewStats();
+        Offset getSegmentOffset() {
+            return offset;
+        }
 
-			Offset getSegmentOffset() { return offset; }
+        char* getSignature() {
+            return kt_signature;
+        }
 
-			char* getSignature() { return kt_signature; }
+        char* getSiteName() {
+            return kt_site;
+        }
 
-			char * getSiteName() { return kt_site; }
+        void parseTypeView();
 
-			void parseTypeView();
+    private:
+        Kernel* kernel;
 
-		private:
-			Kernel *kernel;
+        Zone* zone;
 
-			Zone* zone;
+        KallocHeap* kheap;
 
-			KallocHeap *kheap;
+        Segment* segment;
+        Section* section;
 
-			Segment *segment;
-			Section *section;
+        Offset offset;
 
-			Offset offset;
+        struct kalloc_type_view* typeview;
 
-			struct kalloc_type_view *typeview;
+        char* kt_signature;
 
-			char *kt_signature;
+        char* kt_site;
+    }
 
-			char *kt_site;
-	}
+    namespace ZoneAllocatorTest {
+        Zone* findLargestZone();
 
-	namespace ZoneAllocatorTest
-	{
-		Zone* findLargestZone();
+        Zone* createZone();
 
-		Zone* createZone();
+        void destroyZone(Zone * zone);
 
-		void destroyZone(Zone* zone);
+        void triggerGarbageCollection();
+        void triggerGarbageCollectionForZone(Zone * zone);
 
-		void triggerGarbageCollection();
-		void triggerGarbageCollectionForZone(Zone *zone);
+        void expandZones();
+        void expandZone(Zone * zone);
 
-		void expandZones();
-		void expandZone(Zone *zone);
-
-		void sprayMemory();
-	}
-};
+        void sprayMemory();
+    }
+}; // namespace Heap
 
 #endif

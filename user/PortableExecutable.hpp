@@ -18,9 +18,7 @@
 
 #include "BinaryFormat.hpp"
 
-class PE : public Binary::BinaryFormat
-{
-	public:
-
-	private:
+class PE : public Binary::BinaryFormat {
+public:
+private:
 };

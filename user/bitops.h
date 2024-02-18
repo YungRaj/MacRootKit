@@ -12,33 +12,31 @@
 #ifndef BITOPS_H
 #define BITOPS_H
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#define BITS_PER_BYTE           CHAR_BIT
-#define BITS_PER_LONG           (sizeof (unsigned long) * BITS_PER_BYTE)
+#define BITS_PER_BYTE CHAR_BIT
+#define BITS_PER_LONG (sizeof(unsigned long) * BITS_PER_BYTE)
 
-#define BIT(nr)                 (1UL << (nr))
-#define BIT_ULL(nr)             (1ULL << (nr))
-#define BIT_MASK(nr)            (1UL << ((nr) % BITS_PER_LONG))
-#define BIT_WORD(nr)            ((nr) / BITS_PER_LONG)
-#define BITS_TO_LONGS(nr)       DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
+#define BIT(nr) (1UL << (nr))
+#define BIT_ULL(nr) (1ULL << (nr))
+#define BIT_MASK(nr) (1UL << ((nr) % BITS_PER_LONG))
+#define BIT_WORD(nr) ((nr) / BITS_PER_LONG)
+#define BITS_TO_LONGS(nr) DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
 
-#define MAKE_64BIT_MASK(shift, length) \
-    (((~0ULL) >> (64 - (length))) << (shift))
+#define MAKE_64BIT_MASK(shift, length) (((~0ULL) >> (64 - (length))) << (shift))
 
 /**
  * set_bit - Set a bit in memory
  * @nr: the bit to set
  * @addr: the address to start counting from
  */
-static inline void set_bit(long nr, unsigned long *addr)
-{
+static inline void set_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
 
-    *p  |= mask;
+    *p |= mask;
 }
 
 /**
@@ -46,10 +44,9 @@ static inline void set_bit(long nr, unsigned long *addr)
  * @nr: Bit to clear
  * @addr: Address to start counting from
  */
-static inline void clear_bit(long nr, unsigned long *addr)
-{
+static inline void clear_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
 
     *p &= ~mask;
 }
@@ -59,10 +56,9 @@ static inline void clear_bit(long nr, unsigned long *addr)
  * @nr: Bit to change
  * @addr: Address to start counting from
  */
-static inline void change_bit(long nr, unsigned long *addr)
-{
+static inline void change_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
 
     *p ^= mask;
 }
@@ -72,10 +68,9 @@ static inline void change_bit(long nr, unsigned long *addr)
  * @nr: Bit to set
  * @addr: Address to count from
  */
-static inline int test_and_set_bit(long nr, unsigned long *addr)
-{
+static inline int test_and_set_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
     unsigned long old = *p;
 
     *p = old | mask;
@@ -87,10 +82,9 @@ static inline int test_and_set_bit(long nr, unsigned long *addr)
  * @nr: Bit to clear
  * @addr: Address to count from
  */
-static inline int test_and_clear_bit(long nr, unsigned long *addr)
-{
+static inline int test_and_clear_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
     unsigned long old = *p;
 
     *p = old & ~mask;
@@ -102,10 +96,9 @@ static inline int test_and_clear_bit(long nr, unsigned long *addr)
  * @nr: Bit to change
  * @addr: Address to count from
  */
-static inline int test_and_change_bit(long nr, unsigned long *addr)
-{
+static inline int test_and_change_bit(long nr, unsigned long* addr) {
     unsigned long mask = BIT_MASK(nr);
-    unsigned long *p = addr + BIT_WORD(nr);
+    unsigned long* p = addr + BIT_WORD(nr);
     unsigned long old = *p;
 
     *p = old ^ mask;
@@ -117,9 +110,8 @@ static inline int test_and_change_bit(long nr, unsigned long *addr)
  * @nr: bit number to test
  * @addr: Address to start counting from
  */
-static inline int test_bit(long nr, const unsigned long *addr)
-{
-    return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+static inline int test_bit(long nr, const unsigned long* addr) {
+    return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG - 1)));
 }
 
 /**
@@ -127,8 +119,7 @@ static inline int test_bit(long nr, const unsigned long *addr)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint8_t rol8(uint8_t word, unsigned int shift)
-{
+static inline uint8_t rol8(uint8_t word, unsigned int shift) {
     return (word << (shift & 7)) | (word >> (-shift & 7));
 }
 
@@ -137,8 +128,7 @@ static inline uint8_t rol8(uint8_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint8_t ror8(uint8_t word, unsigned int shift)
-{
+static inline uint8_t ror8(uint8_t word, unsigned int shift) {
     return (word >> (shift & 7)) | (word << (-shift & 7));
 }
 
@@ -147,8 +137,7 @@ static inline uint8_t ror8(uint8_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint16_t rol16(uint16_t word, unsigned int shift)
-{
+static inline uint16_t rol16(uint16_t word, unsigned int shift) {
     return (word << (shift & 15)) | (word >> (-shift & 15));
 }
 
@@ -157,8 +146,7 @@ static inline uint16_t rol16(uint16_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint16_t ror16(uint16_t word, unsigned int shift)
-{
+static inline uint16_t ror16(uint16_t word, unsigned int shift) {
     return (word >> (shift & 15)) | (word << (-shift & 15));
 }
 
@@ -167,8 +155,7 @@ static inline uint16_t ror16(uint16_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint32_t rol32(uint32_t word, unsigned int shift)
-{
+static inline uint32_t rol32(uint32_t word, unsigned int shift) {
     return (word << (shift & 31)) | (word >> (-shift & 31));
 }
 
@@ -177,8 +164,7 @@ static inline uint32_t rol32(uint32_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint32_t ror32(uint32_t word, unsigned int shift)
-{
+static inline uint32_t ror32(uint32_t word, unsigned int shift) {
     return (word >> (shift & 31)) | (word << (-shift & 31));
 }
 
@@ -187,8 +173,7 @@ static inline uint32_t ror32(uint32_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint64_t rol64(uint64_t word, unsigned int shift)
-{
+static inline uint64_t rol64(uint64_t word, unsigned int shift) {
     return (word << (shift & 63)) | (word >> (-shift & 63));
 }
 
@@ -197,8 +182,7 @@ static inline uint64_t rol64(uint64_t word, unsigned int shift)
  * @word: value to rotate
  * @shift: bits to roll
  */
-static inline uint64_t ror64(uint64_t word, unsigned int shift)
-{
+static inline uint64_t ror64(uint64_t word, unsigned int shift) {
     return (word >> (shift & 63)) | (word << (-shift & 63));
 }
 
@@ -206,8 +190,7 @@ static inline uint64_t ror64(uint64_t word, unsigned int shift)
  * hswap32 - swap 16-bit halfwords within a 32-bit value
  * @h: value to swap
  */
-static inline uint32_t hswap32(uint32_t h)
-{
+static inline uint32_t hswap32(uint32_t h) {
     return rol32(h, 16);
 }
 
@@ -215,8 +198,7 @@ static inline uint32_t hswap32(uint32_t h)
  * hswap64 - swap 16-bit halfwords within a 64-bit value
  * @h: value to swap
  */
-static inline uint64_t hswap64(uint64_t h)
-{
+static inline uint64_t hswap64(uint64_t h) {
     uint64_t m = 0x0000ffff0000ffffull;
     h = rol64(h, 32);
     return ((h & m) << 16) | ((h >> 16) & m);
@@ -226,8 +208,7 @@ static inline uint64_t hswap64(uint64_t h)
  * wswap64 - swap 32-bit words within a 64-bit value
  * @h: value to swap
  */
-static inline uint64_t wswap64(uint64_t h)
-{
+static inline uint64_t wswap64(uint64_t h) {
     return rol64(h, 32);
 }
 
@@ -244,8 +225,7 @@ static inline uint64_t wswap64(uint64_t h)
  *
  * Returns: the value of the bit field extracted from the input value.
  */
-static inline uint32_t extract32(uint32_t value, int start, int length)
-{
+static inline uint32_t extract32(uint32_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 32 - start);
     return (value >> start) & (~0U >> (32 - length));
 }
@@ -263,8 +243,7 @@ static inline uint32_t extract32(uint32_t value, int start, int length)
  *
  * Returns: the value of the bit field extracted from the input value.
  */
-static inline uint8_t extract8(uint8_t value, int start, int length)
-{
+static inline uint8_t extract8(uint8_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 8 - start);
     return extract32(value, start, length);
 }
@@ -282,8 +261,7 @@ static inline uint8_t extract8(uint8_t value, int start, int length)
  *
  * Returns: the value of the bit field extracted from the input value.
  */
-static inline uint16_t extract16(uint16_t value, int start, int length)
-{
+static inline uint16_t extract16(uint16_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 16 - start);
     return extract32(value, start, length);
 }
@@ -301,8 +279,7 @@ static inline uint16_t extract16(uint16_t value, int start, int length)
  *
  * Returns: the value of the bit field extracted from the input value.
  */
-static inline uint64_t extract64(uint64_t value, int start, int length)
-{
+static inline uint64_t extract64(uint64_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 64 - start);
     return (value >> start) & (~0ULL >> (64 - length));
 }
@@ -323,8 +300,7 @@ static inline uint64_t extract64(uint64_t value, int start, int length)
  * Returns: the sign extended value of the bit field extracted from the
  * input value.
  */
-static inline int32_t sextract32(uint32_t value, int start, int length)
-{
+static inline int32_t sextract32(uint32_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 32 - start);
     /* Note that this implementation relies on right shift of signed
      * integers being an arithmetic shift.
@@ -348,8 +324,7 @@ static inline int32_t sextract32(uint32_t value, int start, int length)
  * Returns: the sign extended value of the bit field extracted from the
  * input value.
  */
-static inline int64_t sextract64(uint64_t value, int start, int length)
-{
+static inline int64_t sextract64(uint64_t value, int start, int length) {
     assert(start >= 0 && length > 0 && length <= 64 - start);
     /* Note that this implementation relies on right shift of signed
      * integers being an arithmetic shift.
@@ -374,9 +349,7 @@ static inline int64_t sextract64(uint64_t value, int start, int length)
  *
  * Returns: the modified @value.
  */
-static inline uint32_t deposit32(uint32_t value, int start, int length,
-                                 uint32_t fieldval)
-{
+static inline uint32_t deposit32(uint32_t value, int start, int length, uint32_t fieldval) {
     uint32_t mask;
     assert(start >= 0 && length > 0 && length <= 32 - start);
     mask = (~0U >> (32 - length)) << start;
@@ -400,9 +373,7 @@ static inline uint32_t deposit32(uint32_t value, int start, int length,
  *
  * Returns: the modified @value.
  */
-static inline uint64_t deposit64(uint64_t value, int start, int length,
-                                 uint64_t fieldval)
-{
+static inline uint64_t deposit64(uint64_t value, int start, int length, uint64_t fieldval) {
     uint64_t mask;
     assert(start >= 0 && length > 0 && length <= 64 - start);
     mask = (~0ULL >> (64 - length)) << start;
@@ -426,8 +397,7 @@ static inline uint64_t deposit64(uint64_t value, int start, int length,
  *
  * Returns: the shuffled bits.
  */
-static inline uint32_t half_shuffle32(uint32_t x)
-{
+static inline uint32_t half_shuffle32(uint32_t x) {
     /* This algorithm is from _Hacker's Delight_ section 7-2 "Shuffling Bits".
      * It ignores any bits set in the top half of the input.
      */
@@ -455,8 +425,7 @@ static inline uint32_t half_shuffle32(uint32_t x)
  *
  * Returns: the shuffled bits.
  */
-static inline uint64_t half_shuffle64(uint64_t x)
-{
+static inline uint64_t half_shuffle64(uint64_t x) {
     /* This algorithm is from _Hacker's Delight_ section 7-2 "Shuffling Bits".
      * It ignores any bits set in the top half of the input.
      */
@@ -485,8 +454,7 @@ static inline uint64_t half_shuffle64(uint64_t x)
  *
  * Returns: the unshuffled bits.
  */
-static inline uint32_t half_unshuffle32(uint32_t x)
-{
+static inline uint32_t half_unshuffle32(uint32_t x) {
     /* This algorithm is from _Hacker's Delight_ section 7-2 "Shuffling Bits".
      * where it is called an inverse half shuffle.
      */
@@ -515,8 +483,7 @@ static inline uint32_t half_unshuffle32(uint32_t x)
  *
  * Returns: the unshuffled bits.
  */
-static inline uint64_t half_unshuffle64(uint64_t x)
-{
+static inline uint64_t half_unshuffle64(uint64_t x) {
     /* This algorithm is from _Hacker's Delight_ section 7-2 "Shuffling Bits".
      * where it is called an inverse half shuffle.
      */

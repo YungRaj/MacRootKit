@@ -19,42 +19,22 @@
 #include "Hook.hpp"
 #include "Payload.hpp"
 
-UserPatcher::~UserPatcher()
-{
+UserPatcher::~UserPatcher() {}
 
+void UserPatcher::findAndReplace(void* data, Size dataSize, const void* find, Size findSize,
+                                 const void* replace, Size replaceSize) {}
+
+void UserPatcher::routeFunction(Hook* hook) {}
+
+void UserPatcher::onKextLoad(void* kext, kmod_info_t* kmod) {}
+
+void UserPatcher::onExec(char* name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task,
+                         xnu::Mach::VmAddress proc) {}
+
+xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload* payload) {
+    return 0;
 }
 
-void UserPatcher::findAndReplace(void *data, 
-					Size dataSize,
-					const void *find,
-					Size findSize,
-					const void* replace,
-					Size replaceSize)
-{
-
-}
-
-void UserPatcher::routeFunction(Hook *hook)
-{
-
-}
-
-void UserPatcher::onKextLoad(void *kext, kmod_info_t *kmod)
-{
-
-}
-
-void UserPatcher::onExec(char *name, int pid, xnu::Mach::Port port, xnu::Mach::VmAddress task, xnu::Mach::VmAddress proc)
-{
-
-}
-
-xnu::Mach::VmAddress injectPayload(xnu::Mach::VmAddress address, Payload *payload)
-{
-	return 0;
-}
-
-xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload *payload)
-{
-	return 0;
+xnu::Mach::VmAddress injectSegment(xnu::Mach::VmAddress address, Payload* payload) {
+    return 0;
 }

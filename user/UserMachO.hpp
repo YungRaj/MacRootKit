@@ -28,162 +28,190 @@
 
 #include "Dyld.hpp"
 
-extern "C"
-{
-	#include <mach-o.h>
+extern "C" {
+#include <mach-o.h>
 }
 
 class Segment;
 class Section;
 
-namespace dyld
-{
-	class Dyld;
-	class Library;
+namespace dyld {
+    class Dyld;
+    class Library;
+}; // namespace dyld
+
+namespace ObjectiveC {
+    class ObjCData;
 };
 
-namespace ObjectiveC
-{
-	class ObjCData;
+namespace xnu {
+    class Task;
 };
 
-namespace xnu
-{
-	class Task;
-};
+namespace mrk {
+    class CodeSignature {
+    public:
+        explicit CodeSignature(UserMachO* macho, struct linkedit_data_command* cmd)
+            : macho(macho), cmd(cmd) {
+            this->parseCodeSignature();
+        }
 
-namespace mrk
-{
-	class CodeSignature
-	{
-		public:
-			explicit CodeSignature(UserMachO *macho, struct linkedit_data_command *cmd) : macho(macho), cmd(cmd) { this->parseCodeSignature(); }
+        static CodeSignature* codeSignatureWithLinkedit(UserMachO* macho,
+                                                        struct linkedit_data_command* cmd);
 
-			static CodeSignature* codeSignatureWithLinkedit(UserMachO *macho, struct linkedit_data_command *cmd);
+        UserMachO* getMachO() {
+            return macho;
+        }
 
-			UserMachO* getMachO() { return macho; }
+        struct linkedit_data_command* getLoadCommand() {
+            return cmd;
+        }
 
-			struct linkedit_data_command* getLoadCommand() { return cmd; }
+        SuperBlob* getSuperBlob() {
+            return superBlob;
+        }
 
-			SuperBlob* getSuperBlob() { return superBlob; }
+        code_directory_t getCodeDirectory() {
+            return codeDirectory;
+        }
 
-			code_directory_t getCodeDirectory() { return codeDirectory; }
+        char* getEntitlements() {
+            return entitlements;
+        }
 
-			char* getEntitlements() { return entitlements; }
+        bool verifyCodeSlot(UInt8* blob, Size size, bool sha256, char* signature, Size sigsize);
 
-			bool verifyCodeSlot(UInt8 *blob, Size size, bool sha256, char *signature, Size sigsize);
+        bool compareHash(UInt8* hash1, UInt8* hash2, Size hashSize);
 
-			bool compareHash(UInt8 *hash1, UInt8 *hash2, Size hashSize);
+        UInt8* computeHash(bool sha256, UInt8* blob, Size size);
 
-			UInt8* computeHash(bool sha256, UInt8 *blob, Size size);
+        bool parseCodeSignature();
 
-			bool parseCodeSignature();
+    private:
+        UserMachO* macho;
 
-		private:
-			UserMachO *macho;
+        struct linkedit_data_command* cmd;
 
-			struct linkedit_data_command *cmd;
+        SuperBlob* superBlob;
 
-			SuperBlob *superBlob;
+        code_directory_t codeDirectory;
 
-			code_directory_t codeDirectory;
+        char* entitlements;
+    };
 
-			char *entitlements;
-	};
+    class UserMachO : public MachO {
+    public:
+        explicit UserMachO() : task(NULL), file_path(NULL) {}
+        explicit UserMachO(const char* path);
 
-	class UserMachO : public MachO
-	{
-		public:
-			explicit UserMachO() : task(NULL), file_path(NULL) { }
-			explicit UserMachO(const char *path);
+        ~UserMachO() {}
 
-			~UserMachO() { }
+        virtual void withTask(xnu::Task* task);
+        virtual void withFilePath(const char* path);
 
-			virtual void withTask(xnu::Task *task);
-			virtual void withFilePath(const char *path);
+        virtual void withBuffer(char* buffer);
+        virtual void withBuffer(char* buffer, Offset slide);
+        virtual void withBuffer(char* buffer, UInt64 size);
 
-			virtual void withBuffer(char *buffer);
-			virtual void withBuffer(char *buffer, Offset slide);
-			virtual void withBuffer(char *buffer, UInt64 size);
-			
-			virtual void withBuffer(xnu::Mach::VmAddress base, char *buffer, Offset slide);
-			virtual void withBuffer(xnu::Mach::VmAddress base, char *buffer, Offset slide, bool is_dyld_cache);
-			
-			virtual void withBuffer(mrk::UserMachO *libobjc, xnu::Mach::VmAddress base, char *buffer, Offset slide);
+        virtual void withBuffer(xnu::Mach::VmAddress base, char* buffer, Offset slide);
+        virtual void withBuffer(xnu::Mach::VmAddress base, char* buffer, Offset slide,
+                                bool is_dyld_cache);
 
-			char* getFilePath() { return this->dyld ? this->dyld->getMainImagePath() : this->file_path; }
+        virtual void withBuffer(mrk::UserMachO* libobjc, xnu::Mach::VmAddress base, char* buffer,
+                                Offset slide);
 
-			bool isDyldCache() { return is_dyldCache; }
+        char* getFilePath() {
+            return this->dyld ? this->dyld->getMainImagePath() : this->file_path;
+        }
 
-			void setIsDyldCache(bool isDyldCache) { this->is_dyldCache = isDyldCache; }
+        bool isDyldCache() {
+            return is_dyldCache;
+        }
 
-			UserMachO* getObjectiveCLibrary() { return libobjc; }
+        void setIsDyldCache(bool isDyldCache) {
+            this->is_dyldCache = isDyldCache;
+        }
 
-			ObjectiveC::ObjCData* getObjCMetadata() { return objc; }
+        UserMachO* getObjectiveCLibrary() {
+            return libobjc;
+        }
 
-			bool isObjectiveCLibrary() { return is_libobjc; }
+        ObjectiveC::ObjCData* getObjCMetadata() {
+            return objc;
+        }
 
-			void setIsObjectiveCLibrary(bool is_libobjc) { this->is_libobjc = is_libobjc; }
+        bool isObjectiveCLibrary() {
+            return is_libobjc;
+        }
 
-			void setObjectiveCLibrary(UserMachO* libobjc) { this->libobjc = libobjc; }
+        void setIsObjectiveCLibrary(bool is_libobjc) {
+            this->is_libobjc = is_libobjc;
+        }
 
-			static MachO* taskAt(xnu::Mach::Port task);
-			static MachO* libraryLoadedAt(xnu::Mach::Port task, char *library);
+        void setObjectiveCLibrary(UserMachO* libobjc) {
+            this->libobjc = libobjc;
+        }
 
-			static UInt64 untagPacPointer(xnu::Mach::VmAddress base, enum dyld_fixup_t fixupKind, UInt64 ptr, bool *bind, bool *auth, UInt16 *pac, Size *skip);
+        static MachO* taskAt(xnu::Mach::Port task);
+        static MachO* libraryLoadedAt(xnu::Mach::Port task, char* library);
 
-			bool isPointerInPacFixupChain(xnu::Mach::VmAddress ptr);
+        static UInt64 untagPacPointer(xnu::Mach::VmAddress base, enum dyld_fixup_t fixupKind,
+                                      UInt64 ptr, bool* bind, bool* auth, UInt16* pac, Size* skip);
 
-			xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
+        bool isPointerInPacFixupChain(xnu::Mach::VmAddress ptr);
 
-			virtual void parseMachO() override;
+        xnu::Mach::VmAddress getBufferAddress(xnu::Mach::VmAddress address);
 
-			virtual void parseHeader() override;
+        virtual void parseMachO() override;
 
-			virtual void parseFatHeader() override;
+        virtual void parseHeader() override;
 
-			virtual void parseSymbolTable(struct nlist_64 *symtab, UInt32 nsyms, char *strtab, Size strsize) override;
-			
-			virtual void parseLinkedit() override;
+        virtual void parseFatHeader() override;
 
-			virtual bool parseLoadCommands() override;
+        virtual void parseSymbolTable(struct nlist_64* symtab, UInt32 nsyms, char* strtab,
+                                      Size strsize) override;
 
-			void parseCodeSignature(struct linkedit_data_command *cmd) { codeSignature = CodeSignature::codeSignatureWithLinkedit(this, cmd); }
-			
-			void parseObjC()
-			{
-				this->objc = ObjectiveC::parseObjectiveC(this);
-			}
+        virtual void parseLinkedit() override;
 
-			void parseSwift()
-			{
-				this->swift = Swift::parseSwift(this);
-			}
+        virtual bool parseLoadCommands() override;
 
-			UInt8* operator[](UInt64 index) { return this->getOffset(index); }
+        void parseCodeSignature(struct linkedit_data_command* cmd) {
+            codeSignature = CodeSignature::codeSignatureWithLinkedit(this, cmd);
+        }
 
-		private:
-			xnu::Task *task;
+        void parseObjC() {
+            this->objc = ObjectiveC::parseObjectiveC(this);
+        }
 
-			mrk::UserMachO *libobjc;
+        void parseSwift() {
+            this->swift = Swift::parseSwift(this);
+        }
 
-			dyld::Dyld *dyld;
+        UInt8* operator[](UInt64 index) {
+            return this->getOffset(index);
+        }
 
-			xnu::Mach::VmAddress dyld_base;
-			xnu::Mach::VmAddress dyld_shared_cache;
+    private:
+        xnu::Task* task;
 
-			mrk::CodeSignature *codeSignature;
+        mrk::UserMachO* libobjc;
 
-			ObjectiveC::ObjCData *objc;
-			Swift::SwiftMetadata *swift;
+        dyld::Dyld* dyld;
 
-			char *file_path;
+        xnu::Mach::VmAddress dyld_base;
+        xnu::Mach::VmAddress dyld_shared_cache;
 
-			bool is_dyldCache;
-			bool is_libobjc;
+        mrk::CodeSignature* codeSignature;
 
-			UInt64 readUleb128(UInt8 *start, UInt8 *end, UInt32 *idx);
-			Int64  readSleb128(UInt8 *start, UInt8 *end, UInt32 *idx);
-	};
-}
+        ObjectiveC::ObjCData* objc;
+        Swift::SwiftMetadata* swift;
 
+        char* file_path;
+
+        bool is_dyldCache;
+        bool is_libobjc;
+
+        UInt64 readUleb128(UInt8* start, UInt8* end, UInt32* idx);
+        Int64 readSleb128(UInt8* start, UInt8* end, UInt32* idx);
+    };
+} // namespace mrk

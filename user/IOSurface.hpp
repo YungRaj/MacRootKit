@@ -49,9 +49,10 @@ void IOSurface_deinit(void);
  * 	the page size. OSData on the other hand will use kmem_alloc() for large allocations.
  * 	Consequently, the last byte of data will be zeroed out to create a null terminator.
  */
-bool IOSurface_spray_with_gc(uint32_t array_count, uint32_t array_length,
-		void *data, uint32_t data_size,
-		void (^callback)(uint32_t array_id, uint32_t data_id, void *data, size_t size));
+bool IOSurface_spray_with_gc(uint32_t array_count, uint32_t array_length, void* data,
+                             uint32_t data_size,
+                             void (^callback)(uint32_t array_id, uint32_t data_id, void* data,
+                                              size_t size));
 
 /*
  * IOSurface_spray_size_with_gc
@@ -61,9 +62,10 @@ bool IOSurface_spray_with_gc(uint32_t array_count, uint32_t array_length,
  *
  * 	This function computes the number of elements per array automatically.
  */
-bool IOSurface_spray_size_with_gc(uint32_t array_count, size_t spray_size,
-		void *data, uint32_t data_size,
-		void (^callback)(uint32_t array_id, uint32_t data_id, void *data, size_t size));
+bool IOSurface_spray_size_with_gc(uint32_t array_count, size_t spray_size, void* data,
+                                  uint32_t data_size,
+                                  void (^callback)(uint32_t array_id, uint32_t data_id, void* data,
+                                                   size_t size));
 
 /*
  * IOSurface_spray_read_array
@@ -72,7 +74,7 @@ bool IOSurface_spray_size_with_gc(uint32_t array_count, size_t spray_size,
  * 	Read back the data elements in a particular array in a particular IOSurface spray.
  */
 bool IOSurface_spray_read_array(uint32_t array_id, uint32_t array_length, uint32_t data_size,
-		void (^callback)(uint32_t data_id, void *data, size_t size));
+                                void (^callback)(uint32_t data_id, void* data, size_t size));
 
 /*
  * IOSurface_spray_read_all_data
@@ -81,7 +83,8 @@ bool IOSurface_spray_read_array(uint32_t array_id, uint32_t array_length, uint32
  * 	Read back all the data elements in an IOSurface spray.
  */
 bool IOSurface_spray_read_all_data(uint32_t array_count, uint32_t array_length, uint32_t data_size,
-		void (^callback)(uint32_t array_id, uint32_t data_id, void *data, size_t size));
+                                   void (^callback)(uint32_t array_id, uint32_t data_id, void* data,
+                                                    size_t size));
 
 /*
  * IOSurface_spray_remove_array

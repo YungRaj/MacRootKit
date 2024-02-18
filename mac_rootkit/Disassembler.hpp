@@ -22,80 +22,82 @@
 
 #include "Arch.hpp"
 
-namespace xnu
-{
-	class Kernel;
-	class Task;
-}
+namespace xnu {
+    class Kernel;
+    class Task;
+} // namespace xnu
 
 using namespace Arch;
 
-struct DisasmSig
-{
-	union
-	{
-		x86_insn insn_x86_64;
+struct DisasmSig {
+    union {
+        x86_insn insn_x86_64;
 
-		arm64_insn insn_arm64;
-	} insn;
+        arm64_insn insn_arm64;
+    } insn;
 
-	bool sub;
-	bool addr;
+    bool sub;
+    bool addr;
 
-	static DisasmSig* create()
-	{
-		return new DisasmSig;
-	}
+    static DisasmSig* create() {
+        return new DisasmSig;
+    }
 
-	static void deleter(DisasmSig *sig)
-	{
-		delete sig;
-	}
+    static void deleter(DisasmSig* sig) {
+        delete sig;
+    }
 };
 
-enum DisassemblerType
-{
-	DisassemblerType_x86_64,
-	DisassemblerType_arm64,
-	DisassemblerType_Unknown,
-	DisassemblerType_None,
+enum DisassemblerType {
+    DisassemblerType_x86_64,
+    DisassemblerType_arm64,
+    DisassemblerType_Unknown,
+    DisassemblerType_None,
 };
 
-class Disassembler
-{
-	public:
-		Disassembler(xnu::Task *task);
+class Disassembler {
+public:
+    Disassembler(xnu::Task* task);
 
-		~Disassembler();
+    ~Disassembler();
 
-		enum Architectures getArchitecture() { return architecture; }
+    enum Architectures getArchitecture() {
+        return architecture;
+    }
 
-		enum DisassemblerType getDisassemblerType() { return disassembler; }
+    enum DisassemblerType getDisassemblerType() {
+        return disassembler;
+    }
 
-		void initDisassembler();
+    void initDisassembler();
 
-		void deinitDisassembler();
+    void deinitDisassembler();
 
-		Size disassemble(xnu::Mach::VmAddress address, Size size, cs_insn **result);
+    Size disassemble(xnu::Mach::VmAddress address, Size size, cs_insn** result);
 
-		Size quickInstructionSize(xnu::Mach::VmAddress address, Size min);
+    Size quickInstructionSize(xnu::Mach::VmAddress address, Size min);
 
-		Size instructionSize(xnu::Mach::VmAddress address, Size min);
+    Size instructionSize(xnu::Mach::VmAddress address, Size min);
 
-		xnu::Mach::VmAddress disassembleNthCall(xnu::Mach::VmAddress address, Size num, Size lookup_size);
+    xnu::Mach::VmAddress disassembleNthCall(xnu::Mach::VmAddress address, Size num,
+                                            Size lookup_size);
 
-		xnu::Mach::VmAddress disassembleNthJmp(xnu::Mach::VmAddress address, Size num, Size lookup_size);
+    xnu::Mach::VmAddress disassembleNthJmp(xnu::Mach::VmAddress address, Size num,
+                                           Size lookup_size);
 
-		xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address, UInt32 insn, Size num, Size lookup_size);
+    xnu::Mach::VmAddress disassembleNthInstruction(xnu::Mach::VmAddress address, UInt32 insn,
+                                                   Size num, Size lookup_size);
 
-		xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address, std::vector<struct DisasmSig*> *signature, Size num, Size lookup_size);
+    xnu::Mach::VmAddress disassembleSignature(xnu::Mach::VmAddress address,
+                                              std::vector<struct DisasmSig*>* signature, Size num,
+                                              Size lookup_size);
 
-	private:
-		enum Architectures architecture;
+private:
+    enum Architectures architecture;
 
-		enum DisassemblerType disassembler;
+    enum DisassemblerType disassembler;
 
-		xnu::Task *task;
+    xnu::Task* task;
 
-		enum DisassemblerType getDisassemblerFromArch();
+    enum DisassemblerType getDisassemblerFromArch();
 };

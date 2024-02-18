@@ -22,29 +22,27 @@
 
 class MachO;
 
-namespace xnu
-{
-	class Kernel;
+namespace xnu {
+    class Kernel;
 
-	class KextMachO : public MachO 
-	{
-		public:
-			KextMachO(uintptr_t base);
-			KextMachO(uintptr_t base, Offset slide);
-			
-			KextMachO(const char *path, Offset slide);
-			KextMachO(const char *path);
+    class KextMachO : public MachO {
+    public:
+        KextMachO(uintptr_t base);
+        KextMachO(uintptr_t base, Offset slide);
 
-			~KextMachO();
+        KextMachO(const char* path, Offset slide);
+        KextMachO(const char* path);
 
-			virtual void parseLinkedit();
+        ~KextMachO();
 
-			virtual bool parseLoadCommands();
+        virtual void parseLinkedit();
 
-			virtual void parseMachO();
+        virtual bool parseLoadCommands();
 
-		private:
-			xnu::Kernel *kernel;
-	};
+        virtual void parseMachO();
 
-};
+    private:
+        xnu::Kernel* kernel;
+    };
+
+}; // namespace xnu

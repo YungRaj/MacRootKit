@@ -18,58 +18,65 @@
 
 #include <Types.h>
 
-extern "C"
-{
-	#include <mach-o.h>
-	
-	#include <mach/mach_types.h>
-	#include <sys/types.h>
+extern "C" {
+#include <mach-o.h>
 
-	#include <string.h>
+#include <mach/mach_types.h>
+#include <sys/types.h>
+
+#include <string.h>
 }
 
 #include "Log.hpp"
 
-class Section
-{
-	public:
-		Section(struct section_64 *section)
-			: section(section),
-			  address(section->addr),
-			  offset(section->offset),
-			  size(section->size)
-		{
-			name = new char[strlen(section->sectname) + 1];
+class Section {
+public:
+    Section(struct section_64* section)
+        : section(section), address(section->addr), offset(section->offset), size(section->size) {
+        name = new char[strlen(section->sectname) + 1];
 
-			strlcpy(this->name, section->sectname, strlen(section->sectname) + 1);
-		}
+        strlcpy(this->name, section->sectname, strlen(section->sectname) + 1);
+    }
 
-		~Section()
-		{
-			delete name;
-		}
+    ~Section() {
+        delete name;
+    }
 
-		struct section_64* getSection() { return section; }
+    struct section_64* getSection() {
+        return section;
+    }
 
-		char* getSectionName() { return name; }
+    char* getSectionName() {
+        return name;
+    }
 
-		xnu::Mach::VmAddress getAddress() { return address; }
+    xnu::Mach::VmAddress getAddress() {
+        return address;
+    }
 
-		Offset getOffset() { return offset; }
-		Offset getOffsetEnd() { return offset + size; }
+    Offset getOffset() {
+        return offset;
+    }
+    Offset getOffsetEnd() {
+        return offset + size;
+    }
 
-		Size getSize() { return size; }
+    Size getSize() {
+        return size;
+    }
 
-		struct section_64* getSectionHeader() { return section; }
+    struct section_64* getSectionHeader() {
+        return section;
+    }
 
-	private:
-		struct section_64 *section;
+private:
+    struct section_64* section;
 
-		char *name;
+    char* name;
 
-		xnu::Mach::VmAddress address;
+    xnu::Mach::VmAddress address;
 
-		Offset offset;
+    Offset offset;
 
-		Size size;
+    Size size;
 };

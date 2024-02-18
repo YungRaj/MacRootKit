@@ -18,9 +18,8 @@
 
 #include "APIUtil.hpp"
 
-extern "C"
-{
-	#include "API.h"
+extern "C" {
+#include "API.h"
 }
 
 #ifdef __KERNEL__

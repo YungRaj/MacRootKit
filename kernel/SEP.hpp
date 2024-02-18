@@ -22,26 +22,24 @@
 
 #include "MacRootKit.hpp"
 
-namespace mrk
-{
-	class MacRootKit;
+namespace mrk {
+    class MacRootKit;
 };
 
 extern mrk::MacRootKit* mac_rootkit_get_rootkit();
 
-namespace SEP
-{
-	static mrk::Plugin *plugin;
+namespace SEP {
+    static mrk::Plugin* plugin;
 
-	static Kext *appleA7IOP;
-	static Kext *appleSEPManager;
-	static Kext *appleKeyStore;
-	static Kext *appleCredentialManager;
-	
-	void initialize();
+    static Kext* appleA7IOP;
+    static Kext* appleSEPManager;
+    static Kext* appleKeyStore;
+    static Kext* appleCredentialManager;
 
-	void installAppleA7IOPHooks();
-	void installAppleSEPManagerHooks();
-	void installAppleKeyStoreHooks();
-	void installAppleCredentialManagerHooks();
-};
+    void initialize();
+
+    void installAppleA7IOPHooks();
+    void installAppleSEPManagerHooks();
+    void installAppleKeyStoreHooks();
+    void installAppleCredentialManagerHooks();
+}; // namespace SEP

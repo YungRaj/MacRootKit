@@ -20,32 +20,26 @@
 
 #include <unicorn/unicorn.h>
 
-namespace Emulation
-{
-	class Unicorn
-	{
-		public:
-			explicit Unicorn(char *code, Size code_size, UInt64 address);
+namespace Emulation {
+    class Unicorn {
+    public:
+        explicit Unicorn(char* code, Size code_size, UInt64 address);
 
-		private:
-			uc_engine *uc;
-	};
+    private:
+        uc_engine* uc;
+    };
 
+    class Panda {
+    public:
+    private:
+    };
 
-	class Panda
-	{
-		public:
+    template <typename Emu>
+    class Emulator {
+    public:
+        explicit Emulator();
 
-		private:
-	};
-
-	template<typename Emu>
-	class Emulator
-	{
-		public:
-			explicit Emulator();
-
-		private:
-			Emu *emu;
-	};
-};
+    private:
+        Emu* emu;
+    };
+}; // namespace Emulation

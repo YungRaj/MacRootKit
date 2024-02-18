@@ -16,9 +16,7 @@
 
 #pragma once
 
-class Img4
-{
-	public:
-	private:
-		
+class Img4 {
+public:
+private:
 };

@@ -31,240 +31,260 @@ class Symbol;
 
 class Architecture;
 
-namespace Fuzzer
-{
-	struct FuzzBinary;
+namespace Fuzzer {
+    struct FuzzBinary;
 
-	class Harness;
-	class Loader;
+    class Harness;
+    class Loader;
 
-	template <typename T>
-	using GetAllSymbolsReturnType = decltype(std::declval<T>()->getAllSymbols());
+    template <typename T>
+    using GetAllSymbolsReturnType = decltype(std::declval<T>()->getAllSymbols());
 
-	class Module
-	{
-		public:
-			explicit Module(Fuzzer::Loader *loader, const char *path, struct FuzzBinary *binary) 
-				: loader(loader), path(path), mainBinary(binary) { }
+    class Module {
+    public:
+        explicit Module(Fuzzer::Loader* loader, const char* path, struct FuzzBinary* binary)
+            : loader(loader), path(path), mainBinary(binary) {}
 
-			explicit Module(const char *path, xnu::Mach::VmAddress base, Offset slide) : path(path), base(base), slide(slide) { }
+        explicit Module(const char* path, xnu::Mach::VmAddress base, Offset slide)
+            : path(path), base(base), slide(slide) {}
 
-			~Module();
+        ~Module();
 
-			Fuzzer::Loader* getLoader() const { return loader; }
+        Fuzzer::Loader* getLoader() const {
+            return loader;
+        }
 
-			const char* getName() const { return name; }
+        const char* getName() const {
+            return name;
+        }
 
-			const char* getPath() const { return path; }
+        const char* getPath() const {
+            return path;
+        }
 
-			xnu::Mach::VmAddress getEntryPoint();
+        xnu::Mach::VmAddress getEntryPoint();
 
-			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
-			std::vector<Sym>& getSymbols() const requires requires (Binary bin, Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym*>&>;
-			}
-			{
-				return this->getBinary<Binary>()->getAllSymbols();
-			}
+        template <typename Binary, typename Sym>
+            requires AnyBinaryFormat<Binary>
+        std::vector<Sym>& getSymbols() const
+            requires requires(Binary bin, Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym*>&>;
+            }
+        {
+            return this->getBinary<Binary>()->getAllSymbols();
+        }
 
-			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
-			std::vector<Sym>* getUndefinedSymbols() const requires requires (Binary bin, Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				sym->isUndefined();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
-			}
-			{
-				Binary bin = this->getBinary<Binary>();
+        template <typename Binary, typename Sym>
+            requires AnyBinaryFormat<Binary>
+        std::vector<Sym>* getUndefinedSymbols() const
+            requires requires(Binary bin, Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                sym->isUndefined();
+                std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
+            }
+        {
+            Binary bin = this->getBinary<Binary>();
 
-				std::vector<Sym> *syms = new std::vector<Sym>();
-				std::vector<Sym> &allsyms = bin->getAllSymbols();
+            std::vector<Sym>* syms = new std::vector<Sym>();
+            std::vector<Sym>& allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms.size(); i++)
-				{
-					Sym sym = allsyms.at(i);
+            for (int i = 0; i < allsyms.size(); i++) {
+                Sym sym = allsyms.at(i);
 
-					if(sym->isUndefined())
-						syms->push_back(sym);
-				}
+                if (sym->isUndefined())
+                    syms->push_back(sym);
+            }
 
-				return syms;
-			}
+            return syms;
+        }
 
-			template<typename Binary, typename Sym> requires AnyBinaryFormat<Binary>
-			std::vector<Sym>* getExternalSymbols() const requires requires (Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				sym->isExternal();
-				std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
-			}
-			{
-				Binary bin = this->getBinary<Binary>();
+        template <typename Binary, typename Sym>
+            requires AnyBinaryFormat<Binary>
+        std::vector<Sym>* getExternalSymbols() const
+            requires requires(Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                sym->isExternal();
+                std::is_same_v<GetAllSymbolsReturnType<Binary>, std::vector<Sym>*>;
+            }
+        {
+            Binary bin = this->getBinary<Binary>();
 
-				std::vector<Sym> *syms = new std::vector<Sym>();
-				std::vector<Sym> &allsyms = bin->getAllSymbols();
+            std::vector<Sym>* syms = new std::vector<Sym>();
+            std::vector<Sym>& allsyms = bin->getAllSymbols();
 
-				for(int i = 0; i < allsyms.size(); i++)
-				{
-					Sym sym = allsyms.at(i);
+            for (int i = 0; i < allsyms.size(); i++) {
+                Sym sym = allsyms.at(i);
 
-					if(sym->isExternal())
-						syms->push_back(sym);
-				}
+                if (sym->isExternal())
+                    syms->push_back(sym);
+            }
 
-				return syms;
-			}
+            return syms;
+        }
 
-			struct FuzzBinary* getMainBinary() const { return mainBinary; }
+        struct FuzzBinary* getMainBinary() const {
+            return mainBinary;
+        }
 
-			struct FuzzBinary* getModuleBinary() const { return moduleBinary; }
+        struct FuzzBinary* getModuleBinary() const {
+            return moduleBinary;
+        }
 
-			template<typename T>
-			T getBinary() const requires AnyBinaryFormat<T> && PointerToClassType<T>
-			{
-			    static_assert(AnyBinaryFormat<T>,
-			                  "Unsupported type for Module::getBinary()");
+        template <typename T>
+        T getBinary() const
+            requires AnyBinaryFormat<T> && PointerToClassType<T>
+        {
+            static_assert(AnyBinaryFormat<T>, "Unsupported type for Module::getBinary()");
 
-			    if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>)
-			    {
-			        return dynamic_cast<T>(this->moduleBinary->binary.macho);
-			    }
+            if constexpr (std::is_base_of_v<MachO, std::remove_pointer_t<T>>) {
+                return dynamic_cast<T>(this->moduleBinary->binary.macho);
+            }
 
-			    if constexpr (std::is_same_v<T, MachO*>)
-			    {
-			    	return this->moduleBinary->binary.macho;
-			    }
+            if constexpr (std::is_same_v<T, MachO*>) {
+                return this->moduleBinary->binary.macho;
+            }
 
-			    if constexpr (std::is_same_v<T, RawBinary*>)
-			    {
-			        return this->moduleBinary->binary.raw;
-			    }
+            if constexpr (std::is_same_v<T, RawBinary*>) {
+                return this->moduleBinary->binary.raw;
+            }
 
-			    return NULL;
-			}
+            return NULL;
+        }
 
-			template<typename T> requires CastableType<T>
-			T operator[](UInt64 index) const { return reinterpret_cast<T>((UInt8*) base + index); }
+        template <typename T>
+            requires CastableType<T>
+        T operator[](UInt64 index) const {
+            return reinterpret_cast<T>((UInt8*)base + index);
+        }
 
-			template<typename T> requires IntegralOrPointerType<T>
-			T getBase() const
-			{
-				return reinterpret_cast<T>(base);
-			}
+        template <typename T>
+            requires IntegralOrPointerType<T>
+        T getBase() const {
+            return reinterpret_cast<T>(base);
+        }
 
-			Size getSize() const { return size; }
+        Size getSize() const {
+            return size;
+        }
 
-			Offset getSlide() const { return slide; }
+        Offset getSlide() const {
+            return slide;
+        }
 
-		    void load();
+        void load();
 
-		    template<typename Seg>
-		    void mapSegment(Seg segment) requires requires(Seg seg) {
-		        seg->getAddress();
-		    };
+        template <typename Seg>
+        void mapSegment(Seg segment)
+            requires requires(Seg seg) { seg->getAddress(); };
 
-		    template<typename Seg>
-		    void modifySegment(Seg segment) requires requires(Seg seg) {
-		        seg->getAddress();
-		    };
+        template <typename Seg>
+        void modifySegment(Seg segment)
+            requires requires(Seg seg) { seg->getAddress(); };
 
-		private:
-			Fuzzer::Loader *loader;
+    private:
+        Fuzzer::Loader* loader;
 
-			const char *name;
-			const char *path;
+        const char* name;
+        const char* path;
 
-			struct FuzzBinary *mainBinary;
-			struct FuzzBinary *moduleBinary;
+        struct FuzzBinary* mainBinary;
+        struct FuzzBinary* moduleBinary;
 
-			xnu::Mach::VmAddress base;
+        xnu::Mach::VmAddress base;
 
-			Size size;
+        Size size;
 
-			Offset slide;
-	};
+        Offset slide;
+    };
 
-	class Loader
-	{
-		public:
-			explicit Loader(Fuzzer::Harness *harness, struct FuzzBinary *binary);
+    class Loader {
+    public:
+        explicit Loader(Fuzzer::Harness* harness, struct FuzzBinary* binary);
 
-			~Loader();
+        ~Loader();
 
-			Fuzzer::Harness* getHarness() const { return harness; }
+        Fuzzer::Harness* getHarness() const {
+            return harness;
+        }
 
-			struct FuzzBinary* getFuzzBinary() const { return binary; }
+        struct FuzzBinary* getFuzzBinary() const {
+            return binary;
+        }
 
-			Arch::Architecture* getArchitecture() const { return arch; }
+        Arch::Architecture* getArchitecture() const {
+            return arch;
+        }
 
-			Fuzzer::Module* getModule(char *name)
-			{
-				for(int i = 0; i < modules.size(); i++)
-				{
-					Fuzzer::Module *module = modules.at(i);
+        Fuzzer::Module* getModule(char* name) {
+            for (int i = 0; i < modules.size(); i++) {
+                Fuzzer::Module* module = modules.at(i);
 
-					if(strcmp(module->getName(), name) == 0)
-					{
-						return module;
-					}
-				}
+                if (strcmp(module->getName(), name) == 0) {
+                    return module;
+                }
+            }
 
-				return NULL;
-			}
+            return NULL;
+        }
 
-			template<typename Binary> requires AnyBinaryFormat<Binary>
-			void loadModule(Module *module);
+        template <typename Binary>
+            requires AnyBinaryFormat<Binary>
+        void loadModule(Module* module);
 
-			void loadModuleFromKext(const char *kextPath);
+        void loadModuleFromKext(const char* kextPath);
 
-			void loadKextMachO(const char *kextPath, xnu::Mach::VmAddress *loadAddress, Size *loadSize, xnu::Mach::VmAddress *oldLoadAddress);
+        void loadKextMachO(const char* kextPath, xnu::Mach::VmAddress* loadAddress, Size* loadSize,
+                           xnu::Mach::VmAddress* oldLoadAddress);
 
-			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void linkSymbols(Module *module) requires requires (Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
-			};
+        template <typename Sym, typename Binary>
+            requires AnyBinaryFormat<Binary>
+        void linkSymbols(Module* module)
+            requires requires(Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+            };
 
-			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void linkSymbol(Module *module, Sym sym) requires requires (Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
-			};
+        template <typename Sym, typename Binary>
+            requires AnyBinaryFormat<Binary>
+        void linkSymbol(Module* module, Sym sym)
+            requires requires(Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+            };
 
-			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void stubFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym) 
-			{
-				sym->getName();
-				sym->getAddress();
-				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
-			};
+        template <typename Sym, typename Binary>
+            requires AnyBinaryFormat<Binary>
+        void stubFunction(Module* module, Sym sym, xnu::Mach::VmAddress stub)
+            requires requires(Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+            };
 
-			template<typename Sym, typename Binary> requires AnyBinaryFormat<Binary>
-			void shimFunction(Module *module, Sym sym, xnu::Mach::VmAddress stub) requires requires (Sym sym)
-			{
-				sym->getName();
-				sym->getAddress();
-				std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
-			};
+        template <typename Sym, typename Binary>
+            requires AnyBinaryFormat<Binary>
+        void shimFunction(Module* module, Sym sym, xnu::Mach::VmAddress stub)
+            requires requires(Sym sym) {
+                sym->getName();
+                sym->getAddress();
+                std::is_same_v<GetSymbolReturnType<Binary>, Sym>;
+            };
 
-			void* allocateModuleMemory(Size sz, int prot);
+        void* allocateModuleMemory(Size sz, int prot);
 
-		private:
-			Fuzzer::Harness *harness;
+    private:
+        Fuzzer::Harness* harness;
 
-			Arch::Architecture *arch;
+        Arch::Architecture* arch;
 
-			struct FuzzBinary *binary;
+        struct FuzzBinary* binary;
 
-			std::vector<Module*> modules;
-	};
-};
+        std::vector<Module*> modules;
+    };
+}; // namespace Fuzzer

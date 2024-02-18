@@ -32,20 +32,18 @@
 
 #ifdef __cplusplus
 
-	extern "C"
-	{
+extern "C" {
 #endif
-		#include "API.h"
+#include "API.h"
 #ifdef __cplusplus
-	}
+}
 
 #endif
 
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
 
-namespace xnu
-{
+namespace xnu {
     class Kernel;
 }
 
@@ -91,9 +89,8 @@ using namespace xnu;
  *  @return reference to the struct member
  */
 template <typename T>
-inline T &getMember(void *that, Size off)
-{
-    return *reinterpret_cast<T *>(static_cast<UInt8 *>(that) + off);
+inline T& getMember(void* that, Size off) {
+    return *reinterpret_cast<T*>(static_cast<UInt8*>(that) + off);
 }
 
 /**
@@ -104,8 +101,7 @@ inline T &getMember(void *that, Size off)
  *  @return algined value
  */
 template <typename T>
-inline T alignValue(T size, T align = 4096)
-{
+inline T alignValue(T size, T align = 4096) {
     return (size + align - 1) & (~(align - 1));
 }
 
@@ -116,9 +112,8 @@ inline T alignValue(T size, T align = 4096)
  *
  *  @return true if properly aligned
  */
-template<typename T>
-inline bool isAligned(T *p)
-{
+template <typename T>
+inline bool isAligned(T* p) {
     return reinterpret_cast<uintptr_t>(p) % alignof(T) == 0;
 }
 
@@ -131,8 +126,7 @@ inline bool isAligned(T *p)
  *  @return bit value
  */
 template <typename T>
-constexpr T getBit(T n)
-{
+constexpr T getBit(T n) {
     return static_cast<T>(1U) << n;
 }
 
@@ -146,9 +140,8 @@ constexpr T getBit(T n)
  *  @return bit mask
  */
 template <typename T>
-constexpr T getBitMask(T hi, T lo)
-{
-    return (getBit(hi)|(getBit(hi)-1U)) & ~(getBit(lo)-1U);
+constexpr T getBitMask(T hi, T lo) {
+    return (getBit(hi) | (getBit(hi) - 1U)) & ~(getBit(lo) - 1U);
 }
 
 /**
@@ -162,8 +155,7 @@ constexpr T getBitMask(T hi, T lo)
  *  @return bit field value
  */
 template <typename T>
-constexpr T getBitField(T so, T hi, T lo)
-{
+constexpr T getBitField(T so, T hi, T lo) {
     return (so & getBitMask(hi, lo)) >> lo;
 }
 
@@ -178,8 +170,7 @@ constexpr T getBitField(T so, T hi, T lo)
  *  @return bit field value
  */
 template <typename T>
-constexpr T setBitField(T so, T hi, T lo)
-{
+constexpr T setBitField(T so, T hi, T lo) {
     return (so << lo) & getBitMask(hi, lo);
 }
 
@@ -194,12 +185,11 @@ constexpr T setBitField(T so, T hi, T lo)
  *  @return true if an element different from value was found
  */
 template <typename T, typename Y>
-inline bool findNotEquals(T &in, Size size, Y value)
-{
+inline bool findNotEquals(T& in, Size size, Y value) {
     for (Size i = 0; i < size; i++)
         if (in[i] != value)
             return true;
-        
+
     return false;
 }
 
@@ -210,8 +200,7 @@ inline bool findNotEquals(T &in, Size size, Y value)
  *
  *  @return non-null string
  */
-inline const char *safeString(const char *str)
-{
+inline const char* safeString(const char* str) {
     return str ? str : "(null)";
 }
 
@@ -219,14 +208,12 @@ inline const char *safeString(const char *str)
  *  A shorter form of writing reinterpret_cast<decltype(&org)>(ptr)
  */
 template <typename T>
-inline T FunctionCast(T org, uint64_t ptr)
-{
+inline T FunctionCast(T org, uint64_t ptr) {
     return reinterpret_cast<T>(ptr);
 }
 
-namespace API
-{
-	void dump(Kernel *kernel, uint64_t address);
+namespace API {
+    void dump(Kernel* kernel, uint64_t address);
 
-	void hexdump(unsigned char *data, Size size, bool rev);
-};
+    void hexdump(unsigned char* data, Size size, bool rev);
+}; // namespace API

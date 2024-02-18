@@ -18,422 +18,376 @@
 
 #ifdef __KERNEL__
 
-int isspace(int c)
-{
-	return (c == '\t' || c == '\n' ||
-	    c == '\v' || c == '\f' || c == '\r' || c == ' ' ? 1 : 0);
+int isspace(int c) {
+    return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ' ? 1 : 0);
 }
 
 #endif
 
-static UInt32 log2(UInt64 value)
-{
-	UInt32 shift = 0;
+static UInt32 log2(UInt64 value) {
+    UInt32 shift = 0;
 
-	while(value >>= 1) ++shift;
+    while (value >>= 1)
+        ++shift;
 
-	return shift;
+    return shift;
 }
 
-int hex_digit(char ch)
-{
-	if('0' <= ch && '9' >= ch)
-		return ch - '0';
-	else if('A' <= ch && 'F' >= ch)
-		return ch - 'A' + 0xa;
-	else if('a' <= ch && 'f' >= ch)
-		return ch - 'a' + 0xa;
+int hex_digit(char ch) {
+    if ('0' <= ch && '9' >= ch)
+        return ch - '0';
+    else if ('A' <= ch && 'F' >= ch)
+        return ch - 'A' + 0xa;
+    else if ('a' <= ch && 'f' >= ch)
+        return ch - 'a' + 0xa;
 
-	return -1;
+    return -1;
 }
 
-char* strnchar(char *str, UInt32 len, char ch)
-{
-	char *s = str;
-	char *end = str + len;
+char* strnchar(char* str, UInt32 len, char ch) {
+    char* s = str;
+    char* end = str + len;
 
-	while(s < end)
-	{
-		if(*s == ch)
-			return s;
+    while (s < end) {
+        if (*s == ch)
+            return s;
 
-		if(*s == 0)
-			return NULL;
-		
-		s++;
-	}
+        if (*s == 0)
+            return NULL;
 
-	return NULL;
+        s++;
+    }
+
+    return NULL;
 }
 
-enum strtoint_result strtoint(char *str,
-							  UInt32 len,
-							  bool sign,
-							  bool is_signed,
-							  UInt32 base,
-							  UInt64 *value,
-							  char **end)
-{
-	enum strtoint_result result = STRTOINT_OK;
+enum strtoint_result strtoint(char* str, UInt32 len, bool sign, bool is_signed, UInt32 base,
+                              UInt64* value, char** end) {
+    enum strtoint_result result = STRTOINT_OK;
 
-	char *last = str + len;
+    char* last = str + len;
 
-	bool negate = false;
+    bool negate = false;
 
-	UInt64 _value = 0;
+    UInt64 _value = 0;
 
-	if(last == str)
-		goto no_chars;
+    if (last == str)
+        goto no_chars;
 
-	if(sign && (str[0] == '+' || str[0] == '-'))
-	{
-		negate = (str[0] == '-');
-		str++;
-	} else if(str[0] == '0'
-			  && (str[1] == 'x' || str[1] == 'o' || str[1] == 'b'))
-	{
-		if(str[1] == 'x')
-			base = 16;
-		if(str[1] == 'o')
-			base = 8;
-		if(str[1] == 'b')
-			base = 2;
+    if (sign && (str[0] == '+' || str[0] == '-')) {
+        negate = (str[0] == '-');
+        str++;
+    } else if (str[0] == '0' && (str[1] == 'x' || str[1] == 'o' || str[1] == 'b')) {
+        if (str[1] == 'x')
+            base = 16;
+        if (str[1] == 'o')
+            base = 8;
+        if (str[1] == 'b')
+            base = 2;
 
-		str += 2;
-	}
+        str += 2;
+    }
 
-	int d;
+    int d;
 
-	if(last == str)
-		goto no_chars;
+    if (last == str)
+        goto no_chars;
 
-	d = hex_digit(*str);
+    d = hex_digit(*str);
 
-	if(d < 0 || d >= base)
-		goto no_chars;
+    if (d < 0 || d >= base)
+        goto no_chars;
 
-	while(str != last && *str != 0)
-	{
-		d = hex_digit(*str);
+    while (str != last && *str != 0) {
+        d = hex_digit(*str);
 
-		if(d < 0 || d >= base)
-		{
-			result = STRTOINT_BADDIGIT;
+        if (d < 0 || d >= base) {
+            result = STRTOINT_BADDIGIT;
 
-			goto fail;
-		}
+            goto fail;
+        }
 
-		UInt64 new_value = _value * base + d;
+        UInt64 new_value = _value * base + d;
 
-		if(is_signed)
-		{
-			UInt64 max = (UInt64) (negate ? INTMAX_MIN : INTMAX_MAX);
+        if (is_signed) {
+            UInt64 max = (UInt64)(negate ? INTMAX_MIN : INTMAX_MAX);
 
-			if(new_value > max)
-			{
-				result = STRTOINT_OVERFLOW;
+            if (new_value > max) {
+                result = STRTOINT_OVERFLOW;
 
-				goto fail;
-			}
-		} else if(new_value < _value)
-		{
-			result = STRTOINT_OVERFLOW;
+                goto fail;
+            }
+        } else if (new_value < _value) {
+            result = STRTOINT_OVERFLOW;
 
-			goto fail;
-		}
+            goto fail;
+        }
 
-		_value = new_value;
-		str++;
-	}
+        _value = new_value;
+        str++;
+    }
 
-	if(negate)
-		_value = (UInt64)(-(int64_t)_value);
+    if (negate)
+        _value = (UInt64)(-(int64_t)_value);
 
-	*value = _value;
+    *value = _value;
 
-	*end = str;
+    *end = str;
 
-	return result;
+    return result;
 
 no_chars:
-	result = STRTOINT_NODIGITS;
+    result = STRTOINT_NODIGITS;
 fail:
-	*end = str;
-	
-	return result;
+    *end = str;
 
+    return result;
 }
 
-enum strtodata_result strtodata(char *str,
-								UInt32 base,
-								void *data,
-								UInt32 *size,
-								char **end)
-{
-	enum strtodata_result result = STRTODATA_OK;
+enum strtodata_result strtodata(char* str, UInt32 base, void* data, UInt32* size, char** end) {
+    enum strtodata_result result = STRTODATA_OK;
 
-	char *start = str;
+    char* start = str;
 
-	if(str[0] == '0'
-	   && (str[1] == 'x' || str[1] == 'o' || str[1] == 'b'))
-	{
-		if(str[1] == 'x')
-			base = 16;
-		if(str[1] == 'o')
-			base = 8;
-		if(str[1] == 'b')
-			base = 2;
+    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'o' || str[1] == 'b')) {
+        if (str[1] == 'x')
+            base = 16;
+        if (str[1] == 'o')
+            base = 8;
+        if (str[1] == 'b')
+            base = 2;
 
-		str += 2;
-	}
+        str += 2;
+    }
 
-	UInt32 bits_per_digit = log2(base);
+    UInt32 bits_per_digit = log2(base);
 
-	UInt8 *p = (UInt8*) data;
+    UInt8* p = (UInt8*)data;
 
-	UInt32 left = (p == NULL ? 0 : *size);
+    UInt32 left = (p == NULL ? 0 : *size);
 
-	UInt32 realsize = 0;
+    UInt32 realsize = 0;
 
-	do
-	{
-		UInt8 byte = 0;
+    do {
+        UInt8 byte = 0;
 
-		for(UInt32 i = 0; i < 8 / bits_per_digit; i++) 
-		{
-			int d = hex_digit(*str);
-			
-			if( d < 0 || d >= base)
-			{
-				if(i == 0)
-				{
-					if(str == start)
-						result = STRTODATA_NODIGITS;
-					else
-						result = STRTODATA_BADDIGIT;
+        for (UInt32 i = 0; i < 8 / bits_per_digit; i++) {
+            int d = hex_digit(*str);
 
-					goto no_digits;
-				}
+            if (d < 0 || d >= base) {
+                if (i == 0) {
+                    if (str == start)
+                        result = STRTODATA_NODIGITS;
+                    else
+                        result = STRTODATA_BADDIGIT;
 
-				result = STRTODATA_NEEDDIGIT;
+                    goto no_digits;
+                }
 
-				goto fail;
-			}
+                result = STRTODATA_NEEDDIGIT;
 
-			byte |= d << (8 - (i + 1) * bits_per_digit);
-			
-			str++;
-		}
+                goto fail;
+            }
 
-		realsize++;
+            byte |= d << (8 - (i + 1) * bits_per_digit);
 
-		if(left > 0)
-		{
-			*p = byte;
-			p++;
+            str++;
+        }
 
-			left--;
-		}
-	} while(*str != 0);
+        realsize++;
+
+        if (left > 0) {
+            *p = byte;
+            p++;
+
+            left--;
+        }
+    } while (*str != 0);
 
 no_digits:
-	*size = realsize;
+    *size = realsize;
 
 fail:
-	*end = str;
+    *end = str;
 
-	return result;
+    return result;
 }
 
-enum strparse_result strreplace(char *str, char find, char replace)
-{
-	int digits = 0;
+enum strparse_result strreplace(char* str, char find, char replace) {
+    int digits = 0;
 
-	for(int i = 0; i < strlen(str); i++)
-	{
-		if(str[i] == find)
-		{
-			str[i] = replace;
+    for (int i = 0; i < strlen(str); i++) {
+        if (str[i] == find) {
+            str[i] = replace;
 
-			digits++;
-		}
-	}
+            digits++;
+        }
+    }
 
-	if(!digits)
-		return STRPARSE_NODIGITS;
+    if (!digits)
+        return STRPARSE_NODIGITS;
 
-	return STRPARSE_OK;
+    return STRPARSE_OK;
 }
 
 #ifdef __KERNEL__
 
-char* strdup(char *s)
-{
-	Size l;
-	char *t;
+char* strdup(char* s) {
+    Size l;
+    char* t;
 
-	if (s == NULL) return NULL;
-	
-	l = strlen(s);
-	t = new char[l + 1];
-	
-	memcpy(t, s, l);
-	
-	t[l] = '\0';
-	
-	return t;
+    if (s == NULL)
+        return NULL;
+
+    l = strlen(s);
+    t = new char[l + 1];
+
+    memcpy(t, s, l);
+
+    t[l] = '\0';
+
+    return t;
 }
 
-char* strstr(char *string, char *substring)
-{
-	char *a, *b;
+char* strstr(char* string, char* substring) {
+    char *a, *b;
 
-	/* First scan quickly through the two strings looking for a
-	 * single-character match.  When it's found, then compare the
-	 * rest of the substring.
-	 */
+    /* First scan quickly through the two strings looking for a
+     * single-character match.  When it's found, then compare the
+     * rest of the substring.
+     */
 
-	b = substring;
+    b = substring;
 
-	if (*b == 0)
-	{
-		return string;
-	}
+    if (*b == 0) {
+        return string;
+    }
 
-	for ( ; *string != 0; string += 1)
-	{
-		if (*string != *b) {
-		 	continue;
-		}
-		
-		a = string;
-		
-		while (1)
-		{
-			if (*b == 0)
-			{
-				return string;
-			}
+    for (; *string != 0; string += 1) {
+        if (*string != *b) {
+            continue;
+        }
 
-			if (*a++ != *b++)
-			{
-				break;
-			}
-		}
+        a = string;
 
-		b = substring;
-	}
+        while (1) {
+            if (*b == 0) {
+                return string;
+            }
 
-	return NULL;
+            if (*a++ != *b++) {
+                break;
+            }
+        }
+
+        b = substring;
+    }
+
+    return NULL;
 }
 
 #endif
 
-char* strtokmul(char *input, char *delimiter)
-{
-	static char *string;
-	
-	if(input != NULL)
-		string = input;
+char* strtokmul(char* input, char* delimiter) {
+    static char* string;
 
-	if(string == NULL)
-		return string;
+    if (input != NULL)
+        string = input;
 
-	char *end = strstr(string, delimiter);
-	
-	if(end == NULL)
-	{
-		char *temp = string;
-		
-		string = NULL;
-		
-		return temp;
-	}
+    if (string == NULL)
+        return string;
 
-	char *temp = string;
-	
-	*end = '\0';
-	
-	string = end + strlen(delimiter);
-	
-	return temp;
+    char* end = strstr(string, delimiter);
+
+    if (end == NULL) {
+        char* temp = string;
+
+        string = NULL;
+
+        return temp;
+    }
+
+    char* temp = string;
+
+    *end = '\0';
+
+    string = end + strlen(delimiter);
+
+    return temp;
 }
 
-char* ltrim(char *s)
-{
-	while(isspace(*s)) s++;
+char* ltrim(char* s) {
+    while (isspace(*s))
+        s++;
 
-	return s;
+    return s;
 }
 
-char* rtrim(char *s)
-{
-	char* back = s + strlen(s);
+char* rtrim(char* s) {
+    char* back = s + strlen(s);
 
-	while(isspace(*--back));
+    while (isspace(*--back))
+        ;
 
-	*(back + 1) = '\0';
+    *(back + 1) = '\0';
 
-	return s;
+    return s;
 }
 
-char* trim(char *s)
-{
-	return rtrim(ltrim(s)); 
+char* trim(char* s) {
+    return rtrim(ltrim(s));
 }
 
-char* deblank(char* input)
-{
-	int i, j;
+char* deblank(char* input) {
+    int i, j;
 
-	char *output = input;
-	
-	for (i = 0, j = 0; i < strlen(input); i++, j++)
-	{
-		if (input[i] != ' ')
-			output[j] = input[i];
-		else
-			j--;
-	}
+    char* output = input;
 
-	output[j] = '\0';
+    for (i = 0, j = 0; i < strlen(input); i++, j++) {
+        if (input[i] != ' ')
+            output[j] = input[i];
+        else
+            j--;
+    }
 
-	return output;
+    output[j] = '\0';
+
+    return output;
 }
 
 /*
-#include <string.h> 
+#include <string.h>
 
 int main()
 {
-	UInt64 value;
+    UInt64 value;
 
-	char *s = "0xfffffff007b6b668";
-	char *end = NULL;
+    char *s = "0xfffffff007b6b668";
+    char *end = NULL;
 
-	UInt8 *data;
-	UInt32 data_len;
+    UInt8 *data;
+    UInt32 data_len;
 
-	enum strtoint_result sir;
-	enum strtodata_result sdr;
+    enum strtoint_result sir;
+    enum strtodata_result sdr;
 
-	sdr = strtodata(s, 16, NULL, &data_len, &end);
-	
-	data = malloc(data_len);
+    sdr = strtodata(s, 16, NULL, &data_len, &end);
 
-	printf("data_len = 0x%x\n", data_len);
+    data = malloc(data_len);
 
-	sdr = strtodata(s, 16, data, &data_len, &end);
+    printf("data_len = 0x%x\n", data_len);
 
-	for(UInt32 i = 0; i < data_len; i++)
-		printf("%x", data[i]);
+    sdr = strtodata(s, 16, data, &data_len, &end);
 
-	printf("\n");
+    for(UInt32 i = 0; i < data_len; i++)
+        printf("%x", data[i]);
 
-	printf("0x%llx\n", *(UInt64*) data);
+    printf("\n");
 
-	sir = strtoint(s, strlen(s), true, false, 16, &value, &end);
+    printf("0x%llx\n", *(UInt64*) data);
 
-	printf("0x%llx\n", value);
+    sir = strtoint(s, strlen(s), true, false, 16, &value, &end);
+
+    printf("0x%llx\n", value);
 }
 */

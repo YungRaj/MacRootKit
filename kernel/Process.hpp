@@ -18,23 +18,21 @@
 
 #include <Types.h>
 
-namespace xnu
-{
-	class Task;
+namespace xnu {
+    class Task;
 };
 
-namespace bsd
-{
-	class Process
-	{
-		public:
-			Process();
+namespace bsd {
+    class Process {
+    public:
+        Process();
 
-			~Process();
+        ~Process();
 
-			xnu::Task* getTask();
-		private:
-			xnu::Task *task;
-	};
+        xnu::Task* getTask();
 
-};
+    private:
+        xnu::Task* task;
+    };
+
+}; // namespace bsd

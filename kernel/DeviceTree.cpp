@@ -18,442 +18,393 @@
 
 #include <arm64/PatchFinder_arm64.hpp>
 
+#include "DeviceTree.hpp"
 #include "Kernel.hpp"
 #include "MachO.hpp"
-#include "DeviceTree.hpp"
 
 #include "Log.hpp"
 
 using namespace xnu;
 
-Bool is_ascii(char *c, Size len)
-{
-	UInt32 zeros = 0;
+Bool is_ascii(char* c, Size len) {
+    UInt32 zeros = 0;
 
-	for (Size i = 0; i < len; i++)
-	{
-		if(c[i] < 0)
-			return false;
-		else if(c[i] == 0)
-			zeros++;
-	}
+    for (Size i = 0; i < len; i++) {
+        if (c[i] < 0)
+            return false;
+        else if (c[i] == 0)
+            zeros++;
+    }
 
-	return zeros < 3 ? true : false;
+    return zeros < 3 ? true : false;
 }
 
-Bool DeviceTree::iterateNodeProperties(void **data, 
-							 			void *data_end,
-							 			UInt32 *depth,
-										DeviceTreeNode *node,
-										dt_property_callback_t prop_cb,
-										Bool *success)
-{
-	Bool cb;
+Bool DeviceTree::iterateNodeProperties(void** data, void* data_end, UInt32* depth,
+                                       DeviceTreeNode* node, dt_property_callback_t prop_cb,
+                                       Bool* success) {
+    Bool cb;
 
-	UInt8 *p = (UInt8*) data;
-	UInt8 *end = (UInt8*) data_end;
+    UInt8* p = (UInt8*)data;
+    UInt8* end = (UInt8*)data_end;
 
-	UInt32 n_props = node->n_properties;
-	UInt32 n_children = node->n_children;
+    UInt32 n_props = node->n_properties;
+    UInt32 n_children = node->n_children;
 
-	*success = false;
+    *success = false;
 
-	for(int i = 0; i < n_props; i++)
-	{
-		DeviceTreeProperty *prop = (DeviceTreeProperty*) p;
+    for (int i = 0; i < n_props; i++) {
+        DeviceTreeProperty* prop = (DeviceTreeProperty*)p;
 
-		if(p + sizeof(*prop) > end)
-			return false;
+        if (p + sizeof(*prop) > end)
+            return false;
 
-		if(prop->name[sizeof(prop->name) - 1] != 0)
-			return false;
+        if (prop->name[sizeof(prop->name) - 1] != 0)
+            return false;
 
-		UInt32 prop_size = prop->size & ~0x80000000;
-		UInt32 padded_size = (prop_size + 0x3) & ~0x3;
+        UInt32 prop_size = prop->size & ~0x80000000;
+        UInt32 padded_size = (prop_size + 0x3) & ~0x3;
 
-		if(p + padded_size > end)
-		{
-			if(p - padded_size + prop_size == end)
-				p = end;
-			else
-				return false;
-		}
+        if (p + padded_size > end) {
+            if (p - padded_size + prop_size == end)
+                p = end;
+            else
+                return false;
+        }
 
-		if(prop_cb)
-		{
-			cb = prop_cb(*depth + 1, (void*) prop, prop_size);
+        if (prop_cb) {
+            cb = prop_cb(*depth + 1, (void*)prop, prop_size);
 
-			if(cb)
-			{
-				*success = true;
-				*data = p;
+            if (cb) {
+                *success = true;
+                *data = p;
 
-				return true;
-			}
-		}
+                return true;
+            }
+        }
 
-		p += sizeof(*prop);
-		p += padded_size;
-	}
+        p += sizeof(*prop);
+        p += padded_size;
+    }
 
-	*data = p;
+    *data = p;
 
-	return true;
+    return true;
 }
 
-Size DeviceTree::getNodeSize(UInt32 depth, DeviceTreeNode *node)
-{
-	UInt8 *dt = getAs<UInt8*>();
-	
-	Size dt_size = getSize();
+Size DeviceTree::getNodeSize(UInt32 depth, DeviceTreeNode* node) {
+    UInt8* dt = getAs<UInt8*>();
 
-	Bool ok;
-	Bool success;
+    Size dt_size = getSize();
 
-	void *dt_end = (void*) ((UInt8*) dt + dt_size);
+    Bool ok;
+    Bool success;
 
-	UInt8 *p = (UInt8*) node;
+    void* dt_end = (void*)((UInt8*)dt + dt_size);
 
-	p += sizeof(*node);
+    UInt8* p = (UInt8*)node;
 
-	if(p > (UInt8*) dt_end)
-		return 0;
+    p += sizeof(*node);
 
-	UInt8 *end = p;
+    if (p > (UInt8*)dt_end)
+        return 0;
 
-	UInt32 n_props = node->n_properties;
-	UInt32 n_children = node->n_children;
+    UInt8* end = p;
 
-	ok = DeviceTree::iterateNodeProperties((void**) &end, 
-						 			dt_end,
-						 			&depth,
-									node,
-									NULL,
-									&success);
+    UInt32 n_props = node->n_properties;
+    UInt32 n_children = node->n_children;
 
-	if(ok)
-		return (end - p) + sizeof(DeviceTreeNode);
+    ok = DeviceTree::iterateNodeProperties((void**)&end, dt_end, &depth, node, NULL, &success);
 
-	return 0;
+    if (ok)
+        return (end - p) + sizeof(DeviceTreeNode);
+
+    return 0;
 }
 
-Bool DeviceTree::iterateNode(void **data, 
-						     void *data_end,
-						     UInt32 *depth,
-						     dt_node_callback_t node_cb,
-						     dt_property_callback_t prop_cb,
-						     Bool *success)
-{
-	Bool ok;
-	Bool cb;
+Bool DeviceTree::iterateNode(void** data, void* data_end, UInt32* depth, dt_node_callback_t node_cb,
+                             dt_property_callback_t prop_cb, Bool* success) {
+    Bool ok;
+    Bool cb;
 
-	UInt8 *p = (UInt8*) *data;
-	UInt8 *end = (UInt8*) data_end;
+    UInt8* p = (UInt8*)*data;
+    UInt8* end = (UInt8*)data_end;
 
-	DeviceTreeNode *node = (DeviceTreeNode*) p;
+    DeviceTreeNode* node = (DeviceTreeNode*)p;
 
-	if(node_cb)
-	{
-		cb = node_cb(*depth, (void*) node, end - (UInt8*) node);
+    if (node_cb) {
+        cb = node_cb(*depth, (void*)node, end - (UInt8*)node);
 
-		if(cb)
-		{
-			*success = true;
+        if (cb) {
+            *success = true;
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 
-	p += sizeof(*node);
+    p += sizeof(*node);
 
-	if(p > end)
-		return false;
+    if (p > end)
+        return false;
 
-	UInt32 n_props = node->n_properties;
-	UInt32 n_children = node->n_children;
+    UInt32 n_props = node->n_properties;
+    UInt32 n_children = node->n_children;
 
-	ok = DeviceTree::iterateNodeProperties((void**) &p, data_end, depth, node, prop_cb, success);
+    ok = DeviceTree::iterateNodeProperties((void**)&p, data_end, depth, node, prop_cb, success);
 
-	*data = p;
+    *data = p;
 
-	if(*success)
-		return false;
+    if (*success)
+        return false;
 
-	if(!ok)
-		return false;
+    if (!ok)
+        return false;
 
-	for(UInt32 i = 0; i < n_children; i++)
-	{
-		UInt32 child_depth = *depth + 1;
+    for (UInt32 i = 0; i < n_children; i++) {
+        UInt32 child_depth = *depth + 1;
 
-		ok = DeviceTree::iterateNode(data, data_end, &child_depth, node_cb, prop_cb, success);
+        ok = DeviceTree::iterateNode(data, data_end, &child_depth, node_cb, prop_cb, success);
 
-		if(*success)
-		{
-			*depth = child_depth;
+        if (*success) {
+            *depth = child_depth;
 
-			return false;
-		}
+            return false;
+        }
 
-		if(!ok)
-			return false;
-	}
+        if (!ok)
+            return false;
+    }
 
-	return true;
+    return true;
 }
 
-DeviceTreeNode* DeviceTree::findNode(char *nodename, UInt32 *depth)
-{
-	UInt8 *dt = getAs<UInt8*>();
-	
-	Size dt_size = getSize();
+DeviceTreeNode* DeviceTree::findNode(char* nodename, UInt32* depth) {
+    UInt8* dt = getAs<UInt8*>();
 
-	UInt8 *root = (UInt8*) dt;
+    Size dt_size = getSize();
 
-	*depth = 0;
+    UInt8* root = (UInt8*)dt;
 
-	dt_property_callback_t prop_cb =  ^Bool (UInt32 ndepth, void *property, UInt32 size)
-	{
-		DeviceTreeProperty *prop = (DeviceTreeProperty*) property;
+    *depth = 0;
 
-		if(strcmp(prop->name, "name") == 0)
-			return true;
+    dt_property_callback_t prop_cb = ^Bool(UInt32 ndepth, void* property, UInt32 size) {
+      DeviceTreeProperty* prop = (DeviceTreeProperty*)property;
 
-		return false;
-	};
+      if (strcmp(prop->name, "name") == 0)
+          return true;
 
-	dt_node_callback_t node_cb =  ^Bool (UInt32 ndepth, void *dtnode, UInt32 size)
-	{
-		Bool ok;
-		Bool success;
+      return false;
+    };
 
-		DeviceTreeNode *node = (DeviceTreeNode*) dtnode;
+    dt_node_callback_t node_cb = ^Bool(UInt32 ndepth, void* dtnode, UInt32 size) {
+      Bool ok;
+      Bool success;
 
-		UInt8 *p = (UInt8*) node;
+      DeviceTreeNode* node = (DeviceTreeNode*)dtnode;
 
-		p += sizeof(*node);
+      UInt8* p = (UInt8*)node;
 
-		UInt32 node_size = DeviceTree::getNodeSize(ndepth, node);
+      p += sizeof(*node);
 
-		ok = DeviceTree::iterateNodeProperties((void**) &p, 
-										  (void*) ((UInt8*) node + node_size),
-										  &ndepth,
-										  node,
-										  prop_cb,
-										  &success);
+      UInt32 node_size = DeviceTree::getNodeSize(ndepth, node);
 
-		if(ok && success)
-		{
-			DeviceTreeProperty *prop = (DeviceTreeProperty*) p;
+      ok = DeviceTree::iterateNodeProperties((void**)&p, (void*)((UInt8*)node + node_size), &ndepth,
+                                             node, prop_cb, &success);
 
-			if(strcmp(nodename, (char*) &prop->val) == 0)
-				return true;
-		}
+      if (ok && success) {
+          DeviceTreeProperty* prop = (DeviceTreeProperty*)p;
 
-		return false;
-	};
+          if (strcmp(nodename, (char*)&prop->val) == 0)
+              return true;
+      }
 
-	Bool ok;
-	Bool success = false;
+      return false;
+    };
 
-	ok = DeviceTree::iterateNode((void**) &root, (void*)(root + dt_size), depth, node_cb, NULL, &success);
+    Bool ok;
+    Bool success = false;
 
-	if(success)
-	{
-		DeviceTreeNode *node = (DeviceTreeNode*) root;
+    ok = DeviceTree::iterateNode((void**)&root, (void*)(root + dt_size), depth, node_cb, NULL,
+                                 &success);
 
-		return node;
-	}
+    if (success) {
+        DeviceTreeNode* node = (DeviceTreeNode*)root;
 
-	return NULL;
+        return node;
+    }
+
+    return NULL;
 }
 
-DeviceTreeProperty* DeviceTree::findProperty(char *nodename, char *propname)
-{
-	UInt8 *dt = getAs<UInt8*>();
-	
-	Size dt_size = getSize();
+DeviceTreeProperty* DeviceTree::findProperty(char* nodename, char* propname) {
+    UInt8* dt = getAs<UInt8*>();
 
-	DeviceTreeNode *node;
+    Size dt_size = getSize();
 
-	Bool ok;
-	Bool success;
+    DeviceTreeNode* node;
 
-	UInt32 node_size;
-	UInt32 depth = 0;
+    Bool ok;
+    Bool success;
 
-	node = DeviceTree::findNode(nodename, &depth);
+    UInt32 node_size;
+    UInt32 depth = 0;
 
-	node_size = DeviceTree::getNodeSize(depth, node);
+    node = DeviceTree::findNode(nodename, &depth);
 
-	if(node)
-	{
-		dt_property_callback_t prop_cb = 
-				^Bool (UInt32 depth, void *property, UInt32 size)
-				{
-						DeviceTreeProperty *prop = (DeviceTreeProperty*) property;
+    node_size = DeviceTree::getNodeSize(depth, node);
 
-						if(strcmp(prop->name, propname) == 0)
-							return true;
+    if (node) {
+        dt_property_callback_t prop_cb = ^Bool(UInt32 depth, void* property, UInt32 size) {
+          DeviceTreeProperty* prop = (DeviceTreeProperty*)property;
 
-						return false;
-				};
+          if (strcmp(prop->name, propname) == 0)
+              return true;
 
-		success = false;
+          return false;
+        };
 
-		ok = DeviceTree::iterateNode((void**) &node, (void*)((UInt8*)node + node_size), &depth, NULL, prop_cb, &success);
+        success = false;
 
-		if(success)
-		{
-			DeviceTreeProperty *prop = (DeviceTreeProperty*) node;
+        ok = DeviceTree::iterateNode((void**)&node, (void*)((UInt8*)node + node_size), &depth, NULL,
+                                     prop_cb, &success);
 
-			MAC_RK_LOG("%s %s ", nodename, prop->name);
+        if (success) {
+            DeviceTreeProperty* prop = (DeviceTreeProperty*)node;
 
-			DeviceTree::printData((UInt8*) &prop->val, prop->size);
+            MAC_RK_LOG("%s %s ", nodename, prop->name);
 
-			return prop;
-		}
-	}
+            DeviceTree::printData((UInt8*)&prop->val, prop->size);
 
-	return NULL;
+            return prop;
+        }
+    }
+
+    return NULL;
 }
 
-void DeviceTree::printData(UInt8 *prop_data, UInt32 prop_size)
-{
-	if(is_ascii((char*) prop_data, prop_size) && !prop_data[strlen((char*) prop_data)])
-	{
-		MAC_RK_LOG("%s ", (char*) prop_data);
-	}
-	else if(prop_size == sizeof(UInt64))
-	{
-		MAC_RK_LOG("0x%llx ", *(UInt64*) prop_data);
-	}
-	else if(prop_size == sizeof(UInt32))
-	{
-		MAC_RK_LOG("0x%x ", *(UInt32*) prop_data);
-	}
-	else
-	{
-		for(UInt32 j = 0; j < prop_size; j++)
-			MAC_RK_LOG("%x ", prop_data[j]);
-	}
+void DeviceTree::printData(UInt8* prop_data, UInt32 prop_size) {
+    if (is_ascii((char*)prop_data, prop_size) && !prop_data[strlen((char*)prop_data)]) {
+        MAC_RK_LOG("%s ", (char*)prop_data);
+    } else if (prop_size == sizeof(UInt64)) {
+        MAC_RK_LOG("0x%llx ", *(UInt64*)prop_data);
+    } else if (prop_size == sizeof(UInt32)) {
+        MAC_RK_LOG("0x%x ", *(UInt32*)prop_data);
+    } else {
+        for (UInt32 j = 0; j < prop_size; j++)
+            MAC_RK_LOG("%x ", prop_data[j]);
+    }
 
-	MAC_RK_LOG("\n");
+    MAC_RK_LOG("\n");
 }
 
-void DeviceTree::printNode(char *nodename)
-{
-	UInt8 *dt = getAs<UInt8*>();
-	
-	Size dt_size = getSize();
+void DeviceTree::printNode(char* nodename) {
+    UInt8* dt = getAs<UInt8*>();
 
-	DeviceTreeNode *node;
+    Size dt_size = getSize();
 
-	UInt32 depth;
+    DeviceTreeNode* node;
 
-	node = DeviceTree::findNode(nodename, &depth);
+    UInt32 depth;
 
-	if(node)
-	{
-		Size node_size = DeviceTree::getNodeSize(depth, node);
+    node = DeviceTree::findNode(nodename, &depth);
 
-		DeviceTree::print(node, node_size);
-	}
+    if (node) {
+        Size node_size = DeviceTree::getNodeSize(depth, node);
+
+        DeviceTree::print(node, node_size);
+    }
 }
 
-void DeviceTree::print(DeviceTreeNode *node, Size node_size)
-{
-	Bool success = false;
+void DeviceTree::print(DeviceTreeNode* node, Size node_size) {
+    Bool success = false;
 
-	UInt32 depth = 0;
+    UInt32 depth = 0;
 
-	UInt8 *root = (UInt8*) node;
+    UInt8* root = (UInt8*)node;
 
-	Size sz = node_size;
+    Size sz = node_size;
 
-	dt_property_callback_t prop_cb =  ^Bool (UInt32 depth, void *property, UInt32 size)
-	{
-		DeviceTreeProperty *prop = (DeviceTreeProperty*) property;
+    dt_property_callback_t prop_cb = ^Bool(UInt32 depth, void* property, UInt32 size) {
+      DeviceTreeProperty* prop = (DeviceTreeProperty*)property;
 
-		UInt8 *prop_data = (UInt8*) &prop->val;
-		UInt32 prop_size = prop->size;
+      UInt8* prop_data = (UInt8*)&prop->val;
+      UInt32 prop_size = prop->size;
 
-		for(UInt32 j = 0; j < depth; j++)
-			MAC_RK_LOG("\t");
+      for (UInt32 j = 0; j < depth; j++)
+          MAC_RK_LOG("\t");
 
-		MAC_RK_LOG("%s ", prop->name);
+      MAC_RK_LOG("%s ", prop->name);
 
-		printData(prop_data, prop_size);
+      printData(prop_data, prop_size);
 
-		return false;
-	};
+      return false;
+    };
 
-	DeviceTree::iterateNode((void**) &root, (void*)(root + sz), &depth, NULL, prop_cb, &success);
+    DeviceTree::iterateNode((void**)&root, (void*)(root + sz), &depth, NULL, prop_cb, &success);
 }
 
-template<typename T>
-T DeviceTree::dump()
-{
-	UInt8 *dt = getAs<UInt8*>();
+template <typename T>
+T DeviceTree::dump() {
+    UInt8* dt = getAs<UInt8*>();
 
-	Size dt_size = getSize();
+    Size dt_size = getSize();
 
-	UInt8 *device_tree;
+    UInt8* device_tree;
 
-	UInt64 sz = dt_size;
-	UInt64 off = 0;
+    UInt64 sz = dt_size;
+    UInt64 off = 0;
 
-	device_tree = new UInt8[sz];
+    device_tree = new UInt8[sz];
 
-	while(sz > 0)
-	{
-		UInt64 to_read = sz / 0x1000 > 0 ? 0x1000 : sz;
+    while (sz > 0) {
+        UInt64 to_read = sz / 0x1000 > 0 ? 0x1000 : sz;
 
-		if(!(UInt64*) (dt + off, device_tree + off, to_read))
-		{
-			MAC_RK_LOG("Failed to dump device tree at 0x%llx\n", dt + off);
+        if (!(UInt64*)(dt + off, device_tree + off, to_read)) {
+            MAC_RK_LOG("Failed to dump device tree at 0x%llx\n", dt + off);
 
-			return NULL;
-		}
+            return NULL;
+        }
 
-		sz -= to_read;
-		off += to_read;
-	}
+        sz -= to_read;
+        off += to_read;
+    }
 
-	return reinterpret_cast<T>(device_tree);
+    return reinterpret_cast<T>(device_tree);
 }
 
+PE_state_t* platformExpertState(xnu::Kernel* kernel) {
+    uintptr_t device_tree;
 
-PE_state_t* platformExpertState(xnu::Kernel *kernel)
-{
-	uintptr_t device_tree;
+    UInt64 deviceTreeHead;
 
-	UInt64 deviceTreeHead;
+    UInt32 deviceTreeSize;
 
-	UInt32 deviceTreeSize;
+    xnu::Mach::VmAddress PE_state;
+    xnu::Mach::VmAddress boot_args;
 
-	xnu::Mach::VmAddress PE_state;
-	xnu::Mach::VmAddress boot_args;
-	
-	xnu::Mach::VmAddress __ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video = kernel->getSymbolAddressByName("__ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video");
+    xnu::Mach::VmAddress __ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video =
+        kernel->getSymbolAddressByName("__ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video");
 
-	xnu::Mach::VmAddress adrp_ins = Arch::arm64::PatchFinder::step64(kernel->getMachO(), __ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video, 0xF0, reinterpret_cast<bool(*)(UInt32*)>(Arch::arm64::is_adrp), -1, -1);
+    xnu::Mach::VmAddress adrp_ins = Arch::arm64::PatchFinder::step64(
+        kernel->getMachO(), __ZN16IOPlatformExpert14getConsoleInfoEP8PE_Video, 0xF0,
+        reinterpret_cast<bool (*)(UInt32*)>(Arch::arm64::is_adrp), -1, -1);
 
-	using namespace Arch::arm64;
+    using namespace Arch::arm64;
 
-	adr_t adrp = *(adr_t*) adrp_ins;
+    adr_t adrp = *(adr_t*)adrp_ins;
 
-	UInt64 page = (((adrp.immhi << 2) | adrp.immlo)) << 12;
+    UInt64 page = (((adrp.immhi << 2) | adrp.immlo)) << 12;
 
-	xnu::Mach::VmAddress add_ins = Arch::arm64::PatchFinder::step64(kernel->getMachO(), adrp_ins, 8, reinterpret_cast<bool(*)(UInt32*)>(Arch::arm64::is_add_imm), NO_REG, NO_REG);
+    xnu::Mach::VmAddress add_ins = Arch::arm64::PatchFinder::step64(
+        kernel->getMachO(), adrp_ins, 8,
+        reinterpret_cast<bool (*)(UInt32*)>(Arch::arm64::is_add_imm), NO_REG, NO_REG);
 
-	add_imm_t add = *(add_imm_t*) add_ins;
+    add_imm_t add = *(add_imm_t*)add_ins;
 
-	UInt64 page_offset = add.imm << (add.sh ? 12 : 0);
+    UInt64 page_offset = add.imm << (add.sh ? 12 : 0);
 
-	PE_state = ((adrp_ins & ~0x3FFF) + (page | page_offset)) & ~((UInt64) 0xF);
+    PE_state = ((adrp_ins & ~0x3FFF) + (page | page_offset)) & ~((UInt64)0xF);
 
-	return reinterpret_cast<PE_state_t*>(PE_state);
+    return reinterpret_cast<PE_state_t*>(PE_state);
 }
 
 #endif

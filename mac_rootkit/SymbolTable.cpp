@@ -25,120 +25,110 @@
 
 #endif
 
-extern "C"
-{
+extern "C" {
 #ifdef __USER__
 
-	char* cxx_demangle(char *mangled)
-	{
-		int status;
+char* cxx_demangle(char* mangled) {
+    int status;
 
-		char *ret = abi::__cxa_demangle(mangled, 0, 0, &status);  
+    char* ret = abi::__cxa_demangle(mangled, 0, 0, &status);
 
-		std::shared_ptr<char> retval;
+    std::shared_ptr<char> retval;
 
-		retval.reset( (char *)ret, [](char *mem) { if (mem) free((void*)mem); } );
+    retval.reset((char*)ret, [](char* mem) {
+        if (mem)
+            free((void*)mem);
+    });
 
-		return static_cast<char*>(retval.get());
-	}
+    return static_cast<char*>(retval.get());
+}
 
-	typedef char* (*_swift_demangle) (char *mangled, UInt32 length, UInt8 *output_buffer, UInt32 output_buffer_size, UInt32 flags);
+typedef char* (*_swift_demangle)(char* mangled, UInt32 length, UInt8* output_buffer,
+                                 UInt32 output_buffer_size, UInt32 flags);
 
-	char* swift_demangle(char *mangled)
-	{
-		void *runtime_loader_default = dlopen(NULL, RTLD_NOW);
+char* swift_demangle(char* mangled) {
+    void* runtime_loader_default = dlopen(NULL, RTLD_NOW);
 
-		if(runtime_loader_default)
-		{
-			void *sym = dlsym(runtime_loader_default, "swift_demangle");
+    if (runtime_loader_default) {
+        void* sym = dlsym(runtime_loader_default, "swift_demangle");
 
-			if(sym)
-			{
-				_swift_demangle f = reinterpret_cast<_swift_demangle>(sym);
+        if (sym) {
+            _swift_demangle f = reinterpret_cast<_swift_demangle>(sym);
 
-				char *cString = f(mangled, strlen(mangled), NULL, 0, 0);
-				
-				if(cString)
-				{
-					dlclose(runtime_loader_default);
+            char* cString = f(mangled, strlen(mangled), NULL, 0, 0);
 
-					return cString;
-				}
-			}
+            if (cString) {
+                dlclose(runtime_loader_default);
 
-			dlclose(runtime_loader_default);
-		}
+                return cString;
+            }
+        }
 
-		return NULL;
-	}
+        dlclose(runtime_loader_default);
+    }
+
+    return NULL;
+}
 
 #else
 
-	char* cxx_demangle(char *mangled) { return NULL; }
-	char* swift_demangle(char *mangled) { return NULL; }
+char* cxx_demangle(char* mangled) {
+    return NULL;
+}
+char* swift_demangle(char* mangled) {
+    return NULL;
+}
 
 #endif
-
 }
 
-Symbol* SymbolTable::getSymbolByName(char *symname)
-{
-	for(int32_t i = 0; i < symbolTable.size(); i++)
-	{
-		Symbol *symbol = symbolTable.at(i);
+Symbol* SymbolTable::getSymbolByName(char* symname) {
+    for (int32_t i = 0; i < symbolTable.size(); i++) {
+        Symbol* symbol = symbolTable.at(i);
 
-		if(strcmp(symbol->getName(), symname) == 0)
-		{
-			return symbol;
-		}
-	}
+        if (strcmp(symbol->getName(), symname) == 0) {
+            return symbol;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
-Symbol* SymbolTable::getSymbolByAddress(xnu::Mach::VmAddress address)
-{
-	for(int32_t i = 0; i < symbolTable.size(); i++)
-	{
-		Symbol *symbol = symbolTable.at(i);
+Symbol* SymbolTable::getSymbolByAddress(xnu::Mach::VmAddress address) {
+    for (int32_t i = 0; i < symbolTable.size(); i++) {
+        Symbol* symbol = symbolTable.at(i);
 
-		if(symbol->getAddress() == address)
-		{
-			return symbol;
-		}
-	}
+        if (symbol->getAddress() == address) {
+            return symbol;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
-Symbol* SymbolTable::getSymbolByOffset(Offset offset)
-{
-	for(int32_t i = 0; i < symbolTable.size(); i++)
-	{
-		Symbol *symbol = symbolTable.at(i);
+Symbol* SymbolTable::getSymbolByOffset(Offset offset) {
+    for (int32_t i = 0; i < symbolTable.size(); i++) {
+        Symbol* symbol = symbolTable.at(i);
 
-		if(symbol->getOffset() == offset)
-		{
-			return symbol;
-		}
-	}
+        if (symbol->getOffset() == offset) {
+            return symbol;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
-void SymbolTable::replaceSymbol(Symbol *symbol)
-{
-	for(int i = ((int) symbolTable.size()) - 1; i >= 0; i--)
-	{
-		Symbol *sym = symbolTable.at(i);
+void SymbolTable::replaceSymbol(Symbol* symbol) {
+    for (int i = ((int)symbolTable.size()) - 1; i >= 0; i--) {
+        Symbol* sym = symbolTable.at(i);
 
-		if(strcmp(sym->getName(), symbol->getName()) == 0)
-		{
-			symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), sym), symbolTable.end());
+        if (strcmp(sym->getName(), symbol->getName()) == 0) {
+            symbolTable.erase(std::remove(symbolTable.begin(), symbolTable.end(), sym),
+                              symbolTable.end());
 
-			i--;
-		}
-	}
+            i--;
+        }
+    }
 
-	symbolTable.push_back(symbol);
+    symbolTable.push_back(symbol);
 }

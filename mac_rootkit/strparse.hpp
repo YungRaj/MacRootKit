@@ -19,74 +19,63 @@
 #include <Types.h>
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef __KERNEL__
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 #endif
 
 int hex_digit(char c);
 
 enum strparse_result {
-	STRPARSE_OK,
-	STRPARSE_BADDIGIT,
-	STRPARSE_NODIGITS,
-	STRPARSE_OVERFLOW,
+    STRPARSE_OK,
+    STRPARSE_BADDIGIT,
+    STRPARSE_NODIGITS,
+    STRPARSE_OVERFLOW,
 };
 
-char* strnchar(char *str, UInt32 len, char ch);
+char* strnchar(char* str, UInt32 len, char ch);
 
 enum strtoint_result {
-	STRTOINT_OK,
-	STRTOINT_BADDIGIT,
-	STRTOINT_NODIGITS,
-	STRTOINT_OVERFLOW,
+    STRTOINT_OK,
+    STRTOINT_BADDIGIT,
+    STRTOINT_NODIGITS,
+    STRTOINT_OVERFLOW,
 };
 
-enum strtoint_result strtoint(char *str,
-							  UInt32 len,
-							  bool sign,
-							  bool is_signed,
-							  UInt32 base,
-							  UInt64 *value,
-							  char **end);
+enum strtoint_result strtoint(char* str, UInt32 len, bool sign, bool is_signed, UInt32 base,
+                              UInt64* value, char** end);
 
 enum strtodata_result {
-	STRTODATA_OK,
-	STRTODATA_BADBASE,
-	STRTODATA_BADDIGIT,
-	STRTODATA_NEEDDIGIT,
-	STRTODATA_NODIGITS,
+    STRTODATA_OK,
+    STRTODATA_BADBASE,
+    STRTODATA_BADDIGIT,
+    STRTODATA_NEEDDIGIT,
+    STRTODATA_NODIGITS,
 };
 
-enum strtodata_result strtodata(char *str,
-								UInt32 base,
-								void *data,
-								UInt32 *size,
-								char **end);
+enum strtodata_result strtodata(char* str, UInt32 base, void* data, UInt32* size, char** end);
 
-enum strparse_result strreplace(char *str, char find, char replace);
+enum strparse_result strreplace(char* str, char find, char replace);
 
 #ifdef __KERNEL__
 
-extern "C"
-{
-	char* strdup(char *s);
+extern "C" {
+char* strdup(char* s);
 
-	char* strstr(char *string, char *substring);
+char* strstr(char* string, char* substring);
 }
 
 #endif
 
-char* strtokmul(char *input, char *delimiter);
+char* strtokmul(char* input, char* delimiter);
 
-char *trim(char *s);
+char* trim(char* s);
 
-char *deblank(char *input);
-
+char* deblank(char* input);

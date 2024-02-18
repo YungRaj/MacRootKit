@@ -18,87 +18,98 @@
 
 #include <Types.h>
 
-#include "Segment.hpp"
 #include "Section.hpp"
+#include "Segment.hpp"
 
 class MachO;
 
 class Segment;
 class Section;
 
-extern "C"
-{
-	extern char* cxx_demangle(char *mangled);
-	extern char* swift_demangle(char *mangled);
+extern "C" {
+extern char* cxx_demangle(char* mangled);
+extern char* swift_demangle(char* mangled);
 }
 
-class Symbol
-{
-	public:
-		Symbol() { }
+class Symbol {
+public:
+    Symbol() {}
 
-		Symbol(MachO *macho, UInt32 type, char *name, xnu::Mach::VmAddress address, Offset offset, Segment *segment, Section *section)
-			: macho(macho),
-			  type(type),
-			  name(name),
-			  demangled_name(NULL), // this->getDemangledName();
-			  address(address),
-			  offset(offset),
-			  segment(segment),
-			  section(section)
-		{
+    Symbol(MachO* macho, UInt32 type, char* name, xnu::Mach::VmAddress address, Offset offset,
+           Segment* segment, Section* section)
+        : macho(macho), type(type), name(name), demangled_name(NULL), // this->getDemangledName();
+          address(address), offset(offset), segment(segment), section(section) {}
 
-		}
+    bool isUndefined() {
+        return type == N_UNDF;
+    }
+    bool isExternal() {
+        return type & N_EXT;
+    }
 
-		bool isUndefined() { return type == N_UNDF; }
-		bool isExternal() { return type & N_EXT; }
+    bool is_cxx() {
+        return cxx_demangle(this->getName()) != NULL;
+    }
+    bool is_swift() {
+        return /* swift */ cxx_demangle(this->getName()) != NULL;
+    }
 
-		bool is_cxx() { return cxx_demangle(this->getName()) != NULL; }
-		bool is_swift() { return /* swift */ cxx_demangle(this->getName()) != NULL; }
+    MachO* getMachO() {
+        return macho;
+    }
 
-		MachO* getMachO() { return macho; }
+    Segment* getSegment() {
+        return segment;
+    }
 
-		Segment* getSegment() { return segment; }
+    Section* getSection() {
+        return section;
+    }
 
-		Section* getSection() { return section; }
+    char* getName() {
+        return name;
+    }
 
-		char* getName() { return name; }
+    char* getDemangledName() {
+        char* _swift_demangle = swift_demangle(this->getName());
+        char* _cxx_demangle = cxx_demangle(this->getName());
 
-		char* getDemangledName()
-		{
-			char *_swift_demangle = swift_demangle(this->getName());
-			char *_cxx_demangle = cxx_demangle(this->getName());
+        if (_swift_demangle)
+            return _swift_demangle;
+        if (_cxx_demangle)
+            return _cxx_demangle;
 
-			if(_swift_demangle)
-				return _swift_demangle;
-			if(_cxx_demangle)
-				return _cxx_demangle;
+        char* empty = new char[1];
 
-			char *empty = new char[1];
+        *empty = '\0';
 
-			*empty = '\0';
+        return empty;
+    }
 
-			return empty;
-		}
+    xnu::Mach::VmAddress getAddress() {
+        return address;
+    }
 
-		xnu::Mach::VmAddress getAddress() { return address; }
+    Offset getOffset() {
+        return offset;
+    }
 
-		Offset getOffset() { return offset; }
+    UInt32 getType() {
+        return type;
+    }
 
-		UInt32 getType() { return type; }
+private:
+    MachO* macho;
 
-	private:
-		MachO *macho;
+    Segment* segment;
+    Section* section;
 
-		Segment *segment;
-		Section *section;
+    char* name;
+    char* demangled_name;
 
-		char *name;
-		char *demangled_name;
+    UInt32 type;
 
-		UInt32 type;
+    xnu::Mach::VmAddress address;
 
-		xnu::Mach::VmAddress address;
-
-		Offset offset;
+    Offset offset;
 };

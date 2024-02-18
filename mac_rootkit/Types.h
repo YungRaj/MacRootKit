@@ -17,8 +17,8 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <sys/types.h>
 
@@ -49,32 +49,29 @@ using Size = size_t;
 #include <IOKit/IOKitLib.h>
 #endif
 
-namespace xnu
-{
-	using KmodInfo = kmod_info_t;
+namespace xnu {
+    using KmodInfo = kmod_info_t;
 
-	using KmodStartFunc = kmod_start_func_t;
-	using KmodStopFunc = kmod_stop_func_t;
+    using KmodStartFunc = kmod_start_func_t;
+    using KmodStopFunc = kmod_stop_func_t;
 
-	namespace Mach
-	{
-		using VmMap = vm_map_t;
+    namespace Mach {
+        using VmMap = vm_map_t;
 
-		using VmAddress    = mach_vm_address_t;
-		using VmProtection = vm_prot_t;
+        using VmAddress = mach_vm_address_t;
+        using VmProtection = vm_prot_t;
 
-		using Port 		= mach_port_t;
-	};
+        using Port = mach_port_t;
+    }; // namespace Mach
 
-	namespace Macho
-	{
-		using Header64 = struct mach_header_64;
+    namespace Macho {
+        using Header64 = struct mach_header_64;
 
-		using Nlist64 = struct nlist_64;
+        using Nlist64 = struct nlist_64;
 
-		using SymbolName = char*;
+        using SymbolName = char*;
 
-		using SegmentName = char*;
-		using SectionName = char*;
-	};
-};
+        using SegmentName = char*;
+        using SectionName = char*;
+    }; // namespace Macho
+};     // namespace xnu

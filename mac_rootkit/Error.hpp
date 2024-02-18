@@ -16,16 +16,14 @@
 
 #pragma once
 
-namespace Error
-{
-	enum Error : int32_t
-	{
-		kErrorUnknown          = -1,
-		kErrorNone,
-		kErrorInvalidArgument,
-		kErrorOutOfMemory,
-		kErrorNotSupported,
-		kErrorNotAvailable,
-		kErrorCompatibilityFailure,
-	};
+namespace Error {
+    enum Error : int32_t {
+        kErrorUnknown = -1,
+        kErrorNone,
+        kErrorInvalidArgument,
+        kErrorOutOfMemory,
+        kErrorNotSupported,
+        kErrorNotAvailable,
+        kErrorCompatibilityFailure,
+    };
 }

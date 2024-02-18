@@ -28,65 +28,74 @@
 
 #include "Arch.hpp"
 
-namespace xnu
-{
-	class Kernel;
-	class Task;
-};
+namespace xnu {
+    class Kernel;
+    class Task;
+}; // namespace xnu
 
 using namespace xnu;
 
-namespace mrk
-{
-	class Payload
-	{
-		static constexpr UInt32 expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
+namespace mrk {
+    class Payload {
+        static constexpr UInt32 expectedSize = Arch::getPageSize<Arch::getCurrentArchitecture()>();
 
-		public:
-			Payload(xnu::Task *task, Hook *hook, xnu::Mach::VmProtection prot);
+    public:
+        Payload(xnu::Task* task, Hook* hook, xnu::Mach::VmProtection prot);
 
-			~Payload();
+        ~Payload();
 
-			Hook* getHook() { return hook; }
+        Hook* getHook() {
+            return hook;
+        }
 
-			xnu::Mach::VmAddress getAddress() { return address; }
+        xnu::Mach::VmAddress getAddress() {
+            return address;
+        }
 
-			void setCurrentOffset(Offset offset);
+        void setCurrentOffset(Offset offset);
 
-			Offset getCurrentOffset() { return current_offset; }
+        Offset getCurrentOffset() {
+            return current_offset;
+        }
 
-			Size getSize() { return size; }
+        Size getSize() {
+            return size;
+        }
 
-			xnu::Mach::VmProtection getProt() { return prot; }
+        xnu::Mach::VmProtection getProt() {
+            return prot;
+        }
 
-			Task* getTask() { return task; }
+        Task* getTask() {
+            return task;
+        }
 
-			bool readBytes(UInt8 *bytes, Size size);
-			bool readBytes(Offset offset, UInt8 *bytes, Size size);
+        bool readBytes(UInt8* bytes, Size size);
+        bool readBytes(Offset offset, UInt8* bytes, Size size);
 
-			bool writeBytes(UInt8 *bytes, Size size);
-			bool writeBytes(Offset offset, UInt8 *bytes, Size size);
+        bool writeBytes(UInt8* bytes, Size size);
+        bool writeBytes(Offset offset, UInt8* bytes, Size size);
 
-			void setWritable();
-			void setExecutable();
+        void setWritable();
+        void setExecutable();
 
-			bool prepare();
+        bool prepare();
 
-			bool commit();
-		
-		private:
-			xnu::Task *task;
+        bool commit();
 
-			xnu::Mach::VmAddress address;
+    private:
+        xnu::Task* task;
 
-			Offset current_offset;
+        xnu::Mach::VmAddress address;
 
-			Hook *hook;
+        Offset current_offset;
 
-			bool kernelPayload = false;
+        Hook* hook;
 
-			Size size;
+        bool kernelPayload = false;
 
-			xnu::Mach::VmProtection prot;
-	};
-};
+        Size size;
+
+        xnu::Mach::VmProtection prot;
+    };
+}; // namespace mrk

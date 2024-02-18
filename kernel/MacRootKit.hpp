@@ -29,114 +29,128 @@
 
 #include <string.h>
 
-namespace xnu
-{
-	class Kext;
-	class Kernel;
-}
+namespace xnu {
+    class Kext;
+    class Kernel;
+} // namespace xnu
 
 using namespace xnu;
 
 class IOKernelRootKitService;
 
-namespace mrk
-{
-	class Hook;
+namespace mrk {
+    class Hook;
 
-	template <typename T, typename Y=void *>
-	using StoredPair = Pair<T, Y>;
+    template <typename T, typename Y = void*>
+    using StoredPair = Pair<T, Y>;
 
-	template <typename T, typename Y=void *>
-	using StoredArray = std::vector<StoredPair<T, Y>*>;
+    template <typename T, typename Y = void*>
+    using StoredArray = std::vector<StoredPair<T, Y>*>;
 
-	class MacRootKit
-	{
-		public:
-			using entitlement_callback_t = void (*)(void *user, task_t task, const char *entitlement, void *original);
+    class MacRootKit {
+    public:
+        using entitlement_callback_t = void (*)(void* user, task_t task, const char* entitlement,
+                                                void* original);
 
-			using binaryload_callback_t = void (*)(void *user, task_t task, const char *path, Size len);
+        using binaryload_callback_t = void (*)(void* user, task_t task, const char* path, Size len);
 
-			using kextload_callback_t = void (*)(void *user, void *kext, xnu::KmodInfo *kmod_info);
+        using kextload_callback_t = void (*)(void* user, void* kext, xnu::KmodInfo* kmod_info);
 
-		public:
-			MacRootKit(xnu::Kernel *kernel);
+    public:
+        MacRootKit(xnu::Kernel* kernel);
 
-			~MacRootKit();
+        ~MacRootKit();
 
-			xnu::Kernel* getKernel() { return kernel; }
+        xnu::Kernel* getKernel() {
+            return kernel;
+        }
 
-			Arch::Architecture* getArchitecture() { return architecture; }
+        Arch::Architecture* getArchitecture() {
+            return architecture;
+        }
 
-			enum Arch::Architectures getPlatformArchitecture() { return platformArchitecture; }
+        enum Arch::Architectures getPlatformArchitecture() {
+            return platformArchitecture;
+        }
 
-			std::vector<xnu::Kext*>& getKexts() { return kexts; }
+        std::vector<xnu::Kext*>& getKexts() {
+            return kexts;
+        }
 
-			xnu::Kext* getKextByIdentifier(char *name);
+        xnu::Kext* getKextByIdentifier(char* name);
 
-			xnu::Kext* getKextByAddress(xnu::Mach::VmAddress address);
+        xnu::Kext* getKextByAddress(xnu::Mach::VmAddress address);
 
-			mrk::KernelPatcher* getKernelPatcher() { return kernelPatcher; }
+        mrk::KernelPatcher* getKernelPatcher() {
+            return kernelPatcher;
+        }
 
-			mrk::Plugin* getPlugin(const char *pluginName)
-			{
-				for(int i = 0; i < plugins.size(); i++)
-				{
-					mrk::Plugin *plugin = plugins.at(i);
+        mrk::Plugin* getPlugin(const char* pluginName) {
+            for (int i = 0; i < plugins.size(); i++) {
+                mrk::Plugin* plugin = plugins.at(i);
 
-					if(strcmp(plugin->getProduct(), pluginName) == 0)
-						return plugin;
-				}
+                if (strcmp(plugin->getProduct(), pluginName) == 0)
+                    return plugin;
+            }
 
-				return NULL;
-			}
+            return NULL;
+        }
 
-			void installPlugin(mrk::Plugin *plugin) { this->plugins.push_back(plugin); }
+        void installPlugin(mrk::Plugin* plugin) {
+            this->plugins.push_back(plugin);
+        }
 
-			StoredArray<entitlement_callback_t>& getEntitlementCallbacks() { return entitlementCallbacks; }
+        StoredArray<entitlement_callback_t>& getEntitlementCallbacks() {
+            return entitlementCallbacks;
+        }
 
-			StoredArray<binaryload_callback_t>& getBinaryLoadCallbacks() { return binaryLoadCallbacks; }
+        StoredArray<binaryload_callback_t>& getBinaryLoadCallbacks() {
+            return binaryLoadCallbacks;
+        }
 
-			StoredArray<kextload_callback_t>& getKextLoadCallbacks() { return kextLoadCallbacks; }
+        StoredArray<kextload_callback_t>& getKextLoadCallbacks() {
+            return kextLoadCallbacks;
+        }
 
-			void registerCallbacks();
+        void registerCallbacks();
 
-			void registerEntitlementCallback(void *user, entitlement_callback_t callback);
+        void registerEntitlementCallback(void* user, entitlement_callback_t callback);
 
-			void registerBinaryLoadCallback(void *user, binaryload_callback_t callback);
+        void registerBinaryLoadCallback(void* user, binaryload_callback_t callback);
 
-			void registerKextLoadCallback(void *user, kextload_callback_t callback);
+        void registerKextLoadCallback(void* user, kextload_callback_t callback);
 
-			void onEntitlementRequest(task_t task, const char *entitlement, void *original);
+        void onEntitlementRequest(task_t task, const char* entitlement, void* original);
 
-			void onProcLoad(task_t task, const char *path, Size len);
+        void onProcLoad(task_t task, const char* path, Size len);
 
-			void onKextLoad(void *kext, xnu::KmodInfo *kmod);
+        void onKextLoad(void* kext, xnu::KmodInfo* kmod);
 
-			xnu::KmodInfo* findKmodInfo(const char *kextname);
+        xnu::KmodInfo* findKmodInfo(const char* kextname);
 
-			void* findOSKextByIdentifier(const char *kextidentifier);
+        void* findOSKextByIdentifier(const char* kextidentifier);
 
-		private:
-			Arch::Architecture *architecture;
+    private:
+        Arch::Architecture* architecture;
 
-			xnu::Kernel *kernel;
+        xnu::Kernel* kernel;
 
-			mrk::KernelPatcher *kernelPatcher;
+        mrk::KernelPatcher* kernelPatcher;
 
-			enum Arch::Architectures platformArchitecture;
+        enum Arch::Architectures platformArchitecture;
 
-			bool waitingForAlreadyLoadedKexts;
+        bool waitingForAlreadyLoadedKexts;
 
-			std::vector<xnu::Kext*> kexts;
+        std::vector<xnu::Kext*> kexts;
 
-			xnu::KmodInfo **kextKmods;
+        xnu::KmodInfo** kextKmods;
 
-			std::vector<mrk::Plugin*> plugins;
+        std::vector<mrk::Plugin*> plugins;
 
-			StoredArray<entitlement_callback_t> entitlementCallbacks;
+        StoredArray<entitlement_callback_t> entitlementCallbacks;
 
-			StoredArray<binaryload_callback_t> binaryLoadCallbacks;
+        StoredArray<binaryload_callback_t> binaryLoadCallbacks;
 
-			StoredArray<kextload_callback_t> kextLoadCallbacks;
-	};
-}
+        StoredArray<kextload_callback_t> kextLoadCallbacks;
+    };
+} // namespace mrk

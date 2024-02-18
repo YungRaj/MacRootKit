@@ -36,12 +36,11 @@ extern "C" {
 
 /* ------------------------------------------------------------------------ */
 
-void  umm_init( void );
-void *umm_malloc( size_t size );
-void *umm_calloc( size_t num, size_t size );
-void *umm_realloc( void *ptr, size_t size );
-void  umm_free( void *ptr );
-
+void umm_init(void);
+void* umm_malloc(size_t size);
+void* umm_calloc(size_t num, size_t size);
+void* umm_realloc(void* ptr, size_t size);
+void umm_free(void* ptr);
 
 /* ------------------------------------------------------------------------ */
 

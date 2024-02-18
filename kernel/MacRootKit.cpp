@@ -19,153 +19,129 @@
 using namespace Arch;
 using namespace xnu;
 
-namespace mrk
-{
+namespace mrk {
 
-MacRootKit::MacRootKit(xnu::Kernel *kernel)
-	: kernel(kernel),
-	  kextKmods(reinterpret_cast<xnu::KmodInfo**>(kernel->getSymbolAddressByName("_kmod"))),
-	  platformArchitecture(Arch::getCurrentArchitecture()),
-	  kernelPatcher(new KernelPatcher(this->kernel)),
-	  architecture(Arch::initArchitecture())
-{
-	kernel->setRootKit(this);
+    MacRootKit::MacRootKit(xnu::Kernel* kernel)
+        : kernel(kernel),
+          kextKmods(reinterpret_cast<xnu::KmodInfo**>(kernel->getSymbolAddressByName("_kmod"))),
+          platformArchitecture(Arch::getCurrentArchitecture()),
+          kernelPatcher(new KernelPatcher(this->kernel)), architecture(Arch::initArchitecture()) {
+        kernel->setRootKit(this);
 
-	this->registerCallbacks();
-}
+        this->registerCallbacks();
+    }
 
-MacRootKit::~MacRootKit()
-{
+    MacRootKit::~MacRootKit() {}
 
-}
+    void MacRootKit::registerCallbacks() {
+        this->registerEntitlementCallback(
+            (void*)this, [](void* user, task_t task, const char* entitlement, void* original) {
+                static_cast<MacRootKit*>(user)->onEntitlementRequest(task, entitlement, original);
+            });
 
-void MacRootKit::registerCallbacks()
-{
-	this->registerEntitlementCallback((void*) this, [] (void *user, task_t task, const char *entitlement, void *original)
-	{
-		static_cast<MacRootKit*>(user)->onEntitlementRequest(task, entitlement, original);
-	});
+        this->registerBinaryLoadCallback(
+            (void*)this, [](void* user, task_t task, const char* path, Size len) {
+                static_cast<MacRootKit*>(user)->onProcLoad(task, path, len);
+            });
 
-	this->registerBinaryLoadCallback((void*) this, [] (void *user, task_t task, const char *path, Size len)
-	{
-		static_cast<MacRootKit*>(user)->onProcLoad(task, path, len);
-	});
+        this->registerKextLoadCallback((void*)this,
+                                       [](void* user, void* kext, xnu::KmodInfo* kmod) {
+                                           static_cast<MacRootKit*>(user)->onKextLoad(kext, kmod);
+                                       });
+    }
 
-	this->registerKextLoadCallback((void*) this, [] (void *user, void *kext, xnu::KmodInfo *kmod)
-	{
-		static_cast<MacRootKit*>(user)->onKextLoad(kext, kmod);
-	});
-}
+    void MacRootKit::registerEntitlementCallback(void* user, entitlement_callback_t callback) {
+        StoredPair<entitlement_callback_t>* pair =
+            StoredPair<entitlement_callback_t>::create(callback, user);
 
-void MacRootKit::registerEntitlementCallback(void *user, entitlement_callback_t callback)
-{
-	StoredPair<entitlement_callback_t> *pair = StoredPair<entitlement_callback_t>::create(callback, user);
+        this->entitlementCallbacks.push_back(pair);
+    }
 
-	this->entitlementCallbacks.push_back(pair);
-}
+    void MacRootKit::registerBinaryLoadCallback(void* user, binaryload_callback_t callback) {
+        StoredPair<binaryload_callback_t>* pair =
+            StoredPair<binaryload_callback_t>::create(callback, user);
 
-void MacRootKit::registerBinaryLoadCallback(void *user, binaryload_callback_t callback)
-{
-	StoredPair<binaryload_callback_t> *pair = StoredPair<binaryload_callback_t>::create(callback, user);
+        this->binaryLoadCallbacks.push_back(pair);
+    }
 
-	this->binaryLoadCallbacks.push_back(pair);
-}
+    void MacRootKit::registerKextLoadCallback(void* user, kextload_callback_t callback) {
+        StoredPair<kextload_callback_t>* pair =
+            StoredPair<kextload_callback_t>::create(callback, user);
 
-void MacRootKit::registerKextLoadCallback(void *user, kextload_callback_t callback)
-{
-	StoredPair<kextload_callback_t> *pair = StoredPair<kextload_callback_t>::create(callback, user);
+        this->kextLoadCallbacks.push_back(pair);
+    }
 
-	this->kextLoadCallbacks.push_back(pair);
-}
+    Kext* MacRootKit::getKextByIdentifier(char* name) {
+        std::vector<Kext*>& kexts = this->getKexts();
 
-Kext* MacRootKit::getKextByIdentifier(char *name)
-{
-	std::vector<Kext*> &kexts = this->getKexts();
+        for (int i = 0; i < kexts.size(); i++) {
+            Kext* kext = kexts.at(i);
 
-	for(int i = 0; i < kexts.size(); i++)
-	{
-		Kext *kext = kexts.at(i);
+            if (strcmp(kext->getName(), name) == 0) {
+                return kext;
+            }
+        }
 
-		if(strcmp(kext->getName(), name) == 0)
-		{
-			return kext;
-		}
-	}
+        return NULL;
+    }
 
-	return NULL;
-}
+    Kext* MacRootKit::getKextByAddress(xnu::Mach::VmAddress address) {
+        std::vector<Kext*>& kexts = this->getKexts();
 
-Kext* MacRootKit::getKextByAddress(xnu::Mach::VmAddress address)
-{
-	std::vector<Kext*> &kexts = this->getKexts();
+        for (int i = 0; i < kexts.size(); i++) {
+            Kext* kext = kexts.at(i);
 
-	for(int i = 0; i < kexts.size(); i++)
-	{
-		Kext *kext = kexts.at(i);
+            if (kext->getAddress() == address) {
+                return kext;
+            }
+        }
 
-		if(kext->getAddress() == address)
-		{
-			return kext;
-		}
-	}
+        return NULL;
+    }
 
-	return NULL;
-}
+    void MacRootKit::onEntitlementRequest(task_t task, const char* entitlement, void* original) {}
 
-void MacRootKit::onEntitlementRequest(task_t task, const char *entitlement, void *original)
-{
+    void MacRootKit::onProcLoad(task_t task, const char* path, Size len) {}
 
-}
+    void MacRootKit::onKextLoad(void* loaded_kext, xnu::KmodInfo* kmod_info) {
+        Kext* kext;
 
-void MacRootKit::onProcLoad(task_t task, const char *path, Size len)
-{
+        if (loaded_kext && kmod_info->size) {
+            kext = new xnu::Kext(this->getKernel(), loaded_kext, kmod_info);
+        } else {
+            kext = new xnu::Kext(this->getKernel(), kmod_info->address,
+                                 reinterpret_cast<char*>(&kmod_info->name));
+        }
 
-}
+        kexts.push_back(kext);
+    }
 
-void MacRootKit::onKextLoad(void *loaded_kext, xnu::KmodInfo *kmod_info)
-{
-	Kext *kext;
+    xnu::KmodInfo* MacRootKit::findKmodInfo(const char* kextname) {
+        xnu::KmodInfo* kmod;
 
-	if(loaded_kext && kmod_info->size)
-	{
-		kext = new xnu::Kext(this->getKernel(), loaded_kext, kmod_info);
-	} else
-	{
-		kext = new xnu::Kext(this->getKernel(), kmod_info->address, reinterpret_cast<char*>(&kmod_info->name));
-	}
+        if (!kextKmods)
+            return NULL;
 
-	kexts.push_back(kext);
-}
+        for (kmod = *kextKmods; kmod; kmod = kmod->next) {
+            if (strcmp(kmod->name, kextname) == 0) {
+                return kmod;
+            }
+        }
 
-xnu::KmodInfo* MacRootKit::findKmodInfo(const char *kextname)
-{
-	xnu::KmodInfo *kmod;
+        return NULL;
+    }
 
-	if(!kextKmods)
-		return NULL;
+    void* MacRootKit::findOSKextByIdentifier(const char* kextidentifier) {
+        void* (*lookupKextWithIdentifier)(const char*);
 
-	for(kmod = *kextKmods; kmod; kmod = kmod->next)
-	{
-		if(strcmp(kmod->name, kextname) == 0)
-		{
-			return kmod;
-		}
-	}
+        typedef void* (*__ZN6OSKext24lookupKextWithIdentifierEPKc)(const char*);
 
-	return NULL;
-}
+        lookupKextWithIdentifier = reinterpret_cast<__ZN6OSKext24lookupKextWithIdentifierEPKc>(
+            this->kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc"));
 
-void* MacRootKit::findOSKextByIdentifier(const char *kextidentifier)
-{
-	void* (*lookupKextWithIdentifier)(const char*);
+        void* OSKext = lookupKextWithIdentifier(kextidentifier);
 
-	typedef void* (*__ZN6OSKext24lookupKextWithIdentifierEPKc)(const char*);
+        return OSKext;
+    }
 
-	lookupKextWithIdentifier = reinterpret_cast<__ZN6OSKext24lookupKextWithIdentifierEPKc>(this->kernel->getSymbolAddressByName("__ZN6OSKext24lookupKextWithIdentifierEPKc"));
-
-	void *OSKext = lookupKextWithIdentifier(kextidentifier);
-
-	return OSKext;
-}
-
-}
+} // namespace mrk

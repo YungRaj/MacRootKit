@@ -20,45 +20,43 @@
 
 #include <mach/kmod.h>
 
-#include "vector.hpp"
 #include "Pair.hpp"
+#include "vector.hpp"
 
-namespace mrk
-{
-	class Hook;
-	
-	class Patcher
-	{
-		public:
-			Patcher();
+namespace mrk {
+    class Hook;
 
-			~Patcher();
+    class Patcher {
+    public:
+        Patcher();
 
-			virtual void findAndReplace(void *data,
-										Size data_size,
-										const void *find, Size find_size,
-										const void *replace, Size replace_size);
+        ~Patcher();
 
-			virtual void onKextLoad(void *kext, kmod_info_t *kmod);
+        virtual void findAndReplace(void* data, Size data_size, const void* find, Size find_size,
+                                    const void* replace, Size replace_size);
 
-			virtual void routeFunction(mrk::Hook *hook);
+        virtual void onKextLoad(void* kext, kmod_info_t* kmod);
 
-			std::vector<Hook*>& getHooks() { return hooks; }
+        virtual void routeFunction(mrk::Hook* hook);
 
-			mrk::Hook* hookForFunction(xnu::Mach::VmAddress address);
+        std::vector<Hook*>& getHooks() {
+            return hooks;
+        }
 
-			mrk::Hook* breakpointForAddress(xnu::Mach::VmAddress address);
+        mrk::Hook* hookForFunction(xnu::Mach::VmAddress address);
 
-			bool isFunctionHooked(xnu::Mach::VmAddress address);
+        mrk::Hook* breakpointForAddress(xnu::Mach::VmAddress address);
 
-			bool isBreakpointAtInstruction(xnu::Mach::VmAddress address);
+        bool isFunctionHooked(xnu::Mach::VmAddress address);
 
-			void installHook(mrk::Hook *hook, xnu::Mach::VmAddress hooked);
+        bool isBreakpointAtInstruction(xnu::Mach::VmAddress address);
 
-			void removeHook(mrk::Hook *hook);
+        void installHook(mrk::Hook* hook, xnu::Mach::VmAddress hooked);
 
-		private:
-			std::vector<mrk::Hook*> hooks;
-	};
+        void removeHook(mrk::Hook* hook);
 
-}
+    private:
+        std::vector<mrk::Hook*> hooks;
+    };
+
+} // namespace mrk

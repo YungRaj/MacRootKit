@@ -18,296 +18,273 @@
 
 #include "Kernel.hpp"
 
-namespace xnu
-{
+namespace xnu {
 
-KextMachO::KextMachO(Kernel *kernel, char *name, xnu::Mach::VmAddress base)
-    : kernel(kernel),
-      name(name),
-      base_offset(0),
-      kernel_cache(
+    KextMachO::KextMachO(Kernel* kernel, char* name, xnu::Mach::VmAddress base)
+        : kernel(kernel), name(name), base_offset(0), kernel_cache(
 #ifdef __arm64__
-          Kernel::findKernelCache()
+                                                          Kernel::findKernelCache()
 #else
-          0
+                                                          0
 #endif
-      ),
-      kernel_collection(
+                                                              ),
+          kernel_collection(
 #ifdef __x86_64__
-          Kernel::findKernelCollection()
+              Kernel::findKernelCollection()
 #else
-          0
+              0
 #endif
-      )
-{
-	size = 0;
+          ) {
+        size = 0;
 
-	this->initWithBase(base, 0);
-	
-	kmod_info = reinterpret_cast<xnu::KmodInfo*>(this->getSymbolAddressByName("_kmod_info"));
-}
+        this->initWithBase(base, 0);
 
-KextMachO::KextMachO(Kernel *kernel, char *name, xnu::KmodInfo *kmod_info)
-    : kernel(kernel),
-      name(&kmod_info->name[0]),
-      kmod_info(kmod_info),
-      base_offset(0),
-      kernel_cache(
+        kmod_info = reinterpret_cast<xnu::KmodInfo*>(this->getSymbolAddressByName("_kmod_info"));
+    }
+
+    KextMachO::KextMachO(Kernel* kernel, char* name, xnu::KmodInfo* kmod_info)
+        : kernel(kernel), name(&kmod_info->name[0]), kmod_info(kmod_info), base_offset(0),
+          kernel_cache(
 #ifdef __arm64__
-          Kernel::findKernelCache()
+              Kernel::findKernelCache()
 #else
-          0
+              0
 #endif
-      ),
-      kernel_collection(
+                  ),
+          kernel_collection(
 #ifdef __x86_64__
-          Kernel::findKernelCollection()
+              Kernel::findKernelCollection()
 #else
-          0
+              0
 #endif
-      )
-{
+          ) {
 
-	this->initWithBase(this->kmod_info->address, 0);
-}
+        this->initWithBase(this->kmod_info->address, 0);
+    }
 
-KextMachO::~KextMachO()
-{
+    KextMachO::~KextMachO() {}
 
-}
+    void KextMachO::parseLinkedit() {}
 
-void KextMachO::parseLinkedit()
-{
+    bool KextMachO::parseLoadCommands() {
+        struct mach_header_64* mh = this->getMachHeader();
 
-}
+        char buffer[128];
 
+        snprintf(buffer, 128, "0x%llx", (UInt64)(*this)[sizeof(struct mach_header_64)]);
 
-
-bool KextMachO::parseLoadCommands()
-{
-	struct mach_header_64 *mh = this->getMachHeader();
-
-	char buffer[128];
-
-	snprintf(buffer, 128, "0x%llx", (UInt64) (*this)[sizeof(struct mach_header_64)]);
-
-	MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n", buffer);
+        MAC_RK_LOG("MacRK::KextMachO::parseLoadCommands() mh + struct mach_header_64 = %s\n",
+                   buffer);
 
 #ifdef __arm64__
-	this->size = MachO::getSize();
+        this->size = MachO::getSize();
 #endif
 
-	UInt8 *q = reinterpret_cast<UInt8*>(mh) + sizeof(struct mach_header_64);
+        UInt8* q = reinterpret_cast<UInt8*>(mh) + sizeof(struct mach_header_64);
 
-	UInt32 current_offset = sizeof(struct mach_header_64);
+        UInt32 current_offset = sizeof(struct mach_header_64);
 
-	MAC_RK_LOG("MacRK::KextMachO::mach_header->ncmds = %u\n", mh->ncmds);
+        MAC_RK_LOG("MacRK::KextMachO::mach_header->ncmds = %u\n", mh->ncmds);
 
-	for(UInt32 i = 0; i < mh->ncmds; i++)
-	{
-		struct load_command *load_command = reinterpret_cast<struct load_command*>((*this)[current_offset]);
+        for (UInt32 i = 0; i < mh->ncmds; i++) {
+            struct load_command* load_command =
+                reinterpret_cast<struct load_command*>((*this)[current_offset]);
 
-		UInt32 cmdtype = load_command->cmd;
-		UInt32 cmdsize = load_command->cmdsize;
-		
-		if(cmdsize > mh->sizeofcmds - ((uintptr_t) load_command - (uintptr_t)(mh + 1)))
-			return false;
+            UInt32 cmdtype = load_command->cmd;
+            UInt32 cmdsize = load_command->cmdsize;
 
-		switch(cmdtype)
-		{
-			case LC_SEGMENT_64:
-			{
-				;
-				struct segment_command_64 *segment_command = reinterpret_cast<struct segment_command_64*>(load_command);
+            if (cmdsize > mh->sizeofcmds - ((uintptr_t)load_command - (uintptr_t)(mh + 1)))
+                return false;
 
-				UInt32 nsects = segment_command->nsects;
-				UInt32 sect_offset = current_offset + sizeof(struct segment_command_64);
+            switch (cmdtype) {
+            case LC_SEGMENT_64: {
+                ;
+                struct segment_command_64* segment_command =
+                    reinterpret_cast<struct segment_command_64*>(load_command);
 
-				if(segment_command->vmaddr == this->getBase())
-				{
-					this->base_offset = segment_command->fileoff;
-				}
+                UInt32 nsects = segment_command->nsects;
+                UInt32 sect_offset = current_offset + sizeof(struct segment_command_64);
 
-				char buffer1[128];
-				char buffer2[128];
+                if (segment_command->vmaddr == this->getBase()) {
+                    this->base_offset = segment_command->fileoff;
+                }
 
-				snprintf(buffer1, 128, "0x%08llx", segment_command->vmaddr);
-				snprintf(buffer2, 128, "0x%08llx", segment_command->vmaddr + segment_command->vmsize);
+                char buffer1[128];
+                char buffer2[128];
 
-				MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n", segment_command->fileoff,
-																			  segment_command->segname,
-																			  buffer1,
-																			  buffer2);
-				
-				
-				if (!strcmp(segment_command->segname, "__LINKEDIT"))
-				{
-					linkedit = reinterpret_cast<UInt8 *>(segment_command->vmaddr);
-					linkedit_off = segment_command->fileoff;
-					linkedit_size = segment_command->filesize;
-				}
+                snprintf(buffer1, 128, "0x%08llx", segment_command->vmaddr);
+                snprintf(buffer2, 128, "0x%08llx",
+                         segment_command->vmaddr + segment_command->vmsize);
 
-				int j = 0;
+                MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n",
+                           segment_command->fileoff, segment_command->segname, buffer1, buffer2);
 
-				if(nsects * sizeof(struct section_64) + sizeof(struct segment_command_64) > cmdsize)
-					return false;
+                if (!strcmp(segment_command->segname, "__LINKEDIT")) {
+                    linkedit = reinterpret_cast<UInt8*>(segment_command->vmaddr);
+                    linkedit_off = segment_command->fileoff;
+                    linkedit_size = segment_command->filesize;
+                }
 
-				Segment *segment = new Segment(segment_command);
+                int j = 0;
 
-				for(j = 0; j < nsects; j++)
-				{
-					struct section_64 *section = reinterpret_cast<struct section_64*>((*this)[sect_offset]);
+                if (nsects * sizeof(struct section_64) + sizeof(struct segment_command_64) >
+                    cmdsize)
+                    return false;
 
-					char buffer1[128];
-					char buffer2[128];
+                Segment* segment = new Segment(segment_command);
 
-					snprintf(buffer1, 128, "0x%08llx", section->addr);
-					snprintf(buffer2, 128, "0x%08llx", section->addr + section->size);
+                for (j = 0; j < nsects; j++) {
+                    struct section_64* section =
+                        reinterpret_cast<struct section_64*>((*this)[sect_offset]);
 
-					MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j,
-					                            buffer1,
-					                            buffer2,
-					                            section->sectname);
+                    char buffer1[128];
+                    char buffer2[128];
 
-					sect_offset += sizeof(struct section_64);
-				}
+                    snprintf(buffer1, 128, "0x%08llx", section->addr);
+                    snprintf(buffer2, 128, "0x%08llx", section->addr + section->size);
 
-				this->segments.push_back(segment);
+                    MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j, buffer1, buffer2,
+                               section->sectname);
 
-				break;
-			}
+                    sect_offset += sizeof(struct section_64);
+                }
 
-			case LC_SYMTAB:
-			{
-				;
-				struct symtab_command *symtab_command = reinterpret_cast<struct symtab_command*>(load_command);
+                this->segments.push_back(segment);
 
-				xnu::Macho::Nlist64 *symtab;
-				UInt32 nsyms;
+                break;
+            }
 
-				char *strtab;
-				UInt32 strsize;
+            case LC_SYMTAB: {
+                ;
+                struct symtab_command* symtab_command =
+                    reinterpret_cast<struct symtab_command*>(load_command);
 
-				MAC_RK_LOG("MacRK::LC_SYMTAB\n");
-				MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",symtab_command->symoff,symtab_command->symoff,symtab_command->nsyms);
-				MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",symtab_command->stroff,symtab_command->stroff,symtab_command->strsize);
+                xnu::Macho::Nlist64* symtab;
+                UInt32 nsyms;
 
-				if(kernel_cache)
-				{
-					symtab = reinterpret_cast<xnu::Macho::Nlist64*>(this->kernel_cache + symtab_command->symoff);
-					nsyms = symtab_command->nsyms;
+                char* strtab;
+                UInt32 strsize;
 
-					strtab = reinterpret_cast<char*>(this->kernel_cache + symtab_command->stroff);
-					strsize = symtab_command->strsize;
+                MAC_RK_LOG("MacRK::LC_SYMTAB\n");
+                MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",
+                           symtab_command->symoff, symtab_command->symoff, symtab_command->nsyms);
+                MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",
+                           symtab_command->stroff, symtab_command->stroff, symtab_command->strsize);
 
-					char buffer1[128];
-					char buffer2[128];
+                if (kernel_cache) {
+                    symtab = reinterpret_cast<xnu::Macho::Nlist64*>(this->kernel_cache +
+                                                                    symtab_command->symoff);
+                    nsyms = symtab_command->nsyms;
 
-					snprintf(buffer1, 128, "0x%llx", (UInt64) symtab);
-					snprintf(buffer2, 128, "0x%llx", (UInt64) strtab);
+                    strtab = reinterpret_cast<char*>(this->kernel_cache + symtab_command->stroff);
+                    strsize = symtab_command->strsize;
 
-					MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
-					MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+                    char buffer1[128];
+                    char buffer2[128];
 
-				} else if(kernel_collection)
-				{
-					symtab = reinterpret_cast<xnu::Macho::Nlist64*>(this->getBase() + (symtab_command->symoff - this->base_offset));
-					nsyms = symtab_command->nsyms;
+                    snprintf(buffer1, 128, "0x%llx", (UInt64)symtab);
+                    snprintf(buffer2, 128, "0x%llx", (UInt64)strtab);
 
-					strtab = reinterpret_cast<char*>(this->getBase() + (symtab_command->stroff - this->base_offset));
-					strsize = symtab_command->strsize;
-				} else
-				{
-					symtab = NULL;
-					nsyms = 0;
+                    MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
+                    MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
 
-					strtab = NULL;
-					strsize = 0;
-				}
+                } else if (kernel_collection) {
+                    symtab = reinterpret_cast<xnu::Macho::Nlist64*>(
+                        this->getBase() + (symtab_command->symoff - this->base_offset));
+                    nsyms = symtab_command->nsyms;
 
-				if(nsyms > 0)
-					this->parseSymbolTable(symtab, nsyms, strtab, strsize);
-				
-				break;
-			}
-			case LC_DYSYMTAB:
-			{
-				;
-				struct dysymtab_command *dysymtab_command = reinterpret_cast<struct dysymtab_command*>(load_command);
+                    strtab = reinterpret_cast<char*>(this->getBase() +
+                                                     (symtab_command->stroff - this->base_offset));
+                    strsize = symtab_command->strsize;
+                } else {
+                    symtab = NULL;
+                    nsyms = 0;
 
-				MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
-				MAC_RK_LOG("MacRK::\t%u local symbols at index %u\n",dysymtab_command->ilocalsym,dysymtab_command->nlocalsym);
-				MAC_RK_LOG("MacRK::\t%u external symbols at index %u\n",dysymtab_command->nextdefsym,dysymtab_command->iextdefsym);
-				MAC_RK_LOG("MacRK::\t%u undefined symbols at index %u\n",dysymtab_command->nundefsym,dysymtab_command->iundefsym);
-				MAC_RK_LOG("MacRK::\t%u Indirect symbols at offset 0x%x\n",dysymtab_command->nindirectsyms,dysymtab_command->indirectsymoff);
+                    strtab = NULL;
+                    strsize = 0;
+                }
 
-				break;
-			}
+                if (nsyms > 0)
+                    this->parseSymbolTable(symtab, nsyms, strtab, strsize);
 
-			case LC_UUID:
-			{
-				;
-				struct uuid_command *uuid_command = reinterpret_cast<struct uuid_command*>(load_command);
+                break;
+            }
+            case LC_DYSYMTAB: {
+                ;
+                struct dysymtab_command* dysymtab_command =
+                    reinterpret_cast<struct dysymtab_command*>(load_command);
 
-				if(uuid_command->cmdsize != sizeof(struct uuid_command))
-					return false;
+                MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
+                MAC_RK_LOG("MacRK::\t%u local symbols at index %u\n", dysymtab_command->ilocalsym,
+                           dysymtab_command->nlocalsym);
+                MAC_RK_LOG("MacRK::\t%u external symbols at index %u\n",
+                           dysymtab_command->nextdefsym, dysymtab_command->iextdefsym);
+                MAC_RK_LOG("MacRK::\t%u undefined symbols at index %u\n",
+                           dysymtab_command->nundefsym, dysymtab_command->iundefsym);
+                MAC_RK_LOG("MacRK::\t%u Indirect symbols at offset 0x%x\n",
+                           dysymtab_command->nindirectsyms, dysymtab_command->indirectsymoff);
 
-				
-				MAC_RK_LOG("MacRK::LC_UUID\n");
-				MAC_RK_LOG("MacRK::\tuuid = ");
-				
+                break;
+            }
 
-				for(int j = 0; j < sizeof(uuid_command->uuid); j++)
-					MAC_RK_LOG("%x", uuid_command->uuid[j]);
+            case LC_UUID: {
+                ;
+                struct uuid_command* uuid_command =
+                    reinterpret_cast<struct uuid_command*>(load_command);
 
-				MAC_RK_LOG("\n");
+                if (uuid_command->cmdsize != sizeof(struct uuid_command))
+                    return false;
 
-				break;
-			}
+                MAC_RK_LOG("MacRK::LC_UUID\n");
+                MAC_RK_LOG("MacRK::\tuuid = ");
 
-			case LC_DATA_IN_CODE:
-			{
-				;
-				struct linkedit_data_command *linkedit = reinterpret_cast<struct linkedit_data_command*>(load_command);
+                for (int j = 0; j < sizeof(uuid_command->uuid); j++)
+                    MAC_RK_LOG("%x", uuid_command->uuid[j]);
 
-				UInt32 dataoff = linkedit->dataoff;
-				UInt32 datasize = linkedit->datasize;
+                MAC_RK_LOG("\n");
 
-				MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
-				MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
+                break;
+            }
 
-				break;
-			}
-		}
+            case LC_DATA_IN_CODE: {
+                ;
+                struct linkedit_data_command* linkedit =
+                    reinterpret_cast<struct linkedit_data_command*>(load_command);
 
-		current_offset += cmdsize;
-	}
+                UInt32 dataoff = linkedit->dataoff;
+                UInt32 datasize = linkedit->datasize;
 
-	return true;
-}
+                MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
+                MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
 
-void KextMachO::parseHeader()
-{
-	struct mach_header_64 *mh = reinterpret_cast<struct mach_header_64*>(this->getMachHeader());
+                break;
+            }
+            }
 
-	UInt32 magic = mh->magic;
+            current_offset += cmdsize;
+        }
 
-	if(magic == FAT_CIGAM)
-	{
+        return true;
+    }
 
-	} else if(magic == MH_MAGIC_64)
-	{
-	#ifdef __x86_64__
-		this->size = this->kmod_info->size;
-	#endif
+    void KextMachO::parseHeader() {
+        struct mach_header_64* mh = reinterpret_cast<struct mach_header_64*>(this->getMachHeader());
 
-		this->parseLoadCommands();
-	}
-}
+        UInt32 magic = mh->magic;
 
-void KextMachO::parseMachO()
-{
-	this->parseHeader();
-}
+        if (magic == FAT_CIGAM) {
 
-}
+        } else if (magic == MH_MAGIC_64) {
+#ifdef __x86_64__
+            this->size = this->kmod_info->size;
+#endif
+
+            this->parseLoadCommands();
+        }
+    }
+
+    void KextMachO::parseMachO() {
+        this->parseHeader();
+    }
+
+} // namespace xnu

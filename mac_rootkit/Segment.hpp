@@ -18,119 +18,125 @@
 
 #include <Types.h>
 
-extern "C"
-{
-	#include <mach-o.h>
+extern "C" {
+#include <mach-o.h>
 
-	#include <mach/mach_types.h>
+#include <mach/mach_types.h>
 
-	#include <sys/types.h>
+#include <sys/types.h>
 }
 
-#include "vector.hpp"
 #include "Section.hpp"
+#include "vector.hpp"
 
 #include "Log.hpp"
 
-class Segment
-{
-	public:
-		Segment(struct segment_command_64 *segment_command)
-			: segment(segment_command),
-			  initprot(segment_command->initprot),
-			  maxprot(segment_command->maxprot),
-			  address(segment_command->vmaddr),
-			  size(segment_command->vmsize),
-			  fileoffset(segment_command->fileoff),
-			  filesize(segment_command->filesize)
-		{
-			name = new char[strlen(segment_command->segname) + 1];
+class Segment {
+public:
+    Segment(struct segment_command_64* segment_command)
+        : segment(segment_command), initprot(segment_command->initprot),
+          maxprot(segment_command->maxprot), address(segment_command->vmaddr),
+          size(segment_command->vmsize), fileoffset(segment_command->fileoff),
+          filesize(segment_command->filesize) {
+        name = new char[strlen(segment_command->segname) + 1];
 
-			strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
+        strlcpy(this->name, segment_command->segname, strlen(segment_command->segname) + 1);
 
-			this->populateSections();
-		}
+        this->populateSections();
+    }
 
-		~Segment()
-		{
-			delete name;
+    ~Segment() {
+        delete name;
 
-			for(int i = 0; i < sections.size(); i++)
-			{
-				Section *section = sections.at(i);
+        for (int i = 0; i < sections.size(); i++) {
+            Section* section = sections.at(i);
 
-				delete section;
-			}
-		}
+            delete section;
+        }
+    }
 
-		struct segment_command_64* getSegmentCommand() { return segment; }
+    struct segment_command_64* getSegmentCommand() {
+        return segment;
+    }
 
-		xnu::Mach::VmProtection getProt() { return maxprot; }
+    xnu::Mach::VmProtection getProt() {
+        return maxprot;
+    }
 
-		char* getSegmentName() { return name; }
+    char* getSegmentName() {
+        return name;
+    }
 
-		xnu::Mach::VmAddress getAddress() { return address; }
+    xnu::Mach::VmAddress getAddress() {
+        return address;
+    }
 
-		Size getSize() { return size; }
+    Size getSize() {
+        return size;
+    }
 
-		Offset getFileOffset() { return fileoffset; }
+    Offset getFileOffset() {
+        return fileoffset;
+    }
 
-		Size getFileSize() { return filesize; }
+    Size getFileSize() {
+        return filesize;
+    }
 
-		std::vector<Section*>& getSections() { return sections; }
+    std::vector<Section*>& getSections() {
+        return sections;
+    }
 
-		Section* getSection(char *sectname)
-		{
-			for(int i = 0; i < sections.size(); i++)
-			{
-				Section *section = sections.at(i);
+    Section* getSection(char* sectname) {
+        for (int i = 0; i < sections.size(); i++) {
+            Section* section = sections.at(i);
 
-				if(strcmp(section->getSectionName(), sectname) == 0 ||
-				   strncmp(section->getSectionName(), sectname, strlen(sectname)) == 0)
-				{
-					return section;
-				}
-			}
+            if (strcmp(section->getSectionName(), sectname) == 0 ||
+                strncmp(section->getSectionName(), sectname, strlen(sectname)) == 0) {
+                return section;
+            }
+        }
 
-			return NULL;
-		}
+        return NULL;
+    }
 
-		void addSection(Section *section) { sections.push_back(section); }
+    void addSection(Section* section) {
+        sections.push_back(section);
+    }
 
-		void populateSections()
-		{
-			struct segment_command_64 *segment = this->segment;
+    void populateSections() {
+        struct segment_command_64* segment = this->segment;
 
-			UInt32 nsects = segment->nsects;
-			UInt32 offset = sizeof(struct segment_command_64);
+        UInt32 nsects = segment->nsects;
+        UInt32 offset = sizeof(struct segment_command_64);
 
-			for(int32_t i = 0; i < nsects; i++)
-			{
-				struct section_64 *sect = reinterpret_cast<struct section_64*>((UInt8*) segment + offset);
+        for (int32_t i = 0; i < nsects; i++) {
+            struct section_64* sect =
+                reinterpret_cast<struct section_64*>((UInt8*)segment + offset);
 
-				Section *section = new Section(sect);
+            Section* section = new Section(sect);
 
-				this->addSection(section);
+            this->addSection(section);
 
-				offset += sizeof(struct section_64);
-			}
-		}
+            offset += sizeof(struct section_64);
+        }
+    }
 
-	private:
-		struct segment_command_64 *segment;
+private:
+    struct segment_command_64* segment;
 
-		std::vector<Section*> sections;
+    std::vector<Section*> sections;
 
-		char *name;
+    char* name;
 
-		xnu::Mach::VmAddress address;
+    xnu::Mach::VmAddress address;
 
-		Size size;
+    Size size;
 
-		Offset fileoffset;
+    Offset fileoffset;
 
-		Size filesize;
+    Size filesize;
 
-		xnu::Mach::VmProtection	maxprot;
-		xnu::Mach::VmProtection	initprot;
+    xnu::Mach::VmProtection maxprot;
+    xnu::Mach::VmProtection initprot;
 };

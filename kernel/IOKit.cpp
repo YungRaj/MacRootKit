@@ -20,321 +20,300 @@
 
 #include "Log.hpp"
 
-namespace IOKit
-{
-	static constexpr Size bruteMax {40000000};
-	
-	OSSerialize *getProperty(IORegistryEntry *entry, const char *property)
-	{
-		IORegistryEntry *value = OSDynamicCast(IORegistryEntry, entry->getProperty(property));
+namespace IOKit {
+    static constexpr Size bruteMax{40000000};
 
-		if (value)
-		{
-			OSSerialize *s = OSSerialize::withCapacity(PAGE_SIZE);
+    OSSerialize* getProperty(IORegistryEntry* entry, const char* property) {
+        IORegistryEntry* value = OSDynamicCast(IORegistryEntry, entry->getProperty(property));
 
-			if (value->serialize(s))
-			{
-				return s;
-			} else
-			{
-				MAC_RK_LOG("failed to serialise %s property", property);
+        if (value) {
+            OSSerialize* s = OSSerialize::withCapacity(PAGE_SIZE);
 
-				s->release();
-			}
-		} else
-		{
-			MAC_RK_LOG("failed to get %s property", property);
-		}
+            if (value->serialize(s)) {
+                return s;
+            } else {
+                MAC_RK_LOG("failed to serialise %s property", property);
 
-		return NULL;
-	}
+                s->release();
+            }
+        } else {
+            MAC_RK_LOG("failed to get %s property", property);
+        }
 
-	bool awaitPublishing(IORegistryEntry *obj)
-	{
-		Size counter = 0;
+        return NULL;
+    }
 
-		while (counter < 256)
-		{
-			if (obj->inPlane(gIOServicePlane))
-			{
-				MAC_RK_LOG("pci device %s is in service plane %lu", obj->getName(), counter);
-				
-				return true;
-			}
+    bool awaitPublishing(IORegistryEntry* obj) {
+        Size counter = 0;
 
-			MAC_RK_LOG("pci device %s is not in service plane %lu, polling", obj->getName(), counter);
-			
-			++counter;
+        while (counter < 256) {
+            if (obj->inPlane(gIOServicePlane)) {
+                MAC_RK_LOG("pci device %s is in service plane %lu", obj->getName(), counter);
 
-			IOSleep(20);
-		}
+                return true;
+            }
 
-		MAC_RK_LOG("found dead pci device %s", obj->getName());
-		
-		return false;
-	}
+            MAC_RK_LOG("pci device %s is not in service plane %lu, polling", obj->getName(),
+                       counter);
 
-	UInt32 readPCIConfigValue(IORegistryEntry *service, UInt32 reg, UInt32 space, UInt32 size)
-	{
-		if (!awaitPublishing(service))
-			return 0xffffffff;
+            ++counter;
 
-		auto read32 = reinterpret_cast<t_PCIConfigRead32 **>(service)[0][PCIConfigOffset::ConfigRead32];
-		auto read16 = reinterpret_cast<t_PCIConfigRead16 **>(service)[0][PCIConfigOffset::ConfigRead16];
-		auto read8  = reinterpret_cast<t_PCIConfigRead8  **>(service)[0][PCIConfigOffset::ConfigRead8];
+            IOSleep(20);
+        }
 
-		if (space == 0) {
-			space = getMember<UInt32>(service, 0xA8);
-			MAC_RK_LOG("read pci config discovered %s space to be 0x%08X", service->getName(), space);
-		}
+        MAC_RK_LOG("found dead pci device %s", obj->getName());
 
-		if (size != 0) {
-			switch (size) {
-				case 8:
-					return read8(service, space, reg);
-				case 16:
-					return read16(service, space, reg);
-				default: /* assume 32-bit otherwise */
-					return read32(service, space, reg);
-			}
-		}
+        return false;
+    }
 
-		switch (reg) {
-			case kIOPCIConfigVendorID:
-				return read16(service, space, reg);
-			case kIOPCIConfigDeviceID:
-				return read16(service, space, reg);
-			case kIOPCIConfigCommand:
-				return read16(service, space, reg);
-			case kIOPCIConfigStatus:
-				return read16(service, space, reg);
-			case kIOPCIConfigRevisionID:
-				return read8(service, space, reg);
-			case kIOPCIConfigClassCode:
-				return read32(service, space, reg);
-			case kIOPCIConfigCacheLineSize:
-				return read8(service, space, reg);
-			case kIOPCIConfigLatencyTimer:
-				return read8(service, space, reg);
-			case kIOPCIConfigHeaderType:
-				return read8(service, space, reg);
-			case kIOPCIConfigBIST:
-				return read8(service, space, reg);
-			case kIOPCIConfigBaseAddress0:
-				return read32(service, space, reg);
-			case kIOPCIConfigBaseAddress1:
-				return read32(service, space, reg);
-			case kIOPCIConfigBaseAddress2:
-				return read32(service, space, reg);
-			case kIOPCIConfigBaseAddress3:
-				return read32(service, space, reg);
-			case kIOPCIConfigBaseAddress4:
-				return read32(service, space, reg);
-			case kIOPCIConfigBaseAddress5:
-				return read32(service, space, reg);
-			case kIOPCIConfigCardBusCISPtr:
-				return read32(service, space, reg);
-			case kIOPCIConfigSubSystemVendorID:
-				return read16(service, space, reg);
-			case kIOPCIConfigSubSystemID:
-				return read16(service, space, reg);
-			case kIOPCIConfigExpansionROMBase:
-				return read32(service, space, reg);
-			case kIOPCIConfigCapabilitiesPtr:
-				return read32(service, space, reg);
-			case kIOPCIConfigInterruptLine:
-				return read8(service, space, reg);
-			case kIOPCIConfigInterruptPin:
-				return read8(service, space, reg);
-			case kIOPCIConfigMinimumGrant:
-				return read8(service, space, reg);
-			case kIOPCIConfigMaximumLatency:
-				return read8(service, space, reg);
-			default:
-				return read32(service, space, reg);
-		}
-	}
+    UInt32 readPCIConfigValue(IORegistryEntry* service, UInt32 reg, UInt32 space, UInt32 size) {
+        if (!awaitPublishing(service))
+            return 0xffffffff;
 
-	void getDeviceAddress(IORegistryEntry *service, UInt8 &bus, UInt8 &device, UInt8 &function)
-	{
-		auto getBus = reinterpret_cast<t_PCIConfigGetBusNumber **>(service)[0][PCIConfigOffset::GetBusNumber];
-		auto getDevice = reinterpret_cast<t_PCIConfigGetDeviceNumber **>(service)[0][PCIConfigOffset::GetDeviceNumber];
-		auto getFunction = reinterpret_cast<t_PCIConfigGetFunctionNumber **>(service)[0][PCIConfigOffset::GetFunctionNumber];
+        auto read32 =
+            reinterpret_cast<t_PCIConfigRead32**>(service)[0][PCIConfigOffset::ConfigRead32];
+        auto read16 =
+            reinterpret_cast<t_PCIConfigRead16**>(service)[0][PCIConfigOffset::ConfigRead16];
+        auto read8 = reinterpret_cast<t_PCIConfigRead8**>(service)[0][PCIConfigOffset::ConfigRead8];
 
-		bus = getBus(service);
-		device = getDevice(service);
-		function = getFunction(service);
-	}
+        if (space == 0) {
+            space = getMember<UInt32>(service, 0xA8);
+            MAC_RK_LOG("read pci config discovered %s space to be 0x%08X", service->getName(),
+                       space);
+        }
 
-	IORegistryEntry *findEntryByPrefix(const char *path, const char *prefix, const IORegistryPlane *plane, bool (*proc)(void *, IORegistryEntry *), bool brute, void *user)
-	{
-		IORegistryEntry *entry = IORegistryEntry::fromPath(path, plane);
+        if (size != 0) {
+            switch (size) {
+            case 8:
+                return read8(service, space, reg);
+            case 16:
+                return read16(service, space, reg);
+            default: /* assume 32-bit otherwise */
+                return read32(service, space, reg);
+            }
+        }
 
-		if (entry)
-		{
-			auto res = findEntryByPrefix(entry, prefix, plane, proc, brute, user);
-			entry->release();
-			return res;
-		}
+        switch (reg) {
+        case kIOPCIConfigVendorID:
+            return read16(service, space, reg);
+        case kIOPCIConfigDeviceID:
+            return read16(service, space, reg);
+        case kIOPCIConfigCommand:
+            return read16(service, space, reg);
+        case kIOPCIConfigStatus:
+            return read16(service, space, reg);
+        case kIOPCIConfigRevisionID:
+            return read8(service, space, reg);
+        case kIOPCIConfigClassCode:
+            return read32(service, space, reg);
+        case kIOPCIConfigCacheLineSize:
+            return read8(service, space, reg);
+        case kIOPCIConfigLatencyTimer:
+            return read8(service, space, reg);
+        case kIOPCIConfigHeaderType:
+            return read8(service, space, reg);
+        case kIOPCIConfigBIST:
+            return read8(service, space, reg);
+        case kIOPCIConfigBaseAddress0:
+            return read32(service, space, reg);
+        case kIOPCIConfigBaseAddress1:
+            return read32(service, space, reg);
+        case kIOPCIConfigBaseAddress2:
+            return read32(service, space, reg);
+        case kIOPCIConfigBaseAddress3:
+            return read32(service, space, reg);
+        case kIOPCIConfigBaseAddress4:
+            return read32(service, space, reg);
+        case kIOPCIConfigBaseAddress5:
+            return read32(service, space, reg);
+        case kIOPCIConfigCardBusCISPtr:
+            return read32(service, space, reg);
+        case kIOPCIConfigSubSystemVendorID:
+            return read16(service, space, reg);
+        case kIOPCIConfigSubSystemID:
+            return read16(service, space, reg);
+        case kIOPCIConfigExpansionROMBase:
+            return read32(service, space, reg);
+        case kIOPCIConfigCapabilitiesPtr:
+            return read32(service, space, reg);
+        case kIOPCIConfigInterruptLine:
+            return read8(service, space, reg);
+        case kIOPCIConfigInterruptPin:
+            return read8(service, space, reg);
+        case kIOPCIConfigMinimumGrant:
+            return read8(service, space, reg);
+        case kIOPCIConfigMaximumLatency:
+            return read8(service, space, reg);
+        default:
+            return read32(service, space, reg);
+        }
+    }
 
-		MAC_RK_LOG("failed to get %s entry", path);
+    void getDeviceAddress(IORegistryEntry* service, UInt8& bus, UInt8& device, UInt8& function) {
+        auto getBus =
+            reinterpret_cast<t_PCIConfigGetBusNumber**>(service)[0][PCIConfigOffset::GetBusNumber];
+        auto getDevice = reinterpret_cast<t_PCIConfigGetDeviceNumber**>(
+            service)[0][PCIConfigOffset::GetDeviceNumber];
+        auto getFunction = reinterpret_cast<t_PCIConfigGetFunctionNumber**>(
+            service)[0][PCIConfigOffset::GetFunctionNumber];
 
-		return NULL;
-	}
+        bus = getBus(service);
+        device = getDevice(service);
+        function = getFunction(service);
+    }
 
+    IORegistryEntry* findEntryByPrefix(const char* path, const char* prefix,
+                                       const IORegistryPlane* plane,
+                                       bool (*proc)(void*, IORegistryEntry*), bool brute,
+                                       void* user) {
+        IORegistryEntry* entry = IORegistryEntry::fromPath(path, plane);
 
-	IORegistryEntry *findEntryByPrefix(IORegistryEntry *entry, const char *prefix, const IORegistryPlane *plane, bool (*proc)(void *, IORegistryEntry *), bool brute, void *user)
-	{
-		bool found = false;
+        if (entry) {
+            auto res = findEntryByPrefix(entry, prefix, plane, proc, brute, user);
+            entry->release();
+            return res;
+        }
 
-		IORegistryEntry *res = NULL;
+        MAC_RK_LOG("failed to get %s entry", path);
 
-		Size bruteCount = 0;
+        return NULL;
+    }
 
-		do
-		{
-			bruteCount++;
-			
-			auto iterator = entry->getChildIterator(plane);
+    IORegistryEntry* findEntryByPrefix(IORegistryEntry* entry, const char* prefix,
+                                       const IORegistryPlane* plane,
+                                       bool (*proc)(void*, IORegistryEntry*), bool brute,
+                                       void* user) {
+        bool found = false;
 
-			if(iterator)
-			{
-				Size len = strlen(prefix);
-				
-				while ((res = OSDynamicCast(IORegistryEntry, iterator->getNextObject())) != NULL)
-				{
-					const char *resname = res->getName();
+        IORegistryEntry* res = NULL;
 
-					if (resname && !strncmp(prefix, resname, len))
-					{
-						found = proc ? proc(user, res) : true;
-						
-						if (found)
-						{
-							if (bruteCount > 1)
-								MAC_RK_LOG("bruted %s value in %lu attempts", prefix, bruteCount);
-							
-							if (!proc)
-								break;
-						}
-					}
-				}
+        Size bruteCount = 0;
 
-				iterator->release();
+        do {
+            bruteCount++;
 
-			} else
-			{
-				MAC_RK_LOG("failed to iterate over entry");
+            auto iterator = entry->getChildIterator(plane);
 
-				return NULL;
-			}
+            if (iterator) {
+                Size len = strlen(prefix);
 
-		} while (brute && bruteCount < bruteMax && !found);
+                while ((res = OSDynamicCast(IORegistryEntry, iterator->getNextObject())) != NULL) {
+                    const char* resname = res->getName();
 
-		if (!found)
-			MAC_RK_LOG("failed to find %s", prefix);
+                    if (resname && !strncmp(prefix, resname, len)) {
+                        found = proc ? proc(user, res) : true;
 
-		return proc ? NULL : res;
-	}
+                        if (found) {
+                            if (bruteCount > 1)
+                                MAC_RK_LOG("bruted %s value in %lu attempts", prefix, bruteCount);
 
-	bool usingPrelinkedCache()
-	{
-		IORegistryEntry *root = IORegistryEntry::getRegistryRoot();
-		
-		if (root)
-		{
-			OSNumber *count = OSDynamicCast(OSNumber, root->getProperty("OSPrelinkKextCount"));
+                            if (!proc)
+                                break;
+                        }
+                    }
+                }
 
-			if (count)
-			{
-				MAC_RK_LOG("OSPrelinkKextCount equals to %u", count->unsigned32BitValue());
+                iterator->release();
 
-				return count->unsigned32BitValue() > 0;
-			} else
-			{
-				MAC_RK_LOG("missing OSPrelinkKextCount property!");
-			}
-		} else
-		{
-			MAC_RK_LOG("missing registry root!");
-		}
+            } else {
+                MAC_RK_LOG("failed to iterate over entry");
 
-		return false;
-	}
+                return NULL;
+            }
 
-	bool renameDevice(IORegistryEntry *entry, char *name, bool compat)
-	{
-		if (!entry || !name)
-			return false;
+        } while (brute && bruteCount < bruteMax && !found);
 
-		entry->setName(name);
+        if (!found)
+            MAC_RK_LOG("failed to find %s", prefix);
 
-		if (!compat)
-			return true;
+        return proc ? NULL : res;
+    }
 
-		OSData *compatibleProp = OSDynamicCast(OSData, entry->getProperty("compatible"));
-		
-		if (!compatibleProp)
-			return true;
+    bool usingPrelinkedCache() {
+        IORegistryEntry* root = IORegistryEntry::getRegistryRoot();
 
-		UInt32 compatibleSz = compatibleProp->getLength();
+        if (root) {
+            OSNumber* count = OSDynamicCast(OSNumber, root->getProperty("OSPrelinkKextCount"));
 
-		const char *compatibleStr = static_cast<const char *>(compatibleProp->getBytesNoCopy());
+            if (count) {
+                MAC_RK_LOG("OSPrelinkKextCount equals to %u", count->unsigned32BitValue());
 
-		MAC_RK_LOG("compatible property starts with %s and is %u bytes", compatibleStr ? compatibleStr : "(null)", compatibleSz);
+                return count->unsigned32BitValue() > 0;
+            } else {
+                MAC_RK_LOG("missing OSPrelinkKextCount property!");
+            }
+        } else {
+            MAC_RK_LOG("missing registry root!");
+        }
 
-		if (compatibleStr) {
-			for (UInt32 i = 0; i < compatibleSz; i++) {
-				if (!strcmp(&compatibleStr[i], name)) {
-					MAC_RK_LOG("found %s in compatible, ignoring", name);
-					return true;
-				}
+        return false;
+    }
 
-				i += strlen(&compatibleStr[i]);
-			}
+    bool renameDevice(IORegistryEntry* entry, char* name, bool compat) {
+        if (!entry || !name)
+            return false;
 
-			UInt32 nameSize = static_cast<UInt32>(strlen(name) + 1);
+        entry->setName(name);
 
-			UInt32 compatibleBufSz = compatibleSz + nameSize;
+        if (!compat)
+            return true;
 
-			UInt8 *compatibleBuf = new UInt8[compatibleBufSz];
+        OSData* compatibleProp = OSDynamicCast(OSData, entry->getProperty("compatible"));
 
-			if (compatibleBuf)
-			{
-				MAC_RK_LOG("fixing compatible to have %s", name);
+        if (!compatibleProp)
+            return true;
 
-				memcpy(&compatibleBuf[0], compatibleStr, compatibleSz);
-				memcpy(&compatibleBuf[compatibleSz], name, nameSize);
+        UInt32 compatibleSz = compatibleProp->getLength();
 
-				OSData *compatibleData = OSData::withBytes(compatibleBuf, compatibleBufSz);
+        const char* compatibleStr = static_cast<const char*>(compatibleProp->getBytesNoCopy());
 
-				if (compatibleData)
-				{
-					entry->setProperty("compatible", compatibleData);
-					compatibleData->release();
+        MAC_RK_LOG("compatible property starts with %s and is %u bytes",
+                   compatibleStr ? compatibleStr : "(null)", compatibleSz);
 
-					return true;
-				} else
-				{
-					MAC_RK_LOG("compatible property memory alloc failure %u for %s", compatibleBufSz, name);
-				}
-			} else
-			{
-				MAC_RK_LOG("compatible buffer memory alloc failure %u for %s", compatibleBufSz, name);
-			}
-		}
+        if (compatibleStr) {
+            for (UInt32 i = 0; i < compatibleSz; i++) {
+                if (!strcmp(&compatibleStr[i], name)) {
+                    MAC_RK_LOG("found %s in compatible, ignoring", name);
+                    return true;
+                }
 
-		return false;
-	}
+                i += strlen(&compatibleStr[i]);
+            }
 
-	void patchVtableEntry(OSObject *object, void *entry, UInt32 idx)
-	{
+            UInt32 nameSize = static_cast<UInt32>(strlen(name) + 1);
 
-	}
+            UInt32 compatibleBufSz = compatibleSz + nameSize;
 
-	void patchVtable(OSObject *object, void *vtable)
-	{
-		
-	}
+            UInt8* compatibleBuf = new UInt8[compatibleBufSz];
 
-}
+            if (compatibleBuf) {
+                MAC_RK_LOG("fixing compatible to have %s", name);
+
+                memcpy(&compatibleBuf[0], compatibleStr, compatibleSz);
+                memcpy(&compatibleBuf[compatibleSz], name, nameSize);
+
+                OSData* compatibleData = OSData::withBytes(compatibleBuf, compatibleBufSz);
+
+                if (compatibleData) {
+                    entry->setProperty("compatible", compatibleData);
+                    compatibleData->release();
+
+                    return true;
+                } else {
+                    MAC_RK_LOG("compatible property memory alloc failure %u for %s",
+                               compatibleBufSz, name);
+                }
+            } else {
+                MAC_RK_LOG("compatible buffer memory alloc failure %u for %s", compatibleBufSz,
+                           name);
+            }
+        }
+
+        return false;
+    }
+
+    void patchVtableEntry(OSObject* object, void* entry, UInt32 idx) {}
+
+    void patchVtable(OSObject* object, void* vtable) {}
+
+} // namespace IOKit
