@@ -114,7 +114,7 @@ struct LinkerMap {
     static_assert(MappableBinary<T, Sym, Sect>);
 
 public:
-    explicit LinkerMap(T binary, char* map) : binary(binary), mapFilePath(map) {}
+    explicit LinkerMap(T binary, char* map) : binary(binary), mapFilePath(map) { read(); parseMapFile(); }
 
     T getBinary() const {
         return binary;
@@ -144,6 +144,8 @@ public:
     }
 
     void read();
+
+    void parseMapFile();
 
 private:
     T binary;
