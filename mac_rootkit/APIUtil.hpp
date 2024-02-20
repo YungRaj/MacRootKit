@@ -89,7 +89,7 @@ using namespace xnu;
  *  @return reference to the struct member
  */
 template <typename T>
-inline T& getMember(void* that, Size off) {
+inline T& getMember(void* that, size_t off) {
     return *reinterpret_cast<T*>(static_cast<UInt8*>(that) + off);
 }
 
@@ -185,8 +185,8 @@ constexpr T setBitField(T so, T hi, T lo) {
  *  @return true if an element different from value was found
  */
 template <typename T, typename Y>
-inline bool findNotEquals(T& in, Size size, Y value) {
-    for (Size i = 0; i < size; i++)
+inline bool findNotEquals(T& in, size_t size, Y value) {
+    for (size_t i = 0; i < size; i++)
         if (in[i] != value)
             return true;
 
@@ -215,5 +215,5 @@ inline T FunctionCast(T org, uint64_t ptr) {
 namespace API {
 void dump(Kernel* kernel, uint64_t address);
 
-void hexdump(unsigned char* data, Size size, bool rev);
+void hexdump(unsigned char* data, size_t size, bool rev);
 }; // namespace API

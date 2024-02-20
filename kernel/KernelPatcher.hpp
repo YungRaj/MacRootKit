@@ -88,8 +88,11 @@ public:
         return kextKmods;
     }
 
-    mrk::Hook* getEntitlementHook() {
-        return entitlementHook;
+    mrk::Hook* getCopyClientEntitlementHook() {
+        return copyClientEntitlementHook;
+    }
+    mrk::Hook* getHasEntitlementHook() {
+        return hasEntitlementHook;
     }
     mrk::Hook* getBinaryLoadHook() {
         return binaryLoadHook;
@@ -108,6 +111,8 @@ public:
 
     static OSObject* copyClientEntitlement(task_t task, const char* entitlement);
 
+    static bool IOCurrentTaskHasEntitlement(const char *entitlement);
+
     static void taskSetMainThreadQos(task_t task, thread_t thread);
 
     virtual void findAndReplace(void* data, Size data_size, const void* find, Size find_size,
@@ -123,7 +128,8 @@ public:
 
     mrk::Hook* installDummyBreakpoint();
 
-    mrk::Hook* installEntitlementHook();
+    mrk::Hook* installCopyClientEntitlementHook();
+    mrk::Hook* installHasEntitlementHook();
     mrk::Hook* installBinaryLoadHook();
     mrk::Hook* installKextLoadHook();
 
@@ -150,7 +156,9 @@ private:
 
     xnu::KmodInfo** kextKmods;
 
-    mrk::Hook* entitlementHook;
+    mrk::Hook* copyClientEntitlementHook;
+    mrk::Hook* hasEntitlementHook;
+
     mrk::Hook* binaryLoadHook;
     mrk::Hook* kextLoadHook;
 

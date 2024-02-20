@@ -3964,7 +3964,7 @@ uint32_t* assemble(char* ins, uint32_t* nins) {
         if (num_ins)
             memcpy(temp_assembly, assembly, num_ins * sizeof(uint32_t));
 
-        temp_assembly[num_ins] = assemble_instruction(temp);
+        temp_assembly[num_ins] = assembleInstruction(temp);
 
         num_ins++;
 

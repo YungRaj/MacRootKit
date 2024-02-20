@@ -66,7 +66,7 @@ void KernelPatcher::initialize() {
 
     waitingForAlreadyLoadedKexts = false;
 
-    this->installEntitlementHook();
+    this->installCopyClientEntitlementHook();
 
 #ifdef __x86_64__
     // binary load hook does not work on arm64 because symbol to hook does not exist
@@ -169,7 +169,7 @@ void* KernelPatcher::OSKextLookupKextWithIdentifier(const char* identifier) {
 }
 
 OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char* entitlement) {
-    Hook* hook = that->getEntitlementHook();
+    Hook* hook = that->getCopyClientEntitlementHook();
 
     xnu::Mach::VmAddress trampoline;
 
@@ -217,6 +217,11 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char* entitlem
     }
 
     return original;
+}
+
+bool KernelPatcher::IOCurrentTaskHasEntitlement(const char *entitlement)
+{
+    return true;
 }
 
 void KernelPatcher::taskSetMainThreadQos(task_t task, thread_t thread) {
@@ -267,7 +272,7 @@ void KernelPatcher::onExec(task_t task, const char* path, Size len) {}
 
 void KernelPatcher::onEntitlementRequest(task_t task, const char* entitlement, void* original) {}
 
-Hook* KernelPatcher::installEntitlementHook() {
+Hook* KernelPatcher::installCopyClientEntitlementHook() {
     Hook* hook;
 
     xnu::Mach::VmAddress orig_copyClientEntitlement;
@@ -289,7 +294,34 @@ Hook* KernelPatcher::installEntitlementHook() {
 
     this->installHook(hook, hooked_copyClientEntitlement);
 
-    this->entitlementHook = hook;
+    this->copyClientEntitlementHook = hook;
+
+    return hook;
+}
+
+Hook* KernelPatcher::installHasEntitlementHook() {
+    Hook* hook;
+
+    xnu::Mach::VmAddress orig_IOCurrentTaskHasEntitlement;
+    xnu::Mach::VmAddress hooked_IOCurrentTaskHasEntitlement;
+
+    orig_IOCurrentTaskHasEntitlement = this->getKernel()->getSymbolAddressByName(
+        "_IOCurrentTaskHasEntitlement");
+
+    hooked_IOCurrentTaskHasEntitlement =
+        reinterpret_cast<xnu::Mach::VmAddress>(KernelPatcher::IOCurrentTaskHasEntitlement);
+
+    char buffer[128];
+
+    snprintf(buffer, 128, "0x%llx", orig_IOCurrentTaskHasEntitlement);
+
+    MAC_RK_LOG("MacRK::_IOCurrentTaskHasEntitlement = %s\n", buffer);
+
+    hook = Hook::hookForFunction(this->getKernel(), this, orig_IOCurrentTaskHasEntitlement);
+
+    this->installHook(hook, hooked_IOCurrentTaskHasEntitlement);
+
+    this->hasEntitlementHook = hook;
 
     return hook;
 }
