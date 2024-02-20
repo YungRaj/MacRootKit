@@ -67,11 +67,43 @@ using Port = mach_port_t;
 namespace Macho {
 using Header64 = struct mach_header_64;
 
+using FatHeader = struct fat_header;
+
+using FatArch = struct fat_arch;
+
 using Nlist64 = struct nlist_64;
 
 using SymbolName = char*;
 
 using SegmentName = char*;
 using SectionName = char*;
+
+namespace LoadCommand {
+using Cmd = struct load_command;
+
+using Segment64 = struct segment_command_64;
+
+using Section64 = struct section_64;
+
+using FilesetEntry = struct fileset_entry_command;
+
+using Symtab = struct symtab_command;
+
+using Dysymtab = struct dysymtab_command;
+
+using LinkeditData = linkedit_data_command;
+
+using EncryptionInfo = struct encryption_info_command;
+
+using EntryPoint = struct entry_point_command;
+
+using UnixThread = struct unixthread_command;
+
+using Uuid = struct uuid_command;
+
+using Dylib = struct dylib_command;
+
+using DyldInfo = struct dyld_info_command;
+}; // namespace LoadCommand
 }; // namespace Macho
 }; // namespace xnu
