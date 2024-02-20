@@ -43,6 +43,16 @@ class Kernel;
 namespace dyld {
 class Library;
 
+namespace shared_cache {
+using Header = struct dyld_cache_header;
+
+using MappingInfo = struct dyld_cache_mapping_info;
+
+using AllImageInfos = struct dyld_all_image_infos;
+
+using ImageInfo = struct dyld_image_info;
+}; // namespace shared_cache
+
 class Dyld {
 public:
     explicit Dyld(xnu::Kernel* kernel, xnu::Task* task);
@@ -71,7 +81,7 @@ public:
         return dyld_shared_cache;
     }
 
-    struct dyld_image_info* getMainImageInfo() {
+    dyld::shared_cache::ImageInfo* getMainImageInfo() {
         return main_image_info;
     }
 
@@ -83,11 +93,11 @@ public:
 
     void iterateAllImages();
 
-    struct dyld_cache_header* cacheGetHeader();
+    dyld::shared_cache::Header* cacheGetHeader();
 
-    struct dyld_cache_mapping_info* cacheGetMappings(struct dyld_cache_header* cache_header);
-    struct dyld_cache_mapping_info* cacheGetMapping(struct dyld_cache_header* cache_header,
-                                                    xnu::Mach::VmProtection prot);
+    dyld::shared_cache::MappingInfo* cacheGetMappings(dyld::shared_cache::Header* cache_header);
+    dyld::shared_cache::MappingInfo* cacheGetMapping(dyld::shared_cache::Header* cache_header,
+                                                     xnu::Mach::VmProtection prot);
 
     void cacheOffsetToAddress(UInt64 dyld_cache_offset, xnu::Mach::VmAddress* address,
                               Offset* slide);
@@ -136,8 +146,8 @@ private:
 
     Size all_image_info_size;
 
-    struct dyld_all_image_infos* all_image_infos;
-    struct dyld_image_info* main_image_info;
+    dyld::shared_cache::AllImageInfos* all_image_infos;
+    dyld::shared_cache::ImageInfo* main_image_info;
 };
 
 }; // namespace dyld

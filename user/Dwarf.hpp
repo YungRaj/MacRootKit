@@ -409,10 +409,7 @@ template <typename T>
     requires DebuggableBinary<T>
 class LineTable {
 public:
-    explicit LineTable(T binary, Dwarf<T>* dwarf) {
-        this->binary = binary;
-        this->dwarf = dwarf;
-    }
+    explicit LineTable(T binary, Dwarf<T>* dwarf) : binary(binary), dwarf(dwarf) {}
 
     std::vector<struct LTSourceFile*>& getSourceFileNames() {
         return files;

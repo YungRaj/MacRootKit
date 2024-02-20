@@ -23,10 +23,17 @@
 namespace Emulation {
 class Unicorn {
 public:
-    explicit Unicorn(char* code, Size code_size, UInt64 address);
+    explicit Unicorn(UInt8* code, Size code_size, UInt64 address)
+        : code(code), size(code_size), base(address) {}
 
 private:
     uc_engine* uc;
+
+    UInt64 base;
+
+    UInt64 code;
+
+    Size size;
 };
 
 class Panda {

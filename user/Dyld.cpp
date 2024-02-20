@@ -157,7 +157,7 @@ xnu::Mach::VmAddress Dyld::getImageLoadedAt(char* image_name, char** image_path)
 
     xnu::Mach::VmAddress where = 0;
 
-    struct dyld_all_image_infos all_images;
+    dyld::shared_cache::AllImageInfos all_images;
 
     this->getImageInfos();
 
@@ -173,7 +173,7 @@ xnu::Mach::VmAddress Dyld::getImageLoadedAt(char* image_name, char** image_path)
     memcpy(this->all_image_infos, &all_images, sizeof(struct dyld_all_image_infos));
 
     for (UInt32 i = 0; i < all_image_infos->infoArrayCount; i++) {
-        struct dyld_image_info image_info;
+        dyld::shared_cache::ImageInfo image_info;
 
         xnu::Mach::VmAddress image_info_addr;
 
@@ -218,7 +218,7 @@ xnu::Mach::VmAddress Dyld::getImageLoadedAt(char* image_name, char** image_path)
     return where;
 }
 
-struct dyld_cache_header* Dyld::cacheGetHeader() {
+dyld::shared_cache::Header* Dyld::cacheGetHeader() {
     struct dyld_cache_header* cache_header;
 
     xnu::Mach::VmAddress shared_cache_rx_base;
@@ -233,8 +233,8 @@ struct dyld_cache_header* Dyld::cacheGetHeader() {
     return cache_header;
 }
 
-struct dyld_cache_mapping_info* Dyld::cacheGetMappings(struct dyld_cache_header* cache_header) {
-    struct dyld_cache_mapping_info* mappings;
+dyld::shared_cache::MappingInfo* Dyld::cacheGetMappings(struct dyld_cache_header* cache_header) {
+    dyld::shared_cache::MappingInfo* mappings;
 
     mappings = reinterpret_cast<struct dyld_cache_mapping_info*>(
         malloc(sizeof(struct dyld_cache_mapping_info) * cache_header->mappingCount));
@@ -245,8 +245,8 @@ struct dyld_cache_mapping_info* Dyld::cacheGetMappings(struct dyld_cache_header*
     return mappings;
 }
 
-struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header* cache_header,
-                                                      xnu::Mach::VmProtection prot) {
+dyld::shared_cache::MappingInfo* Dyld::cacheGetMapping(struct dyld_cache_header* cache_header,
+                                                       xnu::Mach::VmProtection prot) {
     for (UInt32 i = 0; i < cache_header->mappingCount; ++i) {
         struct dyld_cache_mapping_info* mapping =
             (struct dyld_cache_mapping_info*)malloc(sizeof(struct dyld_cache_mapping_info));
@@ -267,9 +267,9 @@ struct dyld_cache_mapping_info* Dyld::cacheGetMapping(struct dyld_cache_header* 
 
 void Dyld::cacheOffsetToAddress(UInt64 dyld_cache_offset, xnu::Mach::VmAddress* address,
                                 Offset* aslr) {
-    struct dyld_cache_header* cache_header;
+    dyld::shared_cache::Header* cache_header;
 
-    struct dyld_cache_mapping_info* mappings;
+    dyld::shared_cache::MappingInfo* mappings;
 
     xnu::Mach::VmAddress shared_cache_rx_base;
 
@@ -290,7 +290,7 @@ void Dyld::cacheOffsetToAddress(UInt64 dyld_cache_offset, xnu::Mach::VmAddress* 
     xnu::Mach::VmAddress dyld_cache_address = 0;
 
     for (UInt32 i = 0; i < cache_header->mappingCount; i++) {
-        struct dyld_cache_mapping_info* mapping = &mappings[i];
+        dyld::shared_cache::MappingInfo* mapping = &mappings[i];
 
         Offset low_bound = mapping->fileOffset;
         Offset high_bound = mapping->fileOffset + mapping->size;
