@@ -207,7 +207,6 @@ private:
     bool kernelHook = false;
 
     xnu::Mach::VmAddress from;
-
     xnu::Mach::VmAddress trampoline;
 
     enum HookType hooktype;

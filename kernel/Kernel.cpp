@@ -262,6 +262,7 @@ xnu::Mach::VmAddress Kernel::findKernelCollection() {
     return kernel_collection;
 }
 
+
 xnu::Mach::VmAddress Kernel::findKernelBase() {
     static xnu::Mach::VmAddress kernel_base = 0;
 

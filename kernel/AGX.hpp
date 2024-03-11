@@ -24,7 +24,7 @@ class MacRootKit;
 
 extern mrk::MacRootKit* mac_rootkit_get_rootkit();
 
-namespace AGX {
+namespace Agx {
 static Plugin* plugin;
 
 static Kext* agxG13X;

@@ -9,6 +9,8 @@ SYSROOT := $(shell xcrun --sdk $(SDK) --show-sdk-path)
 CLANG := $(shell xcrun --sdk $(SDK) --find clang)
 CLANGPP := $(shell xcrun --sdk $(SDK) --find clang++)
 
+DSYMUTIL := $(shell xcrun --sdk $(SDK) --find dsymutil)
+
 CC := $(CLANG) -isysroot $(SYSROOT) -arch $(ARCH)
 CXX := $(CLANGPP) -isysroot $(SYSROOT) -arch $(ARCH)
 NASM := nasm
@@ -58,11 +60,11 @@ CPATH := /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/De
 
 CFLAGS += -g -I/usr/include -I/usr/local/include $(KERNEL_HEADERS) -Wno-nullability-completeness -Wno-implicit-int-conversion -Wno-shadow -Wno-visibility -Wno-unused-variable -O2 -g -fno-builtin -fno-common -mkernel -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -nostdlib
 
-LDFLAGS += -std=c++20 -g -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -Wl,-kext -lkmod -lkmodc++ -lcc_kext
+LDFLAGS += -g -std=c++20 -fno-builtin -fno-common -nostdinc -nostdlib -Xlinker -kext -Xlinker -export_dynamic -L/usr/lib -L/usr/local/lib /usr/local/lib/libcapstone.a -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -DCAPSTONE_HAS_X86 -DCAPSTONE_HAS_ARM64 -DCAPSTONE_HAS_OSXKERNEL=1 -I./capstone/include -I./kernel -I./mac_rootkit -I./ -Wl,-kext -lkmod -lkmodc++ -lcc_kext
 
-CXXFLAGS += -std=c++20 -g $(KERNEL_HEADERS) -fno-builtin -fno-common -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -Wno-sign-conversion -Wno-writable-strings
+CXXFLAGS += -g -std=c++20 $(KERNEL_HEADERS) -fno-builtin -fno-common -nostdinc -nostdlib -D__KERNEL__ -DMACH_KERNEL_PRIVATE -Wno-inconsistent-missing-override -Wno-unused-variable -Wno-sign-conversion -Wno-writable-strings
 
-ASM_FLAGS = -f macho64
+ASM_FLAGS = -f macho64 -F dwarf -g
 
 .PHONY: all clean
 
@@ -101,6 +103,8 @@ $(BUILD)/$(PKG).kext/Contents/MacOS:
 
 $(BUILD)/$(PKG).kext/Contents/MacOS/$(TARGET):  $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(KERNEL_COBJECTS) $(KERNEL_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
 	$(CXX) $(LDFLAGS) -framework IOKit -o $@ $(KERNEL_COBJECTS) $(COMMON_COBJECTS) $(COMMON_CPPOBJECTS) $(KERNEL_CPPOBJECTS) $(ARM64_CPPOBJECTS) $(X86_64_CPPOBJECTS) $(X86_64_ASMOBJECTS) $(ARM64_ASMOBJECTS)
+	$(DSYMUTIL) $@
+
 
 $(BUILD)/$(PKG).kext/Contents/Info.plist: Info.plist | $(BUILD)/$(PKG).kext/Contents/MacOS
 	cp -f $< $@

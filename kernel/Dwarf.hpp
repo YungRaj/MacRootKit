@@ -356,7 +356,7 @@ static LTStateMachine gInitialState = {.address = 0,
 
 class LineTable {
 public:
-    explicit LineTable(T binary, Dwarf<T>* dwarf) : binary(binary), dwarf(dwarf) {}
+    explicit LineTable(MachO *binary, Dwarf* dwarf) : macho(binary), dwarf(dwarf) {}
 
     std::vector<struct LTSourceFile*>* getSourceFileNames() {
         return &files;
