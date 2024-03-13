@@ -75,15 +75,14 @@ using Nlist64 = struct nlist_64;
 
 using SymbolName = char*;
 
-using SegmentName = char*;
 using SectionName = char*;
+using SegmentName = char*;
+
+using Segment64 = struct segment_command_64;
+using Section64 = struct section_64;
 
 namespace LoadCommand {
 using Cmd = struct load_command;
-
-using Segment64 = struct segment_command_64;
-
-using Section64 = struct section_64;
 
 using FilesetEntry = struct fileset_entry_command;
 

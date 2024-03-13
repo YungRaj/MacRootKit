@@ -31,7 +31,7 @@ extern "C" {
 
 class Section {
 public:
-    Section(struct section_64* section)
+    Section(xnu::Macho::Section64* section)
         : section(section), address(section->addr), offset(section->offset), size(section->size) {
         name = new char[strlen(section->sectname) + 1];
 
@@ -42,7 +42,7 @@ public:
         delete name;
     }
 
-    struct section_64* getSection() {
+    xnu::Macho::Section64* getSection() {
         return section;
     }
 
@@ -70,7 +70,7 @@ public:
     }
 
 private:
-    struct section_64* section;
+    xnu::Macho::Section64* section;
 
     char* name;
 

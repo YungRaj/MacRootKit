@@ -33,7 +33,7 @@ extern "C" {
 
 class Segment {
 public:
-    Segment(struct segment_command_64* segment_command)
+    Segment(xnu::Macho::Segment64* segment_command)
         : segment(segment_command), initprot(segment_command->initprot),
           maxprot(segment_command->maxprot), address(segment_command->vmaddr),
           size(segment_command->vmsize), fileoffset(segment_command->fileoff),
@@ -55,7 +55,7 @@ public:
         }
     }
 
-    struct segment_command_64* getSegmentCommand() {
+    xnu::Macho::Segment64* getSegmentCommand() {
         return segment;
     }
 
@@ -105,14 +105,14 @@ public:
     }
 
     void populateSections() {
-        struct segment_command_64* segment = this->segment;
+        xnu::Macho::Segment64 *segment = this->segment;
 
         UInt32 nsects = segment->nsects;
         UInt32 offset = sizeof(struct segment_command_64);
 
         for (int32_t i = 0; i < nsects; i++) {
-            struct section_64* sect =
-                reinterpret_cast<struct section_64*>((UInt8*)segment + offset);
+            xnu::Macho::Section64* sect =
+                reinterpret_cast<xnu::Macho::Section64*>((UInt8*)segment + offset);
 
             Section* section = new Section(sect);
 
@@ -123,7 +123,7 @@ public:
     }
 
 private:
-    struct segment_command_64* segment;
+    xnu::Macho::Segment64* segment;
 
     std::vector<Section*> sections;
 
