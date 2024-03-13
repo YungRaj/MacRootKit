@@ -27,8 +27,8 @@ class KernelMachO : public MachO {
 public:
     KernelMachO() {}
 
-    KernelMachO(uintptr_t address);
-    KernelMachO(uintptr_t address, Offset slide);
+    KernelMachO(UIntPtr address);
+    KernelMachO(UIntPtr address, Offset slide);
 
     KernelMachO(const char* path, Offset slide);
     KernelMachO(const char* path);
@@ -54,8 +54,8 @@ protected:
 
 class KernelCacheMachO : public KernelMachO {
 public:
-    KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address);
-    KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address, Offset slide);
+    KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address);
+    KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address, Offset slide);
 
     virtual bool parseLoadCommands();
 

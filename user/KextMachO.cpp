@@ -20,7 +20,7 @@ extern "C" {
 #include <fcntl.h>
 };
 
-KextMachO::KextMachO(uintptr_t base) {
+KextMachO::KextMachO(UIntPtr base) {
     buffer = reinterpret_cast<char*>(base),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
     base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
@@ -30,7 +30,7 @@ KextMachO::KextMachO(uintptr_t base) {
     this->parseMachO();
 }
 
-KextMachO::KextMachO(uintptr_t base, Offset slide) {
+KextMachO::KextMachO(UIntPtr base, Offset slide) {
     buffer = reinterpret_cast<char*>(base),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
     base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
@@ -116,7 +116,7 @@ bool KextMachO::parseLoadCommands() {
         UInt32 cmdtype = load_command->cmd;
         UInt32 cmdsize = load_command->cmdsize;
 
-        if (cmdsize > mh->sizeofcmds - ((uintptr_t)load_command - (uintptr_t)(mh + 1)))
+        if (cmdsize > mh->sizeofcmds - ((UIntPtr)load_command - (UIntPtr)(mh + 1)))
             return false;
 
         switch (cmdtype) {

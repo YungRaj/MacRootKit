@@ -229,8 +229,8 @@ bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr) {
                     struct section_64* section = (struct section_64*)(q + sect_offset);
 
                     if (strcmp("__thread_starts", section->sectname) == 0) {
-                        UInt32* start = (UInt32*)((uintptr_t)((UInt8*)header + section->offset));
-                        UInt32* end = (UInt32*)((uintptr_t)start + section->size);
+                        UInt32* start = (UInt32*)((UIntPtr)((UInt8*)header + section->offset));
+                        UInt32* end = (UInt32*)((UIntPtr)start + section->size);
 
                         if (end > start) {
                             ++start;
@@ -276,7 +276,7 @@ bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr) {
             struct dyld_chained_fixups_header* fixup =
                 (struct dyld_chained_fixups_header*)(UInt8*)header + data->dataoff;
             struct dyld_chained_starts_in_image* segs =
-                (struct dyld_chained_starts_in_image*)((uintptr_t)fixup + fixup->starts_offset);
+                (struct dyld_chained_starts_in_image*)((UIntPtr)fixup + fixup->starts_offset);
 
             for (UInt32 i = 0; i < segs->seg_count; ++i) {
                 if (segs->seg_info_offset[i] == 0) {
@@ -284,10 +284,10 @@ bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr) {
                 }
 
                 struct dyld_chained_starts_in_segment* starts =
-                    (struct dyld_chained_starts_in_segment*)((uintptr_t)segs +
+                    (struct dyld_chained_starts_in_segment*)((UIntPtr)segs +
                                                              segs->seg_info_offset[i]);
 
-                UInt64 off = (uintptr_t)ptr - (uintptr_t)this->buffer;
+                UInt64 off = (UIntPtr)ptr - (UIntPtr)this->buffer;
 
                 if (starts->pointer_format == DYLD_CHAINED_PTR_ARM64E_KERNEL) {
                     off = this->offsetToAddress(off) - this->base;
@@ -313,7 +313,7 @@ bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr) {
                     starts->pointer_format == DYLD_CHAINED_PTR_ARM64E_KERNEL
                         ? reinterpret_cast<UInt64*>(this->addressToPointer(this->base + where))
                         : reinterpret_cast<UInt64*>(
-                              (reinterpret_cast<uintptr_t>(this->buffer) + where));
+                              (reinterpret_cast<UIntPtr>(this->buffer) + where));
 
                 do {
                     UInt64 ptr_tag = *mem;
@@ -326,7 +326,7 @@ bool UserMachO::isPointerInPacFixupChain(xnu::Mach::VmAddress ptr) {
                         return true;
                     }
 
-                    mem = (UInt64*)((uintptr_t)mem + skip);
+                    mem = (UInt64*)((UIntPtr)mem + skip);
 
                 } while (skip > 0);
             }
@@ -470,7 +470,7 @@ bool UserMachO::parseLoadCommands() {
         UInt32 cmdtype = load_cmd->cmd;
         UInt32 cmdsize = load_cmd->cmdsize;
 
-        if (cmdsize > mh->sizeofcmds - ((uintptr_t)load_cmd - (uintptr_t)(mh + 1)))
+        if (cmdsize > mh->sizeofcmds - ((UIntPtr)load_cmd - (UIntPtr)(mh + 1)))
             return false;
 
         switch (cmdtype) {

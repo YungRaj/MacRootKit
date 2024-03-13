@@ -36,11 +36,11 @@ class UserMachO;
 namespace ObjectiveC {
 #ifdef __arm64e__
 
-static const uintptr_t bigSignedMethodListFlag = 0x8000000000000000;
+static const UInt64 bigSignedMethodListFlag = 0x8000000000000000;
 
 #else
 
-static const uintptr_t bigSignedMethodListFlag = 0x0;
+static const UInt64 bigSignedMethodListFlag = 0x0;
 
 #endif
 

@@ -20,7 +20,7 @@ extern "C" {
 #include <fcntl.h>
 };
 
-KernelMachO::KernelMachO(uintptr_t address) {
+KernelMachO::KernelMachO(UIntPtr address) {
     buffer = reinterpret_cast<char*>(address),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
     base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
@@ -30,7 +30,7 @@ KernelMachO::KernelMachO(uintptr_t address) {
     this->parseMachO();
 }
 
-KernelMachO::KernelMachO(uintptr_t address, Offset slide) {
+KernelMachO::KernelMachO(UIntPtr address, Offset slide) {
     buffer = reinterpret_cast<char*>(address),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
     base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
@@ -120,7 +120,7 @@ bool KernelMachO::parseLoadCommands() {
         UInt32 cmdtype = load_command->cmd;
         UInt32 cmdsize = load_command->cmdsize;
 
-        if (cmdsize > mh->sizeofcmds - ((uintptr_t)load_command - (uintptr_t)(mh + 1)))
+        if (cmdsize > mh->sizeofcmds - ((UIntPtr)load_command - (UIntPtr)(mh + 1)))
             return false;
 
         switch (cmdtype) {
@@ -347,7 +347,7 @@ void KernelMachO::parseMachO() {
     MachO::parseMachO();
 }
 
-KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address) {
+KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address) {
     kernel_cache = kc;
     buffer = reinterpret_cast<char*>(address),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
@@ -358,7 +358,7 @@ KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address) {
     this->parseMachO();
 }
 
-KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, uintptr_t address, Offset slide) {
+KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address, Offset slide) {
     kernel_cache = kc;
     buffer = reinterpret_cast<char*>(address),
     header = reinterpret_cast<struct mach_header_64*>(this->buffer);
@@ -389,7 +389,7 @@ bool KernelCacheMachO::parseLoadCommands() {
         UInt32 cmdtype = load_command->cmd;
         UInt32 cmdsize = load_command->cmdsize;
 
-        if (cmdsize > mh->sizeofcmds - ((uintptr_t)load_command - (uintptr_t)(mh + 1)))
+        if (cmdsize > mh->sizeofcmds - ((UIntPtr)load_command - (UIntPtr)(mh + 1)))
             return false;
 
         switch (cmdtype) {

@@ -27,8 +27,8 @@ class Kernel;
 
 class KextMachO : public MachO {
 public:
-    KextMachO(uintptr_t base);
-    KextMachO(uintptr_t base, Offset slide);
+    KextMachO(UIntPtr base);
+    KextMachO(UIntPtr base, Offset slide);
 
     KextMachO(const char* path, Offset slide);
     KextMachO(const char* path);
