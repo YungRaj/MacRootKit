@@ -38,8 +38,8 @@ struct DeviceTreeProperty {
     char val[0];
 };
 
-typedef Bool (^dt_node_callback_t)(UInt32 depth, void* node, UInt32 size);
-typedef Bool (^dt_property_callback_t)(UInt32 depth, void* prop, UInt32 size);
+using dt_node_callback_t = Bool (*)(UInt32 depth, void* node, UInt32 size);
+using dt_property_callback_t = Bool (*)(UInt32 depth, void* prop, UInt32 size);
 
 static DeviceTree* deviceTree;
 
@@ -47,7 +47,7 @@ PE_state_t* platformExpertState(xnu::Kernel* kernel);
 
 template <typename T>
 T getDeviceTreeHead(xnu::Kernel* kernel) {
-    PE_state_t* PE = platformExpertState(kernel);
+    PE_state_t* PE = xnu::platformExpertState(kernel);
 
     T deviceTreeHead = reinterpret_cast<T>(PE->deviceTreeHead);
 
@@ -55,7 +55,7 @@ T getDeviceTreeHead(xnu::Kernel* kernel) {
 }
 
 Size getDeviceTreeSize(xnu::Kernel* kernel) {
-    PE_state_t* PE = platformExpertState(kernel);
+    PE_state_t* PE = xnu::platformExpertState(kernel);
 
     Size deviceTreeSize = PE->deviceTreeSize;
 

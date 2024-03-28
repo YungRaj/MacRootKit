@@ -24,11 +24,14 @@ namespace mrk {
 MacRootKit::MacRootKit(xnu::Kernel* kernel)
     : kernel(kernel),
       kextKmods(reinterpret_cast<xnu::KmodInfo**>(kernel->getSymbolAddressByName("_kmod"))),
-      platformArchitecture(Arch::getCurrentArchitecture()),
-      kernelPatcher(new KernelPatcher(this->kernel)), architecture(Arch::initArchitecture()) {
+      platformArchitecture(Arch::getCurrentArchitecture()) {
     kernel->setRootKit(this);
 
     this->registerCallbacks();
+
+    kernelPatcher = new KernelPatcher(this->kernel);
+
+    architecture = Arch::initArchitecture();
 }
 
 MacRootKit::~MacRootKit() {}

@@ -23,9 +23,9 @@ namespace xnu {
 KextMachO::KextMachO(Kernel* kernel, char* name, xnu::Mach::VmAddress base)
     : kernel(kernel), name(name), base_offset(0), kernel_cache(
 #ifdef __arm64__
-                                                      Kernel::findKernelCache()
+      Kernel::findKernelCache()
 #else
-                                                      0
+       0
 #endif
                                                           ),
       kernel_collection(
@@ -65,6 +65,38 @@ KextMachO::KextMachO(Kernel* kernel, char* name, xnu::KmodInfo* kmod_info)
 KextMachO::~KextMachO() {}
 
 void KextMachO::parseLinkedit() {}
+
+void KextMachO::parseSymbolTable(xnu::Macho::Nlist64* symtab, UInt32 nsyms, char* strtab,
+                                 Size strsize) {
+
+    for (int i = 0; i < nsyms; i++) {
+        Symbol* symbol;
+
+        xnu::Macho::Nlist64* nl = &symtab[i];
+
+        char* name;
+
+        xnu::Mach::VmAddress address;
+
+        name = &strtab[nl->n_strx];
+
+        address = nl->n_value;
+
+        symbol =
+            new Symbol(this, nl->n_type & N_TYPE, name, address, this->addressToOffset(address),
+                       this->segmentForAddress(address), this->sectionForAddress(address));
+
+        this->symbolTable->addSymbol(symbol);
+
+        char buffer[128];
+
+        snprintf(buffer, 128, "0x%llx", address);
+
+        MAC_RK_LOG("MacRK::Symbol %s %s\n", name, buffer);
+    }
+
+    MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+}
 
 bool KextMachO::parseLoadCommands() {
     struct mach_header_64* mh = this->getMachHeader();

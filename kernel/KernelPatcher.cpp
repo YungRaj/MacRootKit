@@ -219,8 +219,7 @@ OSObject* KernelPatcher::copyClientEntitlement(task_t task, const char* entitlem
     return original;
 }
 
-bool KernelPatcher::IOCurrentTaskHasEntitlement(const char *entitlement)
-{
+bool KernelPatcher::IOCurrentTaskHasEntitlement(const char* entitlement) {
     return true;
 }
 
@@ -305,8 +304,8 @@ Hook* KernelPatcher::installHasEntitlementHook() {
     xnu::Mach::VmAddress orig_IOCurrentTaskHasEntitlement;
     xnu::Mach::VmAddress hooked_IOCurrentTaskHasEntitlement;
 
-    orig_IOCurrentTaskHasEntitlement = this->getKernel()->getSymbolAddressByName(
-        "_IOCurrentTaskHasEntitlement");
+    orig_IOCurrentTaskHasEntitlement =
+        this->getKernel()->getSymbolAddressByName("_IOCurrentTaskHasEntitlement");
 
     hooked_IOCurrentTaskHasEntitlement =
         reinterpret_cast<xnu::Mach::VmAddress>(KernelPatcher::IOCurrentTaskHasEntitlement);
@@ -442,7 +441,7 @@ void KernelPatcher::processAlreadyLoadedKexts() {
                 char buffer1[128];
                 char buffer2[128];
 
-                snprintf(buffer1, 128, "0x%lx", kmod->address);
+                snprintf(buffer1, 128, "0x%llx", kmod->address);
                 snprintf(buffer2, 128, "0x%x", *(UInt32*)kmod->address);
 
                 MAC_RK_LOG("MacRK::KernelPatcher::processing Kext %s = %s @ %s = %s\n", entry_id,

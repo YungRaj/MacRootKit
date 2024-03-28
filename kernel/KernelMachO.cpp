@@ -23,18 +23,18 @@
 KernelMachO::KernelMachO(Kernel* kernel)
     : kernel(kernel), kernel_collection(
 #ifdef __x86_64__
-                          Kernel::findKernelCollection()
+    kernel::findKernelCollection()
 #else
-                          0
+    0
 #endif
-                              ),
+    ),
       kernel_cache(
 #ifdef __arm64__
-          Kernel::findKernelCache()
+        Kernel::findKernelCache()
 #else
-          0
+        0
 #endif
-      ) {
+) {
 }
 
 KernelMachO::~KernelMachO() {}

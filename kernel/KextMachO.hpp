@@ -67,6 +67,9 @@ public:
         this->kernel_collection = kc;
     }
 
+    virtual void parseSymbolTable(xnu::Macho::Nlist64* symtab, UInt32 nsyms, char* strtab,
+                                  Size strsize);
+
     virtual void parseLinkedit();
 
     virtual bool parseLoadCommands();

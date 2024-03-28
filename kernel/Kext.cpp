@@ -31,8 +31,6 @@ Kext::Kext(Kernel* kernel, xnu::Mach::VmAddress base, char* identifier)
     macho = new KextMachO(kernel, identifier, address);
 
     kmod_info = reinterpret_cast<xnu::KmodInfo*>(macho->getSymbolAddressByName("_kmod_info"));
-
-    size = kmod_info->size;
 }
 
 Kext::Kext(Kernel* kernel, void* kext, xnu::KmodInfo* kmod_info)

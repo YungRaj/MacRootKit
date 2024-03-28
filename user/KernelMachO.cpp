@@ -20,22 +20,18 @@ extern "C" {
 #include <fcntl.h>
 };
 
-KernelMachO::KernelMachO(UIntPtr address) {
-    buffer = reinterpret_cast<char*>(address),
-    header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-    base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
-    symbolTable = new SymbolTable();
-    aslr_slide = 0;
+KernelMachO::KernelMachO(UIntPtr address)
+    : kernel_cache(kc), buffer(address), header(reinterpret_cast<struct mach_header_64*>(buffer)),
+      base(reinterpret_cast<struct mach_header_64*>(buffer)), symbolTable(new SymbolTable()),
+      aslr_slide(0) {
 
     this->parseMachO();
 }
 
-KernelMachO::KernelMachO(UIntPtr address, Offset slide) {
-    buffer = reinterpret_cast<char*>(address),
-    header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-    base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
-    symbolTable = new SymbolTable();
-    aslr_slide = slide;
+KernelMachO::KernelMachO(UIntPtr address, Offset slide)
+    : kernel_cache(kc), buffer(address), header(reinterpret_cast<struct mach_header_64*>(buffer)),
+      base(reinterpret_cast<struct mach_header_64*>(buffer)), symbolTable(new SymbolTable()),
+      aslr_slide(0) {
 
     this->parseMachO();
 }
@@ -347,24 +343,18 @@ void KernelMachO::parseMachO() {
     MachO::parseMachO();
 }
 
-KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address) {
-    kernel_cache = kc;
-    buffer = reinterpret_cast<char*>(address),
-    header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-    base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
-    symbolTable = new SymbolTable();
-    aslr_slide = 0;
+KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address)
+    : kernel_cache(kc), buffer(address), header(reinterpret_cast<struct mach_header_64*>(buffer)),
+      base(reinterpret_cast<struct mach_header_64*>(buffer)), symbolTable(new SymbolTable()),
+      aslr_slide(0) {
 
     this->parseMachO();
 }
 
-KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address, Offset slide) {
-    kernel_cache = kc;
-    buffer = reinterpret_cast<char*>(address),
-    header = reinterpret_cast<struct mach_header_64*>(this->buffer);
-    base = reinterpret_cast<xnu::Mach::VmAddress>(this->buffer);
-    symbolTable = new SymbolTable();
-    aslr_slide = slide;
+KernelCacheMachO::KernelCacheMachO(xnu::Mach::VmAddress kc, UIntPtr address, Offset slide)
+    : kernel_cache(kc), buffer(address), header(reinterpret_cast<struct mach_header_64*>(buffer)),
+      base(reinterpret_cast<struct mach_header_64*>(buffer)), symbolTable(new SymbolTable()),
+      aslr_slide(slide) {
 
     this->parseMachO();
 }

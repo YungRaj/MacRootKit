@@ -61,11 +61,11 @@ char* xnu::getKernelVersion() {
 
     struct utsname kernelInfo;
 
-    uname(&kernelInfo);
+    // uname(&kernelInfo);
 
     strlcpy(kernelBuildVersion, kernelInfo.version, 256);
 
-    MAC_RK_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
+    // MAC_RK_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
 
     return kernelBuildVersion;
 }
@@ -85,11 +85,11 @@ char* xnu::getOSBuildVersion() {
     mib[0] = CTL_KERN;
     mib[1] = KERN_OSVERSION;
 
-    if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0) {
+    /* if (sysctl(mib, 2, buildVersion, &len, NULL, 0) == 0) {
         MAC_RK_LOG("MacRK::macOS OS build version = %s\n", buildVersion);
     } else {
         return NULL;
-    }
+    } */
 
     return buildVersion;
 }
@@ -131,7 +131,7 @@ Kernel::Kernel(xnu::Mach::Port kernel_task_port)
 
     disassembler = new Disassembler(this);
 
-    kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
+    // kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::Kernel(xnu::Mach::VmAddress cache, xnu::Mach::VmAddress base, Offset slide)
@@ -141,7 +141,7 @@ Kernel::Kernel(xnu::Mach::VmAddress cache, xnu::Mach::VmAddress base, Offset sli
 
     macho->initWithBase(base, slide);
 
-    kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
+    // kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::Kernel(xnu::Mach::VmAddress base, Offset slide)
@@ -179,7 +179,7 @@ Kernel::Kernel(xnu::Mach::VmAddress base, Offset slide)
 
 #endif
 
-    kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
+    // kernelDebugKit = xnu::KDK::KDKFromBuildInfo(this, version, osBuildVersion);
 }
 
 Kernel::~Kernel() {}
@@ -201,8 +201,7 @@ xnu::Mach::VmAddress Kernel::findKernelCache() {
     if (kernel_cache)
         return kernel_cache;
 
-    xnu::Mach::VmAddress near =
-        0xfffffe0000000000 | *reinterpret_cast<xnu::Mach::VmAddress*>(IOLog);
+    xnu::Mach::VmAddress near = 0xfffffe0000000000 | reinterpret_cast<xnu::Mach::VmAddress>(IOLog);
 
     Size kaslr_align = 0x4000;
 
@@ -261,7 +260,6 @@ xnu::Mach::VmAddress Kernel::findKernelCollection() {
 
     return kernel_collection;
 }
-
 
 xnu::Mach::VmAddress Kernel::findKernelBase() {
     static xnu::Mach::VmAddress kernel_base = 0;
