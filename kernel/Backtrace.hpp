@@ -40,12 +40,13 @@ mrk::MacRootKit* mac_rootkit_get_rootkit();
 
 namespace Debug {
 namespace Symbolicate {
-void lookForAddressInsideKernel(xnu::Mach::VmAddress address, xnu::Kernel* kernel, Symbol*& sym);
+void lookForAddressInsideKernel(xnu::Mach::VmAddress address, xnu::Kernel* kernel, Symbol** sym,
+                                Offset* delta);
 void lookForAddressInsideKexts(xnu::Mach::VmAddress address, std::vector<xnu::Kext*>& kexts,
-                               Symbol*& sym);
+                               Symbol** sym, Offset* delta);
 
 Symbol* getSymbolFromAddress(xnu::Mach::VmAddress address, Offset* delta);
 }; // namespace Symbolicate
 
-void printBacktrace(union Arch::ThreadState* thread_state);
+void printBacktrace();
 }; // namespace Debug

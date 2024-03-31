@@ -221,6 +221,9 @@ union ThreadState {
     } state_arm64;
 };
 
+using arm64_register_state = ThreadState::arm64_register_state;
+using x86_64_register_state = ThreadState::x86_64_register_state;
+
 template <enum Architectures ArchType>
 concept _x86_64 = ArchType == ARCH_x86_64;
 
@@ -264,60 +267,39 @@ template <enum Architectures ArchType>
     requires IsCurrentArchitecture<ArchType>
 static inline void getThreadState(union ThreadState* state) {
     if constexpr (ArchType == ARCH_arm64) {
-        struct arm64_register_state* state_arm64 = &state->state_arm64;
+        arm64_register_state* state_arm64 = &state->state_arm64;
 
-        asm volatile("MOV %0, x0\n"
-                     "MOV %1, x1\n"
-                     "MOV %2, x2\n"
-                     "MOV %3, x3\n"
-                     "MOV %4, x4\n"
-                     "MOV %5, x5\n"
-                     "MOV %6, x6\n"
-                     "MOV %7, x7\n"
-                     "MOV %8, x8\n"
-                     "MOV %9, x9\n"
-                     "MOV %10, x10\n"
-                     "MOV %11, x11\n"
-                     "MOV %12, x12\n"
-                     "MOV %13, x13\n"
-                     "MOV %14, x14\n"
-                     "MOV %15, x15\n"
-                     "MOV %16, x16\n"
-                     "MOV %17, x17\n"
-                     "MOV %18, x18\n"
-                     "MOV %19, x19\n"
-                     "MOV %20, x20\n"
-                     "MOV %21, x21\n"
-                     "MOV %22, x22\n"
-                     "MOV %23, x23\n"
-                     "MOV %24, x24\n"
-                     "MOV %25, x25\n"
-                     "MOV %26, x26\n"
-                     "MOV %27, x27\n"
-                     "MOV %28, x28\n"
-                     : "=r"(state_arm64->x[0]), "=r"(state_arm64->x[1]), "=r"(state_arm64->x[2]),
-                       "=r"(state_arm64->x[3]), "=r"(state_arm64->x[4]), "=r"(state_arm64->x[5]),
-                       "=r"(state_arm64->x[6]), "=r"(state_arm64->x[7]), "=r"(state_arm64->x[8]),
-                       "=r"(state_arm64->x[9]), "=r"(state_arm64->x[10]), "=r"(state_arm64->x[11]),
-                       "=r"(state_arm64->x[12]), "=r"(state_arm64->x[13]), "=r"(state_arm64->x[14]),
-                       "=r"(state_arm64->x[15]), "=r"(state_arm64->x[16]), "=r"(state_arm64->x[17]),
-                       "=r"(state_arm64->x[18]), "=r"(state_arm64->x[19]), "=r"(state_arm64->x[20]),
-                       "=r"(state_arm64->x[21]), "=r"(state_arm64->x[22]), "=r"(state_arm64->x[23]),
-                       "=r"(state_arm64->x[24]), "=r"(state_arm64->x[25]), "=r"(state_arm64->x[26]),
-                       "=r"(state_arm64->x[27]), "=r"(state_arm64->x[28]));
+        asm volatile("STP x0, x1, [%[regs], #0]\n"
+                     "STP x2, x3, [%[regs], #16]\n"
+                     "STP x4, x5, [%[regs], #32]\n"
+                     "STP x6, x7, [%[regs], #48]\n"
+                     "STP x8, x9, [%[regs], #64]\n"
+                     "STP x10, x11, [%[regs], #80]\n"
+                     "STP x12, x13, [%[regs], #96]\n"
+                     "STP x14, x15, [%[regs], #112]\n"
+                     "STP x16, x17, [%[regs], #128]\n"
+                     "STP x18, x19, [%[regs], #144]\n"
+                     "STP x20, x21, [%[regs], #160]\n"
+                     "STP x22, x23, [%[regs], #176]\n"
+                     "STP x24, x25, [%[regs], #192]\n"
+                     "STP x26, x27, [%[regs], #208]\n"
+                     "STR x28, [%[regs], #224]\n"
+                     :
+                     : [regs] "r"(state_arm64->x)
+                     :);
 
-        asm volatile("STR %0, [%1]\n"
-                     "MRS %0, lr\n"
-                     "MOV %1, sp\n"
-                     "ADR %2, 1f\n"
-                     "MRS %3, cpsr\n"
+        asm volatile("MOV %0, fp\n"
+                     "MOV %1, lr\n"
+                     "MOV %2, sp\n"
+                     "ADR %x3, 1f\n"
                      "1:\n"
+                     "MRS %4, nzcv\n"
                      : "=r"(state_arm64->fp), "=r"(state_arm64->lr), "=r"(state_arm64->sp),
                        "=r"(state_arm64->pc), "=r"(state_arm64->cpsr));
     }
 
     if constexpr (ArchType == ARCH_x86_64) {
-        struct x86_64_register_state* state_x86_64 = &state_x86_64;
+        x86_64_register_state* state_x86_64 = &state->state_x86_64;
 
         asm volatile("movq %%rsp, %0\n"
                      "movq %%rbp, %1\n"

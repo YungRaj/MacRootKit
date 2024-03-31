@@ -23,9 +23,9 @@ namespace xnu {
 KextMachO::KextMachO(Kernel* kernel, char* name, xnu::Mach::VmAddress base)
     : kernel(kernel), name(name), base_offset(0), kernel_cache(
 #ifdef __arm64__
-      Kernel::findKernelCache()
+                                                      Kernel::findKernelCache()
 #else
-       0
+                                                      0
 #endif
                                                           ),
       kernel_collection(
@@ -92,10 +92,10 @@ void KextMachO::parseSymbolTable(xnu::Macho::Nlist64* symtab, UInt32 nsyms, char
 
         snprintf(buffer, 128, "0x%llx", address);
 
-        MAC_RK_LOG("MacRK::Symbol %s %s\n", name, buffer);
+        // MAC_RK_LOG("MacRK::Symbol %s %s\n", name, buffer);
     }
 
-    MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
+    // MAC_RK_LOG("MacRK::MachO::%u syms!\n", nsyms);
 }
 
 bool KextMachO::parseLoadCommands() {
@@ -146,8 +146,9 @@ bool KextMachO::parseLoadCommands() {
             snprintf(buffer1, 128, "0x%08llx", segment_command->vmaddr);
             snprintf(buffer2, 128, "0x%08llx", segment_command->vmaddr + segment_command->vmsize);
 
-            MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n", segment_command->fileoff,
-                       segment_command->segname, buffer1, buffer2);
+            // MAC_RK_LOG("MacRK::LC_SEGMENT_64 at 0x%llx - %s %s to %s \n",
+            // segment_command->fileoff,
+            //           segment_command->segname, buffer1, buffer2);
 
             if (!strcmp(segment_command->segname, "__LINKEDIT")) {
                 linkedit = reinterpret_cast<UInt8*>(segment_command->vmaddr);
@@ -172,8 +173,8 @@ bool KextMachO::parseLoadCommands() {
                 snprintf(buffer1, 128, "0x%08llx", section->addr);
                 snprintf(buffer2, 128, "0x%08llx", section->addr + section->size);
 
-                MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j, buffer1, buffer2,
-                           section->sectname);
+                // MAC_RK_LOG("MacRK::\tSection %d: %s to %s - %s\n", j, buffer1, buffer2,
+                //           section->sectname);
 
                 sect_offset += sizeof(struct section_64);
             }
@@ -194,11 +195,11 @@ bool KextMachO::parseLoadCommands() {
             char* strtab;
             UInt32 strsize;
 
-            MAC_RK_LOG("MacRK::LC_SYMTAB\n");
-            MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",
-                       symtab_command->symoff, symtab_command->symoff, symtab_command->nsyms);
-            MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",
-                       symtab_command->stroff, symtab_command->stroff, symtab_command->strsize);
+            // MAC_RK_LOG("MacRK::LC_SYMTAB\n");
+            // MAC_RK_LOG("MacRK::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",
+            //           symtab_command->symoff, symtab_command->symoff, symtab_command->nsyms);
+            // MAC_RK_LOG("MacRK::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",
+            //          symtab_command->stroff, symtab_command->stroff, symtab_command->strsize);
 
             if (kernel_cache) {
                 symtab = reinterpret_cast<xnu::Macho::Nlist64*>(this->kernel_cache +
@@ -214,8 +215,8 @@ bool KextMachO::parseLoadCommands() {
                 snprintf(buffer1, 128, "0x%llx", (UInt64)symtab);
                 snprintf(buffer2, 128, "0x%llx", (UInt64)strtab);
 
-                MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
-                MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
+                // MAC_RK_LOG("MacRK::\tSymbol Table address = %s\n", buffer1);
+                // MAC_RK_LOG("MacRK::\tString Table address = %s\n", buffer2);
 
             } else if (kernel_collection) {
                 symtab = reinterpret_cast<xnu::Macho::Nlist64*>(
@@ -243,7 +244,7 @@ bool KextMachO::parseLoadCommands() {
             struct dysymtab_command* dysymtab_command =
                 reinterpret_cast<struct dysymtab_command*>(load_command);
 
-            MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
+            /* MAC_RK_LOG("MacRK::LC_DYSYMTAB\n");
             MAC_RK_LOG("MacRK::\t%u local symbols at index %u\n", dysymtab_command->ilocalsym,
                        dysymtab_command->nlocalsym);
             MAC_RK_LOG("MacRK::\t%u external symbols at index %u\n", dysymtab_command->nextdefsym,
@@ -251,7 +252,7 @@ bool KextMachO::parseLoadCommands() {
             MAC_RK_LOG("MacRK::\t%u undefined symbols at index %u\n", dysymtab_command->nundefsym,
                        dysymtab_command->iundefsym);
             MAC_RK_LOG("MacRK::\t%u Indirect symbols at offset 0x%x\n",
-                       dysymtab_command->nindirectsyms, dysymtab_command->indirectsymoff);
+                       dysymtab_command->nindirectsyms, dysymtab_command->indirectsymoff); */
 
             break;
         }
@@ -264,15 +265,15 @@ bool KextMachO::parseLoadCommands() {
             if (uuid_command->cmdsize != sizeof(struct uuid_command))
                 return false;
 
-            MAC_RK_LOG("MacRK::LC_UUID\n");
-            MAC_RK_LOG("MacRK::\tuuid = ");
+            // MAC_RK_LOG("MacRK::LC_UUID\n");
+            // MAC_RK_LOG("MacRK::\tuuid = ");
 
             for (int j = 0; j < sizeof(uuid_command->uuid); j++)
-                MAC_RK_LOG("%x", uuid_command->uuid[j]);
+                // MAC_RK_LOG("%x", uuid_command->uuid[j]);
 
-            MAC_RK_LOG("\n");
+                // MAC_RK_LOG("\n");
 
-            break;
+                break;
         }
 
         case LC_DATA_IN_CODE: {
@@ -283,8 +284,8 @@ bool KextMachO::parseLoadCommands() {
             UInt32 dataoff = linkedit->dataoff;
             UInt32 datasize = linkedit->datasize;
 
-            MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
-            MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
+            // MAC_RK_LOG("MacRK::LC_DATA_IN_CODE\n");
+            // MAC_RK_LOG("MacRK::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
 
             break;
         }
