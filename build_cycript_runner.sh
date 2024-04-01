@@ -6,6 +6,6 @@ clang -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.p
 
 codesign -fs - --deep --entitlements entitlements.xml ./build/libcycript_runner_arm64.dylib
 
-codesign -fs - --deep --entitlements entitlements.xml ./build/libcycript_runner_arm64.dylib
+codesign -fs - --deep --entitlements entitlements.xml ./build/libcycript_runner_arm64e.dylib
 
 lipo -create -output build/libcycript_runner.dylib build/libcycript_runner_arm64.dylib build/libcycript_runner_arm64e.dylib

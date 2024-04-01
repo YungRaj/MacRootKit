@@ -35,6 +35,8 @@
 #include <AppKit/NSAlert.h>
 #include <Foundation/Foundation.h>
 
+#import <os/log.h>
+
 bool try_port(int port) {
   struct sockaddr_in serv_addr;
 
@@ -153,28 +155,33 @@ void run_cycript_server() {
 
     NSLog(@"CYListenServer = %lld called!\n", CYListenServer);
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *message = [NSString
-          stringWithFormat:@"%@ - MacRootKit",
-                           [[NSBundle mainBundle]
-                               objectForInfoDictionaryKey:@"CFBundleName"]];
-      NSString *informativeText = [NSString
-          stringWithFormat:@"Cycript is now running on port %d on %@!", port,
-                           [[NSBundle mainBundle] bundleIdentifier]];
+    // dispatch_async(dispatch_get_main_queue(), ^{
+    // });
+    NSString *message = [NSString
+        stringWithFormat:@"%@ - MacRootKit",
+                         [[NSBundle mainBundle]
+                             objectForInfoDictionaryKey:@"CFBundleName"]];
+    NSString *informativeText = [NSString
+        stringWithFormat:@"Cycript is now running on port %d on %@!", port,
+                         [[NSBundle mainBundle] bundleIdentifier]];
 
-      NSAlert *alert = [[NSAlert alloc] init];
+    os_log_info(OS_LOG_DEFAULT, "%{public}@\n%{public}@", message,
+                informativeText);
 
-      [alert setAlertStyle:NSAlertStyleCritical];
-      [alert setMessageText:message];
-      [alert addButtonWithTitle:@"OK"];
-      [alert setInformativeText:informativeText];
+    /* NSAlert *alert = [[NSAlert alloc] init];
 
-      [alert runModal];
-    });
+    [alert setAlertStyle:NSAlertStyleInformational];
+    [alert setMessageText:message];
+    [alert addButtonWithTitle:@"OK"];
+    [alert setInformativeText:informativeText];
+
+    [alert beginSheetModalForWindow:[[NSApplication sharedApplication]
+    mainWindow] completionHandler:(void (^)(NSModalResponse returnCode)) {
+           }];*/
+
+    NSLog(@"Running cycript server on port %d at IP Address %@", port,
+          ip_address);
   }
-
-  NSLog(@"Running cycript server on port %d at IP Address %@", port,
-        ip_address);
 }
 
 extern "C" {

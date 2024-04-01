@@ -39,13 +39,13 @@
 
 #include <IOKit/IOKitLib.h>
 
-#ifdef TARGET_OS_IPHONE
-
-#include <UIKit/UIKit.h>
-
-#elif TARGET_OS_MAC
+#ifdef TARGET_OS_MAC
 
 #include <AppKit/AppKit.h>
+
+#elif TARGET_OS_IPHONE
+
+#include <UIKit/UIKit.h>
 
 #endif
 
@@ -95,18 +95,19 @@
 
 @end
 
-bool swizzled_performVerificationWithError(id self, SEL selector, id error)
-{
+bool swizzled_performVerificationWithError(id self, SEL selector, id error) {
 	return YES;
 }
 
-bool swizzled_skipDeviceFamilyCheck()
-{
+bool swizzled_setLaunchWarningDataWithError(id self, SEL selector, id error) {
 	return YES;
 }
 
-mach_vm_address_t sign_ptr(mach_vm_address_t ptr)
-{
+bool swizzled_skipDeviceFamilyCheck() {
+	return YES;
+}
+
+mach_vm_address_t sign_ptr(mach_vm_address_t ptr) {
 #ifdef __arm64e__
 
 	__asm__ volatile("PACIZA %[pac]" : [pac] "+rm" (ptr));
@@ -116,8 +117,7 @@ mach_vm_address_t sign_ptr(mach_vm_address_t ptr)
 	return ptr;
 }
 
-void swizzleImplementations()
-{
+void swizzleImplementations() {
 	Class cls = objc_getClass("MIInstallableBundle");
 
 	SEL originalSelector = @selector(performVerificationWithError:);
@@ -128,8 +128,22 @@ void swizzleImplementations()
 										(IMP) sign_ptr((mach_vm_address_t) swizzled_performVerificationWithError),
 										"@:@");
 
-	if(didAddMethod)
-	{
+	if(didAddMethod) {
+		Method originalMethod = class_getInstanceMethod(cls ,originalSelector);
+		Method swizzledMethod = class_getInstanceMethod(cls, swizzledSelector);
+
+		method_exchangeImplementations(originalMethod, swizzledMethod);
+	}
+
+	originalSelector = @selector(_setLaunchWarningDataWithError:);
+	swizzledSelector = @selector(swizzled_setLaunchWarningDataWithError:);
+
+	didAddMethod = class_addMethod(cls,
+								   swizzledSelector,
+								   (IMP) sign_ptr((mach_vm_address_t) swizzled_setLaunchWarningDataWithError),
+									"@:@");
+
+	if(didAddMethod) {
 		Method originalMethod = class_getInstanceMethod(cls ,originalSelector);
 		Method swizzledMethod = class_getInstanceMethod(cls, swizzledSelector);
 
@@ -146,8 +160,7 @@ void swizzleImplementations()
 									(IMP)  sign_ptr((mach_vm_address_t) swizzled_skipDeviceFamilyCheck),
 									"@:@");
 
-	if(didAddMethod)
-	{
+	if(didAddMethod) {
 		Method originalMethod = class_getInstanceMethod(cls ,originalSelector);
 		Method swizzledMethod = class_getInstanceMethod(cls, swizzledSelector);
 
@@ -155,19 +168,17 @@ void swizzleImplementations()
 	}
 }
 
-extern "C"
-{
+extern "C" {
+
 	__attribute__((constructor))
-	static void initializer()
-	{
+	static void initializer() {
 		printf("[%s] initializer()\n", __FILE__);
 
 		swizzleImplementations();
 	}
 
 	__attribute__ ((destructor))
-	static void finalizer()
-	{
+	static void finalizer() {
 		printf("[%s] finalizer()\n", __FILE__);
 	}
 }
