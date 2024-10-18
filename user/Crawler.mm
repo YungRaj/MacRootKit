@@ -587,7 +587,7 @@ done:
 			UIView *view2 = (UIView*) obj2;
 
 			NSUInteger depth1 = [view1 depth];
-			NSUInteger depth2 = [view2 depth];1
+			NSUInteger depth2 = [view2 depth];
 
 			if(depth1 > depth2)
 			{

@@ -17,13 +17,10 @@
 #pragma once
 
 #include <Types.h>
-
 #include <DwarfV5.hpp>
 
 #include "Log.hpp"
-
 #include "vector.hpp"
-
 #include "BinaryFormat.hpp"
 
 namespace Binary {
