@@ -1,6 +1,6 @@
 ARCH = arm64
 
-BUILD = build
+BUILD = target
 OBJ = obj
 
 SDK = iphoneos

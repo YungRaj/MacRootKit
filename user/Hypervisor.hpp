@@ -25,7 +25,7 @@
 
 #include <Hypervisor/Hypervisor.h>
 
-#include <Types.h>
+#include <Types.hpp>
 
 #include <iBoot.h>
 

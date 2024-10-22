@@ -27,7 +27,7 @@ extern "C" {
 
 #include <vector>
 
-#include <Types.h>
+#include <Types.hpp>
 
 class MachO;
 class Segment;

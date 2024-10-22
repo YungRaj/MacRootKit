@@ -25,7 +25,7 @@
 #include <SpriteKit/SpriteKit.h>
 #include <UIKit/UIKit.h>
 
-#include <Types.h>
+#include <Types.hpp>
 
 /* iOS App Crawler */
 

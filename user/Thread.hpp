@@ -24,7 +24,7 @@
 #include <mach/mach_types.h>
 #include <sys/types.h>
 
-#include <Types.h>
+#include <Types.hpp>
 
 #include <Arch.hpp>
 

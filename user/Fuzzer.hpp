@@ -25,7 +25,7 @@ extern "C" {
 
 #include <vector>
 
-#include <Types.h>
+#include <Types.hpp>
 
 #include "Kernel.hpp"
 

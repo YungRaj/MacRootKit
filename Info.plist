@@ -12,6 +12,8 @@
 	<string>KEXT</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
 	<key>IOKitPersonalities</key>
 	<dict>
 		<key>com.YungRaj.MacRootKit</key>
