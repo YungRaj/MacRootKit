@@ -618,7 +618,21 @@ Int64 debug::ReadSleb128(UInt8* p, UInt8* end, UInt32* idx) {
     return result;
 }
 
-using namespace debug;
+namespace debug {
+
+static char kDwarfSegment[] = "__DWARF";
+
+static char kDebugLine[] = "__debug_line";
+static char kDebugLoc[] = "__debug_loc";
+static char kDebugAranges[] = "__debug_aranges";
+static char kDebugInfo[] = "__debug_info";
+static char kDebugRanges[] = "__debug_ranges";
+static char kDebugAbbrev[] = "__debug_abbrev";
+static char kDebugStr[] = "__debug_str";
+static char kAppleNames[] = "__apple_names";
+static char kAppleNamesPac[] = "__apple_namespac";
+static char kAppleTypes[] = "__apple_types";
+static char kAppleObjC[] = "__apple_objc";
 
 template <typename T>
     requires DebuggableBinary<T>
@@ -684,36 +698,36 @@ Dwarf<T>::Dwarf(const char* debugSymbols)
 #else
     : binary(new std::remove_pointer_t<T>(xnu::Kernel::xnu(), debugSymbols)),
 #endif
-      binaryWithDebugSymbols(binary), dwarf(binary->GetSegment("__DWARF")),
-      __debug_line(binary->GetSection("__DWARF", "__debug_line")),
-      __debug_loc(binary->GetSection("__DWARF", "__debug_loc")),
-      __debug_aranges(binary->GetSection("__DWARF", "__debug_aranges")),
-      __debug_info(binary->GetSection("__DWARF", "__debug_info")),
-      __debug_ranges(binary->GetSection("__DWARF", "__debug_ranges")),
-      __debug_abbrev(binary->GetSection("__DWARF", "__debug_abbrev")),
-      __debug_str(binary->GetSection("__DWARF", "__debug_str")),
-      __apple_names(binary->GetSection("__DWARF", "__apple_names")),
-      __apple_namespac(binary->GetSection("__DWARF", "__apple_namespac")),
-      __apple_types(binary->GetSection("__DWARF", "__apple_types")),
-      __apple_objc(binary->GetSection("__DWARF", "__apple_objc")) {
+      binaryWithDebugSymbols(binary), dwarf(binary->GetSegment(kDwarfSegment)),
+      __debug_line(binary->GetSection(kDwarfSegment, kDebugLine)),
+      __debug_loc(binary->GetSection(kDwarfSegment, kDebugLoc)),
+      __debug_aranges(binary->GetSection(kDwarfSegment, kDebugAranges)),
+      __debug_info(binary->GetSection(kDwarfSegment, kDebugInfo)),
+      __debug_ranges(binary->GetSection(kDwarfSegment, kDebugRanges)),
+      __debug_abbrev(binary->GetSection(kDwarfSegment, kDebugAbbrev)),
+      __debug_str(binary->GetSection(kDwarfSegment, kDebugStr)),
+      __apple_names(binary->GetSection(kDwarfSegment, kAppleNames)),
+      __apple_namespac(binary->GetSection(kDwarfSegment, kAppleNamesPac)),
+      __apple_types(binary->GetSection(kDwarfSegment, kAppleTypes)),
+      __apple_objc(binary->GetSection(kDwarfSegment, kAppleObjC)) {
     PopulateDebugSymbols();
 }
 
 template <typename T>
     requires DebuggableBinary<T>
 Dwarf<T>::Dwarf(T binary, const char* debugSymbols)
-    : binary(binary), binaryWithDebugSymbols(binary), dwarf(binary->GetSegment("__DWARF")),
-      __debug_line(binary->GetSection("__DWARF", "__debug_line")),
-      __debug_loc(binary->GetSection("__DWARF", "__debug_loc")),
-      __debug_aranges(binary->GetSection("__DWARF", "__debug_aranges")),
-      __debug_info(binary->GetSection("__DWARF", "__debug_info")),
-      __debug_ranges(binary->GetSection("__DWARF", "__debug_ranges")),
-      __debug_abbrev(binary->GetSection("__DWARF", "__debug_abbrev")),
-      __debug_str(binary->GetSection("__DWARF", "__debug_str")),
-      __apple_names(binary->GetSection("__DWARF", "__apple_names")),
-      __apple_namespac(binary->GetSection("__DWARF", "__apple_namespac")),
-      __apple_types(binary->GetSection("__DWARF", "__apple_types")),
-      __apple_objc(binary->GetSection("__DWARF", "__apple_objc")) {}
+    : binary(binary), binaryWithDebugSymbols(binary), dwarf(binary->GetSegment(kDwarfSegment)),
+      __debug_line(binary->GetSection(kDwarfSegment, kDebugLine)),
+      __debug_loc(binary->GetSection(kDwarfSegment, kDebugLoc)),
+      __debug_aranges(binary->GetSection(kDwarfSegment, kDebugAranges)),
+      __debug_info(binary->GetSection(kDwarfSegment, kDebugInfo)),
+      __debug_ranges(binary->GetSection(kDwarfSegment, kDebugRanges)),
+      __debug_abbrev(binary->GetSection(kDwarfSegment, kDebugAbbrev)),
+      __debug_str(binary->GetSection(kDwarfSegment, kDebugStr)),
+      __apple_names(binary->GetSection(kDwarfSegment, kAppleNames)),
+      __apple_namespac(binary->GetSection(kDwarfSegment, kAppleNamesPac)),
+      __apple_types(binary->GetSection(kDwarfSegment, kAppleTypes)),
+      __apple_objc(binary->GetSection(kDwarfSegment, kAppleObjC)) {}
 
 template <typename T>
     requires DebuggableBinary<T>
@@ -1676,6 +1690,8 @@ void Dwarf<T>::ParseDebugAddressRanges() {
 
         debug_aranges_offset += length;
     }
+}
+
 }
 
 template class debug::Dwarf<KernelMachO*>;

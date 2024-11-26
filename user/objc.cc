@@ -1043,21 +1043,35 @@ void ObjCClass::ParseProperties() {
 } // namespace objc
 
 namespace objc {
+
+static char kDataSegment[] = "__DATA";
+static char kDataConstSegment[] = "__DATA_CONST";
+
+static char kObjCClassList[] = "__objc_classlist";
+static char kObjCCatList[] = "__objc_catlist";
+static char kObjCProtoList[] = "__objc_protolist";
+static char kObjCSelRefs[] = "__objc_selrefs";
+static char kObjCCProtorefs[] = "__objc_protorefs";
+static char kObjCClassRefs[] = "__objc_classrefs";
+static char kObjCSuperRefs[] = "__objc_superrefs";
+static char kObjCIvar[] = "__objc_ivar";
+static char kObjCData[] = "__objc_data";
+
 void ObjCData::ParseObjC() {
-    data = macho->GetSegment("__DATA");
-    data_const = macho->GetSegment("__DATA_CONST");
+    data = macho->GetSegment(kDataSegment);
+    data_const = macho->GetSegment(kDataConstSegment);
 
-    classlist = macho->GetSection("__DATA_CONST", "__objc_classlist");
-    catlist = macho->GetSection("__DATA_CONST", "__objc_catlist");
-    protolist = macho->GetSection("__DATA_CONST", "__objc_protolist");
+    classlist = macho->GetSection(kDataConstSegment, kObjCClassList);
+    catlist = macho->GetSection(kDataConstSegment, kObjCCatList);
+    protolist = macho->GetSection(kDataConstSegment, kObjCProtoList);
 
-    selrefs = macho->GetSection("__DATA", "__objc_selrefs");
-    protorefs = macho->GetSection("__DATA", "__objc_protorefs");
-    classrefs = macho->GetSection("__DATA", "__objc_classrefs");
-    superrefs = macho->GetSection("__DATA", "__objc_superrefs");
+    selrefs = macho->GetSection(kDataSegment, kObjCSelRefs);
+    protorefs = macho->GetSection(kDataSegment, kObjCCProtorefs);
+    classrefs = macho->GetSection(kDataSegment, kObjCClassRefs);
+    superrefs = macho->GetSection(kDataSegment, kObjCSuperRefs);
 
-    ivar = macho->GetSection("__DATA", "__objc_ivar");
-    objc_data = macho->GetSection("__DATA", "__objc_data");
+    ivar = macho->GetSection(kDataSegment, kObjCIvar);
+    objc_data = macho->GetSection(kDataSegment, kObjCData);
 
     assert(data);
     assert(data);

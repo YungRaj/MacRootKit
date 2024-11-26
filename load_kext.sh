@@ -6,19 +6,20 @@ elif [ "$1" == "x86_64" ]; then
 	sudo nvram boot-args="debug=0x100 keepsyms=1 amfi_get_out_of_my_way=1 amfi_allow_any_signature=1"
 else
 	echo Bad Architecture $1
-
 	exit 1
 fi
 
-if [ -d build/com.YungRaj.MacRootKit.kext ]; then
-	sudo rm -R build/com.YungRaj.MacRootKit.kext
-fi
+sudo rm -R DarwinKit.kext
+
+bazel clean
 
 sudo /usr/bin/kmutil install --volume-root /
 
-./build_kext.sh $1
+bazel build --macos_cpus $1 :DarwinKit
 
-sudo chmod -R 755 build/com.YungRaj.MacRootKit.kext
-sudo chown -R root:wheel build/com.YungRaj.MacRootKit.kext
+unzip bazel-bin/DarwinKit.zip
 
-sudo kextload -v build/com.YungRaj.MacRootKit.kext
+sudo chmod -R 755 DarwinKit.kext
+sudo chown -R root:wheel DarwinKit.kext
+
+sudo kextload -v DarwinKit.kext

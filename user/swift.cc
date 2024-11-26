@@ -36,25 +36,39 @@
 
 namespace swift {
 
+static char kTextSegment[] = "__TEXT";
+
+static char kSwift5TypeRef[] = "__swift5_typeref";
+static char kSwift5Entry[] = "__swift5_entry";
+static char kSwift5BuiltIn[] = "__swift5_builtin";
+static char kSwift5RefStr[] = "__swift5_refstr";
+static char kSwift5FieldMd[] = "__swift5_fieldmd";
+static char kSwift5Assocty[] = "__swift5_assocty";
+static char kSwift5Proto[] = "__swift5_proto";
+static char kSwift5Types[] = "__swift5_types";
+static char kSwift5Protos[] = "__swift5_protos";
+static char kSwift5Capture[]  = "__swift5_capture";
+static char kSwift5Mpenum[] = "__swift5_mpenum";
+
 SwiftMetadata* ParseSwift(darwin::MachOUserspace* macho) {
     return macho->GetObjCMetadata() ? new SwiftMetadata(macho, macho->GetObjCMetadata()) : nullptr;
 }
 
 void SwiftMetadata::PopulateSections() {
     if (!text) {
-        text = macho->GetSegment("__TEXT");
+        text = macho->GetSegment(kTextSegment);
     }
-    typeref = macho->GetSection("__TEXT", "__swift5_typeref");
-    entry = macho->GetSection("__TEXT", "__swift5_entry");
-    builtin = macho->GetSection("__TEXT", "__swift5_builtin");
-    reflstr = macho->GetSection("__TEXT", "__swift5_refstr");
-    fieldmd = macho->GetSection("__TEXT", "__swift5_fieldmd");
-    assocty = macho->GetSection("__TEXT", "__swift5_assocty");
-    proto = macho->GetSection("__TEXT", "__swift5_proto");
-    types = macho->GetSection("__TEXT", "__swift5_types");
-    protos = macho->GetSection("__TEXT", "__swift5_protos");
-    capture = macho->GetSection("__TEXT", "__swift5_capture");
-    mpenum = macho->GetSection("__TEXT", "__swift5_mpenum");
+    typeref = macho->GetSection(kTextSegment, kSwift5TypeRef);
+    entry = macho->GetSection(kTextSegment, kSwift5Entry);
+    builtin = macho->GetSection(kTextSegment, kSwift5BuiltIn);
+    reflstr = macho->GetSection(kTextSegment, kSwift5RefStr);
+    fieldmd = macho->GetSection(kTextSegment, kSwift5FieldMd);
+    assocty = macho->GetSection(kTextSegment, kSwift5Assocty);
+    proto = macho->GetSection(kTextSegment, kSwift5Proto);
+    types = macho->GetSection(kTextSegment, kSwift5Types);
+    protos = macho->GetSection(kTextSegment, kSwift5Protos);
+    capture = macho->GetSection(kTextSegment, kSwift5Capture);
+    mpenum = macho->GetSection(kTextSegment, kSwift5Mpenum);
 }
 
 void SwiftMetadata::ParseSwift() {

@@ -616,7 +616,21 @@ int64_t debug::ReadSleb128(UInt8* p, UInt8* end, UInt32* idx) {
     return result;
 }
 
-using namespace debug;
+namespace debug {
+
+static char kDwarfSegment[] = "__DWARF";
+
+static char kDebugLine[] = "__debug_line";
+static char kDebugLoc[] = "__debug_loc";
+static char kDebugAranges[] = "__debug_aranges";
+static char kDebugInfo[] = "__debug_info";
+static char kDebugRanges[] = "__debug_ranges";
+static char kDebugAbbrev[] = "__debug_abbrev";
+static char kDebugStr[] = "__debug_str";
+static char kAppleNames[] = "__apple_names";
+static char kAppleNamesPac[] = "__apple_namespac";
+static char kAppleTypes[] = "__apple_types";
+static char kAppleObjC[] = "__apple_objc";
 
 DIE::DIE(Dwarf* dwarf, UInt64 code, char* name, enum DW_TAG tag, enum DW_CHILDREN has_children)
     : dwarf(dwarf), code(code), name(name), tag(tag), has_children(has_children) {}
@@ -667,34 +681,34 @@ Dwarf::Dwarf(const char* debugSymbols)
 #else
     : macho(new KDKKernelMachO(xnu::Kernel::Xnu(), debugSymbols)),
 #endif
-      machoWithDebug(macho), dwarf(macho->GetSegment("__DWARF")),
-      __debug_line(macho->GetSection("__DWARF", "__debug_line")),
-      __debug_loc(macho->GetSection("__DWARF", "__debug_loc")),
-      __debug_aranges(macho->GetSection("__DWARF", "__debug_aranges")),
-      __debug_info(macho->GetSection("__DWARF", "__debug_info")),
-      __debug_ranges(macho->GetSection("__DWARF", "__debug_ranges")),
-      __debug_abbrev(macho->GetSection("__DWARF", "__debug_abbrev")),
-      __debug_str(macho->GetSection("__DWARF", "__debug_str")),
-      __apple_names(macho->GetSection("__DWARF", "__apple_names")),
-      __apple_namespac(macho->GetSection("__DWARF", "__apple_namespac")),
-      __apple_types(macho->GetSection("__DWARF", "__apple_types")),
-      __apple_objc(macho->GetSection("__DWARF", "__apple_objc")) {
+      machoWithDebug(macho), dwarf(macho->GetSegment(kDwarfSegment)),
+      __debug_line(macho->GetSection(kDwarfSegment, kDebugLine)),
+      __debug_loc(macho->GetSection(kDwarfSegment, kDebugLoc)),
+      __debug_aranges(macho->GetSection(kDwarfSegment, kDebugAranges)),
+      __debug_info(macho->GetSection(kDwarfSegment, kDebugInfo)),
+      __debug_ranges(macho->GetSection(kDwarfSegment, kDebugRanges)),
+      __debug_abbrev(macho->GetSection(kDwarfSegment, kDebugAbbrev)),
+      __debug_str(macho->GetSection(kDwarfSegment, kDebugStr)),
+      __apple_names(macho->GetSection(kDwarfSegment, kAppleNames)),
+      __apple_namespac(macho->GetSection(kDwarfSegment, kAppleNamesPac)),
+      __apple_types(macho->GetSection(kDwarfSegment, kAppleTypes)),
+      __apple_objc(macho->GetSection(kDwarfSegment, kAppleObjC)) {
     PopulateDebugSymbols();
 }
 
 Dwarf::Dwarf(MachO* macho, const char* debugSymbols)
-    : macho(macho), machoWithDebug(macho), dwarf(macho->GetSegment("__DWARF")),
-      __debug_line(macho->GetSection("__DWARF", "__debug_line")),
-      __debug_loc(macho->GetSection("__DWARF", "__debug_loc")),
-      __debug_aranges(macho->GetSection("__DWARF", "__debug_aranges")),
-      __debug_info(macho->GetSection("__DWARF", "__debug_info")),
-      __debug_ranges(macho->GetSection("__DWARF", "__debug_ranges")),
-      __debug_abbrev(macho->GetSection("__DWARF", "__debug_abbrev")),
-      __debug_str(macho->GetSection("__DWARF", "__debug_str")),
-      __apple_names(macho->GetSection("__DWARF", "__apple_names")),
-      __apple_namespac(macho->GetSection("__DWARF", "__apple_namespac")),
-      __apple_types(macho->GetSection("__DWARF", "__apple_types")),
-      __apple_objc(macho->GetSection("__DWARF", "__apple_objc")) {}
+    : macho(macho), machoWithDebug(macho), dwarf(macho->GetSegment(kDwarfSegment)),
+      __debug_line(macho->GetSection(kDwarfSegment, kDebugLine)),
+      __debug_loc(macho->GetSection(kDwarfSegment, kDebugLoc)),
+      __debug_aranges(macho->GetSection(kDwarfSegment, kDebugAranges)),
+      __debug_info(macho->GetSection(kDwarfSegment, kDebugInfo)),
+      __debug_ranges(macho->GetSection(kDwarfSegment, kDebugRanges)),
+      __debug_abbrev(macho->GetSection(kDwarfSegment, kDebugAbbrev)),
+      __debug_str(macho->GetSection(kDwarfSegment, kDebugStr)),
+      __apple_names(macho->GetSection(kDwarfSegment, kAppleNames)),
+      __apple_namespac(macho->GetSection(kDwarfSegment, kAppleNamesPac)),
+      __apple_types(macho->GetSection(kDwarfSegment, kAppleTypes)),
+      __apple_objc(macho->GetSection(kDwarfSegment, kAppleObjC)) {}
 
 DIE* Dwarf::GetDebugInfoEntryByName(const char* name) {
     return nullptr;
@@ -1644,4 +1658,6 @@ void Dwarf::ParseDebugAddressRanges() {
 
         debug_aranges_offset += length;
     }
+}
+
 }
