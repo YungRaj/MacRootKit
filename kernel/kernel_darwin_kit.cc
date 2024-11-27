@@ -36,7 +36,7 @@ OSDefineMetaClassAndStructors(IOKernelDarwinKitService, IOService)
     if (!userClients)
         return false;
 
-    DARWIN_RK_LOG("DarwinKit::IOKernelDarwinKitService::init()!\n");
+    DARWIN_KIT_LOG("DarwinKit::IOKernelDarwinKitService::init()!\n");
 
     return IOService::init(properties);
 }
@@ -67,19 +67,19 @@ bool IOKernelDarwinKitService::start(IOService* provider) {
 
         char buffer[128];
 
-        DARWIN_RK_LOG("DarwinKit::IOKernelDarwinKitService::start()!\n");
+        DARWIN_KIT_LOG("DarwinKit::IOKernelDarwinKitService::start()!\n");
 
         snprintf(buffer, 128, "0x%llx", kernel_base);
 
-        DARWIN_RK_LOG("DarwinKit::IOKernelDarwinKitService::kernel_base = %s\n", buffer);
+        DARWIN_KIT_LOG("DarwinKit::IOKernelDarwinKitService::kernel_base = %s\n", buffer);
 
         snprintf(buffer, 128, "0x%llx", kernel_slide);
 
-        DARWIN_RK_LOG("DarwinKit::IOKernelDarwinKitService::kernel_slide = %s\n", buffer);
+        DARWIN_KIT_LOG("DarwinKit::IOKernelDarwinKitService::kernel_slide = %s\n", buffer);
 
         snprintf(buffer, 128, "0x%x", *(UInt32*)kernel_base);
 
-        DARWIN_RK_LOG("DarwinKit::@ kernel base = %s\n", buffer);
+        DARWIN_KIT_LOG("DarwinKit::@ kernel base = %s\n", buffer);
 
         if (kernel_base && kernel_slide) {
             kernel = xnu::Kernel::Create(kernel_base, kernel_slide);
@@ -97,7 +97,7 @@ bool IOKernelDarwinKitService::start(IOService* provider) {
             registerService();
         }
     } else {
-        DARWIN_RK_LOG("DarwinKit::failed to load! Please enable keepsyms=1 as a boot-arg in NVRAM!\n");
+        DARWIN_KIT_LOG("DarwinKit::failed to load! Please enable keepsyms=1 as a boot-arg in NVRAM!\n");
 
         return kIOReturnUnsupported;
     }

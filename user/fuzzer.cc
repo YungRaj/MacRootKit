@@ -117,7 +117,7 @@ void Harness::AddDebugSymbolsFromKernel(const char* kernelPath) {
     int fd = open(kernelPath, O_RDONLY);
 
     if (fd == -1) {
-        DARWIN_RK_LOG("Error opening kernel Mach-O %s", kernelPath);
+        DARWIN_KIT_LOG("Error opening kernel Mach-O %s", kernelPath);
 
         return;
     }
@@ -133,7 +133,7 @@ void Harness::AddDebugSymbolsFromKernel(const char* kernelPath) {
     bytes_read = read(fd, file_data, file_size);
 
     if (bytes_read != file_size) {
-        DARWIN_RK_LOG("Read file failed!\n");
+        DARWIN_KIT_LOG("Read file failed!\n");
 
         close(fd);
 
@@ -437,7 +437,7 @@ void Harness::GetEntryPointFromKC(xnu::mach::VmAddress kc, xnu::mach::VmAddress*
             struct unixthread_command* thread_command =
                 reinterpret_cast<struct unixthread_command*>(load_command);
 
-            DARWIN_RK_LOG("MacRK::LC_UNIXTHREAD\n");
+            DARWIN_KIT_LOG("MacRK::LC_UNIXTHREAD\n");
 
             if (thread_command->flavor == ARM_THREAD_STATE64) {
                 struct arm_thread_state64 {
@@ -452,7 +452,7 @@ void Harness::GetEntryPointFromKC(xnu::mach::VmAddress kc, xnu::mach::VmAddress*
 
                 state = (struct arm_thread_state64*)(thread_command + 1);
 
-                DARWIN_RK_LOG("MacRK::\tstate->pc = 0x%llx\n", state->pc);
+                DARWIN_KIT_LOG("MacRK::\tstate->pc = 0x%llx\n", state->pc);
 
                 *entryPoint = state->pc;
             }
@@ -482,7 +482,7 @@ void Harness::GetKernelFromKC(xnu::mach::VmAddress kc, xnu::mach::VmAddress* ker
                 *kernelBase = fileset_entry_command->vmaddr;
                 *kernelFileOffset = fileset_entry_command->fileoff;
 
-                DARWIN_RK_LOG("MacRK::Kernel found in kernelcache 0x%llx!\n", *kernelBase);
+                DARWIN_KIT_LOG("MacRK::Kernel found in kernelcache 0x%llx!\n", *kernelBase);
 
                 return;
             }

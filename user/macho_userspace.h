@@ -142,15 +142,15 @@ public:
         return objc;
     }
 
-    bool isObjectiveCLibrary() {
+    bool IsObjectiveCLibrary() {
         return is_libobjc;
     }
 
-    void  SetIsObjectiveCLibrary(bool is_libobjc) {
+    void SetIsObjectiveCLibrary(bool is_libobjc) {
         is_libobjc = is_libobjc;
     }
 
-    void setObjectiveCLibrary(MachOUserspace* libobjc) {
+    void SetObjectiveCLibrary(MachOUserspace* libobjc) {
         libobjc = libobjc;
     }
 

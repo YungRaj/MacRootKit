@@ -146,7 +146,7 @@ void Dyld::GetImageInfos() {
             all_image_info_addr = dyld_info.all_image_info_addr;
             all_image_info_size = dyld_info.all_image_info_size;
         } else {
-            DARWIN_RK_LOG("MacRK::could not find all_image_info for task! %d\n", kr);
+            DARWIN_KIT_LOG("MacRK::could not find all_image_info for task! %d\n", kr);
         }
     }
 }
@@ -1328,7 +1328,7 @@ MachO* Dyld::CacheDumpImage(char* image) {
     if (objC) {
         objc = dynamic_cast<MachOUserspace*>(CacheDumpImage("libobjc.A.dylib"));
 
-        objc->setObjectiveCLibrary(objc);
+        objc->SetObjectiveCLibrary(objc);
         objc->SetIsObjectiveCLibrary(true);
     }
 

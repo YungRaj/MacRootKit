@@ -29,6 +29,7 @@ extern "C" {
 #include <IOKit/IOLib.h>
 
 #include <libkern/OSKextLib.h>
+#include <libkern/version.h>
 
 #include <mach/mach_types.h>
 
@@ -56,45 +57,23 @@ using namespace arch::x86_64::patchfinder;
 
 #endif
 
-char* xnu::GetKernelVersion() {
-    char* kernelBuildVersion = new char[256];
+namespace xnu {
 
-    struct utsname kernelInfo;
-
-    // uname(&kernelInfo);
-
-    strlcpy(kernelBuildVersion, kernelInfo.version, 256);
-
-    // DARWIN_RK_LOG("DarwinKit::macOS kernel version = %s\n", kernelInfo.version);
-
-    return kernelBuildVersion;
+char* GetKernelVersion() {
+    char* kernel_build_version = new char[256];
+    strlcpy(kernel_build_version, version, 256);
+    DARWIN_KIT_LOG("DarwinKit::macOS kernel version = %s\n", kernel_build_version);
+    return kernel_build_version;
 }
 
 extern int sysctl(int*, u_int, void*, Size*, void*, Size);
 
-char* xnu::GetOSBuildVersion() {
-    int mib[2];
-
+char* GetOSBuildVersion() {
     Size len = 256;
-
-    char* buildVersion = new char[len];
-
-#define CTL_KERN 1
-#define KERN_OSVERSION 65
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_OSVERSION;
-
-    /* if (sysctl(mib, 2, buildVersion, &len, nullptr, 0) == 0) {
-        DARWIN_RK_LOG("DarwinKit::macOS OS build version = %s\n", buildVersion);
-    } else {
-        return nullptr;
-    } */
-
-    return buildVersion;
+    char* build_version = new char[len];
+    strlcpy(build_version, osversion, 256);
+    return build_version;
 }
-
-using namespace xnu;
 
 Offset Kernel::tempExecutableMemoryOffset = 0;
 
@@ -413,13 +392,13 @@ void Kernel::GetKernelObjects() {
     snprintf(buffer1, 128, "0x%llx", (xnu::mach::VmAddress)_Get_task_map);
     snprintf(buffer2, 128, "0x%llx", (xnu::mach::VmAddress)_Get_task_pmap);
 
-    DARWIN_RK_LOG("MacPE::Get_task_map = %s Get_task_pmap = %s\n", buffer1, buffer2);
+    DARWIN_KIT_LOG("MacPE::Get_task_map = %s Get_task_pmap = %s\n", buffer1, buffer2);
 
     snprintf(buffer1, 128, "0x%llx", (xnu::mach::VmAddress)GetKernelTask());
     snprintf(buffer2, 128, "0x%llx", (xnu::mach::VmAddress)GetKernelMap());
     snprintf(buffer3, 128, "0x%llx", (xnu::mach::VmAddress)GetKernelPmap());
 
-    DARWIN_RK_LOG("MacPE::kernel_task = %s kernel_map = %s kernel_pmap = %s!\n", buffer1, buffer2,
+    DARWIN_KIT_LOG("MacPE::kernel_task = %s kernel_map = %s kernel_pmap = %s!\n", buffer1, buffer2,
                buffer3);
 }
 
@@ -461,13 +440,13 @@ void Kernel::CreateKernelTaskPort() {
     snprintf(buffer2, 128, "0x%llx", (xnu::mach::VmAddress)_ipc_port_alloc_special);
     snprintf(buffer3, 128, "0x%llx", (xnu::mach::VmAddress)_ipc_port_make_send);
 
-    DARWIN_RK_LOG("MacPE::ipc_kobject_set = %s ipc_port_alloc_special = %s ipc_port_make_send = %s\n",
+    DARWIN_KIT_LOG("MacPE::ipc_kobject_set = %s ipc_port_alloc_special = %s ipc_port_make_send = %s\n",
                buffer1, buffer2, buffer3);
 
     snprintf(buffer1, 128, "0x%llx", (xnu::mach::VmAddress)_kernel_task);
     snprintf(buffer2, 128, "0x%llx", (xnu::mach::VmAddress)_ipc_space_kernel);
 
-    DARWIN_RK_LOG("MacPE::kernel_task = %s ipc_space_kernel = %s\n", buffer1, buffer2);
+    DARWIN_KIT_LOG("MacPE::kernel_task = %s ipc_space_kernel = %s\n", buffer1, buffer2);
 
     // use the host_priv to set host special port 4
     host_priv_t host = host_priv_self();
@@ -546,7 +525,6 @@ UInt64 Kernel::Call(xnu::mach::VmAddress func, UInt64* arguments, Size argCount)
     xnu::mach::VmAddress function = func;
 
 #ifdef __arm64__
-
     __asm__ volatile("PACIZA %[pac]" : [pac] "+rm"(function));
 
 #endif
@@ -954,7 +932,7 @@ xnu::mach::VmAddress Kernel::VmAllocate(Size size, UInt32 flags, xnu::mach::VmPr
 
     snprintf(buffer, 128, "0x%llx", address);
 
-    DARWIN_RK_LOG("DarwinKit::vm_map_enter() return address = %s\n", buffer);
+    DARWIN_KIT_LOG("DarwinKit::vm_map_enter() return address = %s\n", buffer);
 
 #endif
 
@@ -1002,7 +980,7 @@ bool Kernel::VmProtect(xnu::mach::VmAddress address, Size size, xnu::mach::VmPro
 
         snprintf(buffer, 128, "0x%llx", panic_xref);
 
-        DARWIN_RK_LOG("DarwinKit::panic_xref = %s\n", buffer);
+        DARWIN_KIT_LOG("DarwinKit::panic_xref = %s\n", buffer);
 
         if (panic_xref) {
             *(UInt32*)panic_xref = nop;
@@ -1023,14 +1001,14 @@ bool Kernel::VmProtect(xnu::mach::VmAddress address, Size size, xnu::mach::VmPro
     ml_set_interrupts_enabled(true);
 
     if (ret != KERN_SUCCESS) {
-        DARWIN_RK_LOG("DarwinKit::ml_static_protect failed! error = %d\n", ret);
+        DARWIN_KIT_LOG("DarwinKit::ml_static_protect failed! error = %d\n", ret);
 
         return false;
     }
 
 #endif
 
-    DARWIN_RK_LOG("DarwinKit::ml_static_protect success!\n");
+    DARWIN_KIT_LOG("DarwinKit::ml_static_protect success!\n");
 
     return ret == KERN_SUCCESS;
 }
@@ -1107,7 +1085,7 @@ void* Kernel::VmRemap(xnu::mach::VmAddress address, Size size) {
     ret = static_cast<kern_return_t>(Call(vm_map_remap, vmMapRemapArgs, 13));
 
     if (ret != KERN_SUCCESS) {
-        DARWIN_RK_LOG("DarwinKit::vm_map_remap failed!\n");
+        DARWIN_KIT_LOG("DarwinKit::vm_map_remap failed!\n");
 
         return 0;
     }
@@ -1222,8 +1200,9 @@ void Kernel::PhysicalWrite8(UInt64 paddr, UInt8 value) {
 bool Kernel::Read(xnu::mach::VmAddress address, void* data, Size size) {
     ml_set_interrupts_enabled(false);
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++) {
         *((UInt8*)data + i) = *((UInt8*)address + i);
+    }
 
     ml_set_interrupts_enabled(true);
 
@@ -1393,7 +1372,7 @@ bool Kernel::Write(xnu::mach::VmAddress address, void* data, Size size) {
 
     snprintf(buffer, 128, "0x%llx", vm_map_copy_overwrite);
 
-    DARWIN_RK_LOG("DarwinKit::Kernel vm_map_copy_overwrite = %s\n", buffer);
+    DARWIN_KIT_LOG("DarwinKit::Kernel vm_map_copy_overwrite = %s\n", buffer);
 
     struct vm_map_copy {
         int type;
@@ -1502,4 +1481,6 @@ xnu::mach::VmAddress Kernel::GetSymbolAddressByName(char* symbolname) {
     }
 
     return symbolAddress;
+}
+
 }

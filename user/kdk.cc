@@ -45,7 +45,7 @@ public:
         ReadKDKKernelFromPath(path, &buffer);
 
         if (!buffer) {
-            DARWIN_RK_LOG("MacRK::KDK could not be read from disk at path %s\n", path);
+            DARWIN_KIT_LOG("MacRK::KDK could not be read from disk at path %s\n", path);
 
         } else {
             header = reinterpret_cast<struct mach_header_64*>(buffer);
@@ -117,7 +117,7 @@ public:
             symbolTable->AddSymbol(symbol);
         }
 
-        DARWIN_RK_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
+        DARWIN_KIT_LOG("MacRK::KDKKernelMachO::%u syms!\n", nsyms);
     }
 
 private:
@@ -132,7 +132,7 @@ char* findKDKWithBuildVersion(const char* basePath, const char* substring) {
     DIR* dir = opendir(basePath);
 
     if (!dir) {
-        DARWIN_RK_LOG("Error opening directory");
+        DARWIN_KIT_LOG("Error opening directory");
 
         return nullptr;
     }
@@ -144,7 +144,7 @@ char* findKDKWithBuildVersion(const char* basePath, const char* substring) {
             char childName[KDK_PATH_SIZE];
             snprintf(childName, KDK_PATH_SIZE, "%s/%s", basePath, entry->d_name);
 
-            DARWIN_RK_LOG("Found KDK with build version '%s': %s\n", substring, childName);
+            DARWIN_KIT_LOG("Found KDK with build version '%s': %s\n", substring, childName);
 
             closedir(dir);
 
@@ -161,7 +161,7 @@ kern_return_t ReadKDKKernelFromPath(const char* path, char** out_buffer) {
     int fd = open(path, O_RDONLY);
 
     if (fd == -1) {
-        DARWIN_RK_LOG("Error opening file: %s \n", path);
+        DARWIN_KIT_LOG("Error opening file: %s \n", path);
 
         *out_buffer = nullptr;
 
@@ -353,10 +353,10 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion
 
     if (!buildVersion || !kernelVersion) {
         if (!buildVersion)
-            DARWIN_RK_LOG("MacRK::macOS Build Version not found!");
+            DARWIN_KIT_LOG("MacRK::macOS Build Version not found!");
 
         if (!kernelVersion)
-            DARWIN_RK_LOG("MacRK::macOS Kernel Version not found!");
+            DARWIN_KIT_LOG("MacRK::macOS Kernel Version not found!");
 
         return nullptr;
     }
@@ -370,7 +370,7 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion
         kdkInfo->kernelPath[0] == '\0') {
         delete kdkInfo;
 
-        DARWIN_RK_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s",
+        DARWIN_KIT_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s",
                    buildVersion, kernelVersion);
 
         return nullptr;
@@ -391,10 +391,10 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion
 
     if (!buildVersion || !kernelVersion) {
         if (!buildVersion)
-            DARWIN_RK_LOG("MacRK::macOS Build Version not found!");
+            DARWIN_KIT_LOG("MacRK::macOS Build Version not found!");
 
         if (!kernelVersion)
-            DARWIN_RK_LOG("MacRK::macOS Kernel Version not found!");
+            DARWIN_KIT_LOG("MacRK::macOS Kernel Version not found!");
 
         return nullptr;
     }
@@ -409,7 +409,7 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, const char* buildVersion
         kdkInfo->kernelPath[0] == '\0') {
         delete kdkInfo;
 
-        DARWIN_RK_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s",
+        DARWIN_KIT_LOG("MacRK::Failed to find KDK with buildVersion %s and kernelVersion %s",
                    buildVersion, kernelVersion);
 
         return nullptr;

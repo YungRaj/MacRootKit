@@ -88,7 +88,7 @@ xnu::mach::Port Task::GetTaskPort(Kernel* kernel, int pid) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)proc);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskPort() proc = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskPort() proc = %s\n", buffer);
 
     typedef task_t (*proc_task)(proc_t proc);
     task_t (*_proc_task)(proc_t proc);
@@ -99,7 +99,7 @@ xnu::mach::Port Task::GetTaskPort(Kernel* kernel, int pid) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)task);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskPort() task = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskPort() task = %s\n", buffer);
 
     typedef ipc_port_t (*convert_task_to_port)(task_t task);
     ipc_port_t (*_convert_task_to_port)(task_t task);
@@ -111,7 +111,7 @@ xnu::mach::Port Task::GetTaskPort(Kernel* kernel, int pid) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)port);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskPort() port = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskPort() port = %s\n", buffer);
 
     if (!port)
         return NULL;
@@ -128,7 +128,7 @@ Task* Task::GetTaskByName(Kernel* kernel, char* name) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)proc);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskByName() proc = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskByName() proc = %s\n", buffer);
 
     typedef task_t (*proc_task)(proc_t proc);
     task_t (*_proc_task)(proc_t proc);
@@ -139,7 +139,7 @@ Task* Task::GetTaskByName(Kernel* kernel, char* name) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)task);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskByName() task = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskByName() task = %s\n", buffer);
 
     typedef ipc_port_t (*convert_task_to_port)(task_t task);
     ipc_port_t (*_convert_task_to_port)(task_t task);
@@ -151,7 +151,7 @@ Task* Task::GetTaskByName(Kernel* kernel, char* name) {
 
     snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)port);
 
-    DARWIN_RK_LOG("MacPE::Task::GetTaskByName() port = %s\n", buffer);
+    DARWIN_KIT_LOG("MacPE::Task::GetTaskByName() port = %s\n", buffer);
 
     if (!port)
         return NULL;
@@ -183,7 +183,7 @@ proc_t Task::FindProcByPid(Kernel* kernel, int pid) {
 
         snprintf(buffer, 128, "0x%llx", (xnu::mach::VmAddress)current_proc);
 
-        DARWIN_RK_LOG("MacPE::proc = %s pid = %d\n", buffer, current_pid);
+        DARWIN_KIT_LOG("MacPE::proc = %s pid = %d\n", buffer, current_pid);
 
         if (current_pid == pid) {
             return current_proc;
@@ -245,7 +245,7 @@ proc_t Task::FindProcByName(Kernel* kernel, char* name) {
 
         snprintf(pointer, 128, "0x%llx", (xnu::mach::VmAddress)current_proc);
 
-        DARWIN_RK_LOG("DarwinKit::proc = %s name = %s\n", pointer, current_name);
+        DARWIN_KIT_LOG("DarwinKit::proc = %s name = %s\n", pointer, current_name);
 
         if (EndsWith(current_name, name)) {
             return current_proc;

@@ -170,16 +170,16 @@ void debug::PrintBacktrace() {
 
                 snprintf(buffer, 128, "0x%llx", fp);
 
-                DARWIN_RK_LOG("DarwinKit::frame pointer = %s\n", buffer);
+                DARWIN_KIT_LOG("DarwinKit::frame pointer = %s\n", buffer);
 
                 snprintf(buffer, 128, "0x%llx", lr);
 
-                DARWIN_RK_LOG("DarwinKit::link register = %s\n", buffer);
+                DARWIN_KIT_LOG("DarwinKit::link register = %s\n", buffer);
 
                 symbol = debug::symbolicate::GetSymbolFromAddress(lr, &delta);
 
                 if (symbol) {
-                    DARWIN_RK_LOG("DarwinKit::frame %u: %s %s + %llu\n", frame, buffer, symbol->GetName(),
+                    DARWIN_KIT_LOG("DarwinKit::frame %u: %s %s + %llu\n", frame, buffer, symbol->GetName(),
                                delta);
                 }
 
@@ -206,7 +206,7 @@ void debug::PrintBacktrace() {
             if (LooksLikeKernelPointer(rip)) {
                 symbol = debug::symbolicate::GetSymbolFromAddress(rip, &delta);
 
-                DARWIN_RK_LOG("frame %u: 0x%x %s + %llu", frame, rip, symbol->GetName(), delta);
+                DARWIN_KIT_LOG("frame %u: 0x%x %s + %llu", frame, rip, symbol->GetName(), delta);
 
                 rbp = *(UInt64*)rbp;
             } else

@@ -178,7 +178,7 @@ void KDKKernelMachO::ParseSymbolTable(xnu::macho::Nlist64* symtab, UInt32 nsyms,
         symbolTable->AddSymbol(symbol);
     }
 
-    DARWIN_RK_LOG("DarwinKit::KDKKernelMachO::%u syms!\n", nsyms);
+    DARWIN_KIT_LOG("DarwinKit::KDKKernelMachO::%u syms!\n", nsyms);
 }
 
 char* GetKDKWithBuildVersion(const char* basePath, const char* buildVersion) {
@@ -208,7 +208,7 @@ kern_return_t ReadKDKKernelFromPath(xnu::Kernel* kernel, const char* path, char*
     error = vnode_open(path, O_RDONLY, 0, 0, &vnode, vfs_context_current());
 
     if (error != 0) {
-        DARWIN_RK_LOG("Error opening file: %d\n", error);
+        DARWIN_KIT_LOG("Error opening file: %d\n", error);
 
         *out_buffer = nullptr;
 
@@ -227,7 +227,7 @@ kern_return_t ReadKDKKernelFromPath(xnu::Kernel* kernel, const char* path, char*
 
         *out_buffer = nullptr;
 
-        DARWIN_RK_LOG("DarwinKit:: KDK error getting file size: %d\n", error);
+        DARWIN_KIT_LOG("DarwinKit:: KDK error getting file size: %d\n", error);
 
         return KERN_FAILURE;
     }
@@ -241,7 +241,7 @@ kern_return_t ReadKDKKernelFromPath(xnu::Kernel* kernel, const char* path, char*
 
         *out_buffer = nullptr;
 
-        DARWIN_RK_LOG("DarwinKit:: KDK Memory allocation failed\n");
+        DARWIN_KIT_LOG("DarwinKit:: KDK Memory allocation failed\n");
 
         return KERN_FAILURE;
     }
@@ -256,7 +256,7 @@ kern_return_t ReadKDKKernelFromPath(xnu::Kernel* kernel, const char* path, char*
 
         *out_buffer = nullptr;
 
-        DARWIN_RK_LOG("DarwinKit:: KDK Error reading file: %d\n", error);
+        DARWIN_KIT_LOG("DarwinKit:: KDK Error reading file: %d\n", error);
 
         IOFree(buffer, (Size)fileSize);
 
@@ -402,10 +402,10 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, char* buildVersion, char
 
     if (!buildVersion || !kernelVersion) {
         if (!buildVersion)
-            DARWIN_RK_LOG("DarwinKit::macOS Build Version not found!");
+            DARWIN_KIT_LOG("DarwinKit::macOS Build Version not found!");
 
         if (!kernelVersion)
-            DARWIN_RK_LOG("DarwinKit::macOS Kernel Version not found!");
+            DARWIN_KIT_LOG("DarwinKit::macOS Kernel Version not found!");
 
         return nullptr;
     }
@@ -419,7 +419,7 @@ KDKInfo* KDK::KDKInfoFromBuildInfo(xnu::Kernel* kernel, char* buildVersion, char
         kdkInfo->kernelPath[0] == '\0') {
         delete kdkInfo;
 
-        DARWIN_RK_LOG("DarwinKit::Failed to find KDK with buildVersion %s and kernelVersion %s",
+        DARWIN_KIT_LOG("DarwinKit::Failed to find KDK with buildVersion %s and kernelVersion %s",
                    buildVersion, kernelVersion);
 
         return nullptr;

@@ -562,9 +562,12 @@ int main(int argc, char** argv) {
 
     int c;
 
+    /*
+
     kernel = new Kernel();
 
     printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->GetBase(), kernel->GetSlide());
+    */
 
     /*
     task = new Task(kernel, 614);
@@ -587,12 +590,12 @@ int main(int argc, char** argv) {
     using namespace debug;
 
     Dwarf<xnu::KernelMachO*>
-    dwarf("/Library/Developer/KDKs/KDK_12.5_21G72.kdk/System/Library/Kernels/kernel.development.t8020.dSYM/Contents/Resources/DWARF/kernel.development.t8020");
+    dwarf("/Library/Developer/KDKs/KDK_13.6_22G120.kdk/System/Library/Kernels/kernel.release.t8112.dSYM/Contents/Resources/DWARF/kernel.release.t8112");
 
 
     return 0;
-
     */
+
     while (1) {
         int option_index = 0;
 

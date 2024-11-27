@@ -207,7 +207,7 @@ void ParseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& met
         break;
     }
 
-    DARWIN_RK_LOG("\t\t\t%s Methods\n", type);
+    DARWIN_KIT_LOG("\t\t\t%s Methods\n", type);
 
     for (int i = 0; i < methods->count; i++) {
         UInt64 pointer_to_name;
@@ -220,7 +220,7 @@ void ParseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& met
 
             Method* meth = new Method(object, method);
 
-            DARWIN_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
+            DARWIN_KIT_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
 
             methodList.push_back(meth);
 
@@ -237,7 +237,7 @@ void ParseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& met
 
                 methodList.push_back(meth);
 
-                DARWIN_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
+                DARWIN_KIT_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
             }
 
         } else {
@@ -252,7 +252,7 @@ void ParseMethodList(ObjCData* metadata, ObjC* object, std::vector<Method*>& met
 
             methodList.push_back(meth);
 
-            DARWIN_RK_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
+            DARWIN_KIT_LOG("\t\t\t\t0x%08llx: %s%s\n", meth->GetImpl(), prefix, meth->GetName());
         }
 
         off += sizeof(struct _objc_2_class_method);
@@ -273,7 +273,7 @@ void ParsePropertyList(ObjCData* metadata, ObjC* object, std::vector<Property*>&
 
     off = sizeof(struct _objc_2_class_property_info);
 
-    DARWIN_RK_LOG("\t\t\tProperties\n");
+    DARWIN_KIT_LOG("\t\t\tProperties\n");
 
     for (int i = 0; i < properties->count; i++) {
         struct _objc_2_class_property* property = reinterpret_cast<struct _objc_2_class_property*>(
@@ -283,7 +283,7 @@ void ParsePropertyList(ObjCData* metadata, ObjC* object, std::vector<Property*>&
 
         propertyList.push_back(prop);
 
-        DARWIN_RK_LOG("\t\t\t\t%s %s\n", prop->GetAttributes(), prop->GetName());
+        DARWIN_KIT_LOG("\t\t\t\t%s %s\n", prop->GetAttributes(), prop->GetName());
 
         off += sizeof(struct _objc_2_class_property);
     }
@@ -874,7 +874,7 @@ void ObjCClass::ParseMethods() {
 
     off = sizeof(struct _objc_2_class_method_info);
 
-    DARWIN_RK_LOG("\t\t\tMethods\n");
+    DARWIN_KIT_LOG("\t\t\tMethods\n");
 
     for (int i = 0; i < meths->count; i++) {
         struct _objc_2_class_method* method =
@@ -892,9 +892,9 @@ void ObjCClass::ParseMethods() {
                 methods.push_back(meth);
 
                 if (metaclass) {
-                    DARWIN_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->GetImpl(), meth->GetName());
+                    DARWIN_KIT_LOG("\t\t\t\t0x%08llx: +%s\n", meth->GetImpl(), meth->GetName());
                 } else {
-                    DARWIN_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->GetImpl(), meth->GetName());
+                    DARWIN_KIT_LOG("\t\t\t\t0x%08llx: -%s\n", meth->GetImpl(), meth->GetName());
                 }
             }
 
@@ -913,9 +913,9 @@ void ObjCClass::ParseMethods() {
                     methods.push_back(meth);
 
                     if (metaclass) {
-                        DARWIN_RK_LOG("\t\t\t\t0x%08llx: +%s\n", meth->GetImpl(), meth->GetName());
+                        DARWIN_KIT_LOG("\t\t\t\t0x%08llx: +%s\n", meth->GetImpl(), meth->GetName());
                     } else {
-                        DARWIN_RK_LOG("\t\t\t\t0x%08llx: -%s\n", meth->GetImpl(), meth->GetName());
+                        DARWIN_KIT_LOG("\t\t\t\t0x%08llx: -%s\n", meth->GetImpl(), meth->GetName());
                     }
                 }
             }
@@ -976,7 +976,7 @@ void ObjCClass::ParseIvars() {
 
     off = sizeof(struct _objc_2_class_ivar_info);
 
-    DARWIN_RK_LOG("\t\t\tIvars\n");
+    DARWIN_KIT_LOG("\t\t\tIvars\n");
 
     for (int i = 0; i < ivs->count; i++) {
         struct _objc_2_class_ivar* ivar =
@@ -986,7 +986,7 @@ void ObjCClass::ParseIvars() {
 
         ivars.push_back(iv);
 
-        DARWIN_RK_LOG("\t\t\t\t0x%08llx: %s\n", iv->GetOffset(), iv->GetName());
+        DARWIN_KIT_LOG("\t\t\t\t0x%08llx: %s\n", iv->GetOffset(), iv->GetName());
 
         off += sizeof(struct _objc_2_class_ivar);
     }
@@ -1025,7 +1025,7 @@ void ObjCClass::ParseProperties() {
 
     off = sizeof(struct _objc_2_class_property_info);
 
-    DARWIN_RK_LOG("\t\t\tProperties\n");
+    DARWIN_KIT_LOG("\t\t\tProperties\n");
 
     for (int i = 0; i < props->count; i++) {
         struct _objc_2_class_property* property = reinterpret_cast<struct _objc_2_class_property*>(
@@ -1035,7 +1035,7 @@ void ObjCClass::ParseProperties() {
 
         properties.push_back(prop);
 
-        DARWIN_RK_LOG("\t\t\t\t%s %s\n", prop->GetAttributes(), prop->GetName());
+        DARWIN_KIT_LOG("\t\t\t\t%s %s\n", prop->GetAttributes(), prop->GetName());
 
         off += sizeof(struct _objc_2_class_property);
     }

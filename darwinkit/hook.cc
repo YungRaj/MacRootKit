@@ -135,11 +135,8 @@ xnu::mach::VmAddress Hook::GetTrampolineFromChain(xnu::mach::VmAddress address) 
 
         if (to == address) {
 #ifdef __arm64__
-
             __asm__ volatile("PACIZA %[pac]" : [pac] "+rm"(trampoline));
-
 #endif
-
             return trampoline;
         }
     }
@@ -222,7 +219,7 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
     min = disassembler->InstructionSize(from, branch_size);
 
     if (!min) {
-        DARWIN_RK_LOG("Cannot hook! Capstone failed!\n");
+        DARWIN_KIT_LOG("Cannot hook! Capstone failed!\n");
 
         return;
     }
@@ -238,8 +235,8 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
 
     union Branch to_hook_function;
 
-    // build the FunctionPatch branch/jmp instruction from original function to hooked function
-    // NOTE: if function is hooked more than once, then original = previous hook
+    // Builds the FunctionPatch branch/jmp instruction from original function to hooked function
+    // If the function is hooked more than once, then original = previous hook
 
     architecture->MakeBranch(&to_hook_function, to, from);
 
@@ -249,8 +246,7 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
 
     union Branch to_original_function;
 
-    // build the FunctionPatch branch/jmp instruction from trampoline to original function
-
+    // Builds the FunctionPatch branch/jmp instruction from trampoline to original function
     architecture->MakeBranch(&to_original_function, from + min,
                              payload->GetAddress() + payload->GetCurrentOffset());
 
@@ -310,9 +306,8 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
 
     union Branch to_trampoline;
 
-    // build the FunctionPatch branch/jmp instruction from original function to hooked function
-    // NOTE: if function is hooked more than once, then original = previous hook
-
+    // Builds the FunctionPatch branch/jmp instruction from original function to hooked function
+    // If the function is hooked more than once, then original = previous hook
     architecture->MakeBranch(&to_trampoline, trampoline, from);
 
     replace_opcodes = new UInt8[branch_size];
@@ -322,7 +317,7 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
     Size breakpoint_size = architecture->GetBreakpointSize();
 
     if (breakpoint_hook) {
-        // set a conditional breakpoint
+        // Sets a conditional breakpoint
         union FunctionCall call_breakpoint_hook;
 
         union Breakpoint breakpoint;
@@ -349,7 +344,7 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
         payload->WriteBytes((UInt8*)pop_registers,
                             (Size)((UInt8*)pop_registers_end - (UInt8*)pop_registers));
     } else {
-        // break regardless
+        // Breaks regardless
         union Breakpoint breakpoint;
 
         payload->WriteBytes((UInt8*)push_registers,
@@ -365,8 +360,7 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
 
     union Branch to_original_function;
 
-    // build the FunctionPatch branch/jmp instruction from trampoline to original function
-
+    // Builds the FunctionPatch branch/jmp instruction from trampoline to original function
     payload->WriteBytes(original_opcodes, min);
 
     architecture->MakeBranch(&to_original_function, from + min,
@@ -393,4 +387,6 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
     RegisterHook(hook);
 }
 
-void Hook::RemoveBreakpoint() {}
+void Hook::RemoveBreakpoint() {
+
+}

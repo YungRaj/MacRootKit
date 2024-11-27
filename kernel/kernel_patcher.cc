@@ -126,7 +126,7 @@ void KernelPatcher::OnOSKextSaveLoadedKextPanicList() {
 
     _OSKextSavedLoadedKextPanicList();
 
-    DARWIN_RK_LOG("DarwinKit::OSKextSavedLoadedKextPanicList() hook!\n");
+    DARWIN_KIT_LOG("DarwinKit::OSKextSavedLoadedKextPanicList() hook!\n");
 
     if (that->waitingForAlreadyLoadedKexts) {
         that->ProcessAlreadyLoadedKexts();
@@ -169,7 +169,7 @@ OSObject* KernelPatcher::CopyClientEntitlement(task_t task, const char* entitlem
 
     xnu::mach::VmAddress trampoline;
 
-    DARWIN_RK_LOG("DarwinKit::KernelPatcher::copyClientEntitlement() hook!\n");
+    DARWIN_KIT_LOG("DarwinKit::KernelPatcher::copyClientEntitlement() hook!\n");
 
     trampoline = hook->GetTrampolineFromChain(
         reinterpret_cast<xnu::mach::VmAddress>(KernelPatcher::CopyClientEntitlement));
@@ -229,7 +229,7 @@ void KernelPatcher::TaskSetMainThreadQos(task_t task, thread_t thread) {
 
     typedef void* (*task_set_main_thread_qos)(task_t, thread_t);
 
-    DARWIN_RK_LOG("DarwinKit::task_set_main_thread_qos hook!\n");
+    DARWIN_KIT_LOG("DarwinKit::task_set_main_thread_qos hook!\n");
 
     if (that) {
         StoredArray<DarwinKit::BinaryLoadCallback>* binaryLoadCallbacks;
@@ -283,7 +283,7 @@ Hook* KernelPatcher::InstallCopyClientEntitlementHook() {
 
     snprintf(buffer, 128, "0x%llx", orig_copyClientEntitlement);
 
-    DARWIN_RK_LOG("DarwinKit::__ZN12IOUserClient21copyClientEntitlementEP4taskPKc = %s\n", buffer);
+    DARWIN_KIT_LOG("DarwinKit::__ZN12IOUserClient21copyClientEntitlementEP4taskPKc = %s\n", buffer);
 
     hook = Hook::CreateHookForFunction(GetKernel(), this, orig_copyClientEntitlement);
 
@@ -310,7 +310,7 @@ Hook* KernelPatcher::InstallHasEntitlementHook() {
 
     snprintf(buffer, 128, "0x%llx", orig_IOCurrentTaskHasEntitlement);
 
-    DARWIN_RK_LOG("DarwinKit::_IOCurrentTaskHasEntitlement = %s\n", buffer);
+    DARWIN_KIT_LOG("DarwinKit::_IOCurrentTaskHasEntitlement = %s\n", buffer);
 
     hook = Hook::CreateHookForFunction(GetKernel(), this, orig_IOCurrentTaskHasEntitlement);
 
@@ -392,7 +392,7 @@ void KernelPatcher::ProcessAlreadyLoadedKexts() {
             snprintf(buffer1, 128, "0x%lx", kmod->address);
             snprintf(buffer2, 128, "0x%x", *(UInt32*)kmod->address);
 
-            DARWIN_RK_LOG("DarwinKit::KernelPatcher::processing Kext %s = %s @ %s\n", (char*)kmod->name,
+            DARWIN_KIT_LOG("DarwinKit::KernelPatcher::processing Kext %s = %s @ %s\n", (char*)kmod->name,
                        buffer1, buffer2);
 
             ProcessKext(kmod, true);
@@ -440,7 +440,7 @@ void KernelPatcher::ProcessAlreadyLoadedKexts() {
                 snprintf(buffer1, 128, "0x%llx", kmod->address);
                 snprintf(buffer2, 128, "0x%x", *(UInt32*)kmod->address);
 
-                DARWIN_RK_LOG("DarwinKit::KernelPatcher::processing Kext %s = %s @ %s = %s\n", entry_id,
+                DARWIN_KIT_LOG("DarwinKit::KernelPatcher::processing Kext %s = %s @ %s = %s\n", entry_id,
                            buffer1, entry_id, buffer2);
             }
         }
@@ -589,7 +589,7 @@ void KernelPatcher::PatchPmapEnterOptions() {
 
     // write(vm_map_enter, (void*) &breakpoint, sizeof(UInt64));
 
-    // DARWIN_RK_LOG("DarwinKit::@ vm_map_enter = 0x%x\n", *(UInt32*) vm_map_enter);
+    // DARWIN_KIT_LOG("DarwinKit::@ vm_map_enter = 0x%x\n", *(UInt32*) vm_map_enter);
 }
 #endif
 

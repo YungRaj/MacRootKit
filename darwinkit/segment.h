@@ -38,18 +38,14 @@ public:
           size(segment_command->vmsize), fileoffset(segment_command->fileoff),
           filesize(segment_command->filesize) {
         name = new char[strlen(segment_command->segname) + 1];
-
         strlcpy(name, segment_command->segname, strlen(segment_command->segname) + 1);
-
         PopulateSections();
     }
 
     ~Segment() {
         delete name;
-
         for (int i = 0; i < sections.size(); i++) {
             Section* section = sections.at(i);
-
             delete section;
         }
     }
@@ -103,10 +99,9 @@ public:
     }
 
     void PopulateSections() {
-        xnu::macho::Segment64 *segment = segment;
-        UInt32 nsects = segment->nsects;
+        Int32 nsects = segment->nsects;
         UInt32 offset = sizeof(struct segment_command_64);
-        for (int32_t i = 0; i < nsects; i++) {
+        for (Int32 i = 0; i < nsects; i++) {
             xnu::macho::Section64* sect =
                 reinterpret_cast<xnu::macho::Section64*>((UInt8*)segment + offset);
             Section* section = new Section(sect);

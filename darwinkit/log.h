@@ -26,12 +26,12 @@ extern "C" {
 
 #include <os/log.h>
 
-#define DARWIN_RK_LOG(...) os_log(OS_LOG_DEFAULT, __VA_ARGS__)
+#define DARWIN_KIT_LOG(...) os_log(OS_LOG_DEFAULT, __VA_ARGS__)
 
 #endif
 
 #ifdef __USER__
 
-#define DARWIN_RK_LOG printf
+#define DARWIN_KIT_LOG printf
 
 #endif

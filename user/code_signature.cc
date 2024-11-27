@@ -85,7 +85,7 @@ bool CodeSignature::ParseCodeSignature() {
     UInt32 offset = cmd->dataoff;
     UInt32 size = cmd->datasize;
 
-    DARWIN_RK_LOG("\t%u blobs\n", blobcount);
+    DARWIN_KIT_LOG("\t%u blobs\n", blobcount);
 
     for (UInt32 blobidx = 0; blobidx < blobcount; blobidx++) {
         BlobIndex index = superblob->index[blobidx];
@@ -115,63 +115,63 @@ bool CodeSignature::ParseCodeSignature() {
 
             char* ident = reinterpret_cast<char*>((*macho)[begin + identOffset]);
 
-            DARWIN_RK_LOG("\tIdentifier: %s\n", ident);
-            DARWIN_RK_LOG("\tPage size: %u bytes\n", 1 << pageSize);
+            DARWIN_KIT_LOG("\tIdentifier: %s\n", ident);
+            DARWIN_KIT_LOG("\tPage size: %u bytes\n", 1 << pageSize);
 
             if (hashType == HASH_TYPE_SHA1) {
-                DARWIN_RK_LOG("\tCD signatures are signed with SHA1\n");
+                DARWIN_KIT_LOG("\tCD signatures are signed with SHA1\n");
             } else if (hashType == HASH_TYPE_SHA256) {
-                DARWIN_RK_LOG("\tCD signatures are signed with SHA256\n");
+                DARWIN_KIT_LOG("\tCD signatures are signed with SHA256\n");
 
                 sha256 = true;
             } else {
-                DARWIN_RK_LOG("\tUnknown hashing algorithm in pages\n");
+                DARWIN_KIT_LOG("\tUnknown hashing algorithm in pages\n");
             }
 
             for (int i = 0; i < nCodeSlots; i++) {
                 UInt32 pages = nCodeSlots;
 
                 if (pages)
-                    DARWIN_RK_LOG("\t\tPage %2u ", i);
+                    DARWIN_KIT_LOG("\t\tPage %2u ", i);
 
                 UInt8* hash = (UInt8*)(*macho)[begin + hashOffset + i * hashSize];
 
                 for (int j = 0; j < hashSize; j++)
-                    DARWIN_RK_LOG("%.2x", hash[j]);
+                    DARWIN_KIT_LOG("%.2x", hash[j]);
 
                 UInt8* blob = (UInt8*)(*macho)[i * (1 << pageSize)];
 
                 if (i + 1 != nCodeSlots) {
                     if (VerifyCodeSlot(blob, 1 << pageSize, sha256, (char*)hash, hashSize))
-                        DARWIN_RK_LOG(" OK...");
+                        DARWIN_KIT_LOG(" OK...");
                     else
-                        DARWIN_RK_LOG(" Invalid!!!");
+                        DARWIN_KIT_LOG(" Invalid!!!");
                 } else {
 
                     if (VerifyCodeSlot(blob, 1 << pageSize, sha256, (char*)hash, hashSize))
                         // hash the last page only until the code signature,
                         // so that that code signature doesn't get included into hash
-                        DARWIN_RK_LOG(" OK...");
+                        DARWIN_KIT_LOG(" OK...");
                 }
 
-                DARWIN_RK_LOG("\n");
+                DARWIN_KIT_LOG("\n");
             }
 
             begin = offset + bloboffset - hashSize * nSpecialSlots;
 
             if (nSpecialSlots)
-                DARWIN_RK_LOG("\n\tSpecial Slots\n");
+                DARWIN_KIT_LOG("\n\tSpecial Slots\n");
 
             for (int i = 0; i < nSpecialSlots; i++) {
                 UInt8* hash = (UInt8*)(*macho)[begin + hashOffset + i * hashSize];
 
                 if (i < 5)
-                    DARWIN_RK_LOG("\t\t%s ", special_slots[i].name);
+                    DARWIN_KIT_LOG("\t\t%s ", special_slots[i].name);
                 else
-                    DARWIN_RK_LOG("\t\t");
+                    DARWIN_KIT_LOG("\t\t");
 
                 for (int j = 0; j < hashSize; j++)
-                    DARWIN_RK_LOG("%.2x", hash[j]);
+                    DARWIN_KIT_LOG("%.2x", hash[j]);
 
                 special_slots[i].sha256 = (hashType == HASH_TYPE_SHA256);
                 special_slots[i].hash = hash;
@@ -268,16 +268,16 @@ bool CodeSignature::ParseCodeSignature() {
 
                             if (memcmp(info_hash, special_slots[i].hash,
                                        special_slots[i].hashSize) == 0)
-                                DARWIN_RK_LOG(" OK...");
+                                DARWIN_KIT_LOG(" OK...");
                             else
-                                DARWIN_RK_LOG(" Invalid!!!");
+                                DARWIN_KIT_LOG(" Invalid!!!");
                         }
                     }
                 }
 
                 free(zerobuf);
 
-                DARWIN_RK_LOG("\n");
+                DARWIN_KIT_LOG("\n");
             }
         }
 
@@ -300,15 +300,15 @@ bool CodeSignature::ParseCodeSignature() {
             blob_raw = (UInt8*)(*macho)[begin];
             blob_hash = ComputeHash(special_slots[ENTITLEMENTS].sha256, blob_raw, length);
 
-            DARWIN_RK_LOG("\nEntitlements ");
+            DARWIN_KIT_LOG("\nEntitlements ");
 
             if (CompareHash(special_slots[ENTITLEMENTS].hash, blob_hash,
                                   special_slots[ENTITLEMENTS].hashSize))
-                DARWIN_RK_LOG("OK...\n");
+                DARWIN_KIT_LOG("OK...\n");
             else
-                DARWIN_RK_LOG("Invalid!!!\n");
+                DARWIN_KIT_LOG("Invalid!!!\n");
 
-            DARWIN_RK_LOG("%s\n", entitlements);
+            DARWIN_KIT_LOG("%s\n", entitlements);
 
             free(entitlements);
         }

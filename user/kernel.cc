@@ -16,9 +16,9 @@
 
 #include "kernel.h"
 
-using namespace xnu;
+namespace xnu {
 
-const char* xnu::GetKernelVersion() {
+const char* GetKernelVersion() {
     char* kernelBuildVersion = new char[256];
 
     struct utsname kernelInfo;
@@ -27,12 +27,12 @@ const char* xnu::GetKernelVersion() {
 
     strlcpy(kernelBuildVersion, kernelInfo.version, 256);
 
-    DARWIN_RK_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
+    DARWIN_KIT_LOG("MacRK::macOS kernel version = %s\n", kernelInfo.version);
 
     return kernelBuildVersion;
 }
 
-const char* xnu::GetOSBuildVersion() {
+const char* GetOSBuildVersion() {
     int mib[2];
 
     size_t len = 256;
@@ -42,7 +42,7 @@ const char* xnu::GetOSBuildVersion() {
     mib[1] = KERN_OSVERSION;
 
     if (sysctl(mib, 2, buildVersion, &len, nullptr, 0) == 0) {
-        DARWIN_RK_LOG("MacRK::macOS OS build version = %s\n", buildVersion);
+        DARWIN_KIT_LOG("MacRK::macOS OS build version = %s\n", buildVersion);
     } else {
         return nullptr;
     }
@@ -259,4 +259,6 @@ Symbol* Kernel::GetSymbolByAddress(xnu::mach::VmAddress address) {
 
 xnu::mach::VmAddress Kernel::GetSymbolAddressByName(char* symbolname) {
     return get_kernel_symbol(symbolname);
+}
+
 }

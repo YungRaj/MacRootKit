@@ -32,12 +32,12 @@ OSSerialize* GetProperty(IORegistryEntry* entry, const char* property) {
         if (value->serialize(s)) {
             return s;
         } else {
-            DARWIN_RK_LOG("failed to serialise %s property", property);
+            DARWIN_KIT_LOG("failed to serialise %s property", property);
 
             s->release();
         }
     } else {
-        DARWIN_RK_LOG("failed to get %s property", property);
+        DARWIN_KIT_LOG("failed to get %s property", property);
     }
 
     return nullptr;
@@ -48,19 +48,19 @@ bool AwaitPublishing(IORegistryEntry* obj) {
 
     while (counter < 256) {
         if (obj->inPlane(gIOServicePlane)) {
-            DARWIN_RK_LOG("pci device %s is in service plane %lu", obj->getName(), counter);
+            DARWIN_KIT_LOG("pci device %s is in service plane %lu", obj->getName(), counter);
 
             return true;
         }
 
-        DARWIN_RK_LOG("pci device %s is not in service plane %lu, polling", obj->getName(), counter);
+        DARWIN_KIT_LOG("pci device %s is not in service plane %lu, polling", obj->getName(), counter);
 
         ++counter;
 
         IOSleep(20);
     }
 
-    DARWIN_RK_LOG("found dead pci device %s", obj->getName());
+    DARWIN_KIT_LOG("found dead pci device %s", obj->getName());
 
     return false;
 }
@@ -75,7 +75,7 @@ UInt32 ReadPCIConfigValue(IORegistryEntry* service, UInt32 reg, UInt32 space, UI
 
     if (space == 0) {
         space = GetMember<UInt32>(service, 0xA8);
-        DARWIN_RK_LOG("read pci config discovered %s space to be 0x%08X", service->getName(), space);
+        DARWIN_KIT_LOG("read pci config discovered %s space to be 0x%08X", service->getName(), space);
     }
 
     if (size != 0) {
@@ -169,7 +169,7 @@ IORegistryEntry* FindEntryByPrefix(const char* path, const char* prefix,
         return res;
     }
 
-    DARWIN_RK_LOG("failed to get %s entry", path);
+    DARWIN_KIT_LOG("failed to get %s entry", path);
 
     return nullptr;
 }
@@ -199,7 +199,7 @@ IORegistryEntry* FindEntryByPrefix(IORegistryEntry* entry, const char* prefix,
 
                     if (found) {
                         if (bruteCount > 1)
-                            DARWIN_RK_LOG("bruted %s value in %lu attempts", prefix, bruteCount);
+                            DARWIN_KIT_LOG("bruted %s value in %lu attempts", prefix, bruteCount);
 
                         if (!proc)
                             break;
@@ -210,7 +210,7 @@ IORegistryEntry* FindEntryByPrefix(IORegistryEntry* entry, const char* prefix,
             iterator->release();
 
         } else {
-            DARWIN_RK_LOG("failed to iterate over entry");
+            DARWIN_KIT_LOG("failed to iterate over entry");
 
             return nullptr;
         }
@@ -218,7 +218,7 @@ IORegistryEntry* FindEntryByPrefix(IORegistryEntry* entry, const char* prefix,
     } while (brute && bruteCount < bruteMax && !found);
 
     if (!found)
-        DARWIN_RK_LOG("failed to find %s", prefix);
+        DARWIN_KIT_LOG("failed to find %s", prefix);
 
     return proc ? nullptr : res;
 }
@@ -230,14 +230,14 @@ bool UsingPrelinkedCache() {
         OSNumber* count = OSDynamicCast(OSNumber, root->getProperty("OSPrelinkKextCount"));
 
         if (count) {
-            DARWIN_RK_LOG("OSPrelinkKextCount equals to %u", count->unsigned32BitValue());
+            DARWIN_KIT_LOG("OSPrelinkKextCount equals to %u", count->unsigned32BitValue());
 
             return count->unsigned32BitValue() > 0;
         } else {
-            DARWIN_RK_LOG("missing OSPrelinkKextCount property!");
+            DARWIN_KIT_LOG("missing OSPrelinkKextCount property!");
         }
     } else {
-        DARWIN_RK_LOG("missing registry root!");
+        DARWIN_KIT_LOG("missing registry root!");
     }
 
     return false;
@@ -261,13 +261,13 @@ bool RenameDevice(IORegistryEntry* entry, char* name, bool compat) {
 
     const char* compatibleStr = static_cast<const char*>(compatibleProp->getBytesNoCopy());
 
-    DARWIN_RK_LOG("compatible property starts with %s and is %u bytes",
+    DARWIN_KIT_LOG("compatible property starts with %s and is %u bytes",
                compatibleStr ? compatibleStr : "(nullptr)", compatibleSz);
 
     if (compatibleStr) {
         for (UInt32 i = 0; i < compatibleSz; i++) {
             if (!strcmp(&compatibleStr[i], name)) {
-                DARWIN_RK_LOG("found %s in compatible, ignoring", name);
+                DARWIN_KIT_LOG("found %s in compatible, ignoring", name);
                 return true;
             }
 
@@ -281,7 +281,7 @@ bool RenameDevice(IORegistryEntry* entry, char* name, bool compat) {
         UInt8* compatibleBuf = new UInt8[compatibleBufSz];
 
         if (compatibleBuf) {
-            DARWIN_RK_LOG("fixing compatible to have %s", name);
+            DARWIN_KIT_LOG("fixing compatible to have %s", name);
 
             memcpy(&compatibleBuf[0], compatibleStr, compatibleSz);
             memcpy(&compatibleBuf[compatibleSz], name, nameSize);
@@ -294,11 +294,11 @@ bool RenameDevice(IORegistryEntry* entry, char* name, bool compat) {
 
                 return true;
             } else {
-                DARWIN_RK_LOG("compatible property memory alloc failure %u for %s", compatibleBufSz,
+                DARWIN_KIT_LOG("compatible property memory alloc failure %u for %s", compatibleBufSz,
                            name);
             }
         } else {
-            DARWIN_RK_LOG("compatible buffer memory alloc failure %u for %s", compatibleBufSz, name);
+            DARWIN_KIT_LOG("compatible buffer memory alloc failure %u for %s", compatibleBufSz, name);
         }
     }
 

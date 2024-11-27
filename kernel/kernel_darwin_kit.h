@@ -54,7 +54,7 @@ class IOKernelDarwinKitService : public IOService {
 
     virtual void clientClosed(IOUserClient* client);
 
-    darwin::DarwinKit* GetDarwinKit() {
+    darwin::DarwinKit* getDarwinKit() {
         return darwinkit;
     }
 

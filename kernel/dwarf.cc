@@ -505,7 +505,7 @@ UInt64 debug::ReadUleb128(UInt8* p, UInt8* end) {
 
     do {
         if (p == end) {
-            DARWIN_RK_LOG("malformed uleb128\n");
+            DARWIN_KIT_LOG("malformed uleb128\n");
 
             break;
         }
@@ -513,7 +513,7 @@ UInt64 debug::ReadUleb128(UInt8* p, UInt8* end) {
         UInt64 slice = *p & 0x7F;
 
         if (bit > 63) {
-            DARWIN_RK_LOG("uleb128 too big for uint64\n");
+            DARWIN_KIT_LOG("uleb128 too big for uint64\n");
 
             break;
         } else {
@@ -534,7 +534,7 @@ UInt64 debug::ReadUleb128(UInt8* p, UInt8* end, UInt32* idx) {
 
     do {
         if (p == end) {
-            DARWIN_RK_LOG("malformed uleb128\n");
+            DARWIN_KIT_LOG("malformed uleb128\n");
 
             break;
         }
@@ -542,7 +542,7 @@ UInt64 debug::ReadUleb128(UInt8* p, UInt8* end, UInt32* idx) {
         UInt64 slice = *p & 0x7F;
 
         if (bit > 63) {
-            DARWIN_RK_LOG("uleb128 too big for uint64\n");
+            DARWIN_KIT_LOG("uleb128 too big for uint64\n");
 
             break;
         } else {
@@ -567,7 +567,7 @@ int64_t debug::ReadSleb128(UInt8* p, UInt8* end) {
 
     do {
         if (p == end) {
-            DARWIN_RK_LOG("malformed sleb128\n");
+            DARWIN_KIT_LOG("malformed sleb128\n");
 
             break;
         }
@@ -595,7 +595,7 @@ int64_t debug::ReadSleb128(UInt8* p, UInt8* end, UInt32* idx) {
 
     do {
         if (p == end) {
-            DARWIN_RK_LOG("malformed sleb128\n");
+            DARWIN_KIT_LOG("malformed sleb128\n");
 
             break;
         }
@@ -773,7 +773,7 @@ void Dwarf::ParseDebugAbbrev() {
 
                 dies.push_back(die);
 
-                DARWIN_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name,
+                DARWIN_KIT_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name,
                            static_cast<UInt32>(children));
             }
 
@@ -819,7 +819,7 @@ void Dwarf::ParseDebugAbbrev() {
 
                     DIE* die = new DIE(this, code, name, tag, children);
 
-                    DARWIN_RK_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name,
+                    DARWIN_KIT_LOG("\n\n[%llu] DW_TAG = %s children = %u\n", code, name,
                                static_cast<UInt32>(children));
 
                     stack.push_back(die);
@@ -828,7 +828,7 @@ void Dwarf::ParseDebugAbbrev() {
                 }
 
             } else {
-                DARWIN_RK_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr),
+                DARWIN_KIT_LOG("\tDW_AT = %s 0x%x DW_FORM = %s\n", DWAttrToString(attr),
                            static_cast<UInt32>(attr), DWFormToString(form));
 
                 DIE* die = stack.at(stack.size() - 1);
@@ -847,7 +847,7 @@ void Dwarf::ParseDebugAbbrev() {
         }
     }
 
-    DARWIN_RK_LOG("\n\n");
+    DARWIN_KIT_LOG("\n\n");
 }
 
 DIE* Dwarf::GetDebugInfoEntryByCode(UInt64 code) {
@@ -936,10 +936,10 @@ void Dwarf::ParseDebugInfo() {
         }
 
         for (int i = 0; i < stack.size(); i++) {
-            DARWIN_RK_LOG("\t");
+            DARWIN_KIT_LOG("\t");
         }
 
-        DARWIN_RK_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->GetTag()), stack.size());
+        DARWIN_KIT_LOG("DW_TAG = %s depth = %zu\n", DWTagToString(die->GetTag()), stack.size());
 
         UInt64 die_code = die->GetCode();
 
@@ -1060,9 +1060,9 @@ void Dwarf::ParseDebugInfo() {
             dwarfDIE->AddAttribute(attribute);
 
             for (int i = 0; i < stack.size(); i++)
-                DARWIN_RK_LOG("\t");
+                DARWIN_KIT_LOG("\t");
 
-            DARWIN_RK_LOG("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
+            DARWIN_KIT_LOG("\tDW_AT = %s value = 0x%llx\n", DWAttrToString(attr), value);
         }
 
         if (static_cast<bool>(die->GetHasChildren())) {
@@ -1121,7 +1121,7 @@ void Dwarf::ParseDebugLines() {
                 char* source_file_name =
                     reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
 
-                DARWIN_RK_LOG("Source File Name: %s\n", source_file_name);
+                DARWIN_KIT_LOG("Source File Name: %s\n", source_file_name);
 
                 UInt32 string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
@@ -1144,7 +1144,7 @@ void Dwarf::ParseDebugLines() {
                 char* include_directory =
                     reinterpret_cast<char*>(debug_line_begin + debug_line_offset);
 
-                DARWIN_RK_LOG("Include Directory: %s\n", include_directory);
+                DARWIN_KIT_LOG("Include Directory: %s\n", include_directory);
 
                 UInt32 string_size = GetStringSize(debug_line_begin + debug_line_offset);
 
@@ -1160,9 +1160,9 @@ void Dwarf::ParseDebugLines() {
             }
         }
 
-        DARWIN_RK_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "Address", "Line", "Column", "File",
+        DARWIN_KIT_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "Address", "Line", "Column", "File",
                    "ISA", "Discriminator", "Flags");
-        DARWIN_RK_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "--------------------", "--------",
+        DARWIN_KIT_LOG("%-20s %-6s %-6s %-6s %-4s %-13s %-13s\n", "--------------------", "--------",
                    "------", "------", "----", "-------------", "-------------");
 
         struct Sequence* sequence = new Sequence;
@@ -1208,7 +1208,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.end_sequence = 1;
 
-                        DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                                    sourceLine->state.address, sourceLine->state.line,
                                    sourceLine->state.column, sourceLine->state.file,
                                    sourceLine->state.isa, sourceLine->state.discriminator,
@@ -1231,7 +1231,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.address = program_counter;
 
-                        DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                                    sourceLine->state.address, sourceLine->state.line,
                                    sourceLine->state.column, sourceLine->state.file,
                                    sourceLine->state.isa, sourceLine->state.discriminator,
@@ -1258,7 +1258,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.discriminator = discriminator;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1279,7 +1279,7 @@ void Dwarf::ParseDebugLines() {
             } else if (op > 0 && op < 13) {
                 switch (static_cast<DW_LNS>(op)) {
                 case DW_LNS::copy: {
-                    // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                    // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                     // sourceLine->state.address, sourceLine->state.line, sourceLine->state.column,
                     // sourceLine->state.file, sourceLine->state.isa,
                     // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1301,7 +1301,7 @@ void Dwarf::ParseDebugLines() {
                         sourceLine->state.address += program_counter;
                         sourceLine->state.prologue_end = 0;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1316,7 +1316,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.line += line;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1330,7 +1330,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.file = file;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1344,7 +1344,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.column = column;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1355,7 +1355,7 @@ void Dwarf::ParseDebugLines() {
                     {
                         sourceLine->state.statement = ~sourceLine->state.statement;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1366,7 +1366,7 @@ void Dwarf::ParseDebugLines() {
                     {
                         sourceLine->state.basic_block = 1;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1398,7 +1398,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.prologue_end = 0;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1409,7 +1409,7 @@ void Dwarf::ParseDebugLines() {
                     {
                         sourceLine->state.prologue_end = 1;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1420,7 +1420,7 @@ void Dwarf::ParseDebugLines() {
                     {
                         sourceLine->state.epilogue_begin = 1;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1434,7 +1434,7 @@ void Dwarf::ParseDebugLines() {
 
                         sourceLine->state.isa = isa;
 
-                        // DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                        // DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                         // sourceLine->state.address, sourceLine->state.line,
                         // sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                         // sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1456,7 +1456,7 @@ void Dwarf::ParseDebugLines() {
                 sourceLine->state.address += address_change;
                 sourceLine->state.line += line_change;
 
-                DARWIN_RK_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
+                DARWIN_KIT_LOG("0x%-20llx %-6lld %-8lld %-6u %-4u %-13u %-13s\n",
                            sourceLine->state.address, sourceLine->state.line,
                            sourceLine->state.column, sourceLine->state.file, sourceLine->state.isa,
                            sourceLine->state.discriminator, SourceLineFlagsToString(sourceLine));
@@ -1491,7 +1491,7 @@ void Dwarf::ParseDebugLocations() {
 
     UInt32 debug_loc_offset = 0;
 
-    DARWIN_RK_LOG("0x%08x:\n", debug_loc_offset);
+    DARWIN_KIT_LOG("0x%08x:\n", debug_loc_offset);
 
     struct LocationTableEntry* location_entry = new LocationTableEntry;
 
@@ -1510,19 +1510,19 @@ void Dwarf::ParseDebugLocations() {
 
             debug_loc_offset += sizeof(UInt16);
 
-            DARWIN_RK_LOG("\t(0x%016llx, 0x%016llx) ", value0, value1);
+            DARWIN_KIT_LOG("\t(0x%016llx, 0x%016llx) ", value0, value1);
 
             for (int i = 0; i < bytes; i++) {
                 UInt8 byte = *reinterpret_cast<UInt8*>(debug_loc_begin + debug_loc_offset);
 
                 location_entry->location_ops.push_back(static_cast<DW_OP>(byte));
 
-                DARWIN_RK_LOG("0x%x ", byte);
+                DARWIN_KIT_LOG("0x%x ", byte);
 
                 debug_loc_offset++;
             }
 
-            DARWIN_RK_LOG("\n");
+            DARWIN_KIT_LOG("\n");
 
         } else if (value0 == -1ULL) {
             debug_loc_offset += sizeof(UInt64) * 2;
@@ -1539,7 +1539,7 @@ void Dwarf::ParseDebugLocations() {
 
             location_entry = new LocationTableEntry;
 
-            DARWIN_RK_LOG("0x%08x:\n", debug_loc_offset);
+            DARWIN_KIT_LOG("0x%08x:\n", debug_loc_offset);
 
             location_entry->offset = debug_loc_offset;
         }
@@ -1571,7 +1571,7 @@ void Dwarf::ParseDebugRanges() {
         debug_ranges_offset += sizeof(UInt64) * 2;
 
         if (value0 == 0 && value1 == 0) {
-            DARWIN_RK_LOG("%08x <End of list>\n", current_ranges_offset);
+            DARWIN_KIT_LOG("%08x <End of list>\n", current_ranges_offset);
 
             current_ranges_offset = debug_ranges_offset;
 
@@ -1579,7 +1579,7 @@ void Dwarf::ParseDebugRanges() {
 
             rangeEntries = new RangeEntries;
         } else {
-            DARWIN_RK_LOG("%08x %016llx %016llx\n", current_ranges_offset, value0, value1);
+            DARWIN_KIT_LOG("%08x %016llx %016llx\n", current_ranges_offset, value0, value1);
 
             struct RangeEntry* range = new RangeEntry;
 
@@ -1623,7 +1623,7 @@ void Dwarf::ParseDebugAddressRanges() {
 
         offset += sizeof(UInt32);
 
-        DARWIN_RK_LOG("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, "
+        DARWIN_KIT_LOG("Address Range Header: length = 0x%08x, version = 0x%04x, cu_offset = 0x%08x, "
                    "addr_size = 0x%02x, seg_size = 0x%02x\n",
                    address_range_header->length, address_range_header->version,
                    address_range_header->offset, address_range_header->addr_size,
@@ -1646,7 +1646,7 @@ void Dwarf::ParseDebugAddressRanges() {
                 range->start = address;
                 range->end = address + size;
 
-                DARWIN_RK_LOG("(0x%016llx, 0x%016llx)\n", address, address + size);
+                DARWIN_KIT_LOG("(0x%016llx, 0x%016llx)\n", address, address + size);
 
                 arange_entry->ranges.push_back(range);
             }

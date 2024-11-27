@@ -74,7 +74,7 @@ class IOKernelDarwinKitUserClient : public IOUserClient {
                                     IOExternalMethodDispatch* dispatch, OSObject* target,
                                     void* reference);
 
-    IOKernelDarwinKitService* GetDarwinKitService() {
+    IOKernelDarwinKitService* getDarwinKitService() {
         return darwinkitService;
     }
 

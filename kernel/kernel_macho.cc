@@ -132,7 +132,7 @@ bool KernelMachO::parseLoadCommands() {
                 snprintf(buffer1, 128, "0x%08llx", section->addr);
                 snprintf(buffer2, 128, "0x%08llx", section->addr + section->size);
 
-                DARWIN_RK_LOG("DarwinKit::\tSection %d: %s to %s - %s\n", j, buffer1, buffer2,
+                DARWIN_KIT_LOG("DarwinKit::\tSection %d: %s to %s - %s\n", j, buffer1, buffer2,
                            section->sectname);
 
                 if (section->offset > size || section->size > size - section->offset) {
@@ -163,10 +163,10 @@ bool KernelMachO::parseLoadCommands() {
                     (size - symtab_command->symoff) / sizeof(xnu::macho::Nlist64))
                 return false;
 
-            DARWIN_RK_LOG("DarwinKit::LC_SYMTAB\n");
-            DARWIN_RK_LOG("DarwinKit::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",
+            DARWIN_KIT_LOG("DarwinKit::LC_SYMTAB\n");
+            DARWIN_KIT_LOG("DarwinKit::\tSymbol Table is at offset 0x%x (%u) with %u entries \n",
                        symtab_command->symoff, symtab_command->symoff, symtab_command->nsyms);
-            DARWIN_RK_LOG("DarwinKit::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",
+            DARWIN_KIT_LOG("DarwinKit::\tString Table is at offset 0x%x (%u) with size of %u bytes\n",
                        symtab_command->stroff, symtab_command->stroff, symtab_command->strsize);
 
             if (kernel_cache) {
@@ -183,8 +183,8 @@ bool KernelMachO::parseLoadCommands() {
                 snprintf(buffer1, 128, "0x%llx", (UInt64)symtab);
                 snprintf(buffer2, 128, "0x%llx", (UInt64)strtab);
 
-                DARWIN_RK_LOG("DarwinKit::\tSymbol Table address = %s\n", buffer1);
-                DARWIN_RK_LOG("DarwinKit::\tString Table address = %s\n", buffer2);
+                DARWIN_KIT_LOG("DarwinKit::\tSymbol Table address = %s\n", buffer1);
+                DARWIN_KIT_LOG("DarwinKit::\tString Table address = %s\n", buffer2);
 
             } else if (kernel_collection) {
                 symtab = reinterpret_cast<xnu::macho::Nlist64*>(
@@ -219,14 +219,14 @@ bool KernelMachO::parseLoadCommands() {
                     (size - dysymtab_command->extreloff) / sizeof(struct relocation_info))
                 return false;
 
-            DARWIN_RK_LOG("DarwinKit::LC_DYSYMTAB\n");
-            DARWIN_RK_LOG("DarwinKit::\t%u local symbols at index %u\n", dysymtab_command->ilocalsym,
+            DARWIN_KIT_LOG("DarwinKit::LC_DYSYMTAB\n");
+            DARWIN_KIT_LOG("DarwinKit::\t%u local symbols at index %u\n", dysymtab_command->ilocalsym,
                        dysymtab_command->nlocalsym);
-            DARWIN_RK_LOG("DarwinKit::\t%u external symbols at index %u\n", dysymtab_command->nextdefsym,
+            DARWIN_KIT_LOG("DarwinKit::\t%u external symbols at index %u\n", dysymtab_command->nextdefsym,
                        dysymtab_command->iextdefsym);
-            DARWIN_RK_LOG("DarwinKit::\t%u undefined symbols at index %u\n", dysymtab_command->nundefsym,
+            DARWIN_KIT_LOG("DarwinKit::\t%u undefined symbols at index %u\n", dysymtab_command->nundefsym,
                        dysymtab_command->iundefsym);
-            DARWIN_RK_LOG("DarwinKit::\t%u Indirect symbols at offset 0x%x\n",
+            DARWIN_KIT_LOG("DarwinKit::\t%u Indirect symbols at offset 0x%x\n",
                        dysymtab_command->nindirectsyms, dysymtab_command->indirectsymoff);
 
             break;
@@ -240,13 +240,13 @@ bool KernelMachO::parseLoadCommands() {
             if (uuid_command->cmdsize != sizeof(struct uuid_command))
                 return false;
 
-            DARWIN_RK_LOG("DarwinKit::LC_UUID\n");
-            DARWIN_RK_LOG("DarwinKit::\tuuid = ");
+            DARWIN_KIT_LOG("DarwinKit::LC_UUID\n");
+            DARWIN_KIT_LOG("DarwinKit::\tuuid = ");
 
             for (int j = 0; j < sizeof(uuid_command->uuid); j++)
-                DARWIN_RK_LOG("%x", uuid_command->uuid[j]);
+                DARWIN_KIT_LOG("%x", uuid_command->uuid[j]);
 
-            DARWIN_RK_LOG("\n");
+            DARWIN_KIT_LOG("\n");
 
             break;
         }
@@ -259,8 +259,8 @@ bool KernelMachO::parseLoadCommands() {
             UInt32 dataoff = linkedit->dataoff;
             UInt32 datasize = linkedit->datasize;
 
-            DARWIN_RK_LOG("DarwinKit::LC_FUNCTION_STARTS\n");
-            DARWIN_RK_LOG("DarwinKit::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
+            DARWIN_KIT_LOG("DarwinKit::LC_FUNCTION_STARTS\n");
+            DARWIN_KIT_LOG("DarwinKit::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
 
             break;
         }
@@ -270,8 +270,8 @@ bool KernelMachO::parseLoadCommands() {
             struct entry_point_command* ep =
                 reinterpret_cast<struct entry_point_command*>(load_command);
 
-            DARWIN_RK_LOG("DarwinKit::LC_MAIN\n");
-            DARWIN_RK_LOG("DarwinKit::\tEntry Point = 0x%llx\n", base + ep->entryoff);
+            DARWIN_KIT_LOG("DarwinKit::LC_MAIN\n");
+            DARWIN_KIT_LOG("DarwinKit::\tEntry Point = 0x%llx\n", base + ep->entryoff);
 
             entry_point = base + ep->entryoff;
 
@@ -297,8 +297,8 @@ bool KernelMachO::parseLoadCommands() {
             UInt32 dataoff = linkedit->dataoff;
             UInt32 datasize = linkedit->datasize;
 
-            DARWIN_RK_LOG("DarwinKit::LC_DATA_IN_CODE\n");
-            DARWIN_RK_LOG("DarwinKit::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
+            DARWIN_KIT_LOG("DarwinKit::LC_DATA_IN_CODE\n");
+            DARWIN_KIT_LOG("DarwinKit::\tOffset = 0x%x Size = 0x%x\n", dataoff, datasize);
 
             break;
         }

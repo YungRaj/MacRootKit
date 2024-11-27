@@ -65,7 +65,7 @@ xnu::mach::Port Task::GetTaskForPid(int pid) {
     ret = task_for_pid(mach_task_self(), pid, &task);
 
     if (ret != KERN_SUCCESS) {
-        DARWIN_RK_LOG("task_for_pid() failed! ret = %d\n", ret);
+        DARWIN_KIT_LOG("task_for_pid() failed! ret = %d\n", ret);
     }
 
     assert(task != MACH_PORT_NULL);
@@ -117,7 +117,7 @@ xnu::mach::VmAddress Task::FindProcByPid(Kernel* kernel, int pid) {
         return current_proc;
     }
 
-    DARWIN_RK_LOG("MacRK::could not find proc for pid = %d\n", pid);
+    DARWIN_KIT_LOG("MacRK::could not find proc for pid = %d\n", pid);
 
     assert(false);
 
@@ -151,7 +151,7 @@ xnu::mach::VmAddress Task::FindProcByName(Kernel* kernel, char* name) {
         return current_proc;
     }
 
-    DARWIN_RK_LOG("MacRK::could not find proc for name = %s\n", name);
+    DARWIN_KIT_LOG("MacRK::could not find proc for name = %s\n", name);
 
     assert(false);
 
@@ -178,7 +178,7 @@ xnu::mach::VmAddress Task::FindTaskByPid(Kernel* kernel, int pid) {
         return task;
     }
 
-    DARWIN_RK_LOG("MacPE::could not find task by pid = %d\n", pid);
+    DARWIN_KIT_LOG("MacPE::could not find task by pid = %d\n", pid);
 
     assert(false);
 
@@ -205,7 +205,7 @@ xnu::mach::VmAddress Task::FindTaskByName(Kernel* kernel, char* name) {
         return task;
     }
 
-    DARWIN_RK_LOG("MacPE::could not find task by name = %s\n", name);
+    DARWIN_KIT_LOG("MacPE::could not find task by name = %s\n", name);
 
     assert(false);
 
@@ -281,7 +281,7 @@ xnu::mach::VmAddress Task::VmAllocate(Size size) {
         return address;
     }
 
-    DARWIN_RK_LOG("mach_vm_allocate() failed!\n");
+    DARWIN_KIT_LOG("mach_vm_allocate() failed!\n");
 
     assert(ret == KERN_SUCCESS);
 
@@ -299,7 +299,7 @@ xnu::mach::VmAddress Task::VmAllocate(Size size, UInt32 flags, xnu::mach::VmProt
         return address;
     }
 
-    DARWIN_RK_LOG("mach_vm_allocate() failed!\n");
+    DARWIN_KIT_LOG("mach_vm_allocate() failed!\n");
 
     assert(ret == KERN_SUCCESS);
 
@@ -312,7 +312,7 @@ void Task::VmDeallocate(xnu::mach::VmAddress address, Size size) {
     ret = vm_deallocate(task_port, address, size);
 
     if (ret != KERN_SUCCESS) {
-        DARWIN_RK_LOG("mach_vm_deallocate() failed!\n");
+        DARWIN_KIT_LOG("mach_vm_deallocate() failed!\n");
     }
 
     assert(ret == KERN_SUCCESS);
@@ -331,7 +331,7 @@ bool Task::VmProtect(xnu::mach::VmAddress address, Size size, xnu::mach::VmProte
         return true;
     }
 
-    DARWIN_RK_LOG("mach_vm_protect() failed!\n");
+    DARWIN_KIT_LOG("mach_vm_protect() failed!\n");
 
     assert(ret == KERN_SUCCESS);
 
@@ -349,7 +349,7 @@ void* Task::VmRemap(xnu::mach::VmAddress address, Size size) {
         return reinterpret_cast<void*>(remap);
     }
 
-    DARWIN_RK_LOG("mach_vm_remap() failed!\n");
+    DARWIN_KIT_LOG("mach_vm_remap() failed!\n");
 
     assert(ret == KERN_SUCCESS);
 
@@ -372,7 +372,7 @@ bool Task::Read(xnu::mach::VmAddress address, void* data, Size size) {
         return true;
     }
 
-    DARWIN_RK_LOG("mach_vm_read() failed! %d\n", ret);
+    DARWIN_KIT_LOG("mach_vm_read() failed! %d\n", ret);
 
     assert(ret == KERN_SUCCESS);
 
@@ -391,7 +391,7 @@ UInt8 Task::Read8(xnu::mach::VmAddress address) {
     success = this->Read(address, reinterpret_cast<void*>(&read), sizeof(UInt8));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Read8() failed!\n");
+        DARWIN_KIT_LOG("Task::Read8() failed!\n");
     }
 
     assert(success);
@@ -407,7 +407,7 @@ UInt16 Task::Read16(xnu::mach::VmAddress address) {
     success = this->Read(address, reinterpret_cast<void*>(&read), sizeof(UInt16));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Read16() failed!\n");
+        DARWIN_KIT_LOG("Task::Read16() failed!\n");
     }
 
     assert(success);
@@ -423,7 +423,7 @@ UInt32 Task::Read32(xnu::mach::VmAddress address) {
     success = this->Read(address, reinterpret_cast<void*>(&read), sizeof(UInt32));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Read32() failed!\n");
+        DARWIN_KIT_LOG("Task::Read32() failed!\n");
     }
 
     assert(success);
@@ -439,7 +439,7 @@ UInt64 Task::Read64(xnu::mach::VmAddress address) {
     success = this->Read(address, reinterpret_cast<void*>(&read), sizeof(UInt64));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Read64() failed!\n");
+        DARWIN_KIT_LOG("Task::Read64() failed!\n");
     }
 
     assert(success);
@@ -461,7 +461,7 @@ void Task::Write8(xnu::mach::VmAddress address, UInt8 value) {
     success = Write(address, reinterpret_cast<void*>(&value), sizeof(UInt8));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Write8() failed!\n");
+        DARWIN_KIT_LOG("Task::Write8() failed!\n");
     }
 
     assert(success);
@@ -473,7 +473,7 @@ void Task::Write16(xnu::mach::VmAddress address, UInt16 value) {
     success = Write(address, reinterpret_cast<void*>(&value), sizeof(UInt16));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Write16() failed!\n");
+        DARWIN_KIT_LOG("Task::Write16() failed!\n");
     }
 
     assert(success);
@@ -485,7 +485,7 @@ void Task::Write32(xnu::mach::VmAddress address, UInt32 value) {
     success = Write(address, reinterpret_cast<void*>(&value), sizeof(UInt32));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Write32() failed!\n");
+        DARWIN_KIT_LOG("Task::Write32() failed!\n");
     }
 
     assert(success);
@@ -497,7 +497,7 @@ void Task::Write64(xnu::mach::VmAddress address, UInt64 value) {
     success = Write(address, reinterpret_cast<void*>(&value), sizeof(UInt64));
 
     if (!success) {
-        DARWIN_RK_LOG("Task::Write64() failed!\n");
+        DARWIN_KIT_LOG("Task::Write64() failed!\n");
     }
 
     assert(success);
@@ -544,7 +544,7 @@ xnu::mach::VmAddress Task::GetImageLoadedAt(char* image_name, char** image_path)
     xnu::mach::VmAddress image = dyld->GetImageLoadedAt(image_name, image_path);
 
     if (!image) {
-        DARWIN_RK_LOG("Locating image %s failed!\n", image_name);
+        DARWIN_KIT_LOG("Locating image %s failed!\n", image_name);
     }
 
     assert(image != 0);

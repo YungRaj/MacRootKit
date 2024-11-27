@@ -54,17 +54,17 @@ The kext portion runs as a kernel extension. The kext code is present in the `ke
 
 The userspace portion can either be built as a static library or command line tool. The code for both is in the `user` folder.
 
-.
-├── arm64/
-├── x86_64/
-├── darwinkit/
-├── kernel/
-│   ├── start.cc
-└── user/
-│   ├── main.cc
+    .
+    ├── arm64/
+    ├── x86_64/
+    ├── darwinkit/
+    ├── kernel/
+    │   ├── start.cc
+    └── user/
+        ├── main.cc
 
-### Features
-####  Kext
+## Features
+###  Kext
 - Symbolicating the XNU Kernel and all loaded kexts in the `KernelCache`/`KernelCollection`
 - Parse MachOs of all kinds in Kernels/Kexts/etc
 - Read/Write/Allocate/Deallocate/Map/Remap/Protect Virtual Memory

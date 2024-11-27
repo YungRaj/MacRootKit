@@ -192,13 +192,13 @@ IOReturn IOKernelDarwinKitUserClient::externalMethod(UInt32 selector,
                                                    OSObject* target, void* reference) {
     IOReturn result = kIOReturnSuccess;
 
-    DARWIN_RK_LOG("DarwinKit::IOKernelDarwinKitUserClient::externalMethod() called!\n");
+    DARWIN_KIT_LOG("DarwinKit::IOKernelDarwinKitUserClient::externalMethod() called!\n");
 
     switch (selector) {
     case kIOKernelDarwinKitHookKernelFunction:;
 
         if (arguments->scalarInputCount == 3) {
-            KernelPatcher* patcher = darwinkitService->GetDarwinKit()->GetKernelPatcher();
+            KernelPatcher* patcher = darwinkitService->getDarwinKit()->GetKernelPatcher();
 
             IOMemoryDescriptor* descriptor;
 
@@ -224,7 +224,7 @@ IOReturn IOKernelDarwinKitUserClient::externalMethod(UInt32 selector,
     case kIOKernelDarwinKitAddBreakpoint:;
 
         if (arguments->scalarInputCount == 3) {
-            KernelPatcher* patcher = darwinkitService->GetDarwinKit()->GetKernelPatcher();
+            KernelPatcher* patcher = darwinkitService->getDarwinKit()->GetKernelPatcher();
 
             IOMemoryDescriptor* descriptor;
 
@@ -351,7 +351,7 @@ IOReturn IOKernelDarwinKitUserClient::externalMethod(UInt32 selector,
                 char* kextidentifier = reinterpret_cast<char*>(buf1);
 
                 xnu::Kext* kext =
-                    GetDarwinKitService()->GetDarwinKit()->GetKextByIdentifier(kextidentifier);
+                    getDarwinKitService()->getDarwinKit()->GetKextByIdentifier(kextidentifier);
 
                 if (kext) {
                     char* kextsymname = reinterpret_cast<char*>(buf2);
@@ -691,7 +691,7 @@ IOReturn IOKernelDarwinKitUserClient::externalMethod(UInt32 selector,
                     arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn,
                     &descriptor, &map));
 
-                DARWIN_RK_LOG("DarwinKit::finding task with name = 0x%llx\n", (UInt64)(name));
+                DARWIN_KIT_LOG("DarwinKit::finding task with name = 0x%llx\n", (UInt64)(name));
 
                 xnu::mach::VmAddress task = reinterpret_cast<xnu::mach::VmAddress>(
                     Task::FindTaskByName(kernel, name));
@@ -726,7 +726,7 @@ IOReturn IOKernelDarwinKitUserClient::externalMethod(UInt32 selector,
                     arguments->scalarInput[0], arguments->scalarInput[1], kIODirectionOutIn,
                     &descriptor, &map));
 
-                DARWIN_RK_LOG("DarwinKit::finding proc with 0x%llx\n", (UInt64)(name));
+                DARWIN_KIT_LOG("DarwinKit::finding proc with 0x%llx\n", (UInt64)(name));
 
                 xnu::mach::VmAddress proc = reinterpret_cast<xnu::mach::VmAddress>(
                     Task::FindProcByName(kernel, name));

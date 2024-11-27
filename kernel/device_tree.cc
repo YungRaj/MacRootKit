@@ -273,7 +273,7 @@ DeviceTreeProperty* DeviceTree::FindProperty(char* nodename, char* propname) {
         if (success) {
             DeviceTreeProperty* prop = (DeviceTreeProperty*)node;
 
-            DARWIN_RK_LOG("%s %s ", nodename, prop->name);
+            DARWIN_KIT_LOG("%s %s ", nodename, prop->name);
 
             DeviceTree::PrintData((UInt8*)&prop->val, prop->size);
 
@@ -286,17 +286,17 @@ DeviceTreeProperty* DeviceTree::FindProperty(char* nodename, char* propname) {
 
 void DeviceTree::PrintData(UInt8* prop_data, UInt32 prop_size) {
     if (is_ascii((char*)prop_data, prop_size) && !prop_data[strlen((char*)prop_data)]) {
-        DARWIN_RK_LOG("%s ", (char*)prop_data);
+        DARWIN_KIT_LOG("%s ", (char*)prop_data);
     } else if (prop_size == sizeof(UInt64)) {
-        DARWIN_RK_LOG("0x%llx ", *(UInt64*)prop_data);
+        DARWIN_KIT_LOG("0x%llx ", *(UInt64*)prop_data);
     } else if (prop_size == sizeof(UInt32)) {
-        DARWIN_RK_LOG("0x%x ", *(UInt32*)prop_data);
+        DARWIN_KIT_LOG("0x%x ", *(UInt32*)prop_data);
     } else {
         for (UInt32 j = 0; j < prop_size; j++)
-            DARWIN_RK_LOG("%x ", prop_data[j]);
+            DARWIN_KIT_LOG("%x ", prop_data[j]);
     }
 
-    DARWIN_RK_LOG("\n");
+    DARWIN_KIT_LOG("\n");
 }
 
 void DeviceTree::PrintNode(char* nodename) {
@@ -333,9 +333,9 @@ void DeviceTree::Print(DeviceTreeNode* node, Size node_size) {
         UInt32 prop_size = prop->size;
 
         for (UInt32 j = 0; j < depth; j++)
-            DARWIN_RK_LOG("\t");
+            DARWIN_KIT_LOG("\t");
 
-        DARWIN_RK_LOG("%s ", prop->name);
+        DARWIN_KIT_LOG("%s ", prop->name);
 
         PrintData(prop_data, prop_size);
 
@@ -363,7 +363,7 @@ T DeviceTree::Dump() {
         UInt64 to_read = sz / 0x1000 > 0 ? 0x1000 : sz;
 
         if (!(UInt64*)(dt + off, device_tree + off, to_read)) {
-            DARWIN_RK_LOG("Failed to dump device tree at 0x%llx\n", dt + off);
+            DARWIN_KIT_LOG("Failed to dump device tree at 0x%llx\n", dt + off);
 
             return nullptr;
         }
