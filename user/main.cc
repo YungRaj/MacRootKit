@@ -58,9 +58,9 @@
 #include "dwarf.h"
 #include "dyld.h"
 #include "kernel.h"
+#include "macho_userspace.h"
 #include "pac.h"
 #include "task.h"
-#include "macho_userspace.h"
 
 #include <arm64/patch_finder_arm64.h>
 
@@ -391,7 +391,6 @@ int injectLibrary(char* dylib) {
         libSystemPthread->GetAslrSlide();
 
     printf("dlopen = 0x%llx\n", dlopen);
-
     printf("pthread_create_from_mach_thread = 0x%llx\n", pthread_create_from_mach_thread);
 
     if ((kr = thread_create(task->GetTaskPort(), &remote_thread)) != KERN_SUCCESS) {
@@ -551,7 +550,6 @@ void print_usage() {
 
 int main(int argc, char** argv) {
     // fuzzer::Harness *harness = new fuzzer::Harness(new xnu::Kernel());
-
     int err;
 
     char* wait_for_process_name = nullptr;

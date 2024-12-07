@@ -27,7 +27,14 @@
 
 #include <mach/mach.h>
 
-static int EndsWith(const char* str, const char* suffix) {
+namespace darwin {
+namespace dyld {
+
+char* Dyld::Contains(char* str, const char* substr) {
+    return strstr(str, substr);
+}
+
+int Dyld::EndsWith(const char* str, const char* suffix) {
     if (!str || !suffix)
         return 0;
 
@@ -37,17 +44,6 @@ static int EndsWith(const char* str, const char* suffix) {
     if (lensuffix > lenstr)
         return 0;
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
-}
-
-static char* Contains(char* str, const char* substr) {
-    return strstr(str, substr);
-}
-
-namespace darwin {
-namespace dyld {
-
-Dyld::Dyld(xnu::Kernel* kernel, xnu::Task* task) : kernel(kernel), task(task) {
-    IterateAllImages();
 }
 
 void Dyld::IterateAllImages() {

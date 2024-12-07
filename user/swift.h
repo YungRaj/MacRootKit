@@ -301,13 +301,13 @@ struct CaptureDescriptor {
 
 #pragma options align = reset
 
-class SwiftMetadata {
+class SwiftABI {
 public:
-    explicit SwiftMetadata(MachO* macho, objc::ObjCData* objc) : macho(macho), objc(objc) {
+    explicit SwiftABI(MachO* macho, objc::ObjCData* objc) : macho(macho), objc(objc) {
         PopulateSections();
         ParseSwift();
     }
-    explicit SwiftMetadata(MachO* macho, objc::ObjCData* objc, Segment* text)
+    explicit SwiftABI(MachO* macho, objc::ObjCData* objc, Segment* text)
         : macho(macho), objc(objc), text(text) {
         PopulateSections();
         ParseSwift();
@@ -414,5 +414,5 @@ private:
     Section* mpenum;
 };
 
-SwiftMetadata* ParseSwift(darwin::MachOUserspace* macho);
+SwiftABI* ParseSwift(darwin::MachOUserspace* macho);
 }; // namespace swift

@@ -206,7 +206,7 @@ private:
     darwin::CodeSignature* codeSignature;
 
     objc::ObjCData* objc;
-    swift::SwiftMetadata* swift;
+    swift::SwiftABI* swift;
 
     char* file_path;
 
