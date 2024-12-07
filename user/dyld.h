@@ -53,7 +53,10 @@ using ImageInfo = struct dyld_image_info;
 
 class Dyld {
 public:
-    explicit Dyld(xnu::Kernel* kernel, xnu::Task* task);
+    explicit Dyld(xnu::Kernel* kernel, xnu::Task* task)
+                : kernel(kernel), task(task) {
+        IterateAllImages();
+    }
 
     ~Dyld() = default;
 
@@ -86,6 +89,10 @@ public:
     Offset GetSlide() {
         return slide;
     }
+
+    char* Contains(char* str, const char* substr);
+
+    int EndsWith(const char* str, const char* suffix);
 
     void GetImageInfos();
 

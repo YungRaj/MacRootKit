@@ -178,7 +178,7 @@ mach_vm_address_t DisassembleNthCall(mach_vm_address_t address, size_t num, size
     return 0;
 }
 
-mach_vm_address_t disassembleNthJmp(mach_vm_address_t address, size_t num, size_t lookup_size) {
+mach_vm_address_t DisassembleNthJmp(mach_vm_address_t address, size_t num, size_t lookup_size) {
     cs_insn* result = nullptr;
 
     size_t disasm_size = arch::x86_64::disassembler::Disassemble(address, lookup_size, &result);
@@ -215,7 +215,7 @@ mach_vm_address_t disassembleNthJmp(mach_vm_address_t address, size_t num, size_
     return 0;
 }
 
-mach_vm_address_t disassembleNthInstruction(mach_vm_address_t address, x86_insn insn, size_t num,
+mach_vm_address_t DisassembleNthInstruction(mach_vm_address_t address, x86_insn insn, size_t num,
                                             size_t lookup_size) {
     cs_insn* result = nullptr;
 

@@ -38,7 +38,7 @@ extern kern_return_t darwinkit_start(IOKernelDarwinKitService* service, xnu::Ker
 extern kern_return_t darwinkit_stop(IOKernelDarwinKitService* service, xnu::Kernel* kernel,
                                       xnu::Kext** kext);
 
-extern darwin::DarwinKit* mac_darwinkit_get_darwinkit();
+extern darwin::DarwinKit* darwinkit_get_darwinkit();
 
 class IOKernelDarwinKitService : public IOService {
     OSDeclareDefaultStructors(IOKernelDarwinKitService)

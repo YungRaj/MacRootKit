@@ -91,7 +91,7 @@ bool IOKernelDarwinKitService::start(IOService* provider) {
             ret = darwinkit_start(this, kernel, &darwinkitKext);
 
             if (ret == kIOReturnSuccess) {
-                darwinkit = mac_darwinkit_get_darwinkit();
+                darwinkit = darwinkit_get_darwinkit();
             }
 
             registerService();

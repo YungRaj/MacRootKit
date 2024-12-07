@@ -151,7 +151,7 @@ bool registerAccess(cs_insn* insn, cs_regs regs_read, uint8_t* nread, cs_regs re
     return cs_regs_access(handle_arm64, insn, regs_read, nread, regs_write, nwrite) == 0;
 }
 
-xnu::mach::VmAddress disassembleNthBranchLink(xnu::mach::VmAddress address, size_t num,
+xnu::mach::VmAddress DisassembleNthBranchLink(xnu::mach::VmAddress address, size_t num,
                                               size_t lookup_size) {
     cs_insn* result = nullptr;
 

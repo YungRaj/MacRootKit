@@ -50,11 +50,11 @@ static char kSwift5Protos[] = "__swift5_protos";
 static char kSwift5Capture[]  = "__swift5_capture";
 static char kSwift5Mpenum[] = "__swift5_mpenum";
 
-SwiftMetadata* ParseSwift(darwin::MachOUserspace* macho) {
-    return macho->GetObjCMetadata() ? new SwiftMetadata(macho, macho->GetObjCMetadata()) : nullptr;
+SwiftABI* ParseSwift(darwin::MachOUserspace* macho) {
+    return macho->GetObjCMetadata() ? new SwiftABI(macho, macho->GetObjCMetadata()) : nullptr;
 }
 
-void SwiftMetadata::PopulateSections() {
+void SwiftABI::PopulateSections() {
     if (!text) {
         text = macho->GetSegment(kTextSegment);
     }
@@ -71,11 +71,11 @@ void SwiftMetadata::PopulateSections() {
     mpenum = macho->GetSection(kTextSegment, kSwift5Mpenum);
 }
 
-void SwiftMetadata::ParseSwift() {
+void SwiftABI::ParseSwift() {
     EnumerateTypes();
 }
 
-void SwiftMetadata::EnumerateTypes() {
+void SwiftABI::EnumerateTypes() {
     Section* types = GetTypes();
 
     UInt8* swift_types_begin = (*macho)[types->GetOffset()];
@@ -103,7 +103,7 @@ void SwiftMetadata::EnumerateTypes() {
     }
 }
 
-struct Type* SwiftMetadata::ParseTypeDescriptor(struct TypeDescriptor* typeDescriptor) {
+struct Type* SwiftABI::ParseTypeDescriptor(struct TypeDescriptor* typeDescriptor) {
     struct Type* type;
 
     struct TypeDescriptor* descriptor;
@@ -188,7 +188,7 @@ struct Type* SwiftMetadata::ParseTypeDescriptor(struct TypeDescriptor* typeDescr
     return type;
 }
 
-UInt64 SwiftMetadata::GetTypeMetadata(struct TypeDescriptor* typeDescriptor) {
+UInt64 SwiftABI::GetTypeMetadata(struct TypeDescriptor* typeDescriptor) {
     UInt64 typeMetadata;
 
     UInt64 accessFunction = typeDescriptor->access_function;
@@ -226,7 +226,7 @@ UInt64 SwiftMetadata::GetTypeMetadata(struct TypeDescriptor* typeDescriptor) {
 #endif
 }
 
-void SwiftMetadata::ParseFieldDescriptor(struct Type* type,
+void SwiftABI::ParseFieldDescriptor(struct Type* type,
                                          struct FieldDescriptor* fieldDescriptor) {
     struct Fields* fields = new Fields;
 
@@ -250,6 +250,6 @@ void SwiftMetadata::ParseFieldDescriptor(struct Type* type,
     }
 }
 
-void SwiftMetadata::ParseClassMetadata(Class* cls) {}
+void SwiftABI::ParseClassMetadata(Class* cls) {}
 
 } // namespace swift

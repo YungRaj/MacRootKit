@@ -193,7 +193,7 @@ genrule(
 
 cc_library(
     name = "DarwinKit_kext_library",
-    srcs = glob(["kernel/*.c"]),
+    srcs = glob(["kernel/*.c"] + ["darwinkit/*.c"]),
     hdrs = glob(["kernel/*.h"]) + glob(["darwinkit/*.h"]),
     includes = [
         "kernel",
