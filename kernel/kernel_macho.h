@@ -34,28 +34,28 @@ public:
 
     ~KernelMachO() = default;
 
-    xnu::mach::VmAddress getKernelCache() {
+    xnu::mach::VmAddress GetKernelCache() {
         return kernel_cache;
     }
 
-    xnu::mach::VmAddress getKernelCollection() {
+    xnu::mach::VmAddress GetKernelCollection() {
         return kernel_collection;
     }
 
-    void setKernelCache(xnu::mach::VmAddress kc) {
+    void SetKernelCache(xnu::mach::VmAddress kc) {
         kernel_cache = kc;
     }
 
-    void setKernelCollection(xnu::mach::VmAddress kc) {
+    void SetKernelCollection(xnu::mach::VmAddress kc) {
         kernel_collection = kc;
     }
 
-    static xnu::Kext* kextLoadedAt(xnu::Kernel* kernel, xnu::mach::VmAddress address);
-    static xnu::Kext* kextWithIdentifier(xnu::Kernel* kernel, char* kext);
+    static xnu::Kext* KextLoadedAt(xnu::Kernel* kernel, xnu::mach::VmAddress address);
+    static xnu::Kext* KextWithIdentifier(xnu::Kernel* kernel, char* kext);
 
-    virtual void parseLinkedit();
+    virtual void ParseLinkedit();
 
-    virtual bool parseLoadCommands();
+    virtual bool ParseLoadCommands();
 
     virtual void ParseMachO();
 

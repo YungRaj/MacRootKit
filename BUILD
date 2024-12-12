@@ -287,7 +287,12 @@ macos_kernel_extension(
     infoplists = ["Info.plist"],
     ipa_post_processor = None,
     linkopts = [
-        "-framework", "IOKit",
+        "-framework",
+        "IOKit",
+        "-kext",
+        "-export_dynamic",
+        "-lkmod",
+        "-lkmodc++", 
     ],
     minimum_deployment_os_version = "",
     minimum_os_version = "11.0",
