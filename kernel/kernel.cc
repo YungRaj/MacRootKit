@@ -57,6 +57,8 @@ using namespace arch::x86_64::patchfinder;
 
 #endif
 
+char* GetBuildVersionFromOSVersion(char *osversion);
+
 namespace xnu {
 
 char* GetKernelVersion() {
@@ -69,10 +71,7 @@ char* GetKernelVersion() {
 extern int sysctl(int*, u_int, void*, Size*, void*, Size);
 
 char* GetOSBuildVersion() {
-    Size len = 256;
-    char* build_version = new char[len];
-    strlcpy(build_version, osversion, 256);
-    return build_version;
+    return GetBuildVersionFromOSVersion((GetKernelVersion()));
 }
 
 Offset Kernel::tempExecutableMemoryOffset = 0;

@@ -38,14 +38,28 @@
 using namespace xnu;
 
 struct macOSVersionMap {
-    const char* darwinVersion;
-    const char* xnuVersion;
+    char* darwinVersion;
+    char* xnuVersion;
 
-    const char* buildVersion;
-    const char* versionNumber;
+    char* buildVersion;
+    char* versionNumber;
 };
 
 struct macOSVersionMap macOSVersions[] = {
+    {"24.1.0", "xnu-11215.41.3~13", "24B2091", "15.1.1"},
+    {"24.1.0", "xnu-11215.41.3~13", "24B91", "15.1.1"},
+    {"24.1.0", "xnu-11215.41.3~3", "24B2083", "15.1"},
+    {"24.1.0", "xnu-11215.41.3~2", "24B83", "15.1"},
+    {"24.0.0", "xnu-11215.1.12~1", "24A348", "15.0.1"},
+    {"24.0.0", "xnu-11215.1.10~2", "24A335", "15.0"},
+    {"23.6.0", "xnu-10063.141.1.701.1~1", "23H311", "14.7.2"},
+    {"23.6.0", "xnu-10063.141.1.701.1~1", "23H222", "14.7.1"},
+    {"23.6.0", "xnu-10063.141.1.700.5~1", "23H124", "14.7"},
+    {"23.6.0", "xnu-10063.141.1~2", "23G93", "14.6.1"},
+    {"23.6.0", "xnu-10063.141.1~2", "23G80", "14.6"},
+    {"23.5.0", "xnu-10063.121.3~5", "23F79", "14.5"},
+    {"23.4.0", "xnu-10063.101.17~1", "23E224", "14.4.1"},
+    {"23.4.0", "xnu-10063.101.15~2", "23E214", "14.4"},
     {"23.3.0", "xnu-10002.81.5~7", "23D60", "14.3.1"},
     {"23.3.0", "xnu-10002.81.5~7", "23D56", "14.3"},
     {"23.2.0", "xnu-10002.61.3~2", "23C64", "14.2"},
@@ -93,6 +107,7 @@ struct macOSVersionMap macOSVersions[] = {
     {"20.1.0", "xnu-7195.41.8~9", "20A2411", "11.0"},
 };
 
+char* GetBuildVersionFromOSVersion(char *osversion);
 char* GetKDKWithBuildVersion(const char* basePath, const char* buildVersion);
 
 kern_return_t ReadKDKKernelFromPath(xnu::Kernel* kernel, const char* path, char** out_buffer);
@@ -179,6 +194,22 @@ void KDKKernelMachO::ParseSymbolTable(xnu::macho::Nlist64* symtab, UInt32 nsyms,
     }
 
     DARWIN_KIT_LOG("DarwinKit::KDKKernelMachO::%u syms!\n", nsyms);
+}
+
+char* GetBuildVersionFromOSVersion(char *osversion) {
+    char kdkPath[1024];
+
+    Size numEntries = sizeof(macOSVersions) / sizeof(macOSVersions[0]);
+
+    for (int i = 0; i < numEntries; i++) {
+        struct macOSVersionMap map = macOSVersions[i];
+
+        if (strstr(osversion, map.xnuVersion) == 0) {
+            return strdup(map.buildVersion);
+        }
+    }
+
+    return nullptr;
 }
 
 char* GetKDKWithBuildVersion(const char* basePath, const char* buildVersion) {
