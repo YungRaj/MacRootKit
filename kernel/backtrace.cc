@@ -33,7 +33,10 @@ inline bool LooksLikeKernelPointer(xnu::mach::VmAddress address) {
     return (address & 0xfffffe0000000000) > 0;
 }
 
-void debug::symbolicate::LookForAddressInsideKexts(xnu::mach::VmAddress address,
+namespace debug {
+namespace symbolicate {
+
+void LookForAddressInsideKexts(xnu::mach::VmAddress address,
                                                    std::vector<xnu::Kext*>& kexts, Symbol** sym,
                                                    Offset* delta) {
     for (int i = 0; i < kexts.size(); i++) {
@@ -73,7 +76,7 @@ void debug::symbolicate::LookForAddressInsideKexts(xnu::mach::VmAddress address,
     }
 }
 
-void debug::symbolicate::LookForAddressInsideKernel(xnu::mach::VmAddress address,
+void LookForAddressInsideKernel(xnu::mach::VmAddress address,
                                                     xnu::Kernel* kernel, Symbol** sym,
                                                     Offset* delta) {
     MachO* macho = kernel->GetMachO();
@@ -110,7 +113,7 @@ void debug::symbolicate::LookForAddressInsideKernel(xnu::mach::VmAddress address
     }
 }
 
-Symbol* debug::symbolicate::GetSymbolFromAddress(xnu::mach::VmAddress address, Offset* delta) {
+Symbol* GetSymbolFromAddress(xnu::mach::VmAddress address, Offset* delta) {
     Symbol* kernel_sym = nullptr;
     Symbol* kext_sym = nullptr;
 
@@ -144,7 +147,9 @@ Symbol* debug::symbolicate::GetSymbolFromAddress(xnu::mach::VmAddress address, O
     return kext_sym;
 }
 
-void debug::PrintBacktrace() {
+}  //namespace symbolicate
+
+void PrintBacktrace() {
     constexpr arch::Architectures arch = arch::GetCurrentArchitecture();
 
     union arch::ThreadState thread_state;
@@ -216,3 +221,5 @@ void debug::PrintBacktrace() {
         }
     }
 }
+
+}  // namespace debug

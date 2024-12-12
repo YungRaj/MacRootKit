@@ -23,7 +23,7 @@
 KernelMachO::KernelMachO(Kernel* kernel)
     : kernel(kernel), kernel_collection(
 #ifdef __x86_64__
-    Kernel::findKernelCollection()
+    Kernel::FindKernelCollection()
 #else
     0
 #endif
@@ -37,23 +37,23 @@ KernelMachO::KernelMachO(Kernel* kernel)
 ) {
 }
 
-Kext* KernelMachO::kextLoadedAt(Kernel* kernel, xnu::mach::VmAddress address) {
+Kext* KernelMachO::KextLoadedAt(Kernel* kernel, xnu::mach::VmAddress address) {
     darwin::DarwinKit* darwinkit = kernel->GetDarwinKit();
 
     return darwinkit->GetKextByAddress(address);
 }
 
-Kext* KernelMachO::kextWithIdentifier(Kernel* kernel, char* kextname) {
+Kext* KernelMachO::KextWithIdentifier(Kernel* kernel, char* kextname) {
     darwin::DarwinKit* darwinkit = kernel->GetDarwinKit();
 
     return darwinkit->GetKextByIdentifier(kextname);
 }
 
-void KernelMachO::parseLinkedit() {
+void KernelMachO::ParseLinkedit() {
     MachO::ParseLinkedit();
 }
 
-bool KernelMachO::parseLoadCommands() {
+bool KernelMachO::ParseLoadCommands() {
     xnu::macho::Header64* mh = GetMachHeader();
 
     Size file_size;
