@@ -9,7 +9,7 @@ else
 	exit 1
 fi
 
-sudo rm -R DarwinKit.kext
+rm -R DarwinKit.kext
 
 bazel clean
 
@@ -18,6 +18,8 @@ sudo /usr/bin/kmutil install --volume-root /
 bazel build --macos_cpus $1 :DarwinKit
 
 unzip bazel-bin/DarwinKit.zip
+
+$(xcrun --sdk macosx --find dsymutil) DarwinKit.kext/Contents/MacOS/DarwinKit
 
 sudo chmod -R 755 DarwinKit.kext
 sudo chown -R root:wheel DarwinKit.kext

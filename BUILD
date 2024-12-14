@@ -68,7 +68,7 @@ genrule(
         cd ..
         mv capstone/libcapstone.a libcapstone_osx_kernel_x86_64.a
         cd capstone
-        export ARCH=arm64e
+        export ARCH=arm64
         export CFLAGS="-target $$ARCH-apple-macos"
         export CXXFLAGS="-target $$ARCH-apple-macos"
         export LDFLAGS="-target $$ARCH-apple-macos"
