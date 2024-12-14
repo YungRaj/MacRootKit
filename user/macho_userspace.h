@@ -146,12 +146,12 @@ public:
         return is_libobjc;
     }
 
-    void SetIsObjectiveCLibrary(bool is_libobjc) {
-        is_libobjc = is_libobjc;
+    void SetIsObjectiveCLibrary(bool objc) {
+        is_libobjc = objc;
     }
 
-    void SetObjectiveCLibrary(MachOUserspace* libobjc) {
-        libobjc = libobjc;
+    void SetObjectiveCLibrary(MachOUserspace* objc) {
+        libobjc = objc;
     }
 
     static MachO* TaskAt(xnu::mach::Port task);

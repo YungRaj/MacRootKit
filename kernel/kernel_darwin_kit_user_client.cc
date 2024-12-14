@@ -37,7 +37,7 @@ extern "C" {
 
 OSDefineMetaClassAndStructors(IOKernelDarwinKitUserClient, IOUserClient)
 
-IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::rootKitUserClientWithKernel(
+IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::darwinKitUserClientWithKernel(
         xnu::Kernel* kernel, task_t owningTask, void* securityToken, UInt32 type) {
     IOKernelDarwinKitUserClient* client;
 
@@ -54,7 +54,7 @@ IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::rootKitUserClientWithK
     return client;
 }
 
-IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::rootKitUserClientWithKernel(
+IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::darwinKitUserClientWithKernel(
     xnu::Kernel* kernel, task_t owningTask, void* securityToken, UInt32 type,
     OSDictionary* properties) {
     IOKernelDarwinKitUserClient* client;
@@ -73,15 +73,16 @@ IOKernelDarwinKitUserClient* IOKernelDarwinKitUserClient::rootKitUserClientWithK
     return client;
 }
 
-bool IOKernelDarwinKitUserClient::initDarwinKitUserClientWithKernel(xnu::Kernel* kernel,
+bool IOKernelDarwinKitUserClient::initDarwinKitUserClientWithKernel(xnu::Kernel* kern,
                                                                 task_t owningTask,
                                                                 void* securityToken, UInt32 type) {
     bool result = IOUserClient::initWithTask(owningTask, securityToken, type);
 
-    if (!kernel)
-        result = false;
+    kernel = kern;
 
-    kernel = kernel;
+    if (!kernel) {
+        result = false;
+    }
 
     clientTask = owningTask;
     kernelTask = *(task_t*)kernel->GetSymbolAddressByName("_kernel_task");
@@ -89,16 +90,17 @@ bool IOKernelDarwinKitUserClient::initDarwinKitUserClientWithKernel(xnu::Kernel*
     return result;
 }
 
-bool IOKernelDarwinKitUserClient::initDarwinKitUserClientWithKernel(xnu::Kernel* kernel,
+bool IOKernelDarwinKitUserClient::initDarwinKitUserClientWithKernel(xnu::Kernel* kern,
                                                                 task_t owningTask,
                                                                 void* securityToken, UInt32 type,
                                                                 OSDictionary* properties) {
     bool result = IOUserClient::initWithTask(owningTask, securityToken, type, properties);
 
-    if (!kernel)
-        result = false;
+    kernel = kern;
 
-    kernel = kernel;
+    if (!kernel) {
+        result = false;
+    }
 
     clientTask = owningTask;
     kernelTask = *(task_t*)kernel->GetSymbolAddressByName("_kernel_task");

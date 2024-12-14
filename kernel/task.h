@@ -92,20 +92,20 @@ public:
         return pid;
     }
 
-    void SetTask(task_t task) {
-        task = task;
+    void SetTask(task_t tsk) {
+        task = tsk;
     }
 
-    void SetMap(vm_map_t map) {
-        map = map;
+    void SetMap(vm_map_t vm_map) {
+        map = vm_map;
     }
 
-    void SetPmap(pmap_t pmap) {
-        pmap = pmap;
+    void SetPmap(pmap_t p_map) {
+        pmap = p_map;
     }
 
-    void SetProc(proc_t proc) {
-        proc = proc;
+    void SetProc(proc_t p) {
+        proc = p;
     }
 
     virtual xnu::mach::VmAddress GetBase() {
@@ -116,12 +116,12 @@ public:
         return slide;
     }
 
-    void SetBase(xnu::mach::VmAddress base) {
-        base = base;
+    void SetBase(xnu::mach::VmAddress bse) {
+        base = bse;
     }
 
-    void SetSlide(Offset slide) {
-        slide = slide;
+    void SetSlide(Offset s) {
+        slide = s;
     }
 
     virtual UInt64 Call(char* symbolname, UInt64* arguments, Size argCount);

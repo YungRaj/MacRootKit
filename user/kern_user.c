@@ -46,14 +46,17 @@ mach_port_t open_kernel_tfp0_connection()
 
 		IOObjectRelease(service);
 
-		if(kr == KERN_SUCCESS)
+		if(kr == KERN_SUCCESS) {
 			break;
+		}
 
 		IOServiceClose(connection);
 	}
 
-	if(kr != KERN_SUCCESS)
+	if(kr != KERN_SUCCESS) {
+		printf("Open IOService %s failed! %s\n", service_name, mach_error_string(kr));
 		return MACH_PORT_NULL;
+	}
 
 	connection = conn;
 
@@ -140,7 +143,7 @@ mach_vm_address_t get_kernel_base()
 
 	if(kr != KERN_SUCCESS)
 	{
-		printf("get_kernel_base failed!\n");
+		printf("get_kernel_base failed! %s\n", mach_error_string(kr));
 
 		return (mach_vm_address_t) 0;
 	}

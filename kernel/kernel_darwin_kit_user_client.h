@@ -42,20 +42,20 @@ class IOKernelDarwinKitService;
 class IOKernelDarwinKitUserClient : public IOUserClient {
     OSDeclareDefaultStructors(IOKernelDarwinKitUserClient)
  public:
-    static IOKernelDarwinKitUserClient* rootKitUserClientWithKernel(xnu::Kernel* kernel,
+    static IOKernelDarwinKitUserClient* darwinKitUserClientWithKernel(xnu::Kernel* kern,
                                                                                task_t owningTask,
                                                                                void* securityToken,
                                                                                UInt32 type);
 
-    static IOKernelDarwinKitUserClient* rootKitUserClientWithKernel(xnu::Kernel* kernel,
+    static IOKernelDarwinKitUserClient* darwinKitUserClientWithKernel(xnu::Kernel* kern,
                                                                   task_t owningTask,
                                                                   void* securityToken, UInt32 type,
                                                                   OSDictionary* properties);
 
-    virtual bool initDarwinKitUserClientWithKernel(xnu::Kernel* kernel, task_t owningTask,
+    virtual bool initDarwinKitUserClientWithKernel(xnu::Kernel* kern, task_t owningTask,
                                                  void* securityToken, UInt32 type);
 
-    virtual bool initDarwinKitUserClientWithKernel(xnu::Kernel* kernel, task_t owningTask,
+    virtual bool initDarwinKitUserClientWithKernel(xnu::Kernel* kern, task_t owningTask,
                                                  void* securityToken, UInt32 type,
                                                  OSDictionary* properties);
 

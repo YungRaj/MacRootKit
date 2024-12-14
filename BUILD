@@ -29,7 +29,7 @@ genrule(
         cd ..
         cp capstone/libcapstone.a libcapstone_x86_64_universal.a
         cd capstone
-        export ARCH=arm64
+        export ARCH=arm64e
         export CFLAGS="-target $$ARCH-apple-macos"
         export CXXFLAGS="-target $$ARCH-apple-macos"
         export LDFLAGS="-target $$ARCH-apple-macos"
@@ -126,7 +126,7 @@ cc_library(
            glob(["darwinkit/*.cc"]) +
            glob(["arm64/*.s"]) +
            glob(["arm64/*.cc"]) +
-            glob(["x86_64/*.cc"]),
+           glob(["x86_64/*.cc"]),
     hdrs = glob(["user/*.h"]) + glob(["darwinkit/*.h"]) + glob(["arm64/*.h"]) + glob(["x86_64/*.h"]) + glob(["capstone/include/capstone/*.h"]),
     includes = [
         "user",

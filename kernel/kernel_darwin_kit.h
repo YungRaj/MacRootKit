@@ -42,8 +42,8 @@ extern darwin::DarwinKit* darwinkit_get_darwinkit();
 
 class IOKernelDarwinKitService : public IOService {
     OSDeclareDefaultStructors(IOKernelDarwinKitService)
-
-        public : virtual bool init(OSDictionary* properties) override;
+public:   
+    virtual bool init(OSDictionary* properties) override;
 
     virtual void free() override;
 

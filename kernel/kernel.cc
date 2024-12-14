@@ -82,23 +82,23 @@ UInt8 Kernel::tempExecutableMemory[tempExecutableMemorySize]
 Kernel* Kernel::kernel = nullptr;
 
 Kernel* Kernel::Create(xnu::mach::Port kernel_task_port) {
-    if (!kernel)
+    if (!kernel) {
         kernel = new Kernel(kernel_task_port);
-
+    }
     return kernel;
 }
 
 Kernel* Kernel::Create(xnu::mach::VmAddress cache, xnu::mach::VmAddress base, Offset slide) {
-    if (!kernel)
+    if (!kernel) {
         kernel = new Kernel(cache, base, slide);
-
+    }
     return kernel;
 }
 
 Kernel* Kernel::Create(xnu::mach::VmAddress base, Offset slide) {
-    if (!kernel)
+    if (!kernel) {
         kernel = new Kernel(base, slide);
-
+    }
     return kernel;
 }
 

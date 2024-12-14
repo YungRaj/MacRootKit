@@ -560,12 +560,9 @@ int main(int argc, char** argv) {
 
     int c;
 
-    /*
-
     kernel = new Kernel();
 
     printf("Kernel base = 0x%llx slide = 0x%llx\n", kernel->GetBase(), kernel->GetSlide());
-    */
 
     /*
     task = new Task(kernel, 614);

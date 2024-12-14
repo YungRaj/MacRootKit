@@ -30,7 +30,7 @@ static bool loaded = false;
 
 OSDefineMetaClassAndStructors(IOKernelDarwinKitService, IOService)
 
-    bool IOKernelDarwinKitService::init(OSDictionary* properties) {
+bool IOKernelDarwinKitService::init(OSDictionary* properties) {
     userClients = OSSet::withCapacity(1);
 
     if (!userClients)
@@ -137,7 +137,7 @@ IOReturn IOKernelDarwinKitService::createUserClient(task_t task, void* securityI
 
     IOKernelDarwinKitUserClient* userClient;
 
-    userClient = IOKernelDarwinKitUserClient::rootKitUserClientWithKernel(kernel, task,
+    userClient = IOKernelDarwinKitUserClient::darwinKitUserClientWithKernel(kernel, task,
                                                                         securityID, type);
 
     if (userClient)
@@ -155,7 +155,7 @@ IOReturn IOKernelDarwinKitService::createUserClient(task_t task, void* securityI
 
     IOKernelDarwinKitUserClient* userClient;
 
-    userClient = IOKernelDarwinKitUserClient::rootKitUserClientWithKernel(
+    userClient = IOKernelDarwinKitUserClient::darwinKitUserClientWithKernel(
         kernel, task, securityID, type, properties);
 
     if (userClient)
