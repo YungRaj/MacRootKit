@@ -21,8 +21,8 @@
 
 template <typename T>
 static void emptyDeleter(T t) {
-    /* do nothing here because we don't wanna destroy the T object */
-    /* we just wanna destroy the Pair */
+    /* Does nothing here because we don't wanna destroy the T object */
+    /* We just wanna destroy the Pair */
 }
 
 template <typename T, typename Y, void (*deleterT)(T) = emptyDeleter<T>,
@@ -32,10 +32,7 @@ public:
     T first;
     Y second;
 
-    explicit Pair(T first, Y second) {
-        first = first;
-        second = second;
-    }
+    Pair(T first, Y second) : first(first), second(second) {}
 
     ~Pair() {
         deleter(this);
@@ -48,7 +45,5 @@ public:
     static void deleter(Pair<T, Y>* pair) {
         deleterT(pair->first);
         deleterY(pair->second);
-
-        delete pair;
     }
 };

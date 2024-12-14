@@ -108,7 +108,7 @@ public:
     };
 
 public:
-    explicit vector() : head(nullptr), tail(nullptr), sz(0) {}
+    vector() : head(nullptr), tail(nullptr), sz(0) {}
 
     ~vector() {
         clear();

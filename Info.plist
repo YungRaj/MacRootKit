@@ -21,13 +21,13 @@
 			<key>CFBundleIdentifier</key>
 			<string>com.YungRaj.DarwinKit</string>
 			<key>IOClass</key>
-			<string>IOKernelRootKitService</string>
+			<string>IOKernelDarwinKitService</string>
 			<key>IOMatchCategory</key>
-			<string>IOKernelRootKitService</string>
+			<string>IOKernelDarwinKitService</string>
 			<key>IOProviderClass</key>
 			<string>IOResources</string>
 			<key>IOUserClientClass</key>
-			<string>IOKernelRootKitUserClient</string>
+			<string>IOKernelDarwinKitUserClient</string>
 			<key>IOResourceMatch</key>
 			<string>IOBSD</string>
 		</dict>

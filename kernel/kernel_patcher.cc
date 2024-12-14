@@ -62,17 +62,17 @@ void KernelPatcher::Initialize() {
 
     waitingForAlreadyLoadedKexts = false;
 
-    InstallCopyClientEntitlementHook();
+    // InstallCopyClientEntitlementHook();
 
 #ifdef __x86_64__
-    // binary load hook does not work on arm64 because symbol to hook does not exist
+    // The binary load hook does not work on arm64 because symbol to hook does not exist
     InstallBinaryLoadHook();
 
-    // kext load hook does not work on arm64 because symbol to hook does not exist
+    // The kext load hook does not work on arm64 because symbol to hook does not exist
     InstallKextLoadHook();
 #endif
 
-    // installDummyBreakpoint();
+    // InstallDummyBreakpoint();
 }
 
 bool KernelPatcher::DummyBreakpoint(union arch::RegisterState* state) {
@@ -458,13 +458,11 @@ void KernelPatcher::ProcessKext(xnu::KmodInfo* kmod, bool loaded) {
 
     void* OSKext;
 
-    StoredArray<DarwinKit::KextLoadCallback>* kextLoadCallbacks;
-
     xnu::mach::VmAddress kmod_address = (xnu::mach::VmAddress)kmod->address;
 
     darwinkit = GetKernel()->GetDarwinKit();
 
-    kextLoadCallbacks = &darwinkit->GetKextLoadCallbacks();
+    StoredArray<DarwinKit::KextLoadCallback> *kextLoadCallbacks = &darwinkit->GetKextLoadCallbacks();
 
     OSKext = KernelPatcher::OSKextLookupKextWithIdentifier(static_cast<char*>(kmod->name));
 
@@ -620,7 +618,7 @@ void KernelPatcher::ApplyKernelPatch(struct KernelPatch* patch) {
     offset = patch->offset;
 
     if (!symbol) {
-        // patch everything you can N times;
+        // Patches everything you can N times;
 
         xnu::mach::VmAddress base = kernel->GetBase();
 
@@ -640,13 +638,13 @@ void KernelPatcher::ApplyKernelPatch(struct KernelPatch* patch) {
         }
 
     } else {
-        // patch the function directed by symbol
+        // Patches the function directed by symbol
 
         xnu::mach::VmAddress address = symbol->GetAddress();
 
         if (find) {
-            // search up to N bytes from beginning of function
-            // use patchfinder::findFunctionEnd() to get ending point
+            // Searches up to N bytes from beginning of function
+            // Uses patchfinder::findFunctionEnd() to get ending point
 
             xnu::mach::VmAddress current_address = address;
 
@@ -658,7 +656,7 @@ void KernelPatcher::ApplyKernelPatch(struct KernelPatch* patch) {
                 current_address++;
             }
         } else {
-            // use offset provided by user to patch bytes in function
+            // Uses offset provided by user to patch bytes in function
 
             kernel->Write(address + offset, (void*)replace, size);
         }
@@ -694,7 +692,7 @@ void KernelPatcher::ApplyKextPatch(struct KextPatch* patch) {
     offset = patch->offset;
 
     if (!symbol) {
-        // patch everything you can N times;
+        // Patches everything you can N times;
 
         xnu::mach::VmAddress base = kext->GetBase();
 
@@ -714,13 +712,13 @@ void KernelPatcher::ApplyKextPatch(struct KextPatch* patch) {
         }
 
     } else {
-        // patch the function directed by symbol
+        // Patches the function directed by symbol
 
         xnu::mach::VmAddress address = symbol->GetAddress();
 
         if (find) {
-            // search up to N bytes from beginning of function
-            // use patchfinder::findFunctionEnd() to get ending point
+            // Searches up to N bytes from beginning of function
+            // Uses patchfinder::findFunctionEnd() to get ending point
 
             xnu::mach::VmAddress current_address = address;
 
@@ -732,7 +730,7 @@ void KernelPatcher::ApplyKextPatch(struct KextPatch* patch) {
                 current_address++;
             }
         } else {
-            // use offset provided by user to patch bytes in function
+            // Uses offset provided by user to patch bytes in function
 
             kernel->Write(address + offset, (void*)replace, size);
         }
@@ -768,7 +766,7 @@ void KernelPatcher::RemoveKernelPatch(struct KernelPatch* patch) {
     offset = patch->offset;
 
     if (!symbol) {
-        // patch everything you can N times;
+        // Patches everything you can N times;
 
         xnu::mach::VmAddress base = kernel->GetBase();
 
@@ -788,13 +786,13 @@ void KernelPatcher::RemoveKernelPatch(struct KernelPatch* patch) {
         }
 
     } else {
-        // patch the function directed by symbol
+        // Patches the function directed by symbol
 
         xnu::mach::VmAddress address = symbol->GetAddress();
 
         if (find) {
-            // search up to N bytes from beginning of function
-            // use patchfinder::findFunctionEnd() to get ending point
+            // Searches up to N bytes from beginning of function
+            // Uses patchfinder::findFunctionEnd() to get ending point
 
             xnu::mach::VmAddress current_address = address;
 
@@ -806,7 +804,7 @@ void KernelPatcher::RemoveKernelPatch(struct KernelPatch* patch) {
                 current_address++;
             }
         } else {
-            // use offset provided by user to patch bytes in function
+            // Uses offset provided by user to patch bytes in function
 
             kernel->Write(address + offset, (void*)find, size);
         }

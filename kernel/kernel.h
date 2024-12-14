@@ -132,8 +132,8 @@ public:
 
     virtual Offset GetSlide();
 
-    void SetDarwinKit(darwin::DarwinKit* darwinkit) {
-        darwinkit = darwinkit;
+    void SetDarwinKit(darwin::DarwinKit* kit) {
+        darwinkit = kit;
     }
 
     darwin::DarwinKit* GetDarwinKit() {

@@ -31,9 +31,9 @@
 darwin::DarwinKit* darwinkit = nullptr;
 
 darwin::DarwinKit* darwinkit_get_darwinkit() {
-    if (darwinkit)
+    if (darwinkit) {
         return darwinkit;
-
+    }
     return nullptr;
 }
 

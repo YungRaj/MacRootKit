@@ -109,7 +109,7 @@ void DarwinKit::OnKextLoad(void* loaded_kext, xnu::KmodInfo* kmod_info) {
         kext = new xnu::Kext(GetKernel(), loaded_kext, kmod_info);
     } else {
         kext = new xnu::Kext(GetKernel(), kmod_info->address,
-                             reinterpret_cast<char*>(&kmod_info->name));
+                             reinterpret_cast<char*>(kmod_info->name));
     }
 
     kexts.push_back(kext);

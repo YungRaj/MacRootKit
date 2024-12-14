@@ -1,4 +1,4 @@
-# command source -e false ~/path/to/MacRootKit/fuzzers/target.lldb
+# command source -e false ~/path/to/DarwinKit/fuzzers/target.lldb
 
 target create -s /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Kernels/kernel.release.vmapple.dSYM /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Kernels/kernel.release.vmapple
 
@@ -1179,6 +1179,7 @@ image add /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Extensions/
 image add /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Extensions/cddafs.kext/Contents/MacOS/cddafs
 image add /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Extensions/AppleMobileDispT600X-DCP.kext/Contents/MacOS/AppleMobileDispT600X-DCP
 image add /Library/Developer/KDKs/KDK_14.4_23E214.kdk/System/Library/Extensions/AppleD1755PMU.kext/Contents/MacOS/AppleD1755PMU
+image add /Users/ilhanraja/Downloads/Files/Code/projects/DarwinKit/DarwinKit.kext/Contents/MacOS/DarwinKit
 
 settings set target.process.optimization-warnings false
 
