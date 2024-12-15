@@ -18,51 +18,53 @@
 
 #include "hook.h"
 
-using namespace darwin;
 using namespace xnu;
 
-bool Payload::ReadBytes(UInt8* bytes, Size size) {
+namespace darwin {
+
+bool Payload::ReadBytes(UInt8* bytes, Size sz) {
     bool success;
 
-    success = ReadBytes(current_offset, bytes, size);
+    success = ReadBytes(current_offset, bytes, sz);
 
     return success;
 }
 
-bool Payload::ReadBytes(Offset offset, UInt8* bytes, Size size) {
+bool Payload::ReadBytes(Offset offset, UInt8* bytes, Size sz) {
     bool success;
 
-    xnu::mach::VmAddress address = address + offset;
+    xnu::mach::VmAddress addr = address + offset;
 
-    success = GetTask()->Read(address + offset, (void*)bytes, size);
+    success = GetTask()->Read(addr, (void*)bytes, sz);
 
     return success;
 }
 
-bool Payload::WriteBytes(UInt8* bytes, Size size) {
+bool Payload::WriteBytes(UInt8* bytes, Size sz) {
     bool success;
 
-    success = WriteBytes(current_offset, bytes, size);
+    success = WriteBytes(current_offset, bytes, sz);
 
-    if (success)
-        current_offset += size;
+    if (success) {
+        current_offset += sz;
+    }
 
     return success;
 }
 
-bool Payload::WriteBytes(Offset offset, UInt8* bytes, Size size) {
+bool Payload::WriteBytes(Offset offset, UInt8* bytes, Size sz) {
     bool success;
 
-    xnu::mach::VmAddress address = address + offset;
+    xnu::mach::VmAddress addr = address + offset;
 
-    success = GetTask()->Write(address, (void*)bytes, size);
+    success = GetTask()->Write(addr, (void*)bytes, sz);
 
 #ifdef __KERNEL__
 
-    if (address >= (xnu::mach::VmAddress)Kernel::GetExecutableMemory() &&
-        address < (xnu::mach::VmAddress)Kernel::GetExecutableMemory() +
+    if (addr >= (xnu::mach::VmAddress)Kernel::GetExecutableMemory() &&
+        addr < (xnu::mach::VmAddress)Kernel::GetExecutableMemory() +
                       Kernel::GetExecutableMemorySize()) {
-        Kernel::SetExecutableMemoryOffset(Kernel::GetExecutableMemoryOffset() + size);
+        Kernel::SetExecutableMemoryOffset(Kernel::GetExecutableMemoryOffset() + sz);
     }
 
 #endif
@@ -73,26 +75,27 @@ bool Payload::WriteBytes(Offset offset, UInt8* bytes, Size size) {
 bool Payload::Prepare() {
     bool success;
 
-    xnu::mach::VmAddress trampoline;
+    xnu::mach::VmAddress tramp;
 
     Task* task = GetTask();
 
 #if defined(__x86_64__) || (defined(__arm64__) && defined(__USER__))
 
-    trampoline =
+    tramp =
         task->VmAllocate(Payload::expectedSize, VM_FLAGS_ANYWHERE, VM_PROT_READ | VM_PROT_EXECUTE);
 
-    if (!trampoline)
+    if (!tramp) {
         return false;
+    }
 
 /*#elif defined(__arm64__) && defined(__KERNEL__)*/
 #else
 
-    trampoline = Kernel::GetExecutableMemory() + Kernel::GetExecutableMemoryOffset();
+    tramp = Kernel::GetExecutableMemory() + Kernel::GetExecutableMemoryOffset();
 
 #endif
 
-    address = trampoline;
+    address = tramp;
 
     return true;
 }
@@ -110,4 +113,6 @@ bool Payload::Commit() {
     SetExecutable();
 #endif
     return true;
+}
+
 }

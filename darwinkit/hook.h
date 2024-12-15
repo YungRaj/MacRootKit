@@ -145,32 +145,32 @@ public:
 
     enum HookType GetHookTypeForCallback(xnu::mach::VmAddress callback);
 
-    void SetTarget(void* target) {
-        target = target;
+    void SetTarget(void* targ) {
+        target = targ;
     }
 
-    void SetPatcher(Patcher* patcher) {
-        patcher = patcher;
+    void SetPatcher(Patcher* p) {
+        patcher = p;
     }
 
-    void SetDisassembler(Disassembler* disassembler) {
-        disassembler = disassembler;
+    void SetDisassembler(Disassembler* disasm) {
+        disassembler = disasm;
     }
 
-    void SetTask(Task* task) {
-        task = task;
+    void SetTask(Task* t) {
+        task = t;
     }
 
-    void SetFrom(xnu::mach::VmAddress from) {
-        from = from;
+    void SetFrom(xnu::mach::VmAddress f) {
+        from = f;
     }
 
-    void SetTrampoline(xnu::mach::VmAddress trampoline) {
-        trampoline = trampoline;
+    void SetTrampoline(xnu::mach::VmAddress tramp) {
+        trampoline = tramp;
     }
 
-    void SetHookType(enum HookType hooktype) {
-        hooktype = hooktype;
+    void SetHookType(enum HookType type) {
+        hooktype = type;
     }
 
     void PrepareHook(xnu::Task* task, xnu::mach::VmAddress from);

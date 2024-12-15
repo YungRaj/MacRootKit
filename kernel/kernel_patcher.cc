@@ -53,7 +53,6 @@ KernelPatcher::KernelPatcher(xnu::Kernel* kernel)
     : kernel(kernel),
       kextKmods(reinterpret_cast<xnu::KmodInfo**>(kernel->GetSymbolAddressByName("_kmod"))) {
     that = this;
-
     Initialize();
 }
 
@@ -62,7 +61,7 @@ void KernelPatcher::Initialize() {
 
     waitingForAlreadyLoadedKexts = false;
 
-    // InstallCopyClientEntitlementHook();
+    InstallCopyClientEntitlementHook();
 
 #ifdef __x86_64__
     // The binary load hook does not work on arm64 because symbol to hook does not exist

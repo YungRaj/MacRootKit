@@ -29,6 +29,8 @@
 using namespace darwin;
 using namespace xnu;
 
+static constexpr UInt64 kBaseKernelAddress = 0xfffffe0000000000;
+
 Hook::Hook(Patcher* patcher, enum HookType hooktype)
     : patcher(patcher), hooktype(hooktype), payload(nullptr),
       architecture(arch::InitArchitecture()) {}
@@ -47,6 +49,10 @@ Hook* Hook::CreateHookForFunction(Task* task, Patcher* patcher, xnu::mach::VmAdd
     Hook* hook;
 
     std::vector<Hook*>& hooks = patcher->GetHooks();
+
+#ifdef __KERNEL__
+    address |= kBaseKernelAddress;
+#endif
 
     for (int i = 0; i < hooks.size(); i++) {
         hook = hooks.at(i);
@@ -67,6 +73,10 @@ Hook* Hook::CreateHookForFunction(void* target, xnu::Task* task, darwin::Patcher
                             xnu::mach::VmAddress address) {
     Hook* hook = Hook::CreateHookForFunction(task, patcher, address);
 
+#ifdef __KERNEL__
+    address |= kBaseKernelAddress;
+#endif
+
     hook->SetTarget(target);
 
     return hook;
@@ -76,6 +86,10 @@ Hook* Hook::CreateBreakpointForAddress(Task* task, Patcher* patcher, xnu::mach::
     Hook* hook;
 
     std::vector<Hook*>& hooks = patcher->GetHooks();
+
+#ifdef __KERNEL__
+    address |= kBaseKernelAddress;
+#endif
 
     for (int i = 0; i < hooks.size(); i++) {
         hook = hooks.at(i);
@@ -102,12 +116,18 @@ Hook* Hook::CreateBreakpointForAddress(void* target, Task* task, Patcher* patche
 }
 
 void Hook::PrepareHook(Task* task, xnu::mach::VmAddress from) {
+#ifdef __KERNEL__
+    from |= kBaseKernelAddress;
+#endif
     SetTask(task);
     SetFrom(from);
     SetDisassembler(task->GetDisassembler());
 }
 
 void Hook::PrepareBreakpoint(Task* task, xnu::mach::VmAddress breakpoint) {
+#ifdef __KERNEL__
+    breakpoint |= kBaseKernelAddress;
+#endif
     SetHookType(kHookTypeBreakpoint);
     SetTask(task);
     SetFrom(breakpoint);
@@ -124,20 +144,22 @@ struct HookPatch* Hook::GetLatestRegisteredHook() {
     return hooks.at((int)(hooks.size() - 1));
 }
 
-xnu::mach::VmAddress Hook::GetTrampolineFromChain(xnu::mach::VmAddress address) {
+xnu::mach::VmAddress Hook::GetTrampolineFromChain(xnu::mach::VmAddress addr) {
     std::vector<struct HookPatch*>& hooks = GetHooks();
+#ifdef __KERNEL__
+    addr |= kBaseKernelAddress;
+#endif
 
     for (int i = 0; i < hooks.size(); i++) {
         struct HookPatch* patch = hooks.at(i);
 
-        xnu::mach::VmAddress to = patch->to;
-        xnu::mach::VmAddress trampoline = patch->trampoline;
+        xnu::mach::VmAddress tramp = patch->trampoline;
 
-        if (to == address) {
 #ifdef __arm64__
-            __asm__ volatile("PACIZA %[pac]" : [pac] "+rm"(trampoline));
+         __asm__ volatile("PACIZA %[pac]" : [pac] "+rm"(tramp));
 #endif
-            return trampoline;
+        if (patch->to == addr) {
+            return tramp;
         }
     }
 
@@ -159,14 +181,11 @@ enum HookType Hook::GetHookTypeForCallback(xnu::mach::VmAddress callback) {
 }
 
 Payload* Hook::PrepareTrampoline() {
-    Payload* payload;
-
     if (payload) {
         return payload;
     }
 
-    payload = payload =
-        new Payload(GetTask(), this, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+    payload = new Payload(GetTask(), this, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 
     payload->Prepare();
 
@@ -193,34 +212,37 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
 
     Patcher* patcher = GetPatcher();
 
-    Payload* payload = PrepareTrampoline();
+    PrepareTrampoline();
 
     struct HookPatch* chain = GetLatestRegisteredHook();
 
-    xnu::mach::VmAddress trampoline;
+    xnu::mach::VmAddress tramp;
+
+#if __KERNEL__
+    to |= kBaseKernelAddress;
+#endif
 
     // If we don't have any entries in the chain
     // Then we start at the payload's starting point
     // If we have entries in the chain, then start at the correct offset
     if (!chain) {
-        trampoline = trampoline = payload->GetAddress();
+        tramp = trampoline = payload->GetAddress();
     } else {
-        trampoline = payload->GetAddress() + payload->GetCurrentOffset();
+        tramp = payload->GetAddress() + payload->GetCurrentOffset();
     }
 
     Size min;
 
     Size branch_size;
 
-    xnu::mach::VmAddress from = chain ? chain->to : from;
+    xnu::mach::VmAddress chain_addr = chain ? chain->to : from;
 
     branch_size = architecture->GetBranchSize();
 
-    min = disassembler->InstructionSize(from, branch_size);
+    min = disassembler->InstructionSize(chain_addr, branch_size);
 
     if (!min) {
         DARWIN_KIT_LOG("Cannot hook! Capstone failed!\n");
-
         return;
     }
 
@@ -229,7 +251,7 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
 
     original_opcodes = new UInt8[min];
 
-    task->Read(from, (void*)original_opcodes, min);
+    task->Read(chain_addr, (void*)original_opcodes, min);
 
     payload->WriteBytes(original_opcodes, min);
 
@@ -238,7 +260,7 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
     // Builds the FunctionPatch branch/jmp instruction from original function to hooked function
     // If the function is hooked more than once, then original = previous hook
 
-    architecture->MakeBranch(&to_hook_function, to, from);
+    architecture->MakeBranch(&to_hook_function, to, chain_addr);
 
     replace_opcodes = new UInt8[branch_size];
 
@@ -247,19 +269,19 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
     union Branch to_original_function;
 
     // Builds the FunctionPatch branch/jmp instruction from trampoline to original function
-    architecture->MakeBranch(&to_original_function, from + min,
+    architecture->MakeBranch(&to_original_function, chain_addr + min,
                              payload->GetAddress() + payload->GetCurrentOffset());
 
     payload->WriteBytes((UInt8*)&to_original_function, branch_size);
 
-    task->Write(from, (void*)&to_hook_function, branch_size);
+    task->Write(chain_addr, (void*)&to_hook_function, branch_size);
 
     payload->Commit();
 
-    hook->from = from;
+    hook->from = chain_addr;
     hook->to = to;
 
-    hook->trampoline = trampoline;
+    hook->trampoline = tramp;
     hook->patch = to_hook_function;
     hook->payload = payload;
     hook->type = hooktype;
@@ -271,7 +293,8 @@ void Hook::HookFunction(xnu::mach::VmAddress to, enum HookType hooktype) {
     RegisterHook(hook);
 }
 
-void Hook::UninstallHook() {}
+void Hook::UninstallHook() {
+}
 
 void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hooktype) {
     struct HookPatch* hook = new HookPatch;
@@ -282,33 +305,33 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
 
     Patcher* patcher = GetPatcher();
 
-    Payload* payload = PrepareTrampoline();
+    PrepareTrampoline();
 
-    xnu::mach::VmAddress trampoline;
+    xnu::mach::VmAddress tramp;
 
-    trampoline = payload->GetAddress() + payload->GetCurrentOffset();
+    tramp = payload->GetAddress() + payload->GetCurrentOffset();
 
     Size min;
     Size branch_size;
 
-    xnu::mach::VmAddress from = from;
+    xnu::mach::VmAddress chain_addr = from;
 
     branch_size = architecture->GetBranchSize();
 
-    min = disassembler->InstructionSize(from, branch_size);
+    min = disassembler->InstructionSize(chain_addr, branch_size);
 
     UInt8* original_opcodes;
     UInt8* replace_opcodes;
 
     original_opcodes = new UInt8[min];
 
-    task->Read(from, (void*)original_opcodes, min);
+    task->Read(chain_addr, (void*)original_opcodes, min);
 
     union Branch to_trampoline;
 
     // Builds the FunctionPatch branch/jmp instruction from original function to hooked function
     // If the function is hooked more than once, then original = previous hook
-    architecture->MakeBranch(&to_trampoline, trampoline, from);
+    architecture->MakeBranch(&to_trampoline, tramp, chain_addr);
 
     replace_opcodes = new UInt8[branch_size];
 
@@ -363,19 +386,19 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
     // Builds the FunctionPatch branch/jmp instruction from trampoline to original function
     payload->WriteBytes(original_opcodes, min);
 
-    architecture->MakeBranch(&to_original_function, from + min,
+    architecture->MakeBranch(&to_original_function, chain_addr + min,
                              payload->GetAddress() + payload->GetCurrentOffset());
 
     payload->WriteBytes((UInt8*)&to_original_function, branch_size);
 
-    task->Write(from, (void*)replace_opcodes, branch_size);
+    task->Write(chain_addr, (void*)replace_opcodes, branch_size);
 
     payload->Commit();
 
-    hook->from = from;
-    hook->to = trampoline;
+    hook->from = chain_addr;
+    hook->to = tramp;
 
-    hook->trampoline = trampoline;
+    hook->trampoline = tramp;
     hook->patch = to_trampoline;
     hook->payload = payload;
     hook->type = hooktype;

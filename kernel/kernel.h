@@ -64,7 +64,7 @@ class Kernel : public xnu::Task {
 
     static Offset tempExecutableMemoryOffset;
 
-    static UInt8 tempExecutableMemory[tempExecutableMemorySize];
+    static UInt8 tempExecutableMemory[tempExecutableMemorySize] __attribute__((section("__TEXT,__text")));
 
     static xnu::Kernel* kernel;
 
