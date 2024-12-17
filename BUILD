@@ -39,8 +39,7 @@ cc_test(
     ],
     deps = [
         ":darwinkit_test",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@com_google_fuzztest//fuzztest",
         "@com_google_fuzztest//fuzztest:fuzztest_gtest_main",
     ],
