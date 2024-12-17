@@ -13,6 +13,39 @@ config_setting(
     values = {"macos_cpus": "x86_64"},
 )
 
+cc_library(
+    name = "darwinkit_test",
+    hdrs = glob(["darwinkit/*.h"]),
+    includes = [
+        "darwinkit",
+    ],
+)
+
+cc_test(
+    name = "macho_test",
+    srcs = [
+        "tests/macho_test.cc",
+        "darwinkit/macho.cc",
+        "darwinkit/symbol_table.cc",
+    ],
+    copts = [
+        "-w",
+        "-std=c++20",
+        "-D__USER__",
+        "-I./",
+        "-I./capstone/include",
+        "-DCAPSTONE_HAS_X86",
+        "-DCAPSTONE_HAS_ARM64",
+    ],
+    deps = [
+        ":darwinkit_test",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@com_google_fuzztest//fuzztest",
+        "@com_google_fuzztest//fuzztest:fuzztest_gtest_main",
+    ],
+)
+
 genrule(
     name = "capstone_universal_lib",
     srcs = ["capstone"],

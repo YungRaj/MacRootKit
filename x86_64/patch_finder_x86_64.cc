@@ -189,7 +189,7 @@ xnu::mach::VmAddress Xref64(MachO* macho, xnu::mach::VmAddress start, xnu::mach:
     return 0;
 }
 
-xnu::mach::VmAddress findInstruction64(MachO* macho, xnu::mach::VmAddress start, Size length,
+xnu::mach::VmAddress FindInstruction64(MachO* macho, xnu::mach::VmAddress start, Size length,
                                        UInt8* stream) {
     cs_insn* insn;
 
@@ -217,7 +217,7 @@ xnu::mach::VmAddress findInstruction64(MachO* macho, xnu::mach::VmAddress start,
     return 0;
 }
 
-xnu::mach::VmAddress findInstructionBack64(MachO* macho, xnu::mach::VmAddress start, Size length,
+xnu::mach::VmAddress FindInstructionBack64(MachO* macho, xnu::mach::VmAddress start, Size length,
                                            UInt8* stream) {
     cs_insn* insn;
 
@@ -255,22 +255,22 @@ xnu::mach::VmAddress findInstructionBack64(MachO* macho, xnu::mach::VmAddress st
     return 0;
 }
 
-xnu::mach::VmAddress findInstructionNTimes64(MachO* macho, int n, xnu::mach::VmAddress start,
+xnu::mach::VmAddress FindInstructionNTimes64(MachO* macho, int n, xnu::mach::VmAddress start,
                                              Size length, UInt8* stream, Bool forward) {
     uint32_t n_insns = 0;
 
     while (n_insns < n && start) {
         if (forward) {
-            start = findInstruction64(macho, start, length, stream);
+            start = FindInstruction64(macho, start, length, stream);
         } else {
-            start = findInstructionBack64(macho, start, length, stream);
+            start = FindInstructionBack64(macho, start, length, stream);
         }
     }
 
     return start;
 }
 
-xnu::mach::VmAddress step64(MachO* macho, xnu::mach::VmAddress start, Size length, char* mnemonic,
+xnu::mach::VmAddress Step64(MachO* macho, xnu::mach::VmAddress start, Size length, char* mnemonic,
                             char* op_string) {
     cs_insn* insn;
 

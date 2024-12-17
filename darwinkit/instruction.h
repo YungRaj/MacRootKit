@@ -16,13 +16,38 @@
 
 #pragma once
 
+#include "arch.h"
+
+#include <capstone/capstone.h>
+
 namespace darwinkit {
 namespace ir {
 
+template <typname Bin>
+class BasicBlock;
+
+template <typename Bin>
 class Instruction {
 public:
+    explicit Instruction() {}
+
+    ~Instruction() = default;
+
+    Architecture* GetArchitecture() { return architecture; }
+
+    BasicBlock<Bin>* GetBasicBlock() { return basic_block; }
+
+    bool IsTerminator() const;
 
 private:
+    UInt64 pc;
+
+    Architecture *architecture;
+
+    BasicBlock<Bin> *block;
+
+    cs_insn insn;
 };
 
+}
 }

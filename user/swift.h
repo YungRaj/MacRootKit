@@ -333,33 +333,43 @@ public:
     Section* GetTypeRef() {
         return typeref;
     }
+
     Section* GetEntry() {
         return entry;
     }
+
     Section* GetBuiltIn() {
         return builtin;
     }
+
     Section* GetReflStr() {
         return reflstr;
     }
+
     Section* GetFieldMd() {
         return fieldmd;
     }
+
     Section* GetAssocty() {
         return assocty;
     }
+
     Section* GetProto() {
         return proto;
-    };
+    }
+
     Section* GetTypes() {
         return types;
     }
+
     Section* GetProtos() {
         return protos;
     }
+
     Section* GetCapture() {
         return capture;
     }
+
     Section* GetMpenum() {
         return mpenum;
     }

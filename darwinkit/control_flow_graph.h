@@ -16,13 +16,95 @@
 
 #pragma once
 
+#include <types.h>
+
+#include <memory>
+
+#include "macho.h"
+#include "symbol.h"
+#include "basic_block.h"
+
 namespace darwinkit {
 namespace ir {
 
-class ControlFlowGraph {
-public:
-
-private:
+template <typename Bin>
+struct ControlFlowGraphAttributes {
+    using SegmentType = decltype(std::declval<Bin>()->GetSegment(nullptr));
+    using SectionType = decltype(std::declval<Bin>()->GetSection(nullptr, nullptr));
+    using SymbolType = decltype(std::declval<Bin>()->GetSymbol(nullptr));
 };
 
+template <typename Bin>
+class ControlFlowGraph {
+public:
+    using BasicBlockList = std::vector<BasicBlock<Bin>*>;
+    using iterator = BasicBlockList::iterator;
+
+    using Seg = typename ControlFlowGraphAttributes<Bin>::SegmentType;
+    using Sect = typename ControlFlowGraphAttributes<Bin>::SectionType;
+    using Sym = typename ControlFlowGraphAttributes<Bin>::SymbolType;
+
+    explicit ControlFlowGraph() {}
+
+    ~ControlFlowGraph() = default;
+
+    T* GetBinary() const { return binary; }
+
+    Sym *GetSymbol() const { return symbol; }
+
+    inline iterator begin() { return blocks.begin(); }
+    inline const_iterator const_begin() const { return blocks.begin(); }
+
+    inline iterator end() { return blocks.end(); }
+    inline const_iterator const_end() const { return blocks.end(); }
+
+private:
+    UInt64 pc;
+
+    T *binary;
+
+    Bin *symbol;
+
+    BasicBlockList blocks;
+};
+
+template <typename Bin>
+class PreOrder {
+public:
+    using BasicBlockList = ControlFlowGraph<Bin>::BasicBlockList;
+
+    explicit PreOrder(ControlFlowGraph<Bin> *cfg);
+
+    PreOrder(const PreOrder &) = delete;
+    PreOrder &operator=(const PreOrder &) = delete;
+
+    ~PreOrder() = default;
+
+    BasicBlockList GetBlocks() const {
+        return pre_order_blocks_;
+    }
+
+    iterator begin() { return pre_order_blocks_.begin(); }
+    const_iterator const_begin() const {
+        return pre_order_blocks_.begin();
+    }
+
+    iterator end() override { return pre_order_blocks_.end(); }
+    const_iterator const_end() const { return pre_order_blocks_.end(); }
+
+    bool IsBackEdge(BasicBlock<Bin> *block) {
+        return back_edges_.contains(block);
+    }
+
+    private:
+    void Visit(BasicBlockList *seen_on_path,
+               BasicBlockList> *visited,
+               BasicBlock<Bin> *cur_block);
+
+    BasicBlockList pre_order_blocks_;
+
+    BasicBlockList back_edges_;
+};
+
+}
 }

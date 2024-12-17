@@ -16,13 +16,46 @@
 
 #pragma once
 
+#include <types.h>
+
+#include "instruction.h"
+
 namespace darwinkit {
 namespace ir {
 
+template <typename Bin>
 class BasicBlock {
 public:
+    using InstructionList = std::vector<Instruction*>;
+    using BasicBlockList = std::vector<BasicBlock<Bin>*>
+    using iterator = InstructionList::iterator;
+
+    explicit BasicBlock() {}
+
+    Bin* GetBinary() { return bin; }
+
+    InstructionList& GetInstructions() { return instructions; }
+
+    Instruction* GetTerminator();
+
+    BasicBlockList GetSuccessors();
+
+    BasicBlockList GetPrecedessors():
+
+    inline iterator begin() { return instructions.begin(); }
+
+    inline iterator end() { return instructions.end(); }
 
 private:
+    UInt64 pc;
+
+    Bin *bin;
+
+    InstructionList instructions;
+
+    BasicBlockList successors;
+    BasicBlockList predecessors;
 };
 
+}
 }

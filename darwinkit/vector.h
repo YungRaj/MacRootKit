@@ -107,6 +107,8 @@ public:
         off_t current_offset;
     };
 
+    using const_iterator = iterator;
+
 public:
     vector() : head(nullptr), tail(nullptr), sz(0) {}
 
