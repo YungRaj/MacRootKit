@@ -45,7 +45,8 @@ using namespace arch::x86_64::patchfinder;
 #endif
 
 using namespace arch;
-using namespace darwin;
+
+namespace darwin {
 
 static KernelPatcher* that = nullptr;
 
@@ -885,3 +886,5 @@ void KernelPatcher::RemoveKextPatch(struct KextPatch* patch) {
 
     kextPatches.push_back(patch);
 }
+
+} // namespace darwin

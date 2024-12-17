@@ -68,3 +68,47 @@ _pop_registers_x86_64:
 	pop rsp
 _pop_registers_x86_64_end:
 	nop
+_start_coverage:
+.rept 10000
+	push rsp
+	push rbp
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	push rdi
+	push rsi
+	push r8
+	push r9
+	push r10
+	push r11
+	push r12
+	push r13
+	push r14
+	push r15
+	nop
+	lea rdi, [rsp + 0x80]
+	nop
+	cmp rax, 1
+	jne short $+4h
+	nop
+	int3
+	nop
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop r11
+	pop r10
+	pop r9
+	pop r8
+	pop rsi
+	pop rdi
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+	pop rbp
+	pop rsp
+	nop
+.endr

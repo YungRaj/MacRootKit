@@ -25,7 +25,7 @@
 #include "dyld.h"
 #include "task.h"
 
-using namespace xnu;
+namespace xnu {
 
 static int EndsWith(const char* str, const char* suffix) {
     if (!str || !suffix)
@@ -552,4 +552,7 @@ xnu::mach::VmAddress Task::GetImageLoadedAt(char* image_name, char** image_path)
     return image;
 }
 
-void Task::PrintLoadedImages() {}
+void Task::PrintLoadedImages() {
+}
+
+} // namespace xnu

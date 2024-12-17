@@ -32,6 +32,8 @@ public:
 
     explicit BasicBlock() {}
 
+    ~BasicBlock() = default;
+
     Bin* GetBinary() { return bin; }
 
     InstructionList& GetInstructions() { return instructions; }

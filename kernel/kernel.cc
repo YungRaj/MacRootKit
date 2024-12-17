@@ -1482,4 +1482,4 @@ xnu::mach::VmAddress Kernel::GetSymbolAddressByName(char* symbolname) {
     return symbolAddress;
 }
 
-}
+} // namespace xnu

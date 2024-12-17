@@ -26,8 +26,9 @@
 
 #include "arch.h"
 
-using namespace darwin;
 using namespace xnu;
+
+namespace darwin {
 
 static constexpr UInt64 kBaseKernelAddress = 0xfffffe0000000000;
 
@@ -411,5 +412,7 @@ void Hook::AddBreakpoint(xnu::mach::VmAddress breakpoint_hook, enum HookType hoo
 }
 
 void Hook::RemoveBreakpoint() {
+
+}
 
 }

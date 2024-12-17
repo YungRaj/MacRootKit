@@ -23,7 +23,7 @@
 #include "dyld.h"
 #include "task.h"
 
-using namespace darwin;
+namespace darwin {
 
 MachOUserspace::MachOUserspace(const char* path) : objc(nullptr), file_path(strdup(path)) {
     WithFilePath(path);
@@ -843,3 +843,5 @@ void MachOUserspace::ParseHeader() {
 void MachOUserspace::ParseMachO() {
     ParseHeader();
 }
+
+} // namespace darwin

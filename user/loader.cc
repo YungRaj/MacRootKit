@@ -24,7 +24,9 @@
 
 namespace fuzzer {
 
-void Module::Load() {}
+void Module::Load() {
+    
+}
 
 /*
 template<typename Sym>

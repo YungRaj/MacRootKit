@@ -24,8 +24,6 @@
 
 #include "log.h"
 
-using namespace xnu;
-
 Bool is_ascii(char* c, Size len) {
     UInt32 zeros = 0;
 
@@ -38,6 +36,8 @@ Bool is_ascii(char* c, Size len) {
 
     return zeros < 3 ? true : false;
 }
+
+namespace xnu {
 
 Bool DeviceTree::IterateNodeProperties(void** data, void* data_end, UInt32* depth,
                                        DeviceTreeNode* node, dt_property_callback_t prop_cb,
@@ -375,7 +375,7 @@ T DeviceTree::Dump() {
     return reinterpret_cast<T>(device_tree);
 }
 
-PE_state_t* xnu::PlatformExpertState(xnu::Kernel* kernel) {
+PE_state_t* PlatformExpertState(xnu::Kernel* kernel) {
     uintptr_t device_tree;
 
     UInt64 deviceTreeHead;
@@ -409,6 +409,8 @@ PE_state_t* xnu::PlatformExpertState(xnu::Kernel* kernel) {
     PE_state = ((adrp_ins & ~0x3FFF) + (page | page_offset)) & ~((UInt64)0xF);
 
     return reinterpret_cast<PE_state_t*>(PE_state);
+}
+
 }
 
 #endif

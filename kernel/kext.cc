@@ -24,7 +24,7 @@
 
 #include "macho.h"
 
-using namespace xnu;
+namespace xnu {
 
 Kext::Kext(Kernel* kernel, xnu::mach::VmAddress base, char* identifier)
     : kernel(kernel), address(base), identifier(identifier) {
@@ -84,3 +84,5 @@ Kext* Kext::FindKextWithId(Kernel* kernel, UInt32 kext_id) {
 void Kext::OnKextLoad(void* kext, xnu::KmodInfo* kmod_info) {
     return;
 }
+
+} // namespace xnu
