@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-FUZZTEST_COMMIT = "62cf00c7341eb05d128d0a3cbce79ac31dbda032"
+FUZZTEST_COMMIT = "8d81145f5569231084de1a2484b89d10d6118c6b"
 
 http_archive(
     name = "com_google_fuzztest",
@@ -10,9 +10,8 @@ http_archive(
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "81964fe578e9bd7c94dfdb09c8e4d6e6759e19967e397dbea48d1c10e45d0df2",
-    strip_prefix = "googletest-release-1.12.1",
-    url = "https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz",
+    strip_prefix = "googletest-1.15.2",
+    url = "https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz",
 )
 
 ################################################################################
@@ -22,27 +21,60 @@ http_archive(
 # Required by com_google_fuzztest.
 http_archive(
     name = "com_googlesource_code_re2",
-    sha256 = "f89c61410a072e5cbcf8c27e3a778da7d6fd2f2b5b1445cd4f4508bee946ab0f",
-    strip_prefix = "re2-2022-06-01",
-    url = "https://github.com/google/re2/archive/refs/tags/2022-06-01.tar.gz",
+    sha256 = "cd191a311b84fcf37310e5cd876845b4bf5aee76fdd755008eef3b6478ce07bb",
+    strip_prefix = "re2-2024-02-01",
+    url = "https://github.com/google/re2/releases/download/2024-02-01/re2-2024-02-01.tar.gz",
 )
 
 # Required by com_google_fuzztest.
 http_archive(
     name = "com_google_absl",
-    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",
-    strip_prefix = "abseil-cpp-20230125.0",
-    url = "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz",
+    sha256 = "338420448b140f0dfd1a1ea3c3ce71b3bc172071f24f4d9a57d59b45037da440",
+    strip_prefix = "abseil-cpp-20240116.0",
+    url = "https://github.com/abseil/abseil-cpp/releases/download/20240116.0/abseil-cpp-20240116.0.tar.gz"
 )
 
 # Required by com_google_absl.
 http_archive(
     name = "bazel_skylib",
-    sha256 = "f7be3474d42aae265405a592bb7da8e171919d74c16f082a5457840f06054728",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
-    ],
+    sha256 = "cd55a062e763b9349921f0f5db8c3933288dc8ba4f76dd9416aac68acee3cb94",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz"],
+)
+
+http_archive(
+    name = "com_google_riegeli",
+    strip_prefix = "riegeli-411cda7f6aa81f8b8591b04cf141b1decdcc928c",
+    url = "https://github.com/google/riegeli/archive/411cda7f6aa81f8b8591b04cf141b1decdcc928c.tar.gz",
+)
+
+http_archive(
+    name = "org_brotli",
+    sha256 = "84a9a68ada813a59db94d83ea10c54155f1d34399baf377842ff3ab9b3b3256e",
+    strip_prefix = "brotli-3914999fcc1fda92e750ef9190aa6db9bf7bdb07",
+    urls = ["https://github.com/google/brotli/archive/3914999fcc1fda92e750ef9190aa6db9bf7bdb07.zip"],  # 2022-11-17
+)
+
+http_archive(
+    name = "snappy",
+    sha256 = "38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303",
+    strip_prefix = "snappy-1.1.8",
+    urls = ["https://github.com/google/snappy/archive/1.1.8.zip"],  # 2020-01-14
+    build_file = "@com_google_riegeli//third_party:snappy.BUILD",
+)
+
+http_archive(
+    name = "highwayhash",
+    strip_prefix = "highwayhash-08d3f5b4d351d2202531ff22f2ba2e0e0e9865e7",
+    urls = ["https://github.com/google/highwayhash/archive/08d3f5b4d351d2202531ff22f2ba2e0e0e9865e7.zip"],  # 2019-02-22
+    build_file = "@com_google_riegeli//third_party:highwayhash.BUILD",
+)
+
+http_archive(
+    name = "net_zstd",
+    sha256 = "b6c537b53356a3af3ca3e621457751fa9a6ba96daf3aebb3526ae0f610863532",
+    strip_prefix = "zstd-1.4.5/lib",
+    urls = ["https://github.com/facebook/zstd/archive/v1.4.5.zip"],  # 2020-05-22
+    build_file = "@com_google_riegeli//third_party:net_zstd.BUILD",
 )
 
 http_archive(
