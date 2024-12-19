@@ -10,9 +10,17 @@ x86_64 and arm64 machines.
 Fuzzers for macOS are in progress, but aren't complete.
 
 ## Getting Started
-### Installing bazel
+### Instal bazel
 ```
 https://bazel.build/install/os-x
+```
+### Install Xcode
+Please install [Xcode](https://developer.apple.com/xcode/). If you get any errors in bazel related to not having Xcode, please install Xcode and then run.
+```
+bazel clean --expunge 
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license
+bazel clean --expunge
 ```
 ### Building the kext
 ```sh
@@ -77,7 +85,7 @@ The userspace portion can either be built as a static library or command line to
 - Traverse PCI configuration space
 - Loading Plugins that perform hooks
 - A coverage engine for all kernel + kext code (in progress)
-- Gdb Stub for debugging the kernel (in progress)
+- GDB Stub for debugging the kernel (in progress)
 ### Userspace
 - Injecting Libraries into processes using ROP/JOP and `dlopen()` from a remote process
 - Parsing all symbols of loaded libraries including libraries present in the dyld shared cache
